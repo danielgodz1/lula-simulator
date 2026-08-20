@@ -7,6 +7,7 @@ import { Environment } from './environment.js';
 import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
 import { savePlayerScore } from '../firebase-config.js';
+import { auth } from '../auth.js';
 
 export class Game {
   constructor() {
@@ -90,7 +91,8 @@ export class Game {
       localStorage.setItem('run_best', this.bestDistance.toString());
     }
 
-    // Salva pontuação no Firebase Firestore
+    // Salva pontuação na conta e no ranking
+    auth.updateUserScore('runner', distanceKm);
     savePlayerScore('runner', distanceKm);
 
     // Exibe tela de Game Over com frases engraçadas

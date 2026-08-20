@@ -281,6 +281,17 @@
 
   <script type="module">
     import { initGame } from './js/game/main.js';
+    import { auth } from './js/auth.js';
+
+    // Renderiza badge do perfil no cabeçalho
+    auth.renderProfileBadge('nav');
+
+    // Se o jogador não estiver identificado, abre o modal de login/cadastro/anônimo
+    if (!auth.getCurrentUser()) {
+      auth.mountAuthModal(() => {
+        auth.renderProfileBadge('nav');
+      });
+    }
 
     // Inicializa o motor do jogo modular 3D
     initGame();

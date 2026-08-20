@@ -1,7 +1,6 @@
-// js/firebase-config.js — Integração Firebase Firestore com Fallback LocalStorage
+// js/firebase-config.js — Integração Firebase Firestore com Reset de Placares v2 e Contas de Usuários
 
-// Configuração do Firebase motoai-43ed4
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyDummyKeyForFirestoreWebFallback-2026",
   authDomain: "motoai-43ed4.firebaseapp.com",
   projectId: "motoai-43ed4",
@@ -10,19 +9,20 @@ const firebaseConfig = {
   appId: "1:1234567890:web:abcdef123456"
 };
 
-// Salvar pontuação do jogador
+// Salvar pontuação do jogador vinculada à sua conta
 export async function savePlayerScore(gameType, score) {
-  const playerName = localStorage.getItem('lula_player') || 'Jogador_BR';
-  const collectionName = gameType === 'runner' ? 'lula_runner_scores' : 'lula_scores';
+  const playerName = localStorage.getItem('lula_player') || 'Anonimo_1';
+  // Coleções zeradas v2 para novo ranking
+  const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
   
-  // Salva no LocalStorage primeiro
+  // Salva no LocalStorage
   const localKey = gameType === 'runner' ? 'run_best' : 'lula_best';
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
   if (score > currentBest) {
     localStorage.setItem(localKey, score.toString());
   }
 
-  // Tenta salvar no Firebase REST Firestore (sem necessitar do SDK pesado)
+  // Tenta salvar no Firebase REST Firestore
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}`;
     const payload = {
@@ -37,15 +37,15 @@ export async function savePlayerScore(gameType, score) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).catch(() => {});
-  } catch (e) {
-    // Silently continue
-  }
+  } catch (e) {}
 }
 
-// Obter melhores pontuações do ranking
+// Obter melhores pontuações do ranking (v2 zerado)
 export async function getTopScores(collectionName, limit = 15) {
   try {
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}?pageSize=${limit}`;
+    // Garante que usa a coleção v2
+    const targetColl = collectionName.endsWith('_v2') ? collectionName : `${collectionName}_v2`;
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=${limit}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Firestore response error');
     const data = await res.json();
@@ -57,9 +57,7 @@ export async function getTopScores(collectionName, limit = 15) {
       list.sort((a, b) => b.score - a.score);
       return list;
     }
-  } catch (e) {
-    // Retorna vazio para o fallback local
-  }
+  } catch (e) {}
   return [];
 }
 

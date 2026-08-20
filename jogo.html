@@ -180,6 +180,13 @@
   <script type="module">
     import { savePlayerScore } from './js/firebase-config.js';
     import { sounds } from './js/audio.js';
+    import { auth } from './js/auth.js';
+
+    // Badge do perfil
+    auth.renderProfileBadge('nav');
+    if (!auth.getCurrentUser()) {
+      auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
+    }
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -212,15 +219,15 @@
     let lulaCryLoaded = false;
     lulaCryImg.onload = () => lulaCryLoaded = true;
 
-    // FÍSICA DINÂMICA (FÁCIL vs DIFÍCIL)
+    // FÍSICA DINÂMICA COM LULA COMPACTO (FÁCIL vs DIFÍCIL)
     let GRAVITY    = 0.35;
-    let JUMP_POWER = -8.0;
+    let JUMP_POWER = -7.8;
     let PIPE_SPEED = 2.2;
     let GAP_RATIO  = 0.42;
     let PW_RATIO   = 0.14;
     let GH_RATIO   = 0.12;
-    let LR_RATIO   = 0.055;
-    let HITBOX_R   = 0.035;
+    let LR_RATIO   = 0.038;  // Lula ~30% mais compacto para caber com folga entre os canos!
+    let HITBOX_R   = 0.026;  // Hitbox enxuta e justa
     let SPAWN_FREQ = 120;
 
     function setMode(mode) {
@@ -231,10 +238,10 @@
 
       if (mode === 'easy') {
         GRAVITY = 0.35;
-        JUMP_POWER = -8.0;
+        JUMP_POWER = -7.8;
         PIPE_SPEED = 2.2;
         GAP_RATIO = 0.42;
-        HITBOX_R = 0.035;
+        HITBOX_R = 0.026;
         SPAWN_FREQ = 120;
         if (btnEasy) { btnEasy.className = 'btn-primary'; btnEasy.style.background = 'var(--verde-neon)'; btnEasy.style.color = '#000'; }
         if (btnHard) { btnHard.className = 'btn-secondary'; btnHard.style.background = ''; btnHard.style.color = ''; }
@@ -244,10 +251,10 @@
         }
       } else {
         GRAVITY = 0.46;
-        JUMP_POWER = -9.0;
+        JUMP_POWER = -8.8;
         PIPE_SPEED = 4.0;
         GAP_RATIO = 0.28;
-        HITBOX_R = 0.050;
+        HITBOX_R = 0.034;
         SPAWN_FREQ = 75;
         if (btnHard) { btnHard.className = 'btn-primary'; btnHard.style.background = 'var(--vermelho-alert)'; btnHard.style.color = '#fff'; }
         if (btnEasy) { btnEasy.className = 'btn-secondary'; btnEasy.style.background = ''; btnEasy.style.color = ''; }
@@ -598,6 +605,7 @@
           localStorage.setItem('lula_best', bestScore.toString());
           document.getElementById('bestDisplay').textContent = bestScore;
         }
+        auth.updateUserScore('flappy', score);
         savePlayerScore('flappy', score);
       }
       draw();

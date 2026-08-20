@@ -177,17 +177,24 @@
 
   <script type="module">
     import { getTopScores } from './js/firebase-config.js';
+    import { auth } from './js/auth.js';
 
-    // Salva apelido localmente
-    const savedName = localStorage.getItem('lula_player') || '';
-    document.getElementById('playerNameInput').value = savedName;
+    // Renderiza badge no cabeçalho
+    auth.renderProfileBadge('nav');
+
+    const currentUser = auth.getCurrentUser();
+    const nameInput = document.getElementById('playerNameInput');
+    if (nameInput) {
+      nameInput.value = currentUser ? currentUser.username : (localStorage.getItem('lula_player') || '');
+    }
 
     window.saveName = function() {
-      const name = document.getElementById('playerNameInput').value.trim();
-      if (name) {
-        localStorage.setItem('lula_player', name);
-        alert('✅ Apelido salvo com sucesso!');
-      }
+      auth.mountAuthModal(() => {
+        auth.renderProfileBadge('nav');
+        const user = auth.getCurrentUser();
+        if (user && nameInput) nameInput.value = user.username;
+        loadRankingData();
+      });
     };
 
     let currentTab = 'flappy';
@@ -201,28 +208,31 @@
 
     async function loadRankingData() {
       const container = document.getElementById('rankingList');
-      const collectionName = currentTab === 'runner' ? 'lula_runner_scores' : 'lula_scores';
+      const collectionName = currentTab === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
       const unit = currentTab === 'runner' ? 'km' : 'picanhas';
 
       container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Consultando banco de dados... 🇧🇷</div>';
 
       let scores = await getTopScores(collectionName, 15);
 
-      // Fallback local se vazio
+      // Fallback local da conta atual se vazio
       if (scores.length === 0) {
-        const localKey = currentTab === 'runner' ? 'run_best' : 'lula_best';
-        const val = parseInt(localStorage.getItem(localKey) || '0', 10);
-        if (val > 0) {
-          scores = [{ player: localStorage.getItem('lula_player') || 'Você', score: val }];
+        const u = auth.getCurrentUser();
+        if (u) {
+          const val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
+          if (val > 0) {
+            scores = [{ player: u.username, score: val }];
+          }
         }
       }
 
       if (scores.length === 0) {
-        scores = [
-          { player: 'EmpresárioLiberto', score: currentTab === 'runner' ? 42 : 58 },
-          { player: 'PicanhaKing_BR', score: currentTab === 'runner' ? 31 : 44 },
-          { player: 'VisãoDeLongoPrazo', score: currentTab === 'runner' ? 24 : 32 }
-        ];
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            Placar reiniciado! Seja o primeiro a jogar e garantir seu nome no topo do ranking! 🚀
+          </div>
+        `;
+        return;
       }
 
       container.innerHTML = '';

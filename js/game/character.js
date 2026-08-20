@@ -87,25 +87,33 @@ export class Character {
     glasses.position.set(0, 0.04, 0.22);
     this.head.add(glasses);
 
-    // 3. Braços
-    this.leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), suitMat);
-    this.leftArm.position.set(-0.48, 1.35, 0);
-    this.leftArm.castShadow = true;
-    this.mesh.add(this.leftArm);
+    // 3. Braços com Articulação de Ombro (Garante que a maleta fique 100% firme na mão)
+    this.leftArmGroup = new THREE.Group();
+    this.leftArmGroup.position.set(-0.48, 1.70, 0);
+    const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.18), suitMat);
+    leftArmMesh.position.y = -0.36;
+    leftArmMesh.castShadow = true;
+    this.leftArmGroup.add(leftArmMesh);
+    this.mesh.add(this.leftArmGroup);
 
-    this.rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), suitMat);
-    this.rightArm.position.set(0.48, 1.35, 0);
-    this.rightArm.castShadow = true;
-    this.mesh.add(this.rightArm);
+    this.rightArmGroup = new THREE.Group();
+    this.rightArmGroup.position.set(0.48, 1.70, 0);
+    const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.18), suitMat);
+    rightArmMesh.position.y = -0.36;
+    rightArmMesh.castShadow = true;
+    this.rightArmGroup.add(rightArmMesh);
 
-    // Maleta Executiva
-    this.briefcase = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.48), leatherMat);
-    this.briefcase.position.set(0.12, -0.28, 0.1);
+    // Maleta Executiva Firmemente Presa na Mão Direita
+    this.briefcase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.48), leatherMat);
+    this.briefcase.position.set(0.08, -0.65, 0.05); // Exatamente na mão
     this.briefcase.castShadow = true;
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.1, 0.2), goldMat);
+
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.20), goldMat);
     handle.position.set(0, 0.22, 0);
     this.briefcase.add(handle);
-    this.rightArm.add(this.briefcase);
+
+    this.rightArmGroup.add(this.briefcase);
+    this.mesh.add(this.rightArmGroup);
 
     // 4. Pernas
     this.leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.26), suitMat);
@@ -229,6 +237,10 @@ export class Character {
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(0, 0, 0);
     this.mesh.scale.set(1, 1, 1);
+    if (this.briefcase) {
+      this.briefcase.position.set(0.08, -0.65, 0.05);
+      this.briefcase.rotation.set(0, 0, 0);
+    }
   }
 
   update(dt, speed) {
@@ -239,9 +251,9 @@ export class Character {
         this.mesh.rotation.x = -Math.min(Math.PI / 2, this.deathAnimTime * 3.5);
         this.mesh.position.y = Math.max(0.2, 1.0 - this.deathAnimTime * 1.5);
         if (this.briefcase) {
-          this.briefcase.position.x += 2.5 * dt;
-          this.briefcase.position.y += 1.5 * dt;
-          this.briefcase.rotation.z += 8 * dt;
+          this.briefcase.position.x += 1.8 * dt;
+          this.briefcase.position.y += 1.2 * dt;
+          this.briefcase.rotation.z += 6 * dt;
         }
       }
       return;
@@ -279,7 +291,7 @@ export class Character {
       this.mesh.position.y = this.y;
     }
 
-    // 4. Animação de Membros
+    // 4. Animação de Membros com a Maleta Fixa na Mão
     this.animTime += dt * (speed * 0.4);
     const legSwing = Math.sin(this.animTime) * 0.85;
     const armSwing = Math.sin(this.animTime) * 0.75;
@@ -287,19 +299,19 @@ export class Character {
     if (!this.isJumping && !this.isSliding) {
       this.leftLeg.rotation.x = legSwing;
       this.rightLeg.rotation.x = -legSwing;
-      this.leftArm.rotation.x = -armSwing;
-      this.rightArm.rotation.x = armSwing;
+      this.leftArmGroup.rotation.x = -armSwing;
+      this.rightArmGroup.rotation.x = armSwing;
       this.head.rotation.y = Math.sin(this.animTime * 0.5) * 0.06;
     } else if (this.isJumping) {
       this.leftLeg.rotation.x = -0.5;
       this.rightLeg.rotation.x = -0.6;
-      this.leftArm.rotation.x = 0.8;
-      this.rightArm.rotation.x = 0.8;
+      this.leftArmGroup.rotation.x = 0.8;
+      this.rightArmGroup.rotation.x = 0.8;
     } else if (this.isSliding) {
       this.leftLeg.rotation.x = 0.95;
       this.rightLeg.rotation.x = 0.95;
-      this.leftArm.rotation.x = -0.8;
-      this.rightArm.rotation.x = -0.8;
+      this.leftArmGroup.rotation.x = -0.8;
+      this.rightArmGroup.rotation.x = -0.8;
     }
   }
 }
