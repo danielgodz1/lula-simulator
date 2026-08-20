@@ -86,20 +86,20 @@
       left: 50%;
       transform: translateX(-50%);
       display: none;
-      gap: 24px;
+      gap: 14px;
       z-index: 15;
     }
 
     .mob-btn {
-      width: 68px;
-      height: 68px;
+      width: 58px;
+      height: 58px;
       background: rgba(255, 223, 0, 0.25);
       border: 2px solid var(--amarelo-brasil);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 26px;
       cursor: pointer;
       color: var(--amarelo-brasil);
       backdrop-filter: blur(8px);
@@ -232,25 +232,34 @@
       </div>
     </div>
 
+    <!-- CONTROLES MOBILE / TOUCH -->
+    <div id="mobileControls">
+      <div class="mob-btn" id="btnLeft" title="Esquerda">◀</div>
+      <div class="mob-btn" id="btnJump" title="Pular">▲</div>
+      <div class="mob-btn" id="btnSlide" title="Deslizar">▼</div>
+      <div class="mob-btn" id="btnRight" title="Direita">▶</div>
+    </div>
+
     <!-- OVERLAY INICIAL PARA ATIVAR SOM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
         <h1 style="font-family:'Bangers',cursive; font-size:44px; color:var(--amarelo-brasil); margin-bottom:10px;">
-          🏃 EMPRESÁRIO 3D — RIO DE JANEIRO
+          🏃 EMPRESÁRIO 3D — SUBWAY SURFERS
         </h1>
-        <p style="color:var(--text-muted); font-size:15px; margin-bottom:24px;">
-          Corra na favela do Rio com trens de metrô passando! Use as setas <strong>← → ou A / D</strong>.
+        <p style="color:var(--text-main); font-size:15px; margin-bottom:14px; line-height:1.6;">
+          Corra pela metrópole fugindo da burocracia, impostos e trens de metrô em 3D real!
         </p>
-        <button class="btn-primary" style="font-size:26px; padding:16px 36px;">
-          🔊 CLIQUE PARA JOGAR!
+        <div style="background:rgba(0,0,0,0.4); padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; color:var(--text-muted); text-align:left;">
+          🎮 <strong>Controles de Teclado & Touch:</strong><br>
+          • <strong>← → ou A / D:</strong> Mudar de Faixa (Esquerda / Direita)<br>
+          • <strong>↑ ou W ou Espaço:</strong> Pular Barreiras<br>
+          • <strong>↓ ou S:</strong> Deslizar / Slide por baixo de Placas<br>
+          • <strong>Swipe na Tela:</strong> Suporte a gestos no Celular
+        </div>
+        <button class="btn-primary" style="font-size:24px; padding:14px 32px; width:100%;">
+          🔊 CLIQUE PARA INICIAR A CORRIDA!
         </button>
       </div>
-    </div>
-
-    <!-- CONTROLES MOBILE -->
-    <div id="mobileControls">
-      <div class="mob-btn" id="btnLeft">◀</div>
-      <div class="mob-btn" id="btnRight">▶</div>
     </div>
 
     <!-- MODAL DE GAME OVER 3D -->
