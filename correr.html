@@ -230,6 +230,9 @@
         <label>Velocidade</label>
         <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
       </div>
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 14px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;">
+        🔊
+      </button>
     </div>
 
     <!-- CONTROLES MOBILE / TOUCH -->
@@ -244,17 +247,17 @@
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
         <h1 style="font-family:'Bangers',cursive; font-size:44px; color:var(--amarelo-brasil); margin-bottom:10px;">
-          🏃 EMPRESÁRIO 3D — SUBWAY SURFERS
+          🏃 EMPRESÁRIO NA FAVELA 3D
         </h1>
         <p style="color:var(--text-main); font-size:15px; margin-bottom:14px; line-height:1.6;">
-          Corra pela metrópole fugindo da burocracia, impostos e trens de metrô em 3D real!
+          Corra pelos trilhos da <strong>Favela do Rio</strong> desviando da <strong>CLT 44h</strong>, <strong>Bolsa Família</strong>, <strong>Auxílio Brasil</strong> e <strong>Trens de Metrô</strong> em 3D real!
         </p>
         <div style="background:rgba(0,0,0,0.4); padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; color:var(--text-muted); text-align:left;">
-          🎮 <strong>Controles de Teclado & Touch:</strong><br>
-          • <strong>← → ou A / D:</strong> Mudar de Faixa (Esquerda / Direita)<br>
-          • <strong>↑ ou W ou Espaço:</strong> Pular Barreiras<br>
-          • <strong>↓ ou S:</strong> Deslizar / Slide por baixo de Placas<br>
-          • <strong>Swipe na Tela:</strong> Suporte a gestos no Celular
+          🎮 <strong>Como Jogar (Subway Surfers):</strong><br>
+          • <strong>← → / A D:</strong> Mudar de Faixa (Desvie de Trens e Cartões)<br>
+          • <strong>↑ / W / Espaço:</strong> Pular Barreiras e Carteiras de Trabalho<br>
+          • <strong>↓ / S:</strong> Deslizar / Slide por baixo de Varais e Fios<br>
+          • 🥩 <strong>Pegue Picanhas e Moedas</strong> para multiplicar seu lucro!
         </div>
         <button class="btn-primary" style="font-size:24px; padding:14px 32px; width:100%;">
           🔊 CLIQUE PARA INICIAR A CORRIDA!
@@ -290,10 +293,15 @@
       restart3DGame();
     });
 
-    document.getElementById('btnRestart').addEventListener('click', () => {
-      try { sounds.init(); } catch(e){}
-      restart3DGame();
-    });
+    const btnSoundToggle = document.getElementById('btnSoundToggle');
+    if (btnSoundToggle) {
+      btnSoundToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try { sounds.init(); } catch(e){}
+        const isMuted = sounds.toggleMute();
+        btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
   </script>
 
 </body>

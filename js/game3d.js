@@ -1,5 +1,6 @@
-// js/game3d.js — Jogo do Empresário 3D (Subway Surfers Style)
-// Desenvolvido com Three.js (WebGL) para alta performance em navegadores desktop e mobile
+// js/game3d.js — Jogo do Empresário 3D (Subway Surfers Favela Edition)
+// Desenvolvido com Three.js (WebGL) com Favela Ensolarada do Rio e Obstáculos Brasileiros:
+// Carteira de Trabalho (CLT), Cartão Bolsa Família, Auxílio Brasil, Picanhas e Trens em Movimento!
 
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { sounds } from './audio.js';
@@ -10,64 +11,83 @@ let character, characterGroup;
 let isGameRunning = false;
 let isGameOver = false;
 
-// Configurações de Faixas e Posição
-const LANES = [-2.8, 0, 2.8]; // Esquerda, Centro, Direita
-let currentLaneIndex = 1;      // Inicia no Centro
+// 3 Faixas de Corrida (Subway Surfers)
+const LANES = [-2.8, 0, 2.8];
+let currentLaneIndex = 1;
 let targetX = 0;
 let characterX = 0;
 
-// Estado de Movimentação e Física
+// Física do Personagem
 let isJumping = false;
 let jumpVelocity = 0;
-const GRAVITY = -0.55;
-const JUMP_FORCE = 8.5;
+const GRAVITY = -0.62;
+let JUMP_FORCE = 9.8;
 let characterY = 0;
 
 let isSliding = false;
 let slideTimer = 0;
-const SLIDE_DURATION = 0.55; // segundos
+const SLIDE_DURATION = 0.55;
 
-// Velocidade e Distância
-let speed = 28; // unidades por segundo
-const BASE_SPEED = 28;
-const MAX_SPEED = 65;
-let distanceTraveled = 0; // em metros / unidades
+// Power-ups
+let magnetActive = false;
+let magnetTimer = 0;
+let superJumpActive = false;
+let superJumpTimer = 0;
+
+// Velocidade e Pontuação
+let speed = 36;
+const BASE_SPEED = 36;
+const MAX_SPEED = 82;
+let distanceTraveled = 0;
 let coinsCollected = 0;
+let picanhasCollected = 0;
 let bestDistance = parseInt(localStorage.getItem('run_best') || '0', 10);
 
-// Segmentos e Objetos de Cenário
-const SEGMENT_LENGTH = 80;
+// Segmentos e Entidades da Favela
+const SEGMENT_LENGTH = 85;
 const TOTAL_SEGMENTS = 6;
 let roadSegments = [];
 let obstacles = [];
 let coins = [];
+let powerups = [];
+let movingTrains = [];
 let particles = [];
 
-// Relógio do Three.js
+// Relógio e Animação
 let clock = new THREE.Clock();
 let animTime = 0;
 let touchStartX = 0, touchStartY = 0;
 
-// Partes do Corpo do Empresário para Animação
+// Partes do Empresário
 let leftLeg, rightLeg, leftArm, rightArm, briefcaseMesh, headMesh;
 
-// INICIALIZADOR DO MOTOR THREE.JS
+// Texturas Compartilhadas
+const textureLoader = new THREE.TextureLoader();
+let picanhaTexture = textureLoader.load('img/picanha.png');
+let favelaBackdropTexture = textureLoader.load('img/favela.png');
+
+// Texturas Procedurais Criadas no Canvas (Nítidas e Realistas)
+let cltTexture = createCLTTexture();
+let bolsaFamiliaTexture = createBolsaFamiliaTexture();
+let auxilioTexture = createAuxilioTexture();
+
+// INICIALIZADOR DO JOGO 3D
 export function init3DGame() {
   const container = document.getElementById('canvasContainer');
   if (!container) return;
 
-  // 1. Criação da Cena
+  // 1. Cena com Céu Ensolarado Carioca
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x87ceeb); // Céu azul claro
-  scene.fog = new THREE.FogExp2(0x87ceeb, 0.009);
+  scene.background = new THREE.Color(0x60a5fa); // Azul Céu do Rio
+  scene.fog = new THREE.FogExp2(0x93c5fd, 0.0055);
 
-  // 2. Criação da Câmera em 3ª Pessoa
+  // 2. Câmera em 3ª Pessoa (Dinâmica e com Profundidade)
   const aspect = container.clientWidth / container.clientHeight;
-  camera = new THREE.PerspectiveCamera(62, aspect, 0.1, 400);
-  camera.position.set(0, 4.8, 7.5);
-  camera.lookAt(0, 1.8, -12);
+  camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 500);
+  camera.position.set(0, 4.4, 7.2);
+  camera.lookAt(0, 1.6, -14);
 
-  // 3. Renderizador WebGL Otimizado
+  // 3. Renderizador WebGL
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -76,465 +96,587 @@ export function init3DGame() {
   container.innerHTML = '';
   container.appendChild(renderer.domElement);
 
-  // 4. Iluminação Dinâmica
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7);
-  hemiLight.position.set(0, 50, 0);
+  // 4. Luz Solar Tropical e Sombras
+  const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x334155, 0.85);
+  hemiLight.position.set(0, 60, 0);
   scene.add(hemiLight);
 
-  const dirLight = new THREE.DirectionalLight(0xfffaed, 0.9);
-  dirLight.position.set(20, 40, 20);
-  dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 1024;
-  dirLight.shadow.mapSize.height = 1024;
-  dirLight.shadow.camera.near = 0.5;
-  dirLight.shadow.camera.far = 120;
-  dirLight.shadow.camera.left = -15;
-  dirLight.shadow.camera.right = 15;
-  dirLight.shadow.camera.top = 15;
-  dirLight.shadow.camera.bottom = -15;
-  scene.add(dirLight);
+  const sunLight = new THREE.DirectionalLight(0xfff6cf, 1.25);
+  sunLight.position.set(30, 60, 25);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.width = 1024;
+  sunLight.shadow.mapSize.height = 1024;
+  sunLight.shadow.camera.near = 0.5;
+  sunLight.shadow.camera.far = 160;
+  sunLight.shadow.camera.left = -20;
+  sunLight.shadow.camera.right = 20;
+  sunLight.shadow.camera.top = 20;
+  sunLight.shadow.camera.bottom = -20;
+  scene.add(sunLight);
 
-  // 5. Construção do Personagem 3D (Empresário de Terno)
+  // 5. Fundo Panorâmico das Montanhas e Favela do Rio
+  createFavelaBackdrop();
+
+  // 6. Personagem 3D (Empresário de Terno)
   buildCharacter();
 
-  // 6. Construção da Pista Inicial e Segmentos Procedurais
+  // 7. Pista de Ferrovia e Casas da Favela
   buildInitialTrack();
 
-  // 7. Eventos de Janela e Controles
+  // 8. Controles e Redimensionamento
   setupControls();
   window.addEventListener('resize', onWindowResize);
 
-  // 8. Atualização do Recorde no HUD
   updateHUD();
-
-  // Inicia o Loop de Renderização
   animate();
 }
 
-// CONSTRUÇÃO DO MODELO 3D PROCEDURAL DO EMPRESÁRIO
+// 1. FUNDO PANORÂMICO DA FAVELA DO RIO DE JANEIRO
+function createFavelaBackdrop() {
+  const bgGeo = new THREE.CylinderGeometry(280, 280, 140, 32, 1, true, -Math.PI / 2, Math.PI);
+  const bgMat = new THREE.MeshBasicMaterial({
+    map: favelaBackdropTexture,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.88
+  });
+  const backdrop = new THREE.Mesh(bgGeo, bgMat);
+  backdrop.position.set(0, 45, -80);
+  backdrop.rotation.y = Math.PI;
+  scene.add(backdrop);
+}
+
+// 2. MODELO 3D DO PERSONAGEM (EMPRESÁRIO)
 function buildCharacter() {
   characterGroup = new THREE.Group();
 
-  // Materiais do Empresário
-  const suitMaterial = new THREE.MeshLambertMaterial({ color: 0x1e293b }); // Terno Azul Marinho Escuro
-  const shirtMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff }); // Camisa Social Branca
-  const tieMaterial = new THREE.MeshLambertMaterial({ color: 0xdc2626 });   // Gravata Vermelha
-  const skinMaterial = new THREE.MeshLambertMaterial({ color: 0xfbbf24 });  // Tom de Pele
-  const hairMaterial = new THREE.MeshLambertMaterial({ color: 0x27272a });  // Cabelo Penteado
-  const glassesMaterial = new THREE.MeshLambertMaterial({ color: 0x09090b });// Óculos Escuros
-  const shoeMaterial = new THREE.MeshLambertMaterial({ color: 0x18181b });  // Sapato Social
-  const leatherMaterial = new THREE.MeshLambertMaterial({ color: 0x78350f });// Maleta de Couro
-  const goldMaterial = new THREE.MeshLambertMaterial({ color: 0xfacc15 });  // Fivelas Douradas
+  const suitMat = new THREE.MeshLambertMaterial({ color: 0x1e293b }); // Terno Azul Marinho
+  const shirtMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // Camisa Branca
+  const tieMat = new THREE.MeshLambertMaterial({ color: 0xef4444 });   // Gravata Vermelha
+  const skinMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });  // Tom de Pele
+  const hairMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });  // Cabelo
+  const glassesMat = new THREE.MeshLambertMaterial({ color: 0x09090b });// Óculos
+  const shoeMat = new THREE.MeshLambertMaterial({ color: 0x111827 });  // Sapato
+  const leatherMat = new THREE.MeshLambertMaterial({ color: 0x78350f });// Maleta
 
-  // Tronco (Terno com Camisa e Gravata)
-  const torsoGeo = new THREE.BoxGeometry(0.75, 0.95, 0.45);
-  const torso = new THREE.Mesh(torsoGeo, suitMaterial);
+  // Tronco
+  const torso = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.95, 0.44), suitMat);
   torso.position.y = 1.35;
   torso.castShadow = true;
   characterGroup.add(torso);
 
-  // Detalhe da Camisa Branca no Peito
-  const shirtGeo = new THREE.BoxGeometry(0.24, 0.5, 0.05);
-  const shirt = new THREE.Mesh(shirtGeo, shirtMaterial);
+  // Camisa e Gravata
+  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.5, 0.04), shirtMat);
   shirt.position.set(0, 1.5, 0.22);
   characterGroup.add(shirt);
 
-  // Gravata
-  const tieGeo = new THREE.BoxGeometry(0.1, 0.42, 0.06);
-  const tie = new THREE.Mesh(tieGeo, tieMaterial);
+  const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.05), tieMat);
   tie.position.set(0, 1.45, 0.23);
   characterGroup.add(tie);
 
-  // Cabeça
-  const headGeo = new THREE.BoxGeometry(0.48, 0.48, 0.44);
-  headMesh = new THREE.Mesh(headGeo, skinMaterial);
+  // Cabeça e Óculos
+  headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.44), skinMat);
   headMesh.position.y = 2.05;
   headMesh.castShadow = true;
   characterGroup.add(headMesh);
 
-  // Cabelo Estilizado
-  const hairGeo = new THREE.BoxGeometry(0.5, 0.18, 0.46);
-  const hair = new THREE.Mesh(hairGeo, hairMaterial);
+  const hair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.46), hairMat);
   hair.position.set(0, 0.22, -0.02);
   headMesh.add(hair);
 
-  // Óculos Escuros de Executivo
-  const glassesGeo = new THREE.BoxGeometry(0.44, 0.12, 0.1);
-  const glasses = new THREE.Mesh(glassesGeo, glassesMaterial);
+  const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.12, 0.08), glassesMat);
   glasses.position.set(0, 0.04, 0.22);
   headMesh.add(glasses);
 
-  // Braço Esquerdo
-  const armGeo = new THREE.BoxGeometry(0.2, 0.75, 0.2);
-  leftArm = new THREE.Mesh(armGeo, suitMaterial);
+  // Braços e Maleta de Dinheiro
+  leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), suitMat);
   leftArm.position.set(-0.48, 1.35, 0);
   leftArm.castShadow = true;
   characterGroup.add(leftArm);
 
-  // Braço Direito (Segurando a Maleta)
-  rightArm = new THREE.Mesh(armGeo, suitMaterial);
+  rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.75, 0.2), suitMat);
   rightArm.position.set(0.48, 1.35, 0);
   rightArm.castShadow = true;
   characterGroup.add(rightArm);
 
-  // Maleta de Executivo (Briefcase)
-  const briefcaseGeo = new THREE.BoxGeometry(0.18, 0.4, 0.5);
-  briefcaseMesh = new THREE.Mesh(briefcaseGeo, leatherMaterial);
+  briefcaseMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.48), leatherMat);
   briefcaseMesh.position.set(0.12, -0.28, 0.1);
   briefcaseMesh.castShadow = true;
-
-  // Alça e Fivelas da Maleta
-  const handleGeo = new THREE.BoxGeometry(0.06, 0.1, 0.2);
-  const handle = new THREE.Mesh(handleGeo, goldMaterial);
-  handle.position.set(0, 0.23, 0);
-  briefcaseMesh.add(handle);
   rightArm.add(briefcaseMesh);
 
-  // Perna Esquerda
-  const legGeo = new THREE.BoxGeometry(0.26, 0.85, 0.26);
-  leftLeg = new THREE.Mesh(legGeo, suitMaterial);
+  // Pernas
+  leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.26), suitMat);
   leftLeg.position.set(-0.2, 0.45, 0);
   leftLeg.castShadow = true;
 
-  // Sapato Esquerdo
-  const shoeGeo = new THREE.BoxGeometry(0.26, 0.15, 0.38);
-  const leftShoe = new THREE.Mesh(shoeGeo, shoeMaterial);
+  const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.15, 0.38), shoeMat);
   leftShoe.position.set(0, -0.4, 0.06);
   leftLeg.add(leftShoe);
   characterGroup.add(leftLeg);
 
-  // Perna Direita
-  rightLeg = new THREE.Mesh(legGeo, suitMaterial);
+  rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.26), suitMat);
   rightLeg.position.set(0.2, 0.45, 0);
   rightLeg.castShadow = true;
 
-  // Sapato Direito
-  const rightShoe = new THREE.Mesh(shoeGeo, shoeMaterial);
+  const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.15, 0.38), shoeMat);
   rightShoe.position.set(0, -0.4, 0.06);
   rightLeg.add(rightShoe);
   characterGroup.add(rightLeg);
 
-  // Sombra no Chão Abaixo do Personagem
+  // Sombra Dinâmica
   const shadowGeo = new THREE.PlaneGeometry(1.2, 1.2);
   const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
   const charShadow = new THREE.Mesh(shadowGeo, shadowMat);
   charShadow.rotation.x = -Math.PI / 2;
-  charShadow.position.y = 0.02;
+  charShadow.position.y = 0.03;
   characterGroup.add(charShadow);
 
   character = characterGroup;
   scene.add(character);
 }
 
-// CONSTRUÇÃO E CICLO DE SEGMENTOS DE PISTA INFINITA
+// 3. CONSTRUÇÃO DA PISTA DA FAVELA & TRILHOS DE METRÔ (SUBWAY SURFERS)
 function buildInitialTrack() {
   roadSegments = [];
   obstacles = [];
   coins = [];
+  powerups = [];
+  movingTrains = [];
 
   for (let i = 0; i < TOTAL_SEGMENTS; i++) {
     const segZ = -i * SEGMENT_LENGTH;
-    const seg = createRoadSegment(segZ, i > 1);
+    const seg = createFavelaSegment(segZ, i > 1);
     roadSegments.push(seg);
     scene.add(seg);
   }
 }
 
-function createRoadSegment(zPos, withObstacles = true) {
+function createFavelaSegment(zPos, withEntities = true) {
   const segment = new THREE.Group();
   segment.position.z = zPos;
 
-  // 1. Asfalto Principal (3 Faixas)
-  const roadWidth = 9.6;
-  const roadGeo = new THREE.PlaneGeometry(roadWidth, SEGMENT_LENGTH);
-  const roadMat = new THREE.MeshLambertMaterial({ color: 0x22262d });
-  const road = new THREE.Mesh(roadGeo, roadMat);
-  road.rotation.x = -Math.PI / 2;
-  road.receiveShadow = true;
-  segment.add(road);
+  // 1. Leito de Brita e Cascalho da Ferrovia (Subway Tracks)
+  const trackWidth = 9.8;
+  const gravelGeo = new THREE.PlaneGeometry(trackWidth, SEGMENT_LENGTH);
+  const gravelMat = new THREE.MeshLambertMaterial({ color: 0x3f3f46 }); // Cascalho escuro
+  const gravel = new THREE.Mesh(gravelGeo, gravelMat);
+  gravel.rotation.x = -Math.PI / 2;
+  gravel.receiveShadow = true;
+  segment.add(gravel);
 
-  // 2. Linhas Divisórias das Faixas
-  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const yellowLineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+  // 2. Trilhos de Aço e Dormentes de Madeira nas 3 Faixas
+  const woodMat = new THREE.MeshLambertMaterial({ color: 0x5c3a21 }); // Dormentes
+  const railMat = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.9, roughness: 0.2 }); // Trilhos metálicos
 
-  [-1.4, 1.4].forEach(x => {
-    for (let lz = -SEGMENT_LENGTH / 2 + 3; lz < SEGMENT_LENGTH / 2; lz += 8) {
-      const lineGeo = new THREE.PlaneGeometry(0.18, 4);
-      const dash = new THREE.Mesh(lineGeo, lineMat);
-      dash.rotation.x = -Math.PI / 2;
-      dash.position.set(x, 0.01, lz);
-      segment.add(dash);
+  LANES.forEach(laneX => {
+    // Dormentes de Madeira a cada 2.5m
+    for (let dz = -SEGMENT_LENGTH / 2 + 2; dz < SEGMENT_LENGTH / 2; dz += 2.6) {
+      const tieMesh = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.12, 0.4), woodMat);
+      tieMesh.position.set(laneX, 0.06, dz);
+      tieMesh.receiveShadow = true;
+      segment.add(tieMesh);
     }
+
+    // 2 Trilhos de Aço por Faixa
+    [-0.8, 0.8].forEach(rx => {
+      const railMesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, SEGMENT_LENGTH), railMat);
+      railMesh.position.set(laneX + rx, 0.15, 0);
+      railMesh.receiveShadow = true;
+      segment.add(railMesh);
+    });
   });
 
-  // Linhas Laterais Contínuas Amarelas
-  [-4.6, 4.6].forEach(x => {
-    const borderGeo = new THREE.PlaneGeometry(0.25, SEGMENT_LENGTH);
-    const borderLine = new THREE.Mesh(borderGeo, yellowLineMat);
-    borderLine.rotation.x = -Math.PI / 2;
-    borderLine.position.set(x, 0.01, 0);
-    segment.add(borderLine);
+  // 3. Muretas Laterais de Concreto com Grafites
+  const wallMat = new THREE.MeshLambertMaterial({ color: 0x71717a });
+  [-5.4, 5.4].forEach(wx => {
+    const wall = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.2, SEGMENT_LENGTH), wallMat);
+    wall.position.set(wx, 0.6, 0);
+    wall.receiveShadow = true;
+    segment.add(wall);
   });
 
-  // 3. Calçadas Laterais
-  const curbGeo = new THREE.BoxGeometry(2.5, 0.4, SEGMENT_LENGTH);
-  const curbMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
-  [-5.8, 5.8].forEach(cx => {
-    const curb = new THREE.Mesh(curbGeo, curbMat);
-    curb.position.set(cx, 0.2, 0);
-    curb.receiveShadow = true;
-    segment.add(curb);
-  });
+  // 4. Arquitetura 3D da Favela do Rio (Casas sobrepostas, tijolo baiano e lajes)
+  buildFavelaHouses(segment);
 
-  // 4. Edifícios Urbanos de Fundo (Parallax e Profundidade 3D)
-  const theme = getThemeForDistance(distanceTraveled);
-  buildBuildingsForSegment(segment, theme);
-
-  // 5. Postes de Luz e Árvores
-  for (let pz = -SEGMENT_LENGTH / 2 + 10; pz < SEGMENT_LENGTH / 2; pz += 25) {
-    createStreetLamp(segment, -5.2, pz);
-    createStreetLamp(segment, 5.2, pz);
+  // 5. Postes de Eletricidade com Emaranhado de Fios ("Gatos de Luz")
+  for (let pz = -SEGMENT_LENGTH / 2 + 15; pz < SEGMENT_LENGTH / 2; pz += 30) {
+    createFavelaPolesAndWires(segment, pz);
   }
 
-  // 6. Spawn de Obstáculos e Moedas
-  if (withObstacles) {
-    spawnSegmentEntities(segment, zPos);
+  // 6. Spawn de Obstáculos Brasileiros e Coletáveis
+  if (withEntities) {
+    spawnFavelaObstacles(segment, zPos);
   }
 
   return segment;
 }
 
-// TEMA URBANO DINÂMICO CONFORME A DISTÂNCIA
-function getThemeForDistance(dist) {
-  if (dist < 400) return 'corporate'; // Centro Empresarial Ensolarado
-  if (dist < 900) return 'railway';   // Zona de Metrô & Trilhos
-  return 'neon';                       // Avenida Noturna com Néon
-}
+// ARQUITETURA DE CASAS DA FAVELA
+function buildFavelaHouses(segment) {
+  const houseColors = [
+    0xc2410c, // Tijolo Baiano Terracota
+    0xea580c, // Tijolo Laranja
+    0xfacc15, // Amarelo Solar
+    0x0284c7, // Azul Piscina
+    0x16a34a, // Verde Bandeira
+    0xdb2777, // Rosa Choque
+    0x78716c  // Concreto Aparente
+  ];
 
-function buildBuildingsForSegment(segment, theme) {
-  const buildingColors = theme === 'neon' 
-    ? [0x0f172a, 0x1e1b4b, 0x172554, 0x022c22] 
-    : [0x334155, 0x475569, 0x64748b, 0x1e293b, 0x0f172a];
+  const waterTankMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 }); // Caixa d'água Fortlev
+  const brickMat = new THREE.MeshLambertMaterial({ color: 0xb45309 });
 
-  [-16, 16].forEach((bx, sideIdx) => {
-    for (let bz = -SEGMENT_LENGTH / 2 + 10; bz < SEGMENT_LENGTH / 2; bz += 24) {
-      const height = 24 + Math.random() * 45;
-      const width = 12 + Math.random() * 8;
-      const depth = 16 + Math.random() * 8;
+  [-13, 13].forEach((baseX, sideIdx) => {
+    for (let bz = -SEGMENT_LENGTH / 2 + 8; bz < SEGMENT_LENGTH / 2; bz += 16) {
+      const floors = 2 + Math.floor(Math.random() * 3); // 2 a 4 andares empilhados
 
-      const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
-      const bGeo = new THREE.BoxGeometry(width, height, depth);
-      const bMat = new THREE.MeshLambertMaterial({ color });
-      const building = new THREE.Mesh(bGeo, bMat);
-      building.position.set(bx + (sideIdx === 0 ? -width / 4 : width / 4), height / 2, bz);
-      segment.add(building);
+      let curY = 0;
+      for (let f = 0; f < floors; f++) {
+        const width = 6 + Math.random() * 4;
+        const height = 3.5 + Math.random() * 1.5;
+        const depth = 8 + Math.random() * 5;
+        const shiftX = (Math.random() - 0.5) * 1.5;
 
-      // Janelas Iluminadas
-      const winCount = 8;
-      for (let w = 0; w < winCount; w++) {
-        const winGeo = new THREE.PlaneGeometry(0.8, 1.2);
-        const winColor = (theme === 'neon' || Math.random() > 0.4) ? 0xfef08a : 0x38bdf8;
-        const winMat = new THREE.MeshBasicMaterial({ color: winColor });
-        const windowMesh = new THREE.Mesh(winGeo, winMat);
-        const wy = 4 + Math.random() * (height - 8);
-        const wz = bz - depth / 3 + Math.random() * (depth * 0.6);
-        windowMesh.position.set(sideIdx === 0 ? bx + width / 2 + 0.05 : bx - width / 2 - 0.05, wy, wz);
-        windowMesh.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-        segment.add(windowMesh);
+        const color = houseColors[Math.floor(Math.random() * houseColors.length)];
+        const houseMat = (f === 0 && Math.random() > 0.4) ? brickMat : new THREE.MeshLambertMaterial({ color });
+
+        const house = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), houseMat);
+        house.position.set(baseX + shiftX + (sideIdx === 0 ? -width / 4 : width / 4), curY + height / 2, bz);
+        house.castShadow = true;
+        house.receiveShadow = true;
+        segment.add(house);
+
+        // Janelas e Portas com Molduras
+        const winMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+        const win = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.4), winMat);
+        const winX = sideIdx === 0 ? baseX + shiftX + width / 2 + 0.05 : baseX + shiftX - width / 2 - 0.05;
+        win.position.set(winX, curY + height / 2, bz);
+        win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+        segment.add(win);
+
+        // Caixa d'água azul no topo da laje
+        if (f === floors - 1) {
+          const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.7, 1.1, 12), waterTankMat);
+          tank.position.set(house.position.x, curY + height + 0.55, bz + (Math.random() - 0.5) * 2);
+          tank.castShadow = true;
+          segment.add(tank);
+
+          // Antena de TV
+          const antennaPole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 6), new THREE.MeshLambertMaterial({ color: 0xd4d4d8 }));
+          antennaPole.position.set(house.position.x + 1.2, curY + height + 1.1, bz - 1.5);
+          segment.add(antennaPole);
+        }
+
+        curY += height;
       }
     }
   });
 }
 
-function createStreetLamp(segment, x, z) {
-  const poleGeo = new THREE.CylinderGeometry(0.08, 0.1, 5.5, 8);
+// POSTES E FIAÇÃO DE LUZ NA FAVELA
+function createFavelaPolesAndWires(segment, pz) {
   const poleMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-  const pole = new THREE.Mesh(poleGeo, poleMat);
-  pole.position.set(x, 2.75, z);
-  segment.add(pole);
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x09090b });
 
-  const headGeo = new THREE.BoxGeometry(0.3, 0.15, 0.7);
-  const headMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-  const lampHead = new THREE.Mesh(headGeo, headMat);
-  lampHead.position.set(x > 0 ? -0.3 : 0.3, 2.6, 0);
-  pole.add(lampHead);
+  [-5.8, 5.8].forEach(px => {
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 7.5, 8), poleMat);
+    pole.position.set(px, 3.75, pz);
+    pole.castShadow = true;
+    segment.add(pole);
+
+    const crossArm = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.15, 0.15), poleMat);
+    crossArm.position.set(0, 3.2, 0);
+    pole.add(crossArm);
+  });
+
+  // Fios Elétricos Cruzando no Alto
+  [-0.6, 0, 0.6].forEach(offsetY => {
+    const wireGeo = new THREE.CylinderGeometry(0.02, 0.02, 11.6, 6);
+    const wire = new THREE.Mesh(wireGeo, wireMat);
+    wire.rotation.z = Math.PI / 2;
+    wire.position.set(0, 6.8 + offsetY, pz);
+    segment.add(wire);
+  });
 }
 
-// CRIAÇÃO DE OBSTÁCULOS E COLETÁVEIS (SUBWAY SURFERS)
-function spawnSegmentEntities(segment, segZ) {
-  const spawnPoints = [-SEGMENT_LENGTH / 2 + 15, -SEGMENT_LENGTH / 2 + 38, -SEGMENT_LENGTH / 2 + 60];
+// 4. CRIAÇÃO DOS OBSTÁCULOS BRASILEIROS (SUBWAY SURFERS)
+function spawnFavelaObstacles(segment, segZ) {
+  const spawnPoints = [-SEGMENT_LENGTH / 2 + 16, -SEGMENT_LENGTH / 2 + 42, -SEGMENT_LENGTH / 2 + 66];
 
   spawnPoints.forEach(localZ => {
     const worldZ = segZ + localZ;
-    const lane = Math.floor(Math.random() * 3); // 0, 1 ou 2
-    const obstacleType = Math.random();
+    const lane = Math.floor(Math.random() * 3);
+    const rand = Math.random();
 
-    // 1. OBSTÁCULO: BARREIRA CORPORATIVA BAIXA (Pode Pular ou Desviar)
-    if (obstacleType < 0.38) {
-      createRoadBarrier(segment, LANES[lane], localZ, worldZ);
+    // 1. CARTEIRA DE TRABALHO (CLT 44H)
+    if (rand < 0.28) {
+      createCLTObstacle(segment, LANES[lane], localZ, worldZ);
     }
-    // 2. OBSTÁCULO: TREM DE METRÔ / BLOCÃO (Exige Desviar Lateralmente)
-    else if (obstacleType < 0.68) {
-      createTrainObstacle(segment, LANES[lane], localZ, worldZ);
+    // 2. CARTÃO BOLSA FAMÍLIA OU AUXÍLIO BRASIL
+    else if (rand < 0.52) {
+      if (Math.random() > 0.5) {
+        createBolsaFamiliaObstacle(segment, LANES[lane], localZ, worldZ);
+      } else {
+        createAuxilioObstacle(segment, LANES[lane], localZ, worldZ);
+      }
     }
-    // 3. OBSTÁCULO: PLACA SUSPENSA / BUROCRACIA (Exige Deslizar/Slide por Baixo ou Desviar)
+    // 3. TREM DE METRÔ EM MOVIMENTO (OU PARADO COM RAMPA)
+    else if (rand < 0.78) {
+      createMetroTrainObstacle(segment, LANES[lane], localZ, worldZ);
+    }
+    // 4. VARAL DE FAVELA / BUROCRACIA SUSPENSA (EXIGE SLIDE / AGACHAR)
     else {
-      createOverheadObstacle(segment, LANES[lane], localZ, worldZ);
+      createClotheslineObstacle(segment, LANES[lane], localZ, worldZ);
     }
 
-    // Geração de Moedas nas Outras Faixas
-    const coinLane = (lane + 1 + Math.floor(Math.random() * 2)) % 3;
-    spawnCoinArc(segment, LANES[coinLane], localZ - 6, worldZ - 6);
+    // Spawn de Picanhas Coletáveis ou Moedas nas outras faixas
+    const freeLane1 = (lane + 1) % 3;
+    const freeLane2 = (lane + 2) % 3;
 
-    // Chance de Maleta Bônus
-    if (Math.random() < 0.25) {
-      const freeLane = (lane + 2) % 3;
-      spawnBriefcaseItem(segment, LANES[freeLane], localZ + 8, worldZ + 8);
+    if (Math.random() < 0.45) {
+      spawnPicanhaCollectible(segment, LANES[freeLane1], localZ, worldZ);
+    } else {
+      spawnCoinTrack(segment, LANES[freeLane1], localZ - 6, worldZ - 6);
+    }
+
+    // Spawn de Power-up Raro (Ímã ou Super Tênis)
+    if (Math.random() < 0.18) {
+      spawnPowerupItem(segment, LANES[freeLane2], localZ + 8, worldZ + 8);
     }
   });
 }
 
-// 1. Barreira Baixa
-function createRoadBarrier(parent, x, localZ, worldZ) {
-  const barrierGroup = new THREE.Group();
-  barrierGroup.position.set(x, 0, localZ);
+// 1. OBSTÁCULO: CARTEIRA DE TRABALHO (CLT 44H)
+function createCLTObstacle(parent, x, localZ, worldZ) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, localZ);
 
-  // Placa Listrada Vermelho e Branco
-  const boardGeo = new THREE.BoxGeometry(2.3, 0.7, 0.15);
-  const boardMat = new THREE.MeshLambertMaterial({ color: 0xdc2626 });
-  const board = new THREE.Mesh(boardGeo, boardMat);
-  board.position.y = 0.85;
-  board.castShadow = true;
-  barrierGroup.add(board);
+  // Livro 3D Azul da Carteira de Trabalho
+  const bookGeo = new THREE.BoxGeometry(2.1, 1.4, 0.35);
+  const bookMat = new THREE.MeshLambertMaterial({ map: cltTexture });
+  const book = new THREE.Mesh(bookGeo, bookMat);
+  book.position.y = 0.95;
+  book.castShadow = true;
+  group.add(book);
 
-  // Texto/Letreiro
-  const textStripGeo = new THREE.BoxGeometry(2.1, 0.22, 0.18);
-  const textMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const textStrip = new THREE.Mesh(textStripGeo, textMat);
-  textStrip.position.set(0, 0.85, 0);
-  barrierGroup.add(textStrip);
-
-  // Suportes Laterais
-  [-0.9, 0.9].forEach(sx => {
-    const postGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.9, 8);
-    const postMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
-    const post = new THREE.Mesh(postGeo, postMat);
-    post.position.set(sx, 0.45, 0);
-    post.castShadow = true;
-    barrierGroup.add(post);
-  });
-
-  parent.add(barrierGroup);
+  parent.add(group);
 
   obstacles.push({
-    type: 'barrier_low',
-    name: 'Barreira Burocrática',
+    name: 'Carteira Assinada (CLT 44h)',
     x: x,
     z: worldZ,
-    width: 2.2,
-    height: 1.1,
-    depth: 0.4,
-    canSlideUnder: false,
+    width: 2.1,
+    height: 1.4,
+    depth: 0.6,
     canJumpOver: true,
-    mesh: barrierGroup
+    canSlideUnder: false,
+    mesh: group
   });
 }
 
-// 2. Trem de Metrô / Vagão 3D
-function createTrainObstacle(parent, x, localZ, worldZ) {
+// 2. OBSTÁCULO: CARTÃO BOLSA FAMÍLIA
+function createBolsaFamiliaObstacle(parent, x, localZ, worldZ) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, localZ);
+
+  const cardGeo = new THREE.BoxGeometry(2.3, 1.45, 0.25);
+  const cardMat = new THREE.MeshLambertMaterial({ map: bolsaFamiliaTexture });
+  const card = new THREE.Mesh(cardGeo, cardMat);
+  card.position.y = 0.95;
+  card.castShadow = true;
+  group.add(card);
+
+  parent.add(group);
+
+  obstacles.push({
+    name: 'Cartão Bolsa Família',
+    x: x,
+    z: worldZ,
+    width: 2.3,
+    height: 1.45,
+    depth: 0.5,
+    canJumpOver: true,
+    canSlideUnder: false,
+    mesh: group
+  });
+}
+
+// 3. OBSTÁCULO: CARTÃO AUXÍLIO BRASIL
+function createAuxilioObstacle(parent, x, localZ, worldZ) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, localZ);
+
+  const cardGeo = new THREE.BoxGeometry(2.3, 1.45, 0.25);
+  const cardMat = new THREE.MeshLambertMaterial({ map: auxilioTexture });
+  const card = new THREE.Mesh(cardGeo, cardMat);
+  card.position.y = 0.95;
+  card.castShadow = true;
+  group.add(card);
+
+  parent.add(group);
+
+  obstacles.push({
+    name: 'Cartão Auxílio Brasil',
+    x: x,
+    z: worldZ,
+    width: 2.3,
+    height: 1.45,
+    depth: 0.5,
+    canJumpOver: true,
+    canSlideUnder: false,
+    mesh: group
+  });
+}
+
+// 4. OBSTÁCULO: TREM DE METRÔ EM MOVIMENTO COM RAMPA E FARÓIS (SUBWAY SURFERS)
+function createMetroTrainObstacle(parent, x, localZ, worldZ) {
   const trainGroup = new THREE.Group();
   trainGroup.position.set(x, 0, localZ);
 
-  // Corpo do Trem (Metrô Rio)
-  const bodyGeo = new THREE.BoxGeometry(2.4, 2.8, 8.5);
-  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 }); // Azul Metrô
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = 1.45;
+  const trainLength = 11;
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 }); // Azul Metrô Rio
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.2 });
+
+  // Corpo do Vagão
+  const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.9, trainLength), bodyMat);
+  body.position.y = 1.5;
   body.castShadow = true;
+  body.receiveShadow = true;
   trainGroup.add(body);
 
-  // Faixa Prateada
-  const stripeGeo = new THREE.BoxGeometry(2.42, 0.4, 8.52);
-  const stripeMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
-  const stripe = new THREE.Mesh(stripeGeo, stripeMat);
-  stripe.position.y = 1.5;
-  trainGroup.add(stripe);
+  // Teto Prateado
+  const roof = new THREE.Mesh(new THREE.BoxGeometry(2.44, 0.3, trainLength), metalMat);
+  roof.position.y = 2.95;
+  trainGroup.add(roof);
 
-  // Faróis Frontais
+  // Faróis Fortes
   [-0.7, 0.7].forEach(fx => {
-    const lightGeo = new THREE.BoxGeometry(0.3, 0.25, 0.1);
-    const lightMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-    const light = new THREE.Mesh(lightGeo, lightMat);
-    light.position.set(fx, 0.8, 4.3);
-    trainGroup.add(light);
+    const headlight = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.25, 0.1), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+    headlight.position.set(fx, 1.2, trainLength / 2 + 0.05);
+    trainGroup.add(headlight);
   });
 
-  // Janelas Laterais
-  for (let jz = -3; jz <= 3; jz += 2) {
-    const winGeo = new THREE.BoxGeometry(2.44, 0.7, 1.2);
-    const winMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
-    const win = new THREE.Mesh(winGeo, winMat);
-    win.position.set(0, 1.9, jz);
-    trainGroup.add(win);
+  // Rampa de Acesso Traseira (Permite subir no teto do trem como no Subway Surfers!)
+  const rampMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
+  const ramp = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 3.5), rampMat);
+  ramp.position.set(0, 1.4, -trainLength / 2 - 1.4);
+  ramp.rotation.x = Math.PI / 8;
+  trainGroup.add(ramp);
+
+  // Moedas de Ouro no Teto do Trem
+  for (let rz = -3; rz <= 3; rz += 2.2) {
+    const roofCoin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.08, 16), new THREE.MeshLambertMaterial({ color: 0xfacc15, emissive: 0x713f12 }));
+    roofCoin.rotation.x = Math.PI / 2;
+    roofCoin.position.set(0, 3.4, rz);
+    trainGroup.add(roofCoin);
+
+    coins.push({
+      type: 'coin',
+      value: 10,
+      x: x,
+      z: worldZ + rz,
+      y: 3.4,
+      mesh: roofCoin,
+      collected: false
+    });
   }
 
   parent.add(trainGroup);
 
-  obstacles.push({
-    type: 'train',
-    name: 'Trem Metrô Rio',
+  // Trem em Movimento que Vem de Frente!
+  const isMoving = Math.random() > 0.4;
+  if (isMoving) {
+    try { sounds.playTrainHorn(); } catch(e){}
+  }
+
+  const obsObj = {
+    name: 'Trem do Metrô Rio',
     x: x,
     z: worldZ,
-    width: 2.3,
-    height: 2.8,
-    depth: 8.5,
+    width: 2.4,
+    height: 3.0,
+    depth: trainLength + 3.0,
+    canJumpOver: false,
     canSlideUnder: false,
-    canJumpOver: false, // Muito alto, deve desviar lateralmente!
+    isMoving: isMoving,
+    trainSpeed: isMoving ? 16 : 0,
     mesh: trainGroup
-  });
+  };
+
+  obstacles.push(obsObj);
+  if (isMoving) movingTrains.push(obsObj);
 }
 
-// 3. Placa Suspensa (Exige Slide / Agachar)
-function createOverheadObstacle(parent, x, localZ, worldZ) {
-  const overGroup = new THREE.Group();
-  overGroup.position.set(x, 0, localZ);
+// 5. OBSTÁCULO: VARAL DE ROUPAS / FIOS BAIXOS DE FAVELA (EXIGE SLIDE / AGACHAR)
+function createClotheslineObstacle(parent, x, localZ, worldZ) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, localZ);
 
-  // Placa Superior Alta ("CLT / IMPOSTOS")
-  const signGeo = new THREE.BoxGeometry(2.4, 1.1, 0.2);
-  const signMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });
-  const sign = new THREE.Mesh(signGeo, signMat);
-  sign.position.y = 2.0;
-  sign.castShadow = true;
-  overGroup.add(sign);
+  // Placa / Viga Suspensa com Roupas
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.3, 0.15), new THREE.MeshLambertMaterial({ color: 0x78350f }));
+  beam.position.y = 2.0;
+  beam.castShadow = true;
+  group.add(beam);
 
-  // Faixas Laterais de Sustentação
-  [-1.05, 1.05].forEach(px => {
-    const beamGeo = new THREE.CylinderGeometry(0.06, 0.06, 2.5, 8);
-    const beamMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-    const beam = new THREE.Mesh(beamGeo, beamMat);
-    beam.position.set(px, 1.25, 0);
-    overGroup.add(beam);
+  // Postes Laterais
+  [-1.15, 1.15].forEach(px => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.3, 8), new THREE.MeshLambertMaterial({ color: 0x334155 }));
+    post.position.set(px, 1.15, 0);
+    group.add(post);
   });
 
-  parent.add(overGroup);
+  // Roupas Penduradas no Varal
+  const clothesColors = [0xef4444, 0x3b82f6, 0xfacc15, 0x10b981];
+  for (let i = 0; i < 3; i++) {
+    const shirt = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.7), new THREE.MeshLambertMaterial({ color: clothesColors[i], side: THREE.DoubleSide }));
+    shirt.position.set(-0.6 + i * 0.6, 1.55, 0);
+    group.add(shirt);
+  }
+
+  parent.add(group);
 
   obstacles.push({
-    type: 'overhead_sign',
-    name: 'Burocracia Suspensa (CLT)',
+    name: 'Varal de Roupas da Favela',
     x: x,
     z: worldZ,
-    width: 2.2,
-    height: 1.1,
-    minY: 1.4, // Parte sólida começa a partir de 1.4m de altura!
-    depth: 0.3,
+    width: 2.4,
+    height: 1.2,
+    minY: 1.35, // Parte sólida começa a 1.35m (requer slide!)
+    depth: 0.4,
     canSlideUnder: true,
     canJumpOver: false,
-    mesh: overGroup
+    mesh: group
   });
 }
 
-// Moedas em Arco (Gold Coins)
-function spawnCoinArc(parent, x, localZ, worldZ) {
+// PICANHA COLETÁVEL (+50 PONTOS DE LUCRO)
+function spawnPicanhaCollectible(parent, x, localZ, worldZ) {
+  const picanhaGeo = new THREE.PlaneGeometry(0.9, 0.7);
+  const picanhaMat = new THREE.MeshBasicMaterial({ map: picanhaTexture, transparent: true, side: THREE.DoubleSide });
+  const picanhaMesh = new THREE.Mesh(picanhaGeo, picanhaMat);
+  picanhaMesh.position.set(x, 1.1, localZ);
+  parent.add(picanhaMesh);
+
+  // Halo Dourado Giratório
+  const haloGeo = new THREE.RingGeometry(0.5, 0.65, 16);
+  const haloMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.position.set(0, 0, -0.05);
+  picanhaMesh.add(halo);
+
+  coins.push({
+    type: 'picanha',
+    value: 50,
+    x: x,
+    z: worldZ,
+    y: 1.1,
+    mesh: picanhaMesh,
+    collected: false
+  });
+}
+
+// MOEDAS EM TRILHA (R$ DE OURO)
+function spawnCoinTrack(parent, x, localZ, worldZ) {
   const coinGeo = new THREE.CylinderGeometry(0.32, 0.32, 0.08, 16);
   const coinMat = new THREE.MeshLambertMaterial({ color: 0xfacc15, emissive: 0x713f12 });
 
@@ -558,47 +700,130 @@ function spawnCoinArc(parent, x, localZ, worldZ) {
   }
 }
 
-// Maleta de Dinheiro Coletável
-function spawnBriefcaseItem(parent, x, localZ, worldZ) {
-  const caseGeo = new THREE.BoxGeometry(0.55, 0.4, 0.2);
-  const caseMat = new THREE.MeshLambertMaterial({ color: 0x16a34a, emissive: 0x052e16 });
-  const caseMesh = new THREE.Mesh(caseGeo, caseMat);
-  caseMesh.position.set(x, 1.1, localZ);
-  parent.add(caseMesh);
+// POWER-UP (ÍMÃ OU SUPER TÊNIS)
+function spawnPowerupItem(parent, x, localZ, worldZ) {
+  const isMagnet = Math.random() > 0.5;
+  const color = isMagnet ? 0xef4444 : 0x10b981;
 
-  coins.push({
-    type: 'briefcase',
-    value: 50,
+  const itemGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+  const itemMat = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.4 });
+  const itemMesh = new THREE.Mesh(itemGeo, itemMat);
+  itemMesh.position.set(x, 1.2, localZ);
+  parent.add(itemMesh);
+
+  powerups.push({
+    type: isMagnet ? 'magnet' : 'superjump',
     x: x,
     z: worldZ,
-    y: 1.1,
-    mesh: caseMesh,
+    y: 1.2,
+    mesh: itemMesh,
     collected: false
   });
 }
 
-// CONTROLES: TECLADO, TOUCH E BOTÕES DE TELA
+// 5. GERAÇÃO PROCEDURAL DE TEXTURAS NÍTIDAS (CANVAS TEXTURES)
+function createCLTTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 340;
+  const ctx = canvas.getContext('2d');
+
+  // Capa Azul da CTPS
+  ctx.fillStyle = '#0f3a68';
+  ctx.fillRect(0, 0, 512, 340);
+
+  // Moldura Dourada
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 12;
+  ctx.strokeRect(16, 16, 480, 308);
+
+  // Brasão e Letreiros
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('REPÚBLICA FEDERATIVA DO BRASIL', 256, 60);
+
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillStyle = '#ffd700';
+  ctx.fillText('CARTEIRA DE TRABALHO', 256, 130);
+  ctx.fillText('E PREVIDÊNCIA SOCIAL', 256, 175);
+
+  ctx.fillStyle = '#ff4d4d';
+  ctx.font = '900 48px Bangers, sans-serif';
+  ctx.fillText('⚠️ CLT 44H SEMANAIS!', 256, 260);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function createBolsaFamiliaTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+
+  // Gradiente Amarelo e Verde
+  const grad = ctx.createLinearGradient(0, 0, 512, 320);
+  grad.addColorStop(0, '#facc15');
+  grad.addColorStop(1, '#16a34a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 320);
+
+  // Chip Dourado
+  ctx.fillStyle = '#d4af37';
+  ctx.fillRect(40, 100, 70, 55);
+  ctx.strokeStyle = '#000000'; ctx.lineWidth = 3;
+  ctx.strokeRect(40, 100, 70, 55);
+
+  // Logo Bolsa Família
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 44px Bangers, sans-serif';
+  ctx.fillText('BOLSA FAMÍLIA', 140, 140);
+
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText('CAIXA ECONÔMICA FEDERAL', 140, 180);
+
+  ctx.fillStyle = '#dc2626';
+  ctx.font = 'bold 32px Bangers, sans-serif';
+  ctx.fillText('SAQUE R$ 600,00', 40, 260);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+function createAuxilioTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 320;
+  const ctx = canvas.getContext('2d');
+
+  // Gradiente Azul e Amarelo
+  const grad = ctx.createLinearGradient(0, 0, 512, 320);
+  grad.addColorStop(0, '#0284c7');
+  grad.addColorStop(1, '#f59e0b');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 512, 320);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '900 50px Bangers, sans-serif';
+  ctx.fillText('AUXÍLIO BRASIL', 50, 120);
+
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillText('GOVERNO FEDERAL 🇧🇷', 50, 180);
+
+  ctx.fillStyle = '#1e1b4b';
+  ctx.font = 'bold 36px Bangers, sans-serif';
+  ctx.fillText('BENEFÍCIO APROVADO!', 50, 260);
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+// CONTROLES
 function setupControls() {
-  // Teclado
   window.addEventListener('keydown', (e) => {
     if (!isGameRunning || isGameOver) return;
-
-    if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-      e.preventDefault();
-      moveLeft();
-    } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-      e.preventDefault();
-      moveRight();
-    } else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') {
-      e.preventDefault();
-      jump();
-    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
-      e.preventDefault();
-      slide();
-    }
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA') { e.preventDefault(); moveLeft(); }
+    else if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); moveRight(); }
+    else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space') { e.preventDefault(); jump(); }
+    else if (e.code === 'ArrowDown' || e.code === 'KeyS') { e.preventDefault(); slide(); }
   });
 
-  // Touch / Gestos Swipe em Dispositivos Móveis
   const container = document.getElementById('canvasContainer');
   if (container) {
     container.addEventListener('touchstart', (e) => {
@@ -621,19 +846,17 @@ function setupControls() {
     }, { passive: true });
   }
 
-  // Botões Virtuais Móveis
   const btnLeft = document.getElementById('btnLeft');
   const btnRight = document.getElementById('btnRight');
-  if (btnLeft) btnLeft.addEventListener('click', () => moveLeft());
-  if (btnRight) btnRight.addEventListener('click', () => moveRight());
-
   const btnJump = document.getElementById('btnJump');
   const btnSlide = document.getElementById('btnSlide');
+
+  if (btnLeft) btnLeft.addEventListener('click', () => moveLeft());
+  if (btnRight) btnRight.addEventListener('click', () => moveRight());
   if (btnJump) btnJump.addEventListener('click', () => jump());
   if (btnSlide) btnSlide.addEventListener('click', () => slide());
 }
 
-// AÇÕES DO PERSONAGEM
 export function moveLeft() {
   if (currentLaneIndex > 0) {
     currentLaneIndex--;
@@ -651,8 +874,8 @@ export function moveRight() {
 export function jump() {
   if (!isJumping) {
     isJumping = true;
-    jumpVelocity = JUMP_FORCE;
-    isSliding = false; // Cancela slide ao pular
+    jumpVelocity = superJumpActive ? JUMP_FORCE * 1.35 : JUMP_FORCE;
+    isSliding = false;
     try { sounds.playJump(); } catch(e){}
   }
 }
@@ -665,21 +888,20 @@ export function slide() {
   }
 }
 
-// SISTEMA DE FÍSICA E ANIMAÇÃO DO PERSONAGEM
+// ATUALIZAÇÃO DO PERSONAGEM E FÍSICA
 function updateCharacter(dt) {
   if (!character) return;
 
-  // 1. Transição Lateral Suave entre as Faixas (Lerp)
-  characterX += (targetX - characterX) * (18 * dt);
+  // Transição Lateral Rápida e Elástica
+  characterX += (targetX - characterX) * (20 * dt);
   character.position.x = characterX;
 
-  // Leve Inclinação Corporal ao Mudar de Faixa
   const laneDelta = targetX - characterX;
-  character.rotation.z = -laneDelta * 0.12;
+  character.rotation.z = -laneDelta * 0.14;
 
-  // 2. Física do Pulo (Parábola com Gravidade)
+  // Pulo
   if (isJumping) {
-    characterY += jumpVelocity * dt * 3.6;
+    characterY += jumpVelocity * dt * 3.8;
     jumpVelocity += GRAVITY * dt * 60;
 
     if (characterY <= 0) {
@@ -689,112 +911,133 @@ function updateCharacter(dt) {
     }
   }
 
-  // 3. Duração e Estado do Slide (Agachamento)
+  // Slide
   if (isSliding) {
     slideTimer -= dt;
-    if (slideTimer <= 0) {
-      isSliding = false;
-    }
+    if (slideTimer <= 0) isSliding = false;
   }
 
-  // 4. Transformação Visual de Pulo / Slide
   if (isSliding) {
-    character.scale.set(1.0, 0.45, 1.3);
-    character.position.y = 0.25;
+    character.scale.set(1.0, 0.42, 1.35);
+    character.position.y = 0.22;
   } else {
     character.scale.set(1.0, 1.0, 1.0);
     character.position.y = characterY;
   }
 
-  // 5. Animação Esquelética Procedural (Passadas e Braços)
-  animTime += dt * (speed * 0.35);
-  const legSwing = Math.sin(animTime) * 0.75;
-  const armSwing = Math.sin(animTime) * 0.65;
+  // Animação de Passadas e Balanço de Braços
+  animTime += dt * (speed * 0.4);
+  const legSwing = Math.sin(animTime) * 0.85;
+  const armSwing = Math.sin(animTime) * 0.75;
 
   if (!isJumping && !isSliding) {
     leftLeg.rotation.x = legSwing;
     rightLeg.rotation.x = -legSwing;
     leftArm.rotation.x = -armSwing;
     rightArm.rotation.x = armSwing;
-    headMesh.rotation.y = Math.sin(animTime * 0.5) * 0.05;
+    headMesh.rotation.y = Math.sin(animTime * 0.5) * 0.06;
   } else if (isJumping) {
-    leftLeg.rotation.x = -0.4;
-    rightLeg.rotation.x = -0.5;
+    leftLeg.rotation.x = -0.5;
+    rightLeg.rotation.x = -0.6;
     leftArm.rotation.x = 0.8;
     rightArm.rotation.x = 0.8;
   } else if (isSliding) {
-    leftLeg.rotation.x = 0.9;
-    rightLeg.rotation.x = 0.9;
-    leftArm.rotation.x = -0.7;
-    rightArm.rotation.x = -0.7;
+    leftLeg.rotation.x = 0.95;
+    rightLeg.rotation.x = 0.95;
+    leftArm.rotation.x = -0.8;
+    rightArm.rotation.x = -0.8;
+  }
+
+  // Atualização dos Timers de Power-up
+  if (magnetActive) {
+    magnetTimer -= dt;
+    if (magnetTimer <= 0) magnetActive = false;
+  }
+  if (superJumpActive) {
+    superJumpTimer -= dt;
+    if (superJumpTimer <= 0) superJumpActive = false;
   }
 }
 
-// DETECÇÃO DE COLISÕES PRECISA COM AABB (HITBOX)
+// COLISÕES PRECISAS
 function checkCollisions() {
   const playerX = characterX;
-  const playerY = isSliding ? 0.4 : characterY + 1.0;
-  const playerZ = 0; // O personagem corre fixo em Z = 0 enquanto a pista se move
+  const playerY = isSliding ? 0.35 : characterY + 1.0;
+  const playerZ = 0;
 
-  const playerRadiusX = 0.45;
-  const playerHeight = isSliding ? 0.6 : 1.8;
-
-  // 1. Colisão com Obstáculos
+  // 1. Obstáculos
   for (const obs of obstacles) {
     const dz = Math.abs(obs.z - playerZ);
     if (dz < (obs.depth / 2 + 0.35)) {
       const dx = Math.abs(obs.x - playerX);
-      if (dx < (obs.width / 2 + playerRadiusX)) {
+      if (dx < (obs.width / 2 + 0.45)) {
         
-        // Verifica se o obstáculo pode ser pulado
-        if (obs.canJumpOver && characterY > obs.height) {
-          continue; // Pulou por cima com sucesso!
-        }
+        if (obs.canJumpOver && characterY > obs.height) continue;
+        if (obs.canSlideUnder && isSliding) continue;
 
-        // Verifica se o obstáculo suspenso pode ser passado com slide
-        if (obs.canSlideUnder && isSliding) {
-          continue; // Deslizou por baixo com sucesso!
-        }
-
-        // Colisão Fatal!
         triggerGameOver(obs);
         return;
       }
     }
   }
 
-  // 2. Coleta de Moedas e Maletas
+  // 2. Moedas e Picanhas
   for (const item of coins) {
     if (item.collected) continue;
 
+    // Efeito de Ímã de Moedas
+    if (magnetActive) {
+      item.x += (playerX - item.x) * 0.25;
+      item.y += (playerY - item.y) * 0.25;
+    }
+
     const dz = Math.abs(item.z - playerZ);
-    if (dz < 1.2) {
+    if (dz < 1.3) {
       const dx = Math.abs(item.x - playerX);
-      if (dx < 1.1) {
+      if (dx < 1.2) {
         item.collected = true;
         item.mesh.visible = false;
 
-        if (item.type === 'coin') {
-          coinsCollected += item.value;
-          try { sounds.playCoin(); } catch(e){}
-        } else if (item.type === 'briefcase') {
+        if (item.type === 'picanha') {
+          picanhasCollected++;
           coinsCollected += item.value;
           try { sounds.playBriefcase(); } catch(e){}
+        } else {
+          coinsCollected += item.value;
+          try { sounds.playCoin(); } catch(e){}
         }
         updateHUD();
       }
     }
   }
+
+  // 3. Power-ups
+  for (const p of powerups) {
+    if (p.collected) continue;
+    const dz = Math.abs(p.z - playerZ);
+    if (dz < 1.3 && Math.abs(p.x - playerX) < 1.2) {
+      p.collected = true;
+      p.mesh.visible = false;
+      try { sounds.playPowerup(); } catch(e){}
+
+      if (p.type === 'magnet') {
+        magnetActive = true;
+        magnetTimer = 8.0;
+      } else if (p.type === 'superjump') {
+        superJumpActive = true;
+        superJumpTimer = 10.0;
+      }
+    }
+  }
 }
 
-// GAME OVER E REINICIALIZAÇÃO
+// GAME OVER
 function triggerGameOver(obstacle) {
   isGameOver = true;
   isGameRunning = false;
   try { sounds.playGameOver(); } catch(e){}
   try { sounds.stopAmbienceCity(); } catch(e){}
 
-  // Salva Recorde de Distância
   const finalDistanceKm = Math.floor(distanceTraveled / 10);
   if (finalDistanceKm > bestDistance) {
     bestDistance = finalDistanceKm;
@@ -803,7 +1046,6 @@ function triggerGameOver(obstacle) {
 
   savePlayerScore('runner', finalDistanceKm);
 
-  // Exibe Modal de Game Over
   const modal = document.getElementById('gameOverModal');
   const goTitle = document.getElementById('goTitle');
   const goMessage = document.getElementById('goMessage');
@@ -811,8 +1053,8 @@ function triggerGameOver(obstacle) {
 
   if (modal) {
     if (goTitle) goTitle.textContent = obstacle.name || 'OBSTÁCULO';
-    if (goMessage) goMessage.textContent = `Você colidiu com ${obstacle.name || 'o obstáculo'}!\nColete moedas e desvie dos impostos e trens de metrô!`;
-    if (goDistance) goDistance.textContent = `${finalDistanceKm} KM PERCORRIDOS · ${coinsCollected} LUCRO`;
+    if (goMessage) goMessage.textContent = `Você foi pego por: ${obstacle.name}!\nFuja da CLT, Bolsa Família e pegue todas as picanhas!`;
+    if (goDistance) goDistance.textContent = `${finalDistanceKm} KM · R$ ${coinsCollected} LUCRO · 🥩 ${picanhasCollected} PICANHAS`;
     modal.style.display = 'flex';
   }
 }
@@ -822,6 +1064,7 @@ export function restart3DGame() {
   isGameRunning = true;
   distanceTraveled = 0;
   coinsCollected = 0;
+  picanhasCollected = 0;
   speed = BASE_SPEED;
   currentLaneIndex = 1;
   targetX = 0;
@@ -829,28 +1072,27 @@ export function restart3DGame() {
   characterY = 0;
   isJumping = false;
   isSliding = false;
+  magnetActive = false;
+  superJumpActive = false;
 
-  // Esconde Modais
   const modal = document.getElementById('gameOverModal');
   if (modal) modal.style.display = 'none';
 
   const startOverlay = document.getElementById('startOverlay');
   if (startOverlay) startOverlay.style.display = 'none';
 
-  // Reconstrói a Pista
   for (const seg of roadSegments) scene.remove(seg);
   roadSegments = [];
   obstacles = [];
   coins = [];
+  powerups = [];
+  movingTrains = [];
   buildInitialTrack();
 
-  // Inicia Som Ambiente
   try { sounds.startAmbienceCity(); } catch(e){}
-
   updateHUD();
 }
 
-// ATUALIZAÇÃO DO HUD EM TELA
 function updateHUD() {
   const distEl = document.getElementById('distDisplay');
   const bestEl = document.getElementById('bestDisplay');
@@ -862,78 +1104,77 @@ function updateHUD() {
   if (speedEl) speedEl.textContent = `${(speed / BASE_SPEED).toFixed(1)}x`;
 }
 
-// REDIMENSIONAMENTO DE TELA
 function onWindowResize() {
   const container = document.getElementById('canvasContainer');
   if (!container || !renderer || !camera) return;
 
-  const width = container.clientWidth;
-  const height = container.clientHeight;
-  camera.aspect = width / height;
+  camera.aspect = container.clientWidth / container.clientHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(width, height);
+  renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
-// LOOP PRINCIPAL DE ANIMAÇÃO E RENDERIZAÇÃO
+// LOOP PRINCIPAL DE RENDERIZAÇÃO
 function animate() {
   requestAnimationFrame(animate);
 
   const dt = Math.min(clock.getDelta(), 0.1);
 
   if (isGameRunning && !isGameOver) {
-    // 1. Incremento de Distância e Aceleração Gradual
     distanceTraveled += speed * dt;
-    if (speed < MAX_SPEED) {
-      speed += 0.45 * dt;
-    }
+    if (speed < MAX_SPEED) speed += 0.5 * dt;
 
-    // 2. Movimento dos Segmentos da Pista em Direção ao Jogador
     const moveZ = speed * dt;
-    for (const seg of roadSegments) {
-      seg.position.z += moveZ;
-    }
 
+    // Movimentação dos Segmentos
+    for (const seg of roadSegments) seg.position.z += moveZ;
     for (const obs of obstacles) {
       obs.z += moveZ;
+      // Trens em Movimento vindo na direção oposta!
+      if (obs.isMoving) {
+        obs.z += obs.trainSpeed * dt;
+        if (obs.mesh) obs.mesh.position.z += obs.trainSpeed * dt;
+      }
     }
 
     for (const coin of coins) {
       coin.z += moveZ;
-      if (coin.mesh) {
-        coin.mesh.rotation.z += 3.5 * dt; // Rotação da moeda
+      if (coin.mesh) coin.mesh.rotation.z += 4.0 * dt;
+    }
+
+    for (const p of powerups) {
+      p.z += moveZ;
+      if (p.mesh) {
+        p.mesh.rotation.y += 3.0 * dt;
+        p.mesh.rotation.x += 2.0 * dt;
       }
     }
 
-    // 3. Reciclagem de Segmentos que Ficaram Para Trás
+    // Reciclagem de Segmentos
     const firstSeg = roadSegments[0];
     if (firstSeg && firstSeg.position.z > SEGMENT_LENGTH) {
       scene.remove(firstSeg);
       roadSegments.shift();
 
-      // Limpa obstáculos antigos fora da visão
-      obstacles = obstacles.filter(o => o.z < 25);
-      coins = coins.filter(c => c.z < 25);
+      obstacles = obstacles.filter(o => o.z < 30);
+      coins = coins.filter(c => c.z < 30);
+      powerups = powerups.filter(p => p.z < 30);
 
-      // Adiciona novo segmento no final
       const lastSeg = roadSegments[roadSegments.length - 1];
       const newZ = lastSeg.position.z - SEGMENT_LENGTH;
-      const newSeg = createRoadSegment(newZ, true);
+      const newSeg = createFavelaSegment(newZ, true);
       roadSegments.push(newSeg);
       scene.add(newSeg);
     }
 
-    // 4. Atualização do Personagem e Colisões
     updateCharacter(dt);
     checkCollisions();
     updateHUD();
 
-    // 5. Câmera Dinâmica (Leve Vibração e Abertura de Campo por Velocidade)
-    camera.fov = 62 + (speed - BASE_SPEED) * 0.18;
-    camera.position.x = characterX * 0.4;
+    camera.fov = 65 + (speed - BASE_SPEED) * 0.16;
+    camera.position.x = characterX * 0.35;
     camera.updateProjectionMatrix();
   }
 
-  // Renderiza a Cena
   if (renderer && scene && camera) {
     renderer.render(scene, camera);
   }

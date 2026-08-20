@@ -293,6 +293,65 @@ class AudioManager {
     }
   }
 
+  // 8. EFEITO DE BUZINA DE TREM (Dois tons metálicos de trem de metrô)
+  playTrainHorn() {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      [311.13, 370.0, 466.16].forEach((freq) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.linearRampToValueAtTime(0.12, now + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1200, now);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.68);
+      });
+    } catch (e) {}
+  }
+
+  // 9. EFEITO DE POWER-UP (Ativação de Super Tênis / Ímã)
+  playPowerup() {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(1320, now + 0.25);
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.29);
+    } catch (e) {}
+  }
+
   // Síntese de fala opcional (SpeechSynthesis API)
   speak(text, rate = 1.0, pitch = 1.0) {
     if (this.isMuted || !window.speechSynthesis) return;
