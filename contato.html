@@ -159,30 +159,15 @@
         <div style="text-align:center; padding:30px; color:var(--text-muted);">Carregando mensagens do Firebase... 📬</div>
       </div>
     </div>
-
-    <!-- DICA DE REGRAS DO FIREBASE CONSOLE SE PRECISAR -->
-    <div class="card" style="margin-top: 40px; border-color: rgba(255, 152, 0, 0.4);">
-      <h3 style="font-family:'Bangers',cursive; font-size:22px; color:#ff9800; margin-bottom:10px;">💡 Dica do Firebase Console (Regras do Banco de Dados)</h3>
-      <p style="color:var(--text-muted); font-size:13px; line-height:1.6;">
-        No <strong>Firebase Console</strong> do seu projeto <code>motoai-43ed4</code>, acesse <strong>Firestore Database ➔ Regras (Rules)</strong> e verifique se as regras permitem gravações públicas durante a avaliação do curso:
-      </p>
-      <pre style="background:rgba(0,0,0,0.5); padding:12px; border-radius:8px; color:var(--verde-neon); font-size:12px; margin-top:10px; overflow-x:auto;">
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
-    }
-  }
-}
-      </pre>
-    </div>
   </div>
 
   <script type="module">
     import { sendContactMessage, getContactMessages } from './js/firebase-config.js';
+    import { auth } from './js/auth.js';
 
-    document.getElementById('ctName').value = localStorage.getItem('lula_player') || '';
+    auth.renderProfileBadge('nav');
+    const curUser = auth.getCurrentUser();
+    document.getElementById('ctName').value = curUser ? curUser.username : (localStorage.getItem('lula_player') || '');
 
     window.submitContact = async function() {
       const name = document.getElementById('ctName').value.trim();

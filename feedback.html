@@ -176,8 +176,11 @@
 
   <script type="module">
     import { sendFeedback, getFeedbacks } from './js/firebase-config.js';
+    import { auth } from './js/auth.js';
 
-    document.getElementById('fbName').value = localStorage.getItem('lula_player') || '';
+    auth.renderProfileBadge('nav');
+    const curUser = auth.getCurrentUser();
+    document.getElementById('fbName').value = curUser ? curUser.username : (localStorage.getItem('lula_player') || '');
 
     let selectedStars = 0;
     const starBtns = document.querySelectorAll('.star-btn');

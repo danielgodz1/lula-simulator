@@ -1,4 +1,4 @@
-// js/firebase-config.js — Integração Firebase Firestore com Reset de Placares v2 e Contas de Usuários
+// js/firebase-config.js — Integração Firebase Firestore com Recorde Único por Usuário (v2)
 
 export const firebaseConfig = {
   apiKey: "AIzaSyDummyKeyForFirestoreWebFallback-2026",
@@ -9,59 +9,80 @@ export const firebaseConfig = {
   appId: "1:1234567890:web:abcdef123456"
 };
 
-// Salvar pontuação do jogador vinculada à sua conta
+// 1. SALVAR RECORDE MÁXIMO DO JOGADOR (1 ENTRADA ÚNICA POR USUÁRIO)
+// Se a nova pontuação for maior que o recorde anterior, atualiza. Se for menor, mantém o recorde máximo!
 export async function savePlayerScore(gameType, score) {
   const playerName = localStorage.getItem('lula_player') || 'Anonimo_1';
-  // Coleções zeradas v2 para novo ranking
   const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
   
-  // Salva no LocalStorage
+  // Salva no LocalStorage se superar o recorde
   const localKey = gameType === 'runner' ? 'run_best' : 'lula_best';
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
   if (score > currentBest) {
     localStorage.setItem(localKey, score.toString());
   }
 
-  // Tenta salvar no Firebase REST Firestore
+  // Identificador único do documento do jogador
+  const docId = encodeURIComponent(playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+
   try {
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}`;
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}/${docId}`;
+    
+    // 1. Consulta o recorde existente do jogador
+    const checkRes = await fetch(url);
+    if (checkRes.ok) {
+      const data = await checkRes.json();
+      const existingScore = parseInt(data.fields?.score?.integerValue || '0', 10);
+      // Se a rodada atual fez menos ou igual ao recorde máximo, não substitui!
+      if (score <= existingScore) {
+        return;
+      }
+    }
+
+    // 2. Grava/Atualiza o novo recorde máximo no documento do usuário
     const payload = {
       fields: {
         player: { stringValue: playerName },
-        score: { integerValue: score.toString() },
-        createdAt: { timestampValue: new Date().toISOString() }
+        score: { integerValue: Math.max(score, currentBest).toString() },
+        updatedAt: { timestampValue: new Date().toISOString() }
       }
     };
+
     fetch(url, {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     }).catch(() => {});
   } catch (e) {}
 }
 
-// Obter melhores pontuações do ranking (v2 zerado)
+// 2. OBTER PLACAR ZERADO COM APENAS 1 RECORDE POR USUÁRIO
 export async function getTopScores(collectionName, limit = 15) {
   try {
-    // Garante que usa a coleção v2
     const targetColl = collectionName.endsWith('_v2') ? collectionName : `${collectionName}_v2`;
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=${limit}`;
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=50`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Firestore response error');
     const data = await res.json();
     if (data.documents && data.documents.length > 0) {
-      const list = data.documents.map(doc => ({
-        player: doc.fields?.player?.stringValue || 'Anônimo',
-        score: parseInt(doc.fields?.score?.integerValue || '0', 10)
-      }));
+      const userMap = new Map();
+      data.documents.forEach(doc => {
+        const player = doc.fields?.player?.stringValue || 'Anônimo';
+        const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
+        if (!userMap.has(player) || score > userMap.get(player)) {
+          userMap.set(player, score);
+        }
+      });
+
+      const list = Array.from(userMap.entries()).map(([player, score]) => ({ player, score }));
       list.sort((a, b) => b.score - a.score);
-      return list;
+      return list.slice(0, limit);
     }
   } catch (e) {}
   return [];
 }
 
-// Enviar avaliação / feedback
+// 3. ENVIAR AVALIAÇÃO / FEEDBACK
 export async function sendFeedback(feedbackData) {
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks`;
@@ -88,7 +109,7 @@ export async function sendFeedback(feedbackData) {
   return { success: false, error: 'Offline fallback' };
 }
 
-// Obter avaliações
+// 4. OBTER AVALIAÇÕES
 export async function getFeedbacks(limit = 20) {
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
@@ -100,6 +121,54 @@ export async function getFeedbacks(limit = 20) {
         name: doc.fields?.name?.stringValue || 'Anônimo',
         stars: parseInt(doc.fields?.stars?.integerValue || '5', 10),
         comment: doc.fields?.comment?.stringValue || '',
+        createdAt: doc.fields?.createdAt?.timestampValue || ''
+      }));
+    }
+  } catch (e) {}
+  return [];
+}
+
+// 5. ENVIAR MENSAGEM DE CONTATO
+export async function sendContactMessage(msgData) {
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_contatos`;
+    const payload = {
+      fields: {
+        name: { stringValue: msgData.name || 'Anônimo' },
+        email: { stringValue: msgData.email || '' },
+        subject: { stringValue: msgData.subject || '' },
+        message: { stringValue: msgData.message || '' },
+        createdAt: { timestampValue: new Date().toISOString() }
+      }
+    };
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, id: data.name ? data.name.split('/').pop() : 'doc_id' };
+    }
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+  return { success: false, error: 'Offline fallback' };
+}
+
+// 6. OBTER MENSAGENS DE CONTATO
+export async function getContactMessages(limit = 20) {
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_contatos?pageSize=${limit}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Firestore response error');
+    const data = await res.json();
+    if (data.documents && data.documents.length > 0) {
+      return data.documents.map(doc => ({
+        name: doc.fields?.name?.stringValue || 'Anônimo',
+        email: doc.fields?.email?.stringValue || '',
+        subject: doc.fields?.subject?.stringValue || '',
+        message: doc.fields?.message?.stringValue || '',
         createdAt: doc.fields?.createdAt?.timestampValue || ''
       }));
     }
