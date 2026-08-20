@@ -1,54 +1,60 @@
 /* ==========================================================================
-   LULA SIMULATOR — ESTILOS GLOBAIS E COMPONENTES
-   Projeto Integrador de IA Generativa, WebGL 3D, Firebase e Vercel
+   LULA SIMULATOR — SISTEMA GLOBAL DE ESTILOS & DESIGN SYSTEM
    ========================================================================== */
 
-/* 1. VARIÁVEIS DE CORES E TEMA BRASIL */
+/* 1. VARIÁVEIS DE CORES & TEMA */
 :root {
+  --bg-dark: #080914;
+  --bg-card: rgba(22, 27, 38, 0.95);
   --verde-brasil: #009c3b;
-  --verde-neon: #00c44a;
+  --verde-neon: #00e676;
   --amarelo-brasil: #ffdf00;
   --azul-brasil: #002776;
-  --vermelho-alert: #cc0000;
-  --bg-dark-1: #0a0a14;
-  --bg-dark-2: #161b26;
-  --bg-card: rgba(255, 255, 255, 0.05);
+  --vermelho-alert: #ef4444;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
   --border-card: rgba(255, 223, 0, 0.25);
-  --text-main: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.65);
 }
 
-/* 2. RESET GERAL */
-*, *::before, *::after {
-  box-sizing: border-box;
+/* 2. RESET GLOBAL */
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 html, body {
+  width: 100%;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(180deg, #0a0a14 0%, #161b26 50%, #0d121d 100%);
+  background-color: var(--bg-dark);
   color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
-/* 3. BARRA DE NAVEGAÇÃO SUPERIOR */
+/* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA */
 nav {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   z-index: 100;
-  background: rgba(10, 10, 20, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 3px solid var(--amarelo-brasil);
-  padding: 0 28px;
-  height: 60px;
+  background: rgba(8, 9, 20, 0.94);
+  backdrop-filter: blur(14px);
+  border-bottom: 2px solid var(--amarelo-brasil);
+  padding: 0 24px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .nav-brand {
@@ -59,28 +65,34 @@ nav {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .nav-links {
   display: flex;
-  gap: 18px;
+  gap: 8px;
   list-style: none;
+  align-items: center;
 }
 
 .nav-links a {
   color: var(--text-muted);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 14px;
   transition: all 0.2s ease;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .nav-links a:hover,
 .nav-links a.active {
   color: var(--amarelo-brasil);
-  background: rgba(255, 223, 0, 0.1);
+  background: rgba(255, 223, 0, 0.15);
+  border: 1px solid rgba(255, 223, 0, 0.35);
 }
 
 /* 4. BOTÕES REUTILIZÁVEIS */
@@ -101,6 +113,8 @@ nav {
   cursor: pointer;
   box-shadow: 0 6px 24px rgba(0, 156, 59, 0.4);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .btn-primary:hover {
@@ -112,10 +126,10 @@ nav {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  background: transparent;
-  border: 2px solid var(--amarelo-brasil);
+  gap: 8px;
+  background: rgba(255, 223, 0, 0.12);
   color: var(--amarelo-brasil);
+  border: 2px solid var(--amarelo-brasil);
   font-family: 'Bangers', cursive;
   font-size: 20px;
   letter-spacing: 1px;
@@ -124,6 +138,8 @@ nav {
   text-decoration: none;
   cursor: pointer;
   transition: all 0.25s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .btn-secondary:hover {
@@ -161,54 +177,80 @@ footer strong {
   color: var(--amarelo-brasil);
 }
 
-/* 7. RESPONSIVIDADE GLOBAL */
-@media (max-width: 768px) {
+/* 7. RESPONSIVIDADE GLOBAL PARA DISPOSITIVOS MÓVEIS (320px - 900px) */
+@media (max-width: 900px) {
   nav {
-    padding: 0 12px;
-    height: 60px;
+    height: auto;
+    padding: 10px 14px;
+    flex-direction: column;
+    gap: 8px;
   }
+
   .nav-brand {
-    font-size: 16px;
-    letter-spacing: 1px;
+    font-size: 20px;
   }
+
   .nav-links {
-    gap: 4px;
-    overflow-x: auto;
-    white-space: nowrap;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 2px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 0;
+    padding: 0;
   }
+
   .nav-links a {
-    font-size: 11px;
-    padding: 4px 6px;
+    font-size: 13px;
+    padding: 8px 4px;
+    text-align: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  .nav-links a.active {
+    background: rgba(255, 223, 0, 0.2);
+    border-color: var(--amarelo-brasil);
+  }
+
   #playerProfileBadge {
-    font-size: 11px;
+    font-size: 12px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 2px;
   }
+
+  .page {
+    padding-top: 135px !important;
+  }
+
   .card {
-    padding: 18px 14px;
+    padding: 20px 16px;
     border-radius: 14px;
   }
+
   .page-header h1 {
     font-size: 38px !important;
   }
+
   .btn-primary, .btn-secondary {
-    font-size: 16px;
-    padding: 10px 18px;
+    font-size: 18px;
+    padding: 12px 20px;
   }
 }
 
 @media (max-width: 480px) {
-  nav {
-    height: auto;
-    min-height: 56px;
-    padding: 6px 10px;
-    flex-wrap: wrap;
-    justify-content: space-between;
-  }
   .nav-links {
-    width: 100%;
-    margin-top: 4px;
-    justify-content: flex-start;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+
+  .nav-links a {
+    font-size: 12px;
+    padding: 7px 3px;
+  }
+
+  .page {
+    padding-top: 140px !important;
   }
 }

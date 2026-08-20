@@ -109,18 +109,25 @@
       border-radius: 18px;
       box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.7);
       cursor: pointer;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+      -ms-user-select: none !important;
+      -webkit-tap-highlight-color: transparent !important;
+      outline: none !important;
+      -webkit-touch-callout: none !important;
     }
 
     @media (max-width: 900px) {
       .game-layout {
         flex-direction: column;
         align-items: center;
-        padding: 68px 10px 20px;
+        padding: 135px 10px 20px;
         gap: 10px;
       }
       .side-panel, .side-right {
         width: 100%;
-        max-width: 460px;
+        max-width: 480px;
         flex-direction: row;
         flex-wrap: wrap;
         gap: 8px;
@@ -130,23 +137,23 @@
       }
       .side-right .info-box {
         width: 100%;
-        padding: 8px 12px;
+        padding: 10px 14px;
         margin-bottom: 0 !important;
       }
       .side-panel .score-box {
         flex: 1;
-        min-width: 120px;
-        padding: 8px 12px;
+        min-width: 130px;
+        padding: 10px 14px;
       }
       .side-panel .score-box span {
-        font-size: 32px;
+        font-size: 34px;
       }
       .side-panel .info-box, .side-panel .btn-secondary {
         display: none;
       }
       canvas#gameCanvas {
         max-width: 95vw;
-        max-height: calc(100vh - 220px);
+        max-height: calc(100vh - 250px);
       }
     }
   </style>
@@ -663,7 +670,18 @@
     window.addEventListener('keydown', e => {
       if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleStart(); }
     });
-    canvas.addEventListener('click', handleStart);
+
+    // Eventos com preventDefault para evitar qualquer seleção de texto ou caixa azul no navegador
+    canvas.addEventListener('selectstart', e => e.preventDefault());
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    canvas.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      handleStart();
+    });
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      handleStart();
+    }, { passive: false });
 
     loop();
   </script>
