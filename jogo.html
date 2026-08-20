@@ -159,13 +159,20 @@
 
     <!-- PAINEL DIREITO -->
     <div class="side-right">
+      <div class="info-box" style="margin-bottom:12px;">
+        <strong>🎮 Modo de Jogo</strong>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="btnEasyMode" class="btn-primary" style="flex:1; padding:8px 4px; font-size:14px; background:var(--verde-neon); color:#000;">Fácil</button>
+          <button id="btnHardMode" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">Difícil ⚡</button>
+        </div>
+      </div>
       <div class="info-box">
         <strong>🥩 Picanhas Caídas</strong>
         <div id="picanhasLog" style="margin-top: 8px; font-size: 18px;"></div>
       </div>
-      <div class="info-box" style="border-color: rgba(0, 196, 74, 0.4);">
+      <div class="info-box" id="modeInfoBox" style="border-color: rgba(0, 196, 74, 0.4);">
         <strong>⚡ MODO FÁCIL ATIVADO</strong>
-        Hitbox 50% menor e abertura de canos ampliada para passar pelos canos e chegar nos 13 pontos facilmente!
+        Velocidade suave e abertura ampla de canos para jogar tranquilo!
       </div>
     </div>
   </div>
@@ -176,6 +183,8 @@
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    let currentMode = 'easy'; // 'easy' ou 'hard'
 
     function calcSize() {
       const maxH = Math.min(window.innerHeight - 90, 680);
@@ -203,15 +212,54 @@
     let lulaCryLoaded = false;
     lulaCryImg.onload = () => lulaCryLoaded = true;
 
-    // FÍSICA FACILITADA: Slower speed, wider gap (42%), micro-hitbox (0.04)
-    const GRAVITY    = 0.35;
-    const JUMP_POWER = -8.0;
-    const PIPE_SPEED = 2.2;   // Velocidade mais lenta e amigável
-    const GAP_RATIO  = 0.42;   // Abertura ampliada (42%)
-    const PW_RATIO   = 0.14;
-    const GH_RATIO   = 0.12;
-    const LR_RATIO   = 0.055;  // Imagem visual compacta
-    const HITBOX_R   = 0.035;  // HITBOX HIPER REDUZIDA (3.5%) — Impossível bater sem querer!
+    // FÍSICA DINÂMICA (FÁCIL vs DIFÍCIL)
+    let GRAVITY    = 0.35;
+    let JUMP_POWER = -8.0;
+    let PIPE_SPEED = 2.2;
+    let GAP_RATIO  = 0.42;
+    let PW_RATIO   = 0.14;
+    let GH_RATIO   = 0.12;
+    let LR_RATIO   = 0.055;
+    let HITBOX_R   = 0.035;
+    let SPAWN_FREQ = 120;
+
+    function setMode(mode) {
+      currentMode = mode;
+      const btnEasy = document.getElementById('btnEasyMode');
+      const btnHard = document.getElementById('btnHardMode');
+      const infoBox = document.getElementById('modeInfoBox');
+
+      if (mode === 'easy') {
+        GRAVITY = 0.35;
+        JUMP_POWER = -8.0;
+        PIPE_SPEED = 2.2;
+        GAP_RATIO = 0.42;
+        HITBOX_R = 0.035;
+        SPAWN_FREQ = 120;
+        if (btnEasy) { btnEasy.className = 'btn-primary'; btnEasy.style.background = 'var(--verde-neon)'; btnEasy.style.color = '#000'; }
+        if (btnHard) { btnHard.className = 'btn-secondary'; btnHard.style.background = ''; btnHard.style.color = ''; }
+        if (infoBox) {
+          infoBox.style.borderColor = 'rgba(0, 196, 74, 0.4)';
+          infoBox.innerHTML = '<strong>⚡ MODO FÁCIL ATIVADO</strong>Velocidade suave e abertura ampla para jogar relaxado!';
+        }
+      } else {
+        GRAVITY = 0.46;
+        JUMP_POWER = -9.0;
+        PIPE_SPEED = 4.0;
+        GAP_RATIO = 0.28;
+        HITBOX_R = 0.050;
+        SPAWN_FREQ = 75;
+        if (btnHard) { btnHard.className = 'btn-primary'; btnHard.style.background = 'var(--vermelho-alert)'; btnHard.style.color = '#fff'; }
+        if (btnEasy) { btnEasy.className = 'btn-secondary'; btnEasy.style.background = ''; btnEasy.style.color = ''; }
+        if (infoBox) {
+          infoBox.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+          infoBox.innerHTML = '<strong>🔥 MODO DIFÍCIL ATIVADO</strong>Cenário veloz, canos estreitos e alta frequência! Desafio hardcore!';
+        }
+      }
+    }
+
+    document.getElementById('btnEasyMode').addEventListener('click', () => setMode('easy'));
+    document.getElementById('btnHardMode').addEventListener('click', () => setMode('hard'));
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
@@ -260,7 +308,7 @@
 
     function updatePipes() {
       if (state !== STATE.PLAYING) return;
-      if (frameCount % 120 === 0) spawnPipe();
+      if (frameCount % SPAWN_FREQ === 0) spawnPipe();
       const PW = W * PW_RATIO;
       for (const p of pipes) {
         p.x -= PIPE_SPEED;

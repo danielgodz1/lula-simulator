@@ -280,28 +280,10 @@
   </div>
 
   <script type="module">
-    import { init3DGame, restart3DGame } from './js/game3d.js';
-    import { sounds } from './js/audio.js';
+    import { initGame } from './js/game/main.js';
 
-    // Inicializa motor Three.js 3D
-    init3DGame();
-
-    const startOverlay = document.getElementById('startOverlay');
-    startOverlay.addEventListener('click', () => {
-      try { sounds.init(); } catch(e){}
-      startOverlay.style.display = 'none';
-      restart3DGame();
-    });
-
-    const btnSoundToggle = document.getElementById('btnSoundToggle');
-    if (btnSoundToggle) {
-      btnSoundToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        try { sounds.init(); } catch(e){}
-        const isMuted = sounds.toggleMute();
-        btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
-      });
-    }
+    // Inicializa o motor do jogo modular 3D
+    initGame();
   </script>
 
 </body>
