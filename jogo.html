@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flappy Lula — Lula Simulator</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+      background: #4ec0ca;
+      transition: background 0.5s ease;
+    }
+
+    body.prison-mode {
+      background: #11111d;
+    }
+
+    .game-layout {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 20px;
+      padding: 76px 20px 20px;
+      flex: 1;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .side-panel, .side-right {
+      width: 190px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .score-box {
+      background: rgba(10, 10, 20, 0.7);
+      backdrop-filter: blur(8px);
+      border: 2px solid var(--amarelo-brasil);
+      padding: 16px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .score-box label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .score-box span {
+      font-family: 'Bangers', cursive;
+      font-size: 44px;
+      color: var(--amarelo-brasil);
+      line-height: 1;
+    }
+
+    .info-box {
+      background: rgba(10, 10, 20, 0.65);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .info-box strong {
+      color: #ffffff;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .key-badge {
+      display: inline-block;
+      background: rgba(255,223,0,0.15);
+      border: 1px solid rgba(255,223,0,0.4);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      color: var(--amarelo-brasil);
+      font-weight: 700;
+    }
+
+    canvas#gameCanvas {
+      display: block;
+      border: 4px solid var(--amarelo-brasil);
+      border-radius: 18px;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), 0 20px 60px rgba(0, 0, 0, 0.7);
+      cursor: pointer;
+    }
+
+    @media (max-width: 900px) {
+      .side-panel, .side-right { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+  </nav>
+
+  <!-- LAYOUT DO JOGO -->
+  <div class="game-layout">
+    <!-- PAINEL ESQUERDO -->
+    <div class="side-panel">
+      <div class="score-box">
+        <label>Pontuação</label>
+        <span id="scoreDisplay">0</span>
+      </div>
+      <div class="score-box" style="border-color: rgba(0,196,74,0.5);">
+        <label>Recorde</label>
+        <span id="bestDisplay" style="color: var(--verde-neon);">0</span>
+      </div>
+      <div class="info-box">
+        <strong>🕹️ Controles</strong>
+        <span class="key-badge">ESPAÇO</span> Pular<br>
+        <span class="key-badge">CLIQUE</span> Pular<br>
+        <span class="key-badge">TOQUE</span> Pular
+      </div>
+      <a href="correr.html" class="btn-secondary" style="font-size: 14px; padding: 10px; text-align: center;">🏃 Jogar Empresário 3D</a>
+    </div>
+
+    <!-- CANVAS FLAPPY BIRD FACILITADO -->
+    <div>
+      <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- PAINEL DIREITO -->
+    <div class="side-right">
+      <div class="info-box">
+        <strong>🥩 Picanhas Caídas</strong>
+        <div id="picanhasLog" style="margin-top: 8px; font-size: 18px;"></div>
+      </div>
+      <div class="info-box" style="border-color: rgba(0, 196, 74, 0.4);">
+        <strong>⚡ MODO FÁCIL ATIVADO</strong>
+        Hitbox 50% menor e abertura de canos ampliada para passar pelos canos e chegar nos 13 pontos facilmente!
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { savePlayerScore } from './js/firebase-config.js';
+    import { sounds } from './js/audio.js';
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function calcSize() {
+      const maxH = Math.min(window.innerHeight - 90, 680);
+      const H = Math.max(maxH, 400);
+      const W = Math.round(H * 0.70);
+      canvas.width = W;
+      canvas.height = H;
+      return { W, H };
+    }
+    let { W, H } = calcSize();
+
+    window.addEventListener('resize', () => {
+      const s = calcSize();
+      W = s.W; H = s.H;
+      lula.init();
+    });
+
+    const lulaImg = new Image();
+    lulaImg.src = 'img/lula.png';
+    let lulaLoaded = false;
+    lulaImg.onload = () => lulaLoaded = true;
+
+    const lulaCryImg = new Image();
+    lulaCryImg.src = 'img/lula_cry.png';
+    let lulaCryLoaded = false;
+    lulaCryImg.onload = () => lulaCryLoaded = true;
+
+    // FÍSICA FACILITADA: Slower speed, wider gap (42%), micro-hitbox (0.04)
+    const GRAVITY    = 0.35;
+    const JUMP_POWER = -8.0;
+    const PIPE_SPEED = 2.2;   // Velocidade mais lenta e amigável
+    const GAP_RATIO  = 0.42;   // Abertura ampliada (42%)
+    const PW_RATIO   = 0.14;
+    const GH_RATIO   = 0.12;
+    const LR_RATIO   = 0.055;  // Imagem visual compacta
+    const HITBOX_R   = 0.035;  // HITBOX HIPER REDUZIDA (3.5%) — Impossível bater sem querer!
+
+    const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
+    let state = STATE.WAITING;
+    let score = 0;
+    let bestScore = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    let frameCount = 0;
+    let groundScroll = 0;
+    let pipes = [], picanhas = [];
+    let isPrisonMode = false;
+
+    document.getElementById('bestDisplay').textContent = bestScore;
+
+    const clouds = [
+      { x: W * 0.1, y: H * 0.12, scale: 1.0, speed: 0.4 },
+      { x: W * 0.5, y: H * 0.20, scale: 0.8, speed: 0.3 },
+      { x: W * 0.8, y: H * 0.08, scale: 1.2, speed: 0.5 }
+    ];
+
+    const prisoners = [
+      { x: -50, speed: 1.2, dir: 1, anim: 0, clothes: '#000000' },
+      { x: W + 50, speed: 1.5, dir: -1, anim: 0, clothes: '#000000' }
+    ];
+
+    const lula = {
+      get x() { return W * 0.24; },
+      y: 0, vy: 0, rotation: 0,
+      init() { this.y = H * 0.44; this.vy = 0; this.rotation = 0; },
+      jump() {
+        this.vy = JUMP_POWER;
+        try { sounds.playJump(); } catch(e){}
+      },
+      update() {
+        if (state !== STATE.PLAYING) return;
+        this.vy += GRAVITY;
+        this.y += this.vy;
+        this.rotation = Math.max(-25, Math.min(85, this.vy * 3.5));
+      }
+    };
+    lula.init();
+
+    function spawnPipe() {
+      const GH = H * GH_RATIO, GAP = H * GAP_RATIO;
+      const topH = GH + 30 + Math.random() * (H - GH - GAP - 70);
+      pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
+    }
+
+    function updatePipes() {
+      if (state !== STATE.PLAYING) return;
+      if (frameCount % 120 === 0) spawnPipe();
+      const PW = W * PW_RATIO;
+      for (const p of pipes) {
+        p.x -= PIPE_SPEED;
+        if (!p.scored && p.x + PW < lula.x) {
+          p.scored = true;
+          score++;
+          document.getElementById('scoreDisplay').textContent = score;
+          spawnPicanhas(p.x + PW / 2);
+
+          // EASTER EGG DE 13 PONTOS
+          if (score === 13 && !isPrisonMode) {
+            isPrisonMode = true;
+            document.body.classList.add('prison-mode');
+            try {
+              sounds.speak("13 Pontos! Entrou no modo cadeia companheiro!", 1.0, 1.1);
+            } catch(e){}
+          }
+          
+          try { sounds.playPicanhaMemeSound(); } catch(e){}
+        }
+      }
+      pipes = pipes.filter(p => p.x + PW > -10);
+    }
+
+    function spawnPicanhas(cx) {
+      const log = document.getElementById('picanhasLog');
+      if (log) {
+        log.textContent += '🥩 ';
+        if (log.textContent.length > 24) log.textContent = log.textContent.slice(-24);
+      }
+      for (let i = 0; i < 3; i++) {
+        picanhas.push({
+          x: cx + (Math.random() - 0.5) * 60,
+          y: H * 0.15 + Math.random() * H * 0.25,
+          vy: 2 + Math.random() * 2,
+          vx: (Math.random() - 0.5) * 2,
+          rot: Math.random() * 360,
+          emoji: '🥩',
+          alpha: 1
+        });
+      }
+    }
+
+    function updatePicanhas() {
+      const GH = H * GH_RATIO;
+      for (const p of picanhas) {
+        p.vy += 0.2; p.y += p.vy; p.x += p.vx;
+        if (p.y >= H - GH - 15) { p.y = H - GH - 15; p.alpha -= 0.012; }
+      }
+      picanhas = picanhas.filter(p => p.alpha > 0);
+    }
+
+    function updatePrisoners() {
+      if (!isPrisonMode) return;
+      const GH = H * GH_RATIO;
+      for (const p of prisoners) {
+        p.x += p.speed * p.dir;
+        p.anim += 0.15;
+        if (p.dir === 1 && p.x > W + 60) { p.x = -60; }
+        if (p.dir === -1 && p.x < -60) { p.x = W + 60; }
+      }
+    }
+
+    function drawPrisoner(p) {
+      const GH = H * GH_RATIO;
+      const py = H - GH + 10;
+      ctx.save();
+      ctx.translate(p.x, py);
+      
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(0, 0, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+      const legSwing = Math.sin(p.anim) * 12;
+
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(-4, -14); ctx.lineTo(-4 + legSwing, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(4, -14); ctx.lineTo(4 - legSwing, 0); ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-10, -32, 20, 18);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(-10, -32, 20, 4);
+      ctx.fillRect(-10, -24, 20, 4);
+      ctx.fillRect(-10, -16, 20, 4);
+
+      ctx.fillStyle = '#f5cba7';
+      ctx.beginPath(); ctx.arc(0, -40, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#000000';
+      ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('171', 0, -38);
+
+      ctx.restore();
+    }
+
+    // COLISÃO COM HITBOX 50% MENOR PARA GANHAR FÁCIL
+    function checkCollision() {
+      const HR = H * HITBOX_R; // Hitbox hiper pequena!
+      const PW = W * PW_RATIO;
+      const GH = H * GH_RATIO;
+      if (lula.y + HR >= H - GH || lula.y - HR <= 0) return true;
+      for (const p of pipes) {
+        if (lula.x + HR > p.x && lula.x - HR < p.x + PW) {
+          if (lula.y - HR < p.topH || lula.y + HR > p.botY) return true;
+        }
+      }
+      return false;
+    }
+
+    function draw() {
+      const GH = H * GH_RATIO;
+
+      if (!isPrisonMode) {
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, H - GH);
+        skyGrad.addColorStop(0, '#4ec0ca');
+        skyGrad.addColorStop(0.85, '#70c5ce');
+        skyGrad.addColorStop(1, '#a3e5eb');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, H - GH);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        clouds.forEach(c => {
+          if (state === STATE.PLAYING) {
+            c.x -= c.speed;
+            if (c.x < -80) c.x = W + 80;
+          }
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, 25 * c.scale, 0, Math.PI * 2);
+          ctx.arc(c.x + 20 * c.scale, c.y - 10 * c.scale, 20 * c.scale, 0, Math.PI * 2);
+          ctx.arc(c.x + 40 * c.scale, c.y, 22 * c.scale, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      } else {
+        ctx.fillStyle = '#181824';
+        ctx.fillRect(0, 0, W, H - GH);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1;
+        for (let y = 0; y < H - GH; y += 24) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+          const offset = (y / 24) % 2 === 0 ? 0 : 25;
+          for (let x = offset; x < W; x += 50) {
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 24); ctx.stroke();
+          }
+        }
+
+        ctx.strokeStyle = '#444455'; ctx.lineWidth = 4;
+        for (let x = 15; x < W; x += 28) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - GH); ctx.stroke();
+        }
+
+        const spotX = W / 2 + Math.sin(frameCount * 0.04) * (W * 0.35);
+        const spotGrad = ctx.createRadialGradient(spotX, H * 0.3, 10, spotX, H * 0.3, 160);
+        spotGrad.addColorStop(0, 'rgba(255, 0, 0, 0.35)');
+        spotGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+        ctx.fillStyle = spotGrad;
+        ctx.fillRect(0, 0, W, H - GH);
+
+        ctx.fillStyle = 'rgba(220, 38, 38, 0.85)';
+        ctx.fillRect(0, 0, W, 28);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔒 CADEIA DE CURITIBA (13 PONTOS ATINGIDOS!)', W / 2, 19);
+      }
+
+      const PW = W * PW_RATIO;
+      for (const p of pipes) {
+        const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x + PW, 0);
+        pipeGrad.addColorStop(0, '#538021');
+        pipeGrad.addColorStop(0.2, '#73bf2e');
+        pipeGrad.addColorStop(0.7, '#9ce659');
+        pipeGrad.addColorStop(0.9, '#538021');
+        
+        ctx.fillStyle = pipeGrad;
+        ctx.fillRect(p.x, 0, PW, p.topH);
+        ctx.strokeStyle = '#2b4d0c'; ctx.lineWidth = 3;
+        ctx.strokeRect(p.x, 0, PW, p.topH);
+
+        ctx.fillStyle = pipeGrad;
+        ctx.fillRect(p.x - 5, p.topH - 24, PW + 10, 24);
+        ctx.strokeRect(p.x - 5, p.topH - 24, PW + 10, 24);
+
+        ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
+        ctx.strokeRect(p.x, p.botY, PW, H - GH - p.botY);
+
+        ctx.fillRect(p.x - 5, p.botY, PW + 10, 24);
+        ctx.strokeRect(p.x - 5, p.botY, PW + 10, 24);
+      }
+
+      if (state === STATE.PLAYING) groundScroll = (groundScroll + PIPE_SPEED) % 24;
+
+      ctx.fillStyle = isPrisonMode ? '#222233' : '#ded895';
+      ctx.fillRect(0, H - GH, W, GH);
+
+      ctx.fillStyle = isPrisonMode ? '#dc2626' : '#73bf2e';
+      ctx.fillRect(0, H - GH, W, 14);
+
+      if (isPrisonMode) {
+        prisoners.forEach(p => drawPrisoner(p));
+      } else {
+        ctx.strokeStyle = '#cbbd6b'; ctx.lineWidth = 3;
+        for (let x = -groundScroll; x < W + 24; x += 24) {
+          ctx.beginPath();
+          ctx.moveTo(x, H - GH + 18);
+          ctx.lineTo(x - 12, H);
+          ctx.stroke();
+        }
+      }
+
+      for (const p of picanhas) {
+        ctx.globalAlpha = p.alpha;
+        ctx.font = '24px serif';
+        ctx.fillText(p.emoji, p.x, p.y);
+        ctx.globalAlpha = 1.0;
+      }
+
+      const R = H * LR_RATIO;
+      ctx.save();
+      ctx.translate(lula.x, lula.y);
+      ctx.rotate(lula.rotation * Math.PI / 180);
+
+      ctx.beginPath(); ctx.arc(0, 0, R + 2, 0, Math.PI * 2);
+      ctx.fillStyle = isPrisonMode ? '#dc2626' : '#ffdf00'; ctx.fill();
+
+      if (lulaLoaded) {
+        ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(lulaImg, -R, -R, R * 2, R * 2);
+      } else {
+        ctx.font = `${R * 1.2}px serif`;
+        ctx.fillText('👨‍🦳', -R / 2, R / 2);
+      }
+      ctx.restore();
+
+      if (state === STATE.PLAYING) {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 5;
+        ctx.font = `bold ${H * 0.08}px 'Press Start 2P', Bangers, cursive`;
+        ctx.textAlign = 'center';
+        ctx.strokeText(score, W / 2, H * 0.14);
+        ctx.fillText(score, W / 2, H * 0.14);
+      } else if (state === STATE.WAITING) {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, W, H - GH);
+        ctx.fillStyle = '#ffdf00';
+        ctx.font = `bold ${W * 0.11}px Bangers, cursive`;
+        ctx.textAlign = 'center';
+        ctx.fillText('FLAPPY LULA', W / 2, H * 0.35);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${W * 0.052}px Bangers, cursive`;
+        ctx.fillText('CLIQUE OU ESPAÇO PARA JOGAR', W / 2, H * 0.55);
+      } else if (state === STATE.DEAD) {
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(0, 0, W, H - GH);
+        ctx.fillStyle = '#cc0000';
+        ctx.font = `bold ${W * 0.10}px Bangers, cursive`;
+        ctx.textAlign = 'center';
+        ctx.fillText('AI NEYMAR! AI NEYMAR!', W / 2, H * 0.30);
+        
+        if (lulaCryLoaded) {
+          ctx.save();
+          ctx.beginPath(); ctx.arc(W / 2, H * 0.44, 45, 0, Math.PI * 2); ctx.clip();
+          ctx.drawImage(lulaCryImg, W / 2 - 45, H * 0.44 - 45, 90, 90);
+          ctx.restore();
+          ctx.strokeStyle = '#cc0000'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(W / 2, H * 0.44, 45, 0, Math.PI * 2); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${W * 0.05}px Bangers, cursive`;
+        ctx.fillText(`PONTUAÇÃO: ${score} PICANHAS`, W / 2, H * 0.62);
+        ctx.fillStyle = '#ffdf00';
+        ctx.font = `${W * 0.048}px Bangers, cursive`;
+        ctx.fillText('CLIQUE AQUI PARA REINICIAR DAQUI', W / 2, H * 0.72);
+      }
+    }
+
+    function loop() {
+      frameCount++;
+      lula.update(); updatePipes(); updatePicanhas(); updatePrisoners();
+      if (state === STATE.PLAYING && checkCollision()) {
+        state = STATE.DEAD;
+        
+        try { sounds.playLulaNeymarDeath(); } catch(e){}
+
+        if (score > bestScore) {
+          bestScore = score;
+          localStorage.setItem('lula_best', bestScore.toString());
+          document.getElementById('bestDisplay').textContent = bestScore;
+        }
+        savePlayerScore('flappy', score);
+      }
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function handleStart() {
+      try { sounds.init(); } catch(e){}
+      if (state === STATE.WAITING || state === STATE.DEAD) {
+        state = STATE.PLAYING; pipes = []; picanhas = []; score = 0;
+        isPrisonMode = false;
+        document.body.classList.remove('prison-mode');
+        document.getElementById('scoreDisplay').textContent = 0;
+        lula.init(); lula.jump();
+      } else if (state === STATE.PLAYING) {
+        lula.jump();
+      }
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleStart(); }
+    });
+    canvas.addEventListener('click', handleStart);
+
+    loop();
+  </script>
+
+</body>
+</html>

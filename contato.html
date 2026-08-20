@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contato — Lula Simulator</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais Organizados -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 56px;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--amarelo-brasil), var(--verde-neon));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #ffffff;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--amarelo-brasil);
+    }
+
+    .msg-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .msg-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(0, 196, 74, 0.15);
+      color: var(--verde-neon);
+      border: 1px solid rgba(0, 196, 74, 0.4);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html" class="active">📬 Contato</a></li>
+    </ul>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>📬 FORMULÁRIO DE CONTATO</h1>
+      <p>Envie sua mensagem. Todas as mensagens são salvas diretamente no banco de dados Firebase Firestore!</p>
+    </div>
+
+    <!-- FORMULÁRIO DE CONTATO -->
+    <div class="card" style="margin-bottom: 40px;">
+      <h2 style="font-family:'Bangers',cursive; font-size:26px; color:var(--amarelo-brasil); margin-bottom:12px;">✉️ Enviar Mensagem para o Firestore</h2>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">
+        Projeto: <strong style="color:var(--amarelo-brasil);">motoai-43ed4</strong> | Coleção: <code style="color:var(--verde-neon); background:rgba(0,0,0,0.4); padding:2px 8px; border-radius:4px;">lula_contatos</code>
+      </p>
+      
+      <div id="statusAlert" style="display:none;" class="status-badge"></div>
+
+      <div class="form-group">
+        <label>Seu Nome</label>
+        <input type="text" id="ctName" placeholder="Ex: Empreendedor Silva" maxlength="50">
+      </div>
+
+      <div class="form-group">
+        <label>Seu E-mail</label>
+        <input type="email" id="ctEmail" placeholder="seuemail@exemplo.com">
+      </div>
+
+      <div class="form-group">
+        <label>Assunto</label>
+        <input type="text" id="ctSubject" placeholder="Ex: Sugestão para o jogo 3D" maxlength="80">
+      </div>
+
+      <div class="form-group">
+        <label>Mensagem</label>
+        <textarea id="ctMessage" rows="4" placeholder="Escreva sua mensagem..."></textarea>
+      </div>
+
+      <button class="btn-primary" style="width: 100%; font-size: 22px;" id="btnSendContact" onclick="submitContact()">
+        🚀 ENVIAR PARA O FIREBASE FIRESTORE
+      </button>
+    </div>
+
+    <!-- MENSAGENS GRAVADAS NO FIREBASE -->
+    <div>
+      <h2 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:20px;">💬 Mensagens Recebidas no Firestore</h2>
+      <div id="messagesList">
+        <div style="text-align:center; padding:30px; color:var(--text-muted);">Carregando mensagens do Firebase... 📬</div>
+      </div>
+    </div>
+
+    <!-- DICA DE REGRAS DO FIREBASE CONSOLE SE PRECISAR -->
+    <div class="card" style="margin-top: 40px; border-color: rgba(255, 152, 0, 0.4);">
+      <h3 style="font-family:'Bangers',cursive; font-size:22px; color:#ff9800; margin-bottom:10px;">💡 Dica do Firebase Console (Regras do Banco de Dados)</h3>
+      <p style="color:var(--text-muted); font-size:13px; line-height:1.6;">
+        No <strong>Firebase Console</strong> do seu projeto <code>motoai-43ed4</code>, acesse <strong>Firestore Database ➔ Regras (Rules)</strong> e verifique se as regras permitem gravações públicas durante a avaliação do curso:
+      </p>
+      <pre style="background:rgba(0,0,0,0.5); padding:12px; border-radius:8px; color:var(--verde-neon); font-size:12px; margin-top:10px; overflow-x:auto;">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+      </pre>
+    </div>
+  </div>
+
+  <script type="module">
+    import { sendContactMessage, getContactMessages } from './js/firebase-config.js';
+
+    document.getElementById('ctName').value = localStorage.getItem('lula_player') || '';
+
+    window.submitContact = async function() {
+      const name = document.getElementById('ctName').value.trim();
+      const email = document.getElementById('ctEmail').value.trim();
+      const subject = document.getElementById('ctSubject').value.trim();
+      const message = document.getElementById('ctMessage').value.trim();
+
+      if (!name || !message) {
+        alert('Por favor preencha Nome e Mensagem!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSendContact');
+      btn.disabled = true; btn.textContent = 'Enviando ao Firebase...';
+
+      const alertBox = document.getElementById('statusAlert');
+      alertBox.style.display = 'none';
+
+      const newMsgObj = {
+        name, email, subject, message, createdAt: new Date().toISOString()
+      };
+
+      const result = await sendContactMessage(newMsgObj);
+
+      if (result.success) {
+        alertBox.textContent = `✅ Mensagem gravada no Firebase Firestore! Document ID: ${result.id}`;
+        alertBox.style.display = 'inline-block';
+        alertBox.style.borderColor = 'rgba(0,196,74,0.4)';
+        alertBox.style.color = 'var(--verde-neon)';
+      } else {
+        alertBox.textContent = `⚠️ Gravado no modo offline/backup local (${result.error || 'Firestore regras'})`;
+        alertBox.style.display = 'inline-block';
+        alertBox.style.borderColor = 'rgba(255,152,0,0.4)';
+        alertBox.style.color = '#ff9800';
+      }
+
+      localStorage.setItem('lula_player', name);
+
+      // Salva localmente para renderização imediata
+      const localMsgs = JSON.parse(localStorage.getItem('lula_contatos_local') || '[]');
+      localMsgs.unshift(newMsgObj);
+      localStorage.setItem('lula_contatos_local', JSON.stringify(localMsgs.slice(0, 15)));
+
+      btn.disabled = false; btn.textContent = '🚀 ENVIAR PARA O FIREBASE FIRESTORE';
+      document.getElementById('ctMessage').value = '';
+      loadMessagesList();
+    };
+
+    async function loadMessagesList() {
+      const container = document.getElementById('messagesList');
+      let items = await getContactMessages(25);
+
+      // Fallback local se vazio
+      if (items.length === 0) {
+        items = JSON.parse(localStorage.getItem('lula_contatos_local') || '[]');
+      }
+
+      if (items.length === 0) {
+        items = [
+          { name: 'Empreendedor Silva', email: 'silva@exemplo.com', subject: 'Parabéns pelo projeto', message: 'O jogo 3D do empresário correndo das taxas ficou sensacional!', createdAt: new Date().toISOString() }
+        ];
+      }
+
+      container.innerHTML = '';
+      items.forEach(m => {
+        const card = document.createElement('div');
+        card.className = 'msg-card';
+        const dateStr = m.createdAt ? new Date(m.createdAt).toLocaleDateString('pt-BR') : '';
+        card.innerHTML = `
+          <div class="msg-card-header">
+            <div style="font-weight:700; font-size:16px;">👤 ${m.name || m.nome || 'Anônimo'}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${m.email || ''}</div>
+          </div>
+          ${m.subject || m.assunto ? `<div style="color:var(--amarelo-brasil); font-size:13px; font-weight:700; margin-bottom:6px;">📌 ${m.subject || m.assunto}</div>` : ''}
+          <p style="color:var(--text-main); font-size:14px; line-height:1.5;">${m.message || m.mensagem || ''}</p>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">🕒 ${dateStr}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadMessagesList();
+  </script>
+
+</body>
+</html>

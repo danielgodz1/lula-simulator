@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Empresário Fugindo 3D — Lula Simulator</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    body {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #0f172a;
+    }
+
+    .game-wrapper {
+      position: relative;
+      flex: 1;
+      width: 100vw;
+      height: calc(100vh - 60px);
+      margin-top: 60px;
+      overflow: hidden;
+      /* FUNDO REALISTA ENSOLARADO DA FAVELA DO RIO DE JANEIRO */
+      background: url('img/favela.png') center center / cover no-repeat;
+    }
+
+    #canvasContainer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    #hudOverlay {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hud-box {
+      background: rgba(10, 10, 20, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid var(--amarelo-brasil);
+      padding: 8px 20px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      min-width: 110px;
+    }
+
+    .hud-box label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .hud-box span {
+      font-family: 'Bangers', cursive;
+      font-size: 26px;
+      color: var(--amarelo-brasil);
+      line-height: 1;
+    }
+
+    #mobileControls {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 24px;
+      z-index: 15;
+    }
+
+    .mob-btn {
+      width: 68px;
+      height: 68px;
+      background: rgba(255, 223, 0, 0.25);
+      border: 2px solid var(--amarelo-brasil);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      cursor: pointer;
+      color: var(--amarelo-brasil);
+      backdrop-filter: blur(8px);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    @media (max-width: 768px) {
+      #mobileControls { display: flex; }
+    }
+
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 9, 20, 0.65);
+      backdrop-filter: blur(6px);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .start-card {
+      background: rgba(22, 27, 38, 0.95);
+      border: 2px solid var(--amarelo-brasil);
+      border-radius: 24px;
+      padding: 36px 40px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(255, 223, 0, 0.3);
+    }
+
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 9, 20, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-card {
+      background: rgba(22, 27, 38, 0.95);
+      border: 2px solid var(--vermelho-alert);
+      border-radius: 24px;
+      padding: 36px 40px;
+      max-width: 540px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(204, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
+      animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-family: 'Bangers', cursive;
+      font-size: 52px;
+      color: var(--vermelho-alert);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .modal-subtitle {
+      font-family: 'Bangers', cursive;
+      font-size: 28px;
+      color: var(--amarelo-brasil);
+      margin-bottom: 16px;
+    }
+
+    .modal-message {
+      font-size: 15px;
+      color: var(--text-main);
+      line-height: 1.6;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 16px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 24px;
+      white-space: pre-line;
+    }
+
+    .modal-dist {
+      font-family: 'Bangers', cursive;
+      font-size: 32px;
+      color: var(--verde-neon);
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html" class="active">🏃 Empresário 3D</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+  </nav>
+
+  <!-- ÁREA DO JOGO 3D COM FUNDO RIO FAVELA -->
+  <div class="game-wrapper">
+    <div id="canvasContainer"></div>
+
+    <div id="hudOverlay">
+      <div class="hud-box">
+        <label>Distância</label>
+        <span id="distDisplay">0 km</span>
+      </div>
+      <div class="hud-box" style="border-color: var(--verde-neon);">
+        <label>Recorde</label>
+        <span id="bestDisplay" style="color: var(--verde-neon);">0 km</span>
+      </div>
+      <div class="hud-box" style="border-color: #3b82f6;">
+        <label>Velocidade</label>
+        <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
+      </div>
+    </div>
+
+    <!-- OVERLAY INICIAL PARA ATIVAR SOM -->
+    <div class="start-overlay" id="startOverlay">
+      <div class="start-card">
+        <h1 style="font-family:'Bangers',cursive; font-size:44px; color:var(--amarelo-brasil); margin-bottom:10px;">
+          🏃 EMPRESÁRIO 3D — RIO DE JANEIRO
+        </h1>
+        <p style="color:var(--text-muted); font-size:15px; margin-bottom:24px;">
+          Corra na favela do Rio com trens de metrô passando! Use as setas <strong>← → ou A / D</strong>.
+        </p>
+        <button class="btn-primary" style="font-size:26px; padding:16px 36px;">
+          🔊 CLIQUE PARA JOGAR!
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTROLES MOBILE -->
+    <div id="mobileControls">
+      <div class="mob-btn" id="btnLeft">◀</div>
+      <div class="mob-btn" id="btnRight">▶</div>
+    </div>
+
+    <!-- MODAL DE GAME OVER 3D -->
+    <div class="modal-overlay" id="gameOverModal">
+      <div class="modal-card">
+        <div class="modal-title">CAPTURADO!</div>
+        <div class="modal-subtitle" id="goTitle">OBSTÁCULO</div>
+        <div class="modal-message" id="goMessage">Você foi pego pelo sistema!</div>
+        <div class="modal-dist" id="goDistance">0 KM PERCORRIDOS</div>
+        <button class="btn-primary" id="btnRestart">
+          🔄 REINICIAR CORRIDA 3D
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { init3DGame, restart3DGame } from './js/game3d.js';
+    import { sounds } from './js/audio.js';
+
+    // Inicializa motor Three.js 3D
+    init3DGame();
+
+    const startOverlay = document.getElementById('startOverlay');
+    startOverlay.addEventListener('click', () => {
+      try { sounds.init(); } catch(e){}
+      startOverlay.style.display = 'none';
+      restart3DGame();
+    });
+
+    document.getElementById('btnRestart').addEventListener('click', () => {
+      try { sounds.init(); } catch(e){}
+      restart3DGame();
+    });
+  </script>
+
+</body>
+</html>

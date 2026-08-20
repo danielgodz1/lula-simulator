@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedbacks — Lula Simulator</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais Organizados -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 100px 24px 60px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .page-header h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 58px;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, var(--amarelo-brasil), var(--verde-neon));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .form-group input, .form-group textarea {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-card);
+      border-radius: 12px;
+      padding: 12px 16px;
+      color: #ffffff;
+      font-size: 15px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--amarelo-brasil);
+    }
+
+    .stars-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .star-btn {
+      font-size: 38px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      filter: grayscale(90%);
+      transition: transform 0.2s, filter 0.2s;
+    }
+
+    .star-btn:hover, .star-btn.active {
+      filter: grayscale(0%);
+      transform: scale(1.15);
+    }
+
+    .feedback-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(0, 196, 74, 0.15);
+      color: var(--verde-neon);
+      border: 1px solid rgba(0, 196, 74, 0.4);
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="feedback.html" class="active">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>⭐ AVALIAÇÕES & FEEDBACKS</h1>
+      <p>O que o povo brasileiro está achando dos jogos? Avalie no Firebase Firestore!</p>
+    </div>
+
+    <!-- FORMULÁRIO -->
+    <div class="card" style="margin-bottom: 40px;">
+      <h2 style="font-family:'Bangers',cursive; font-size:28px; color:var(--amarelo-brasil); margin-bottom:12px;">📝 Envie sua Avaliação ao Firestore</h2>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:20px;">
+        Projeto: <strong style="color:var(--amarelo-brasil);">motoai-43ed4</strong> | Coleção: <code style="color:var(--verde-neon); background:rgba(0,0,0,0.4); padding:2px 8px; border-radius:4px;">lula_feedbacks</code>
+      </p>
+
+      <div id="statusAlert" style="display:none;" class="status-badge"></div>
+      
+      <div class="form-group">
+        <label>Seu Nome / Apelido</label>
+        <input type="text" id="fbName" placeholder="Ex: Empresário_BR" maxlength="40">
+      </div>
+
+      <div class="form-group">
+        <label>Avaliação em Estrelas ⭐</label>
+        <div class="stars-row" id="starsRow">
+          <button class="star-btn" data-val="1">⭐</button>
+          <button class="star-btn" data-val="2">⭐</button>
+          <button class="star-btn" data-val="3">⭐</button>
+          <button class="star-btn" data-val="4">⭐</button>
+          <button class="star-btn" data-val="5">⭐</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Comentário</label>
+        <textarea id="fbComment" rows="3" placeholder="O que achou do jogo do presidente e do Empresário 3D?"></textarea>
+      </div>
+
+      <button class="btn-primary" style="width: 100%; font-size: 22px;" id="btnSubmit" onclick="submitFB()">
+        🚀 GRAVAR AVALIAÇÃO NO FIREBASE FIRESTORE
+      </button>
+    </div>
+
+    <!-- LISTA DE FEEDBACKS -->
+    <div>
+      <h2 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:20px;">💬 Avaliações Recebidas no Firestore</h2>
+      <div id="feedbacksList">
+        <div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando feedbacks... 🇧🇷</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { sendFeedback, getFeedbacks } from './js/firebase-config.js';
+
+    document.getElementById('fbName').value = localStorage.getItem('lula_player') || '';
+
+    let selectedStars = 0;
+    const starBtns = document.querySelectorAll('.star-btn');
+    starBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedStars = parseInt(btn.getAttribute('data-val'), 10);
+        starBtns.forEach(b => {
+          b.classList.toggle('active', parseInt(b.getAttribute('data-val'), 10) <= selectedStars);
+        });
+      });
+    });
+
+    window.submitFB = async function() {
+      const name = document.getElementById('fbName').value.trim() || 'Anônimo';
+      const comment = document.getElementById('fbComment').value.trim();
+
+      if (selectedStars === 0) {
+        alert('Por favor selecione pelo menos 1 estrela!');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = true; btn.textContent = 'Enviando...';
+
+      const alertBox = document.getElementById('statusAlert');
+      alertBox.style.display = 'none';
+
+      const newFb = { name, stars: selectedStars, comment, createdAt: new Date().toISOString() };
+      const result = await sendFeedback(newFb);
+
+      if (result.success) {
+        alertBox.textContent = `✅ Avaliação gravada no Firebase Firestore! Document ID: ${result.id}`;
+        alertBox.style.display = 'inline-block';
+        alertBox.style.borderColor = 'rgba(0,196,74,0.4)';
+        alertBox.style.color = 'var(--verde-neon)';
+      } else {
+        alertBox.textContent = `⚠️ Salvo no modo backup local (${result.error || 'Firestore regras'})`;
+        alertBox.style.display = 'inline-block';
+        alertBox.style.borderColor = 'rgba(255,152,0,0.4)';
+        alertBox.style.color = '#ff9800';
+      }
+
+      localStorage.setItem('lula_player', name);
+
+      const localFbs = JSON.parse(localStorage.getItem('lula_feedbacks_local') || '[]');
+      localFbs.unshift(newFb);
+      localStorage.setItem('lula_feedbacks_local', JSON.stringify(localFbs.slice(0, 15)));
+
+      btn.disabled = false; btn.textContent = '🚀 GRAVAR AVALIAÇÃO NO FIREBASE FIRESTORE';
+      document.getElementById('fbComment').value = '';
+      loadFeedbacksList();
+    };
+
+    async function loadFeedbacksList() {
+      const container = document.getElementById('feedbacksList');
+      let items = await getFeedbacks(25);
+
+      if (items.length === 0) {
+        items = JSON.parse(localStorage.getItem('lula_feedbacks_local') || '[]');
+      }
+
+      if (items.length === 0) {
+        items = [
+          { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!' },
+          { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!' }
+        ];
+      }
+
+      container.innerHTML = '';
+      items.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'feedback-card';
+        card.innerHTML = `
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+            <div style="font-weight:700;">👤 ${f.name || 'Anônimo'}</div>
+            <div>${'⭐'.repeat(f.stars || 5)}</div>
+          </div>
+          <p style="color:var(--text-main); font-size:14px; font-style:italic;">"${f.comment || ''}"</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadFeedbacksList();
+  </script>
+
+</body>
+</html>

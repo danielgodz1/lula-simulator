@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lula Simulator — O Jogo Oficial do Povo</title>
+  <meta name="description" content="Ajude o Lula a voar entre os canos e fuja do sistema no jogo 3D do Empresário!">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    /* Estilos específicos da Landing Page */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-text h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 84px;
+      line-height: 0.95;
+      letter-spacing: 3px;
+      margin-bottom: 12px;
+    }
+
+    .hero-text h1 .verde { color: var(--verde-neon); }
+    .hero-text h1 .amarelo { color: var(--amarelo-brasil); }
+
+    .hero-text .tagline {
+      font-size: 20px;
+      color: var(--text-muted);
+      margin: 20px 0 36px;
+      line-height: 1.5;
+    }
+
+    .hero-text .tagline strong { color: var(--amarelo-brasil); }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    /* Preview visual */
+    .hero-character {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-container {
+      position: relative;
+      width: 360px;
+      height: 360px;
+      background: #87CEEB;
+      border-radius: 24px;
+      border: 4px solid var(--amarelo-brasil);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 223, 0, 0.3);
+    }
+
+    .preview-ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, #5D8A3C, #4A7A2E);
+    }
+
+    .preview-lula-img {
+      position: absolute;
+      left: 70px;
+      top: 40%;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid var(--amarelo-brasil);
+      animation: lulaFloat 2s ease-in-out infinite;
+      object-fit: cover;
+    }
+
+    @keyframes lulaFloat {
+      0%, 100% { transform: translateY(0) rotate(-4deg); }
+      50% { transform: translateY(-16px) rotate(4deg); }
+    }
+
+    .features {
+      padding: 90px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .features h2 {
+      font-family: 'Bangers', cursive;
+      font-size: 52px;
+      text-align: center;
+      letter-spacing: 2px;
+      color: var(--amarelo-brasil);
+      margin-bottom: 50px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-content { grid-template-columns: 1fr; text-align: center; }
+      .hero-character { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .btn-group { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <div style="margin-bottom: 12px;">
+          <span style="background: rgba(255,223,0,0.15); border: 1px solid var(--amarelo-brasil); padding: 6px 16px; border-radius: 50px; font-size: 13px; font-weight: 700; color: var(--amarelo-brasil); letter-spacing: 1px;">
+            🇧🇷 O SIMULADOR POLÍTICO MAIS DIVERTIDO DO BRASIL
+          </span>
+        </div>
+        <h1>
+          <span class="verde">LULA</span><br>
+          <span class="amarelo">SIMULATOR</span>
+        </h1>
+        <p class="tagline">
+          Faça o presidente voar no <strong>Flappy Lula</strong> distribuindo picanha ou enfrente a rodovia 3D no <strong>Empresário Fugindo</strong> fugindo do Bolsa Família e da CLT!
+        </p>
+        <div class="btn-group">
+          <a href="jogo.html" class="btn-primary">
+            🐦 JOGAR FLAPPY LULA
+          </a>
+          <a href="correr.html" class="btn-secondary">
+            🏃 JOGAR EMPRESÁRIO 3D
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-character">
+        <div class="preview-container">
+          <!-- Lula Foto Real Animada -->
+          <img src="img/lula.png" alt="Lula" class="preview-lula-img">
+          
+          <!-- Canos Decorativos -->
+          <div style="position: absolute; right: 60px; top: 0; width: 50px; height: 110px; background: #2ECC40; border-radius: 0 0 6px 6px; border: 2px solid #1a8a30;"></div>
+          <div style="position: absolute; right: 60px; bottom: 60px; width: 50px; height: 120px; background: #2ECC40; border-radius: 6px 6px 0 0; border: 2px solid #1a8a30;"></div>
+
+          <!-- Chão -->
+          <div class="preview-ground"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features">
+    <h2>MODOS DE JOGO & RECURSOS 🎮</h2>
+    <div class="features-grid">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🐦</div>
+        <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Flappy Lula 2D</h3>
+        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+          Ajude o Lula a voar entre os canos e soltar picanhas caindo na tela. Se bater, o Lula chora!
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🏃</div>
+        <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Empresário 3D Real</h3>
+        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+          Motor Three.js WebGL! Fuja do Bolsa Família, Auxílio e Carteira Assinada em 3D.
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🔥</div>
+        <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Firebase Firestore</h3>
+        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+          Ranking em tempo real, sistema de feedbacks com estrelas e mensagens salvas no banco de dados.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RODAPÉ -->
+  <footer>
+    <p>🇧🇷 <strong>Lula Simulator</strong> — Projeto Integrador de IA Generativa, Three.js 3D, Firebase & Vercel · 2026</p>
+  </footer>
+
+</body>
+</html>

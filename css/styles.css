@@ -1,0 +1,179 @@
+/* ==========================================================================
+   LULA SIMULATOR — ESTILOS GLOBAIS E COMPONENTES
+   Projeto Integrador de IA Generativa, WebGL 3D, Firebase e Vercel
+   ========================================================================== */
+
+/* 1. VARIÁVEIS DE CORES E TEMA BRASIL */
+:root {
+  --verde-brasil: #009c3b;
+  --verde-neon: #00c44a;
+  --amarelo-brasil: #ffdf00;
+  --azul-brasil: #002776;
+  --vermelho-alert: #cc0000;
+  --bg-dark-1: #0a0a14;
+  --bg-dark-2: #161b26;
+  --bg-card: rgba(255, 255, 255, 0.05);
+  --border-card: rgba(255, 223, 0, 0.25);
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.65);
+}
+
+/* 2. RESET GERAL */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, #0a0a14 0%, #161b26 50%, #0d121d 100%);
+  color: var(--text-main);
+  overflow-x: hidden;
+}
+
+/* 3. BARRA DE NAVEGAÇÃO SUPERIOR */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 3px solid var(--amarelo-brasil);
+  padding: 0 28px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.nav-brand {
+  font-family: 'Bangers', cursive;
+  font-size: 24px;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--amarelo-brasil), var(--verde-brasil));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--amarelo-brasil);
+  background: rgba(255, 223, 0, 0.1);
+}
+
+/* 4. BOTÕES REUTILIZÁVEIS */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--verde-brasil) 0%, var(--verde-neon) 100%);
+  color: #ffffff;
+  font-family: 'Bangers', cursive;
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  padding: 14px 32px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(0, 156, 59, 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 32px rgba(0, 156, 59, 0.7);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: transparent;
+  border: 2px solid var(--amarelo-brasil);
+  color: var(--amarelo-brasil);
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+  letter-spacing: 1px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--amarelo-brasil);
+  color: #000000;
+  transform: translateY(-2px);
+}
+
+/* 5. CARDS E RECIPIENTES */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 18px;
+  padding: 24px;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--amarelo-brasil);
+}
+
+/* 6. RODAPÉ */
+footer {
+  background: rgba(0, 0, 0, 0.6);
+  border-top: 2px solid var(--verde-brasil);
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 40px;
+}
+
+footer strong {
+  color: var(--amarelo-brasil);
+}
+
+/* 7. RESPONSIVIDADE */
+@media (max-width: 768px) {
+  nav {
+    padding: 0 16px;
+  }
+  .nav-brand {
+    font-size: 18px;
+  }
+  .nav-links {
+    gap: 8px;
+  }
+  .nav-links a {
+    font-size: 11px;
+    padding: 4px 6px;
+  }
+}
