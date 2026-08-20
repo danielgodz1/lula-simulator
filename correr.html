@@ -108,7 +108,38 @@
     }
 
     @media (max-width: 768px) {
-      #mobileControls { display: flex; }
+      #hudOverlay {
+        top: 66px;
+        gap: 6px;
+        width: 95%;
+        justify-content: center;
+      }
+      .hud-box {
+        min-width: auto;
+        padding: 6px 8px;
+      }
+      .hud-box span {
+        font-size: 18px;
+      }
+      .hud-box label {
+        font-size: 9px;
+      }
+      #mobileControls {
+        display: flex;
+        bottom: 16px;
+        gap: 10px;
+      }
+      .mob-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
+      }
+      .start-card, .modal-card {
+        padding: 24px 18px;
+      }
+      .start-card h1, .modal-title {
+        font-size: 32px !important;
+      }
     }
 
     .start-overlay {

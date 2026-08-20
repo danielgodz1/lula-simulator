@@ -202,7 +202,7 @@ export class Character {
   }
 
   jump() {
-    if (!this.isJumping && !this.isDead) {
+    if (!this.isDead && (!this.isJumping || Math.abs(this.y - this.groundY) < 0.15)) {
       this.isJumping = true;
       this.jumpVelocity = this.superJump ? this.jumpForce * 1.35 : this.jumpForce;
       this.isSliding = false;
@@ -230,6 +230,7 @@ export class Character {
     this.targetX = 0;
     this.x = 0;
     this.y = 0;
+    this.groundY = 0;
     this.isJumping = false;
     this.isSliding = false;
     this.superJump = false;
@@ -266,14 +267,21 @@ export class Character {
     const laneDelta = this.targetX - this.x;
     this.mesh.rotation.z = -laneDelta * 0.14;
 
-    // 2. Pulo Parabólico
+    // 2. Física Vertical (Pulo, Teto do Trem e Gravidade Suave)
     if (this.isJumping) {
       this.y += this.jumpVelocity * dt * 3.8;
       this.jumpVelocity += this.gravity * dt * 60;
-      if (this.y <= 0) {
-        this.y = 0;
+      if (this.jumpVelocity < 0 && this.y <= this.groundY) {
+        this.y = this.groundY;
         this.isJumping = false;
         this.jumpVelocity = 0;
+      }
+    } else {
+      // Ajuste suave quando sai ou sobe no teto do trem
+      if (this.y > this.groundY) {
+        this.y = Math.max(this.groundY, this.y - 16 * dt);
+      } else if (this.y < this.groundY) {
+        this.y = Math.min(this.groundY, this.y + 20 * dt);
       }
     }
 

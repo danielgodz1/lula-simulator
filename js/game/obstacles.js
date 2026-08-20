@@ -449,13 +449,41 @@ export class ObstacleManager {
     const py = player.isSliding ? 0.35 : player.y + 1.0;
     const pz = 0;
 
-    // Colisão com Obstáculos
+    let targetGroundY = 0;
+
+    // Colisão com Obstáculos e Plataforma de Teto do Metrô
     for (const obs of this.obstacles) {
       const dz = Math.abs(obs.z - pz);
-      if (dz < (obs.depth / 2 + 0.35)) {
-        const dx = Math.abs(obs.x - px);
-        if (dx < (obs.width / 2 + 0.45)) {
-          if (obs.canJumpOver && player.y > obs.height) continue;
+      const dx = Math.abs(obs.x - px);
+
+      if (obs.type === 'train') {
+        const trainHalfDepth = obs.depth / 2;
+        const rampZ = obs.z - trainHalfDepth;
+
+        // Se o jogador estiver na mesma linha do trem
+        if (dx < (obs.width / 2 + 0.35)) {
+          // Dentro do comprimento do corpo do trem
+          if (dz < (trainHalfDepth - 0.5)) {
+            // Se estiver em cima do teto ou descendo de um salto
+            if (player.y >= 2.3 || (player.isJumping && player.y >= 1.8)) {
+              targetGroundY = 3.0; // Anda perfeitamente no teto do trem!
+              continue;
+            } else {
+              // Bateu de frente no nível do chão
+              onCrash(obs);
+              return;
+            }
+          }
+          // Na rampa traseira do trem
+          else if (Math.abs(rampZ - pz) < 2.0) {
+            targetGroundY = 3.0;
+            continue;
+          }
+        }
+      } else {
+        // Obstáculos normais (CLT, Bolsa Família, Auxílio, Varal)
+        if (dz < (obs.depth / 2 + 0.35) && dx < (obs.width / 2 + 0.45)) {
+          if (obs.canJumpOver && player.y >= (obs.height - 0.2)) continue;
           if (obs.canSlideUnder && player.isSliding) continue;
 
           onCrash(obs);
@@ -463,6 +491,8 @@ export class ObstacleManager {
         }
       }
     }
+
+    player.groundY = targetGroundY;
 
     // Coleta de Moedas e Picanhas
     for (const item of this.coins) {

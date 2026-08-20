@@ -112,7 +112,42 @@
     }
 
     @media (max-width: 900px) {
-      .side-panel, .side-right { display: none; }
+      .game-layout {
+        flex-direction: column;
+        align-items: center;
+        padding: 68px 10px 20px;
+        gap: 10px;
+      }
+      .side-panel, .side-right {
+        width: 100%;
+        max-width: 460px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .side-right {
+        order: -1; /* Botões de modo Fácil/Difícil sempre visíveis no topo no celular! */
+      }
+      .side-right .info-box {
+        width: 100%;
+        padding: 8px 12px;
+        margin-bottom: 0 !important;
+      }
+      .side-panel .score-box {
+        flex: 1;
+        min-width: 120px;
+        padding: 8px 12px;
+      }
+      .side-panel .score-box span {
+        font-size: 32px;
+      }
+      .side-panel .info-box, .side-panel .btn-secondary {
+        display: none;
+      }
+      canvas#gameCanvas {
+        max-width: 95vw;
+        max-height: calc(100vh - 220px);
+      }
     }
   </style>
 </head>
