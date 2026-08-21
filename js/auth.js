@@ -1,5 +1,6 @@
 // js/auth.js — Sistema de Contas, Nomes de Jogador Personalizados e Persistência Cloud de Recordes e Picanhas
 import { firebaseConfig } from './firebase-config.js';
+import { escapeHTML } from './security.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -541,8 +542,9 @@ class AuthManager {
     const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
 
     if (user) {
+      const safeUsername = escapeHTML(user.username);
       badge.innerHTML = `
-        <span title="Total acumulado: ${totalPicanhas} picanhas">👤 ${user.username} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b></span>
+        <span title="Total acumulado: ${totalPicanhas} picanhas">👤 ${safeUsername} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b></span>
         <button id="btnLogoutProfile" style="
           background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
           color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer;

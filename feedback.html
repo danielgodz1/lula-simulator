@@ -178,6 +178,7 @@
   <script type="module">
     import { sendFeedback, getFeedbacks } from './js/firebase-config.js';
     import { auth } from './js/auth.js';
+    import { escapeHTML } from './js/security.js';
 
     auth.renderProfileBadge('nav');
     const curUser = auth.getCurrentUser();
@@ -213,7 +214,7 @@
       const result = await sendFeedback(newFb);
 
       if (result.success) {
-        alertBox.textContent = `✅ Avaliação gravada no Firebase Firestore! Document ID: ${result.id}`;
+        alertBox.textContent = `✅ Avaliação gravada com segurança no banco de dados!`;
         alertBox.style.display = 'inline-block';
         alertBox.style.borderColor = 'rgba(0,196,74,0.4)';
         alertBox.style.color = 'var(--verde-neon)';
@@ -254,12 +255,16 @@
       items.forEach(f => {
         const card = document.createElement('div');
         card.className = 'feedback-card';
+        const safeName = escapeHTML(f.name || 'Anônimo');
+        const safeComment = escapeHTML(f.comment || '');
+        const safeStars = Math.max(1, Math.min(5, parseInt(f.stars || 5, 10)));
+
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <div style="font-weight:700;">👤 ${f.name || 'Anônimo'}</div>
-            <div>${'⭐'.repeat(f.stars || 5)}</div>
+            <div style="font-weight:700;">👤 ${safeName}</div>
+            <div>${'⭐'.repeat(safeStars)}</div>
           </div>
-          <p style="color:var(--text-main); font-size:14px; font-style:italic;">"${f.comment || ''}"</p>
+          <p style="color:var(--text-main); font-size:14px; font-style:italic;">"${safeComment}"</p>
         `;
         container.appendChild(card);
       });

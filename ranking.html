@@ -187,36 +187,50 @@
     const nameInput = document.getElementById('playerNameInput');
     if (nameInput) {
       nameInput.value = currentUser ? currentUser.username : (localStorage.getItem('lula_player') || '');
+    let currentTab = 'flappy';
+
+    const cur = auth.getCurrentUser();
+    if (cur) {
+      document.getElementById('playerNameInput').value = cur.username;
+    } else {
+      const savedName = localStorage.getItem('lula_player');
+      if (savedName) {
+        document.getElementById('playerNameInput').value = savedName;
+      }
     }
 
-    window.saveName = function() {
-      auth.mountAuthModal(() => {
-        auth.renderProfileBadge('nav');
-        const user = auth.getCurrentUser();
-        if (user && nameInput) nameInput.value = user.username;
-        loadRankingData();
-      });
+    window.saveName = async function() {
+      const input = document.getElementById('playerNameInput');
+      const name = (input.value || '').trim();
+      if (!name || name.length < 2) {
+        alert('Por favor digite um apelido válido!');
+        return;
+      }
+      localStorage.setItem('lula_player', name);
+      if (auth.getCurrentUser()) {
+        auth.getCurrentUser().username = name;
+      }
+      auth.renderProfileBadge('nav');
+      alert(`Apelido salvo como "${name}"!`);
+      loadRankingData();
     };
-
-    let currentTab = 'flappy';
 
     window.switchTab = function(tab) {
       currentTab = tab;
-      document.getElementById('tabFlappy').classList.toggle('active', tab === 'flappy');
-      document.getElementById('tabRunner').classList.toggle('active', tab === 'runner');
+      document.getElementById('tabFlappy').className = `tab-btn ${tab === 'flappy' ? 'active' : ''}`;
+      document.getElementById('tabRunner').className = `tab-btn ${tab === 'runner' ? 'active' : ''}`;
       loadRankingData();
     };
 
     async function loadRankingData() {
       const container = document.getElementById('rankingList');
-      const collectionName = currentTab === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+      container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Consultando banco de dados seguro... 🇧🇷</div>';
+
+      const collection = currentTab === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
       const unit = currentTab === 'runner' ? 'km' : 'picanhas';
 
-      container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Consultando banco de dados... 🇧🇷</div>';
+      let scores = await getTopScores(collection, 15);
 
-      let scores = await getTopScores(collectionName, 15);
-
-      // Fallback local da conta atual se vazio
       if (scores.length === 0) {
         const u = auth.getCurrentUser();
         if (u) {
@@ -230,7 +244,7 @@
       if (scores.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-            Placar reiniciado! Seja o primeiro a jogar e garantir seu nome no topo do ranking! 🚀
+            Placar protegido! Seja o primeiro a jogar e garantir seu nome no topo do ranking! 🚀
           </div>
         `;
         return;
@@ -243,11 +257,13 @@
 
         const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-other';
         const badge = i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+        const safePlayer = escapeHTML(item.player || 'Anônimo');
+        const safeScore = parseInt(item.score || 0, 10);
 
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
-          <div style="font-weight:700; font-size:16px;">👤 ${item.player || 'Anônimo'}</div>
-          <div class="score-val">${item.score} <small style="font-size:12px; color:var(--text-muted);">${unit}</small></div>
+          <div style="font-weight:700; font-size:16px;">👤 ${safePlayer}</div>
+          <div class="score-val">${safeScore} <small style="font-size:12px; color:var(--text-muted);">${unit}</small></div>
         `;
         container.appendChild(row);
       });

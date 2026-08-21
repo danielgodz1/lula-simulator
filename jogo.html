@@ -901,6 +901,7 @@
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
     import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
+    import { escapeHTML } from './js/security.js';
 
     auth.renderProfileBadge('nav');
     if (!auth.getCurrentUser()) {
@@ -1715,10 +1716,12 @@
             const row = document.createElement('div');
             row.className = 'go-lb-row';
             const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+            const safePlayer = escapeHTML(item.player || 'Anônimo');
+            const safeScore = parseInt(item.score || 0, 10);
             row.innerHTML = `
               <span class="go-lb-rank">${medals[i] || (i+1)}</span>
-              <span class="go-lb-name">${item.player || 'Anônimo'}</span>
-              <span class="go-lb-score">${item.score} 🥩</span>
+              <span class="go-lb-name">${safePlayer}</span>
+              <span class="go-lb-score">${safeScore} 🥩</span>
             `;
             listEl.appendChild(row);
           });

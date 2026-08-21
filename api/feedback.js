@@ -1,4 +1,4 @@
-// api/feedback.js — Vercel Serverless Function para avaliações e comentários seguros
+// api/feedback.js — Vercel Serverless Function com sanitização total contra Script Injection (XSS)
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,8 +15,17 @@ export default async function handler(req, res) {
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
+  const sanitizeStr = (str, maxLen = 100) => {
+    if (!str || typeof str !== 'string') return '';
+    return str
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/[\r\n\t]/g, ' ')
+      .trim()
+      .slice(0, maxLen);
+  };
+
   if (req.method === 'GET') {
-    const limit = parseInt(req.query.limit || '20', 10);
+    const limit = Math.min(50, parseInt(req.query.limit || '20', 10));
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
       const fireRes = await fetch(url);
@@ -24,9 +33,9 @@ export default async function handler(req, res) {
       const data = await fireRes.json();
       if (data.documents && data.documents.length > 0) {
         const feedbacks = data.documents.map(doc => ({
-          name: (doc.fields?.name?.stringValue || 'Anônimo').slice(0, 40),
+          name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
           stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
-          comment: (doc.fields?.comment?.stringValue || '').slice(0, 500),
+          comment: sanitizeStr(doc.fields?.comment?.stringValue || '', 500),
           createdAt: doc.fields?.createdAt?.timestampValue || ''
         }));
         return res.status(200).json({ success: true, feedbacks });
@@ -40,8 +49,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { name, stars, comment } = req.body || {};
 
-    const cleanName = (name || 'Anônimo').trim().slice(0, 40);
-    const cleanComment = (comment || '').trim().slice(0, 500);
+    const cleanName = sanitizeStr(name, 40) || 'Anônimo';
+    const cleanComment = sanitizeStr(comment, 500);
     const numStars = Math.max(1, Math.min(5, parseInt(stars || 5, 10)));
 
     if (!cleanComment) {

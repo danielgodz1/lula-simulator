@@ -1,4 +1,4 @@
-// api/score.js — Vercel Serverless Function com validação estrita anti-cheat e proteção do Firestore
+// api/score.js — Vercel Serverless Function com validação estrita anti-cheat e proteção contra Script Injection
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -13,11 +13,22 @@ export default async function handler(req, res) {
     return;
   }
 
+  const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
+
+  // Função interna de sanitização
+  const sanitize = (str, maxLen = 30) => {
+    if (!str || typeof str !== 'string') return 'Jogador';
+    return str
+      .replace(/<[^>]*>?/gm, '')
+      .replace(/[^a-zA-Z0-9_\- .À-ÿ]/g, '')
+      .trim()
+      .slice(0, maxLen) || 'Jogador';
+  };
+
   // GET: Obter placar sanitizado
   if (req.method === 'GET') {
     const { game, limit = 15 } = req.query;
     const collectionName = game === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}?pageSize=50`;
@@ -28,9 +39,10 @@ export default async function handler(req, res) {
       if (data.documents && data.documents.length > 0) {
         const userMap = new Map();
         data.documents.forEach(doc => {
-          const player = (doc.fields?.player?.stringValue || 'Anônimo').slice(0, 30);
+          const rawPlayer = doc.fields?.player?.stringValue || 'Anônimo';
+          const player = sanitize(rawPlayer, 30);
           const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
-          if (score >= 0 && score <= 50000) {
+          if (!isNaN(score) && score >= 0 && score <= 50000) {
             if (!userMap.has(player) || score > userMap.get(player)) {
               userMap.set(player, score);
             }
@@ -39,7 +51,7 @@ export default async function handler(req, res) {
 
         const list = Array.from(userMap.entries()).map(([player, score]) => ({ player, score }));
         list.sort((a, b) => b.score - a.score);
-        return res.status(200).json({ success: true, scores: list.slice(0, parseInt(limit, 10)) });
+        return res.status(200).json({ success: true, scores: list.slice(0, Math.min(50, parseInt(limit, 10) || 15)) });
       }
       return res.status(200).json({ success: true, scores: [] });
     } catch (err) {
@@ -51,7 +63,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { player, score, game } = req.body || {};
 
-    const cleanPlayer = (player || 'Jogador').trim().slice(0, 25);
+    const cleanPlayer = sanitize(player, 25);
     const numScore = parseInt(score, 10);
 
     // Validações Anti-Hacker / Anti-Cheat
@@ -65,7 +77,6 @@ export default async function handler(req, res) {
 
     const collectionName = game === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
     const docId = encodeURIComponent(cleanPlayer.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
-    const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}/${docId}`;
@@ -80,7 +91,7 @@ export default async function handler(req, res) {
         }
       }
 
-      // 2. Salva o novo recorde
+      // 2. Salva o novo recorde com payload sanitizado
       const payload = {
         fields: {
           player: { stringValue: cleanPlayer },
@@ -96,7 +107,7 @@ export default async function handler(req, res) {
       });
 
       if (patchRes.ok) {
-        return res.status(200).json({ success: true, message: 'Recorde salvo com sucesso no banco seguro!' });
+        return res.status(200).json({ success: true, message: 'Recorde salvo com segurança!' });
       }
     } catch (e) {
       return res.status(200).json({ success: true, fallback: true });
