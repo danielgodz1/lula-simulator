@@ -9,6 +9,7 @@ class AudioManager {
     this.ambienceGain = null;
     this.lastJumpTime = 0;
     this.initialized = false;
+    this.activeAudios = [];
   }
 
   // Inicializa o contexto de áudio na primeira interação do usuário
@@ -352,15 +353,33 @@ class AudioManager {
     } catch (e) {}
   }
 
-  // 10. ÁUDIOS CUSTOMIZADOS DO JOGO (MP3 / MPEG)
+  // 10. CONTROLE DE INTERRUPÇÃO E ÁUDIOS CUSTOMIZADOS (MP3 / MPEG)
+  stopAllVoiceAndDeathAudios() {
+    if (this.activeAudios && this.activeAudios.length > 0) {
+      this.activeAudios.forEach(a => {
+        try {
+          a.pause();
+          a.currentTime = 0;
+        } catch (e) {}
+      });
+      this.activeAudios = [];
+    }
+    if (window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+  }
+
   playBrasilIntro() {
     if (this.isMuted) return;
+    this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/brasilbrasil.mp3');
-      audio.volume = 0.20;
+      audio.volume = 0.15; // Volume bem baixo e sutil
+      this.activeAudios.push(audio);
       audio.play().catch(() => {
         const alt = new Audio('audios/brasilbrasi.mp3');
-        alt.volume = 0.20;
+        alt.volume = 0.15;
+        this.activeAudios.push(alt);
         alt.play().catch(() => {});
       });
     } catch (e) {}
@@ -368,24 +387,26 @@ class AudioManager {
 
   playBestaEnjaulada() {
     if (this.isMuted) return;
+    this.stopAllVoiceAndDeathAudios();
     try {
-      if (this.currentBestaAudio) {
-        this.currentBestaAudio.pause();
-      }
-      this.currentBestaAudio = new Audio('audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
-      this.currentBestaAudio.volume = 0.70;
-      this.currentBestaAudio.play().catch(() => {});
+      const audio = new Audio('audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
+      audio.volume = 0.35; // Volume moderado e agradável
+      this.activeAudios.push(audio);
+      audio.play().catch(() => {});
     } catch (e) {}
   }
 
   playLulaDeathAudio() {
     if (this.isMuted) return;
+    this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/ehsoissoacabou.mpeg');
-      audio.volume = 0.75;
+      audio.volume = 0.35; // Volume moderado
+      this.activeAudios.push(audio);
       audio.play().catch(() => {
         const alt = new Audio('audios/ehsoissoacabou.mp3');
-        alt.volume = 0.75;
+        alt.volume = 0.35;
+        this.activeAudios.push(alt);
         alt.play().catch(() => {
           this.playLulaNeymarDeath();
         });
@@ -397,9 +418,11 @@ class AudioManager {
 
   playNoAuraDeathAudio() {
     if (this.isMuted) return;
+    this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/voce-nao-tem-aura.mp3');
-      audio.volume = 0.75;
+      audio.volume = 0.35; // Volume moderado
+      this.activeAudios.push(audio);
       audio.play().catch(() => {
         this.playLulaNeymarDeath();
       });
@@ -417,7 +440,7 @@ class AudioManager {
       utterance.lang = 'pt-BR';
       utterance.rate = rate;
       utterance.pitch = pitch;
-      utterance.volume = 0.7;
+      utterance.volume = 0.4;
       window.speechSynthesis.speak(utterance);
     } catch (e) {}
   }

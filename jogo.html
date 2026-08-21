@@ -1968,7 +1968,8 @@
         lula.init();
         lula.jump();
 
-        // Áudio Brasil Brasil no início em volume baixo
+        // Interrompe qualquer áudio anterior e inicia trilha sutil
+        sounds.stopAllVoiceAndDeathAudios();
         try { sounds.playBrasilIntro(); } catch(e){}
       } else if (state === STATE.PLAYING) {
         lula.jump();
@@ -1976,6 +1977,7 @@
     }
 
     function restartGame() {
+      sounds.stopAllVoiceAndDeathAudios();
       gameOverModal.style.display = 'none';
       state = STATE.PLAYING;
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
@@ -1994,6 +1996,13 @@
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
     document.getElementById('btnRestartGame')?.addEventListener('click', restartGame);
     
+    // Interrompe áudios ao navegar para Badges ou Início
+    document.querySelectorAll('.btn-pixel-badges, .btn-pixel-home, nav a').forEach(el => {
+      el.addEventListener('click', () => {
+        sounds.stopAllVoiceAndDeathAudios();
+      });
+    });
+
     document.getElementById('btnShareScore')?.addEventListener('click', () => {
       const text = `Fiz ${score} picanhas no Flappy Lula Simulator! Venha bater meu recorde: ${window.location.href}`;
       if (navigator.clipboard) {
@@ -2004,6 +2013,8 @@
     });
 
     window.addEventListener('keydown', e => {
+      // Permite digitação livre em todos os campos de texto e modais
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
       if (e.code === 'Space' || e.code === 'ArrowUp') {
         e.preventDefault();
         if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
@@ -2015,7 +2026,7 @@
     });
 
     const onUserTouch = (e) => {
-      if (e.target.closest('button, a, input, #playerProfileBadge, .game-over-container, .modal-card, .start-card, .nav-right-group')) return;
+      if (e.target.closest('button, a, input, textarea, #playerProfileBadge, .game-over-container, .modal-card, .start-card, .nav-right-group')) return;
       e.preventDefault();
       if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
         restartGame();

@@ -229,6 +229,8 @@ export class Character {
 
   setupControls() {
     window.addEventListener('keydown', (e) => {
+      // Nunca intercepta teclas se o usuário estiver digitando em um campo de texto ou modal
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
       if (this.isDead) return;
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') { e.preventDefault(); this.moveLeft(); }
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') { e.preventDefault(); this.moveRight(); }
