@@ -28,21 +28,33 @@ export function sanitizeMessage(text, maxLen = 500) {
   return text.replace(/<[^>]*>?/gm, '').trim().slice(0, maxLen);
 }
 
-// 4. Hash Criptográfico SHA-256 com Salt para Senhas (Nunca trafega nem armazena senha pura)
-export async function hashPassword(password) {
+// 4. Gerador de Salt Criptográfico Único por Usuário (16 bytes = 32 caracteres hexadecimais)
+export function generateSalt(len = 16) {
+  const bytes = new Uint8Array(len);
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < len; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// 5. Hash Criptográfico SHA-256 com Salt Individual (Nunca trafega nem armazena senha pura)
+export async function hashPassword(password, salt = 'lula_simulator_sec_salt_2026_') {
   if (!password) return '';
-  const salt = 'lula_simulator_sec_salt_2026_';
+  const effectiveSalt = salt || 'lula_simulator_sec_salt_2026_';
   const encoder = new TextEncoder();
-  const data = encoder.encode(salt + password);
-  if (crypto && crypto.subtle) {
+  const data = encoder.encode(effectiveSalt + password);
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
   // Fallback seguro simples se crypto.subtle não estiver disponível
   let h = 0x811c9dc5;
-  for (let i = 0; i < password.length; i++) {
-    h ^= password.charCodeAt(i);
+  const fullStr = effectiveSalt + password;
+  for (let i = 0; i < fullStr.length; i++) {
+    h ^= fullStr.charCodeAt(i);
     h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
   }
   return (h >>> 0).toString(16);

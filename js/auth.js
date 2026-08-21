@@ -1,6 +1,6 @@
 // js/auth.js — Sistema de Contas, Nomes de Jogador Personalizados e Persistência Cloud de Recordes e Picanhas
 import { firebaseConfig } from './firebase-config.js';
-import { escapeHTML, hashPassword } from './security.js';
+import { escapeHTML, hashPassword, generateSalt } from './security.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -182,7 +182,7 @@ class AuthManager {
     return { success: true, user: userObj };
   }
 
-  // 2. CRIAR CONTA PROTEGIDA COM PALAVRA-CHAVE
+  // 2. CRIAR CONTA PROTEGIDA COM PALAVRA-CHAVE E SALT INDIVIDUAL
   async register(username, password) {
     const cleanName = (username || '').trim();
     const cleanPass = (password || '').trim();
@@ -206,7 +206,7 @@ class AuthManager {
       const res = await fetch(checkUrl);
       if (res.ok) {
         const doc = await res.json();
-        const hasPassword = doc.fields?.hasPassword?.booleanValue || !!doc.fields?.password?.stringValue;
+        const hasPassword = doc.fields?.hasPassword?.booleanValue;
         if (hasPassword) {
           return { success: false, error: `O nome "${cleanName}" já possui senha no banco! Escolha outro nome ou faça login.` };
         }
@@ -217,11 +217,14 @@ class AuthManager {
     const prevFlappy = localDB[normalizedName]?.flappyScore || parseInt(localStorage.getItem('lula_best') || '0', 10);
     const prevRunner = localDB[normalizedName]?.runnerScore || parseInt(localStorage.getItem('run_best') || '0', 10);
 
-    const passHash = await hashPassword(cleanPass);
+    // 1. Gera salt único aleatório por usuário (16 bytes = 32 hex chars)
+    const salt = generateSalt(16);
+    const passHash = await hashPassword(cleanPass, salt);
 
     const userObj = {
       username: cleanName,
       passwordHash: passHash,
+      passwordSalt: salt,
       hasPassword: true,
       flappyScore: prevFlappy,
       runnerScore: prevRunner,
@@ -232,12 +235,12 @@ class AuthManager {
     localDB[normalizedName] = userObj;
     this.saveLocalUsersDB(localDB);
 
+    // 2. Grava perfil público no Firestore (SEM hash nem salt)
     try {
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const payload = {
+      const publicDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
+      const publicPayload = {
         fields: {
           username: { stringValue: cleanName },
-          passwordHash: { stringValue: passHash },
           hasPassword: { booleanValue: true },
           flappyScore: { integerValue: prevFlappy.toString() },
           runnerScore: { integerValue: prevRunner.toString() },
@@ -245,18 +248,53 @@ class AuthManager {
           createdAt: { timestampValue: userObj.createdAt }
         }
       };
-      fetch(docUrl, {
+      fetch(publicDocUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(publicPayload)
       }).catch(() => {});
     } catch (e) {}
+
+    // 3. Grava credenciais na subcoleção privada lula_users_v2/{userId}/private/credentials
+    try {
+      const privDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
+      const privPayload = {
+        fields: {
+          passwordHash: { stringValue: passHash },
+          passwordSalt: { stringValue: salt },
+          hasPassword: { booleanValue: true },
+          createdAt: { timestampValue: userObj.createdAt }
+        }
+      };
+      fetch(privDocUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(privPayload)
+      }).catch(() => {});
+    } catch (e) {}
+
+    // 4. Sincroniza via API Serverless
+    try {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          username: cleanName,
+          passwordHash: passHash,
+          passwordSalt: salt,
+          flappyScore: prevFlappy,
+          runnerScore: prevRunner,
+          totalPicanhas: localPicanhas
+        })
+      }).catch(() => {});
+    } catch(e) {}
 
     this.setCurrentUser(userObj);
     return { success: true, user: userObj };
   }
 
-  // 3. LOGIN COM NOME E PALAVRA-CHAVE
+  // 3. LOGIN COM NOME E PALAVRA-CHAVE (COM SUPORTE A SALT E MIGRAÇÃO AUTOMÁTICA)
   async login(username, password) {
     const cleanName = (username || '').trim();
     const cleanPass = (password || '').trim();
@@ -266,43 +304,93 @@ class AuthManager {
       return { success: false, error: 'Preencha o nome e a palavra-chave!' };
     }
 
-    const passHash = await hashPassword(cleanPass);
     const localDB = this.getLocalUsersDB();
-    let userObj = localDB[normalizedName];
 
-    // Busca no Firestore
+    // 1. Tenta autenticação direta via API Serverless Segura
     try {
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const res = await fetch(docUrl);
-      if (res.ok) {
-        const doc = await res.json();
-        const remotePicanhas = parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10);
-        const remoteFlappy = parseInt(doc.fields?.flappyScore?.integerValue || '0', 10);
-        const remoteRunner = parseInt(doc.fields?.runnerScore?.integerValue || '0', 10);
-
-        userObj = {
-          username: doc.fields?.username?.stringValue || cleanName,
-          passwordHash: doc.fields?.passwordHash?.stringValue || doc.fields?.password?.stringValue || userObj?.passwordHash || '',
-          hasPassword: doc.fields?.hasPassword?.booleanValue ?? true,
-          flappyScore: Math.max(remoteFlappy, userObj?.flappyScore || 0),
-          runnerScore: Math.max(remoteRunner, userObj?.runnerScore || 0),
-          totalPicanhas: Math.max(remotePicanhas, userObj?.totalPicanhas || 0),
-          createdAt: doc.fields?.createdAt?.timestampValue || new Date().toISOString()
-        };
-        localDB[normalizedName] = userObj;
-        this.saveLocalUsersDB(localDB);
+      const apiRes = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', username: cleanName, password: cleanPass })
+      });
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (data.success && data.user) {
+          const userObj = {
+            ...(localDB[normalizedName] || {}),
+            ...data.user
+          };
+          localDB[normalizedName] = userObj;
+          this.saveLocalUsersDB(localDB);
+          this.setCurrentUser(userObj);
+          return { success: true, user: userObj };
+        }
+      } else if (apiRes.status === 401) {
+        return { success: false, error: 'Palavra-chave incorreta! Tente novamente.' };
       }
     } catch (e) {}
+
+    // 2. Fallback de verificação local / legada
+    let userObj = localDB[normalizedName];
+
+    // Busca dados públicos se não estiver no local
+    if (!userObj) {
+      try {
+        const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
+        const res = await fetch(docUrl);
+        if (res.ok) {
+          const doc = await res.json();
+          userObj = {
+            username: doc.fields?.username?.stringValue || cleanName,
+            hasPassword: doc.fields?.hasPassword?.booleanValue ?? true,
+            flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
+            runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
+            totalPicanhas: parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10),
+            createdAt: doc.fields?.createdAt?.timestampValue || new Date().toISOString()
+          };
+        }
+      } catch (e) {}
+    }
 
     if (!userObj || !userObj.hasPassword) {
       return { success: false, error: `Usuário "${cleanName}" não possui senha cadastrada! Você pode jogar diretamente ou criar uma senha na aba "Criar Conta".` };
     }
 
-    const matchesHash = userObj.passwordHash && (userObj.passwordHash === passHash || userObj.passwordHash === cleanPass);
-    const matchesLegacyPass = userObj.password && (userObj.password === cleanPass || userObj.password === passHash);
+    const salt = userObj.passwordSalt || '';
+    const passHash = await hashPassword(cleanPass, salt);
+    const legacyFixedHash = await hashPassword(cleanPass, 'lula_simulator_sec_salt_2026_');
 
-    if (!matchesHash && !matchesLegacyPass) {
+    const matchesSaltedHash = userObj.passwordHash && userObj.passwordHash === passHash;
+    const matchesLegacyHash = userObj.passwordHash && (userObj.passwordHash === legacyFixedHash || userObj.passwordHash === cleanPass);
+    const matchesPlain = userObj.password && (userObj.password === cleanPass || userObj.password === legacyFixedHash);
+
+    if (!matchesSaltedHash && !matchesLegacyHash && !matchesPlain) {
       return { success: false, error: 'Palavra-chave incorreta! Tente novamente.' };
+    }
+
+    // Se a conta era legada, faz a migração automática gerando salt individual
+    if (!userObj.passwordSalt || matchesLegacyHash || matchesPlain) {
+      const newSalt = generateSalt(16);
+      const newHash = await hashPassword(cleanPass, newSalt);
+      userObj.passwordSalt = newSalt;
+      userObj.passwordHash = newHash;
+      delete userObj.password;
+      localDB[normalizedName] = userObj;
+      this.saveLocalUsersDB(localDB);
+
+      const privUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
+      fetch(privUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            passwordHash: { stringValue: newHash },
+            passwordSalt: { stringValue: newSalt },
+            hasPassword: { booleanValue: true },
+            updatedAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      }).catch(() => {});
     }
 
     this.setCurrentUser(userObj);
