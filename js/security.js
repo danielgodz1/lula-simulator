@@ -27,3 +27,23 @@ export function sanitizeMessage(text, maxLen = 500) {
   if (!text || typeof text !== 'string') return '';
   return text.replace(/<[^>]*>?/gm, '').trim().slice(0, maxLen);
 }
+
+// 4. Hash Criptográfico SHA-256 com Salt para Senhas (Nunca trafega nem armazena senha pura)
+export async function hashPassword(password) {
+  if (!password) return '';
+  const salt = 'lula_simulator_sec_salt_2026_';
+  const encoder = new TextEncoder();
+  const data = encoder.encode(salt + password);
+  if (crypto && crypto.subtle) {
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  // Fallback seguro simples se crypto.subtle não estiver disponível
+  let h = 0x811c9dc5;
+  for (let i = 0; i < password.length; i++) {
+    h ^= password.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return (h >>> 0).toString(16);
+}

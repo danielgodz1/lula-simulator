@@ -2,12 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Verificação de Administrador (Autenticado via Google no Firebase)
+    // 1. Verificação Estrita de Administrador (Autenticado exclusivamente pelos e-mails autorizados)
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.email == 'insanodanieldoublegaming@gmail.com' ||
-        request.auth.token.email == 'danielzin173@gmail.com' ||
-        request.auth.token.firebase.sign_in_provider == 'google.com'
+        request.auth.token.email == 'danielzin173@gmail.com'
       );
     }
 
@@ -19,7 +18,7 @@ service cloud.firestore {
           && val.matches('^[a-zA-Z0-9_\\- .À-ÿ]+$');
     }
 
-    // 3. Sanitização de Textos e Comentários (Sem HTML / Script)
+    // 3. Sanitização de Textos e Mensagens (Sem HTML / Script)
     function isSafeText(val, maxLen) {
       return val is string
           && val.size() <= maxLen
@@ -28,26 +27,53 @@ service cloud.firestore {
           && !val.matches('.*data:text/html.*');
     }
 
-    // 4. Validação de Pontuação Legítima (Anti-Cheating)
-    function isValidScoreEntry() {
-      return isSafeUsername(request.resource.data.player, 2, 30)
-          && request.resource.data.score is int
-          && request.resource.data.score >= 0
-          && request.resource.data.score <= 50000;
+    // 4. Validação de Pontuação Legítima (Sem chaves extras, limites anti-hack)
+    function isValidScoreData() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['player', 'score', 'updatedAt'])
+          && isSafeUsername(d.player, 2, 30)
+          && d.score is int
+          && d.score >= 0
+          && d.score <= 50000;
     }
 
-    // 5. Validação Abrangente de Usuários (Anti-Tampering)
-    function isValidUserDocument() {
-      let data = request.resource.data;
-      return isSafeUsername(data.username, 2, 30)
-          && (!('hasPassword' in data) || data.hasPassword is bool)
-          && (!('password' in data) || (data.password is string && data.password.size() <= 128 && !data.password.matches('.*<[^>]+>.*')))
-          && (!('totalPicanhas' in data) || (data.totalPicanhas is int && data.totalPicanhas >= 0 && data.totalPicanhas <= 1000000))
-          && (!('flappyScore' in data) || (data.flappyScore is int && data.flappyScore >= 0 && data.flappyScore <= 50000))
-          && (!('runnerScore' in data) || (data.runnerScore is int && data.runnerScore >= 0 && data.runnerScore <= 50000))
-          && (!('equippedBadge' in data) || (data.equippedBadge is string && data.equippedBadge.size() <= 60))
-          && (!('selectedChar' in data) || (data.selectedChar is string && data.selectedChar.size() <= 40))
-          && (!('unlockedCharacters' in data) || data.unlockedCharacters is list);
+    // 5. Validação de Usuários (Apenas hashes criptográficos, sem senhas puras, sem chaves extras)
+    function isValidUserData() {
+      let d = request.resource.data;
+      return d.keys().hasOnly([
+        'username', 'hasPassword', 'passwordHash', 'totalPicanhas',
+        'flappyScore', 'runnerScore', 'equippedBadge', 'selectedChar',
+        'unlockedCharacters', 'lastSync', 'updatedAt', 'createdAt'
+      ])
+      && isSafeUsername(d.username, 2, 30)
+      && (!('hasPassword' in d) || d.hasPassword is bool)
+      && (!('passwordHash' in d) || (d.passwordHash is string && d.passwordHash.size() <= 128 && !d.passwordHash.matches('.*<[^>]+>.*')))
+      && (!('totalPicanhas' in d) || (d.totalPicanhas is int && d.totalPicanhas >= 0 && d.totalPicanhas <= 1000000))
+      && (!('flappyScore' in d) || (d.flappyScore is int && d.flappyScore >= 0 && d.flappyScore <= 50000))
+      && (!('runnerScore' in d) || (d.runnerScore is int && d.runnerScore >= 0 && d.runnerScore <= 50000))
+      && (!('equippedBadge' in d) || (d.equippedBadge is string && d.equippedBadge.size() <= 60))
+      && (!('selectedChar' in d) || (d.selectedChar is string && d.selectedChar.size() <= 40))
+      && (!('unlockedCharacters' in d) || d.unlockedCharacters is list);
+    }
+
+    // 6. Validação de Feedbacks
+    function isValidFeedbackData() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'stars', 'comment', 'createdAt'])
+          && isSafeUsername(d.name, 1, 40)
+          && d.stars is int
+          && d.stars >= 1
+          && d.stars <= 5
+          && isSafeText(d.comment, 500);
+    }
+
+    // 7. Validação de Contatos com Verificação de Formato de E-mail
+    function isValidContactData() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'email', 'message', 'createdAt'])
+          && isSafeUsername(d.name, 1, 60)
+          && (d.email is string && d.email.size() <= 100 && d.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'))
+          && isSafeText(d.message, 2000);
     }
 
     // -------------------------------------------------------------
@@ -57,10 +83,10 @@ service cloud.firestore {
     // 1. Placar Flappy Lula
     match /lula_scores_v2/{docId} {
       allow read: if true;
-      allow create: if isValidScoreEntry();
+      allow create: if isValidScoreData();
       // NUNCA permite diminuir ou zerar pontuação existente — somente subir recorde
       allow update: if isAdmin() || (
-        isValidScoreEntry() 
+        isValidScoreData() 
         && request.resource.data.player == resource.data.player
         && request.resource.data.score >= resource.data.score
       );
@@ -71,9 +97,9 @@ service cloud.firestore {
     // 2. Placar Empresário 3D
     match /lula_runner_scores_v2/{docId} {
       allow read: if true;
-      allow create: if isValidScoreEntry();
+      allow create: if isValidScoreData();
       allow update: if isAdmin() || (
-        isValidScoreEntry() 
+        isValidScoreData() 
         && request.resource.data.player == resource.data.player
         && request.resource.data.score >= resource.data.score
       );
@@ -83,9 +109,9 @@ service cloud.firestore {
     // 3. Perfis e Contas de Usuários
     match /lula_users_v2/{userId} {
       allow read: if true;
-      allow create: if isValidUserDocument();
+      allow create: if isValidUserData();
       allow update: if isAdmin() || (
-        isValidUserDocument()
+        isValidUserData()
         && request.resource.data.username == resource.data.username
       );
       allow delete: if isAdmin();
@@ -94,11 +120,7 @@ service cloud.firestore {
     // 4. Feedbacks & Avaliações (Impedir edições/exclusões de terceiros)
     match /lula_feedbacks/{feedbackId} {
       allow read: if true;
-      allow create: if isSafeUsername(request.resource.data.name, 1, 40)
-                    && request.resource.data.stars is int
-                    && request.resource.data.stars >= 1
-                    && request.resource.data.stars <= 5
-                    && isSafeText(request.resource.data.comment, 500);
+      allow create: if isValidFeedbackData();
       // Somente o Administrador pode editar ou remover feedbacks
       allow update, delete: if isAdmin();
     }
@@ -106,9 +128,7 @@ service cloud.firestore {
     // 5. Mensagens de Contato (100% Privadas para o Administrador)
     match /lula_contatos/{contactId} {
       allow read: if isAdmin();
-      allow create: if isSafeUsername(request.resource.data.name, 1, 60)
-                    && request.resource.data.email is string
-                    && isSafeText(request.resource.data.message, 2000);
+      allow create: if isValidContactData();
       allow update, delete: if isAdmin();
     }
   }

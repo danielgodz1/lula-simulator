@@ -1,6 +1,6 @@
 // js/auth.js — Sistema de Contas, Nomes de Jogador Personalizados e Persistência Cloud de Recordes e Picanhas
 import { firebaseConfig } from './firebase-config.js';
-import { escapeHTML } from './security.js';
+import { escapeHTML, hashPassword } from './security.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -217,9 +217,11 @@ class AuthManager {
     const prevFlappy = localDB[normalizedName]?.flappyScore || parseInt(localStorage.getItem('lula_best') || '0', 10);
     const prevRunner = localDB[normalizedName]?.runnerScore || parseInt(localStorage.getItem('run_best') || '0', 10);
 
+    const passHash = await hashPassword(cleanPass);
+
     const userObj = {
       username: cleanName,
-      password: cleanPass,
+      passwordHash: passHash,
       hasPassword: true,
       flappyScore: prevFlappy,
       runnerScore: prevRunner,
@@ -235,7 +237,7 @@ class AuthManager {
       const payload = {
         fields: {
           username: { stringValue: cleanName },
-          password: { stringValue: cleanPass },
+          passwordHash: { stringValue: passHash },
           hasPassword: { booleanValue: true },
           flappyScore: { integerValue: prevFlappy.toString() },
           runnerScore: { integerValue: prevRunner.toString() },
@@ -264,6 +266,7 @@ class AuthManager {
       return { success: false, error: 'Preencha o nome e a palavra-chave!' };
     }
 
+    const passHash = await hashPassword(cleanPass);
     const localDB = this.getLocalUsersDB();
     let userObj = localDB[normalizedName];
 
@@ -279,7 +282,7 @@ class AuthManager {
 
         userObj = {
           username: doc.fields?.username?.stringValue || cleanName,
-          password: doc.fields?.password?.stringValue || userObj?.password || '',
+          passwordHash: doc.fields?.passwordHash?.stringValue || doc.fields?.password?.stringValue || userObj?.passwordHash || '',
           hasPassword: doc.fields?.hasPassword?.booleanValue ?? true,
           flappyScore: Math.max(remoteFlappy, userObj?.flappyScore || 0),
           runnerScore: Math.max(remoteRunner, userObj?.runnerScore || 0),
@@ -295,7 +298,10 @@ class AuthManager {
       return { success: false, error: `Usuário "${cleanName}" não possui senha cadastrada! Você pode jogar diretamente ou criar uma senha na aba "Criar Conta".` };
     }
 
-    if (userObj.password !== cleanPass) {
+    const matchesHash = userObj.passwordHash && (userObj.passwordHash === passHash || userObj.passwordHash === cleanPass);
+    const matchesLegacyPass = userObj.password && (userObj.password === cleanPass || userObj.password === passHash);
+
+    if (!matchesHash && !matchesLegacyPass) {
       return { success: false, error: 'Palavra-chave incorreta! Tente novamente.' };
     }
 
