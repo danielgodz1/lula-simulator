@@ -109,52 +109,47 @@ export class ObstacleManager {
     return new THREE.CanvasTexture(canvas);
   }
 
-  // 2. SPAWN INTELIGENTE DE OBSTÁCULOS COM ESPAÇAMENTO SEGURO
+  // 2. SPAWN INTELIGENTE DE OBSTÁCULOS COM ESPAÇAMENTO SEGURO E SEM BLOQUEIO TRIPLO
   spawnSegmentEntities(parent, segZ, segmentLength = 85) {
-    // Espaçamento generoso entre obstáculos (apenas 2 zonas por segmento para evitar empilhamento)
-    const spawnPoints = [-segmentLength / 2 + 20, -segmentLength / 2 + 58];
+    // Espaçamento generoso entre obstáculos (2 zonas bem distribuídas)
+    const spawnPoints = [-segmentLength / 2 + 22, -segmentLength / 2 + 62];
 
-    spawnPoints.forEach((localZ, idx) => {
+    spawnPoints.forEach((localZ) => {
       const worldZ = segZ + localZ;
       
-      // Escolhe 1 faixa para obstáculo principal, garantindo 2 faixas livres
+      // Escolhe exatamente 1 faixa para obstáculo principal, garantindo 2 FAIXAS 100% LIVRES
       const obstacleLane = Math.floor(Math.random() * 3);
       const freeLane1 = (obstacleLane + 1) % 3;
       const freeLane2 = (obstacleLane + 2) % 3;
 
       const rand = Math.random();
 
-      // Alterna os tipos de obstáculos de forma equilibrada
-      if (rand < 0.35) {
+      // Alterna os tipos de obstáculos (Nunca gera 2 ou 3 trens bloqueando tudo)
+      if (rand < 0.38) {
         // CLT 44H (Pode pular por cima)
         this.createCLT(parent, LANES[obstacleLane], localZ, worldZ);
-      } else if (rand < 0.60) {
+      } else if (rand < 0.68) {
         // Cartão Bolsa / Auxílio (Pode pular por cima)
         if (Math.random() > 0.5) {
           this.createBolsaFamilia(parent, LANES[obstacleLane], localZ, worldZ);
         } else {
           this.createAuxilio(parent, LANES[obstacleLane], localZ, worldZ);
         }
-      } else if (rand < 0.82) {
-        // Trem de Metrô com rampa e moedas no teto
+      } else if (rand < 0.88) {
+        // Trem de Metrô único com rampa e moedas no teto
         this.createMetroTrain(parent, LANES[obstacleLane], localZ, worldZ);
       } else {
         // Varal de Roupas (Exige agachar/slide)
         this.createClothesline(parent, LANES[obstacleLane], localZ, worldZ);
       }
 
-      // Ocasionalmente coloca um segundo obstáculo pulável em uma das faixas livres, mantendo SEMPRE 1 faixa 100% aberta
-      if (Math.random() < 0.30 && rand >= 0.35) {
-        this.createCLT(parent, LANES[freeLane1], localZ, worldZ);
-      } else {
-        // Trilha de moedas guiando o jogador pela faixa segura
-        this.spawnCoinTrack(parent, LANES[freeLane1], localZ - 6, worldZ - 6);
-      }
+      // Faixa livre 1: Trilha de moedas para conduzir o jogador
+      this.spawnCoinTrack(parent, LANES[freeLane1], localZ - 6, worldZ - 6);
 
-      // Picanha ou Power-up na outra faixa livre
+      // Faixa livre 2: Picanha / Power-up ou Moedas (Totalmente desimpedida)
       if (Math.random() < 0.40) {
         this.spawnPicanha(parent, LANES[freeLane2], localZ, worldZ);
-      } else if (Math.random() < 0.22) {
+      } else if (Math.random() < 0.25) {
         this.spawnPowerup(parent, LANES[freeLane2], localZ + 4, worldZ + 4);
       } else {
         this.spawnCoinTrack(parent, LANES[freeLane2], localZ - 6, worldZ - 6);
@@ -493,11 +488,11 @@ export class ObstacleManager {
         const rampZ = obs.z - trainHalfDepth;
 
         // Se estiver alinhado com a largura do trem
-        if (dx < (obs.width / 2 + 0.18)) {
+        if (dx < (obs.width / 2 + 0.15)) {
           // Dentro do comprimento do corpo do trem
-          if (dz < (trainHalfDepth - 0.3)) {
+          if (dz < (trainHalfDepth - 0.4)) {
             // Se estiver em cima do teto ou descendo de um salto
-            if (py >= 2.3 || (player.isJumping && py >= 1.6 && player.jumpVelocity <= 0)) {
+            if (py >= 1.8 || (player.isJumping && py >= 1.3 && player.jumpVelocity <= 0)) {
               targetGroundY = 2.9; // Anda suavemente no teto do trem!
               continue;
             } else {
@@ -507,17 +502,19 @@ export class ObstacleManager {
             }
           }
           // Na rampa traseira do trem
-          else if (Math.abs(rampZ - pz) < 1.8) {
+          else if (Math.abs(rampZ - pz) < 2.0) {
             targetGroundY = 2.9;
             continue;
           }
         }
       } else {
         // Obstáculos normais (CLT, Bolsa Família, Auxílio, Varal)
-        // Hitbox horizontal justa: 0.75m para nunca colidir se o jogador estiver em outra faixa
-        if (dz < (obs.depth / 2 + 0.30) && dx < (obs.width / 2 - 0.15)) {
-          if (obs.canJumpOver && py >= (obs.height - 0.25)) continue;
-          if (obs.canSlideUnder && player.isSliding) continue;
+        // Hitbox horizontal justa: 0.65m para nunca colidir se o jogador estiver em outra faixa
+        if (dz < (obs.depth / 2 + 0.20) && dx < (obs.width / 2 - 0.22)) {
+          // Se estiver no ar pulando por cima (tolerância generosa anti-arrasto)
+          if (obs.canJumpOver && (py >= 0.70 || (player.isJumping && py >= 0.45))) continue;
+          // Se estiver agachado / deslizando
+          if (obs.canSlideUnder && (player.isSliding || py <= 0.45)) continue;
 
           onCrash(obs);
           return;

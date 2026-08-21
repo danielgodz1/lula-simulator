@@ -17,12 +17,12 @@ export class Character {
     this.z = 0;
     this.groundY = 0;
 
-    // Física e Salto Refinado (Snappy & Ágil como Subway Surfers)
+    // Física e Salto Refinado (Salto Alto, Suave e Sem Falso-Arrasto)
     this.isJumping = false;
     this.jumpVelocity = 0;
-    this.gravity = -42; // Gravidade ágil
-    this.fallMultiplier = 1.35; // Queda mais rápida para evitar sensação de "flutuar"
-    this.jumpForce = 15.2; // Altura ideal para pular sobre CLT/Bolsa e alcançar moedas no ar (~2.7m a 3.1m)
+    this.gravity = -38; // Gravidade calibrada para arco de pulo perfeito
+    this.fallMultiplier = 1.18; // Queda natural sem puxar violentamente para baixo
+    this.jumpForce = 17.2; // Altura generosa (~3.5m) para saltar facilmente por cima de qualquer barreira
 
     // Assistentes de Salto (Coyote Time & Buffer)
     this.jumpBufferTimer = 0;
@@ -30,7 +30,7 @@ export class Character {
 
     this.isSliding = false;
     this.slideTimer = 0;
-    this.slideDuration = 0.55;
+    this.slideDuration = 0.58;
 
     this.isDead = false;
     this.deathAnimTime = 0;

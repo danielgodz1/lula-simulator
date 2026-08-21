@@ -352,6 +352,62 @@ class AudioManager {
     } catch (e) {}
   }
 
+  // 10. ÁUDIOS CUSTOMIZADOS DO JOGO (MP3 / MPEG)
+  playBrasilIntro() {
+    if (this.isMuted) return;
+    try {
+      const audio = new Audio('audios/brasilbrasil.mp3');
+      audio.volume = 0.20;
+      audio.play().catch(() => {
+        const alt = new Audio('audios/brasilbrasi.mp3');
+        alt.volume = 0.20;
+        alt.play().catch(() => {});
+      });
+    } catch (e) {}
+  }
+
+  playBestaEnjaulada() {
+    if (this.isMuted) return;
+    try {
+      if (this.currentBestaAudio) {
+        this.currentBestaAudio.pause();
+      }
+      this.currentBestaAudio = new Audio('audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
+      this.currentBestaAudio.volume = 0.70;
+      this.currentBestaAudio.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  playLulaDeathAudio() {
+    if (this.isMuted) return;
+    try {
+      const audio = new Audio('audios/ehsoissoacabou.mpeg');
+      audio.volume = 0.75;
+      audio.play().catch(() => {
+        const alt = new Audio('audios/ehsoissoacabou.mp3');
+        alt.volume = 0.75;
+        alt.play().catch(() => {
+          this.playLulaNeymarDeath();
+        });
+      });
+    } catch (e) {
+      this.playLulaNeymarDeath();
+    }
+  }
+
+  playNoAuraDeathAudio() {
+    if (this.isMuted) return;
+    try {
+      const audio = new Audio('audios/voce-nao-tem-aura.mp3');
+      audio.volume = 0.75;
+      audio.play().catch(() => {
+        this.playLulaNeymarDeath();
+      });
+    } catch (e) {
+      this.playLulaNeymarDeath();
+    }
+  }
+
   // Síntese de fala opcional (SpeechSynthesis API)
   speak(text, rate = 1.0, pitch = 1.0) {
     if (this.isMuted || !window.speechSynthesis) return;

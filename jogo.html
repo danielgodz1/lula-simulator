@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
-  <!-- Estilos Globais Organizados -->
+  <!-- Estilos Globais -->
   <link rel="stylesheet" href="css/styles.css">
 
   <style>
@@ -128,7 +128,7 @@
       line-height: 1;
     }
 
-    /* BANNER DE AVISO DE CADEIA / LIBERDADE */
+    /* BANNER DE AVISO DE CADEIA / LIBERDADE / POWERUPS */
     #prisonBanner {
       position: absolute;
       top: 60px;
@@ -499,7 +499,7 @@
     }
 
     .btn-pixel-play {
-      flex: 1.5;
+      flex: 1.4;
       background: #22c55e;
       border: 2px solid #14532d;
       color: #fff;
@@ -542,6 +542,23 @@
       cursor: pointer;
       text-decoration: none;
       box-shadow: 0 3px 0px #713f12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-pixel-home {
+      flex: 1;
+      background: #475569;
+      border: 2px solid #1e293b;
+      color: #fff;
+      font-family: 'Press Start 2P', 'Bangers', cursive;
+      font-size: 8px;
+      padding: 8px 4px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 3px 0px #1e293b;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -650,7 +667,7 @@
 
       #prisonBanner {
         top: 46px;
-        font-size: 14px;
+        font-size: 13px;
         padding: 4px 12px;
       }
 
@@ -666,9 +683,9 @@
         padding: 4px 6px;
       }
 
-      .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges {
-        font-size: 7.5px;
-        padding: 7px 3px;
+      .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges, .btn-pixel-home {
+        font-size: 7px;
+        padding: 7px 2px;
       }
     }
 
@@ -723,7 +740,7 @@
       <canvas id="gameCanvas"></canvas>
     </div>
 
-    <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU -->
+    <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU/POWERUPS -->
     <div id="prisonBanner">🚨 13 PONTOS: MODO CADEIA ATIVADO!</div>
 
     <!-- HUD OVERLAY SUPERIOR COMPACTO (1 ÚNICA LINHA LIMPA) -->
@@ -891,6 +908,9 @@
           <a href="conquistas.html" class="btn-pixel-badges">
             🏅 BADGES
           </a>
+          <a href="index.html" class="btn-pixel-home">
+            🏠 INÍCIO
+          </a>
         </div>
       </div>
     </div>
@@ -936,7 +956,7 @@
     let pendingCharSelect = activeCharacter;
 
     const gameState = {
-      HITBOX_R: 0.026,
+      HITBOX_R: 0.024,
       GAP_RATIO: 0.42,
       SPEED_MULT: 1.0,
       EXTRA_SCORE_PER_PIPE: 1,
@@ -968,27 +988,10 @@
     }
 
     let dpr = 1;
+    let LR_RATIO = 0.044;
 
     function isFullscreenActive() {
       return !!(document.fullscreenElement || document.webkitFullscreenElement);
-    }
-
-    // CACHE DE GRADIENTES PARA MÁXIMA PERFORMANCE (Zero Alocação no Loop)
-    let cachedBgGrad = null;
-    let cachedJailGrad = null;
-    let cachedPipeGrad = null;
-    let cachedJailPipeGrad = null;
-
-    function createCachedGradients(W, H) {
-      cachedBgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      cachedBgGrad.addColorStop(0, '#4ec0ca');
-      cachedBgGrad.addColorStop(0.65, '#86d1cc');
-      cachedBgGrad.addColorStop(1, '#a6e2dc');
-
-      cachedJailGrad = ctx.createLinearGradient(0, 0, 0, H);
-      cachedJailGrad.addColorStop(0, '#0f172a');
-      cachedJailGrad.addColorStop(0.5, '#1e293b');
-      cachedJailGrad.addColorStop(1, '#090d16');
     }
 
     function calcSize() {
@@ -1010,22 +1013,22 @@
         W = Math.round(H * 0.70);
       }
 
-      // DPR Otimizado: 1.0 no mobile para 60FPS fluidos; 1.5 no PC
       dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.25) : Math.min(window.devicePixelRatio || 1, 1.5);
+      
+      // Ícone do jogador ligeiramente menor no celular para melhor visão dos canos
+      LR_RATIO = isMobile ? 0.035 : 0.044;
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
 
-      createCachedGradients(W, H);
-
       return { W, H };
     }
 
     let { W, H } = calcSize();
 
-    // CACHE DE SPRITES DOS PERSONAGENS
+    // SPRITES DOS PERSONAGENS
     const characterSprites = {};
     CHARACTERS.forEach(char => {
       const img = new Image();
@@ -1033,12 +1036,14 @@
       characterSprites[char.id] = img;
     });
 
+    const lulaIconImg = new Image();
+    lulaIconImg.src = 'img/lula.png';
+
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
     let BASE_PIPE_SPEED = 2.2;
-    let PW_RATIO   = 0.14;
-    let GH_RATIO   = 0.14;
-    let LR_RATIO   = 0.046;
+    let PW_RATIO   = 0.145;
+    let GH_RATIO   = 0.16;
     let SPAWN_FREQ = 120;
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
@@ -1047,14 +1052,13 @@
     let bestScore = parseInt(localStorage.getItem('lula_best') || '0', 10);
     let frameCount = 0;
     let groundScroll = 0;
-    let pipes = [], picanhas = [], likesBonus = [];
+    let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];
     let isPrisonMode = false;
+    let hasPlayedBesta = false;
 
-    const clouds = [
-      { x: 40, y: 40, scale: 0.8, speed: 0.35 },
-      { x: 220, y: 70, scale: 1.1, speed: 0.5 },
-      { x: 380, y: 35, scale: 0.7, speed: 0.3 }
-    ];
+    // Power-up Nikolas
+    let nikolasSlowTimer = 0;
+    let nikolasTripleTimer = 0;
 
     const prisoners = [
       { x: 40, speed: 0.85, dir: 1, bob: 0 },
@@ -1099,7 +1103,7 @@
       prisonBanner.classList.add('show');
       setTimeout(() => {
         prisonBanner.classList.remove('show');
-      }, 2200);
+      }, 2500);
     }
 
     function renderCharacterGrid() {
@@ -1270,12 +1274,37 @@
           collected: false
         });
       }
+
+      // Nikolas Floating Lula Icon Spawn (Ao passar dos 200 pontos para desacelerar e triplicar)
+      if (activeCharacter.id === 'nikolas' && score >= 200 && Math.random() < 0.35 && floatingLulaIcons.length === 0) {
+        floatingLulaIcons.push({
+          x: W + 120,
+          y: topH + GAP / 2,
+          collected: false,
+          bob: 0
+        });
+      }
     }
 
-    function updatePipes() {
+    function updatePipes(dt) {
       if (state !== STATE.PLAYING) return;
       
-      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT);
+      // Multiplicador Nikolas (200 pts -> 1.5x, 500 pts -> 2.0x)
+      let nikolasSpeedMult = 1.0;
+      if (activeCharacter.id === 'nikolas') {
+        if (score >= 500) nikolasSpeedMult = 2.0;
+        else if (score >= 200) nikolasSpeedMult = 1.5;
+
+        if (nikolasSlowTimer > 0) {
+          nikolasSlowTimer -= dt;
+          nikolasSpeedMult = 1.0; // Desacelera para normal
+        }
+        if (nikolasTripleTimer > 0) {
+          nikolasTripleTimer -= dt;
+        }
+      }
+
+      let currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * nikolasSpeedMult;
 
       if (frameCount % Math.round(SPAWN_FREQ / (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT)) === 0) {
         spawnPipe();
@@ -1286,12 +1315,24 @@
         p.x -= currentSpeed;
         if (!p.scored && p.x + PW < lula.x) {
           p.scored = true;
-          const pointsEarned = gameState.EXTRA_SCORE_PER_PIPE;
+          
+          let pointsEarned = gameState.EXTRA_SCORE_PER_PIPE;
+          if (nikolasTripleTimer > 0) {
+            pointsEarned *= 3; // Picanha Tripla do Nikolas!
+          }
+
           score += pointsEarned;
           CharacterInventory.addPicanhas(pointsEarned);
 
           if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
           spawnPicanhas(p.x + PW / 2);
+
+          // ÁUDIO HOMEM MÁQUINA BESTA ENJAULADA AO PASSAR DE 100 PONTOS
+          if (score >= 100 && !hasPlayedBesta) {
+            hasPlayedBesta = true;
+            try { sounds.playBestaEnjaulada(); } catch(e){}
+            showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA, UMA BESTA ENJAULADA!', false);
+          }
 
           if (gameState.isTurboAllowed) {
             gameState.comboCount++;
@@ -1309,18 +1350,30 @@
             isPrisonMode = true;
             document.body.classList.add('prison-mode');
             showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO!`, true);
-            try { sounds.speak(`${score} Pontos! Entrou na custódia companheiro!`, 1.0, 1.1); } catch(e){}
           } else if (!shouldBePrison && isPrisonMode) {
             isPrisonMode = false;
             document.body.classList.remove('prison-mode');
             showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! LIBERDADE!`, false);
-            try { sounds.speak(`${score} Pontos! Liberdade provisória concedida!`, 1.0, 1.1); } catch(e){}
           }
           
           try { sounds.playPicanhaMemeSound(); } catch(e){}
         }
       }
       pipes = pipes.filter(p => p.x + PW > -10);
+
+      // Ícones do Lula Voando para o Nikolas pegar
+      for (const fl of floatingLulaIcons) {
+        fl.x -= currentSpeed * 0.9;
+        fl.bob = Math.sin(frameCount * 0.1) * 6;
+        if (!fl.collected && Math.hypot(lula.x - fl.x, lula.y - (fl.y + fl.bob)) < 32) {
+          fl.collected = true;
+          nikolasSlowTimer = 8.0; // Desacelera 8s
+          nikolasTripleTimer = 8.0; // Triplica pontos por 8s
+          showBannerAlert('⚡ DESACELERAÇÃO ATIVA & PONTOS TRIPLOS 3X! 🥩🥩🥩', false);
+          try { sounds.playPowerup(); } catch(e){}
+        }
+      }
+      floatingLulaIcons = floatingLulaIcons.filter(fl => fl.x > -40 && !fl.collected);
 
       for (const lk of likesBonus) {
         lk.x -= currentSpeed;
@@ -1359,16 +1412,6 @@
       picanhas = picanhas.filter(p => p.alpha > 0);
     }
 
-    function updateClouds() {
-      for (const c of clouds) {
-        c.x -= c.speed;
-        if (c.x < -100) {
-          c.x = W + 30 + Math.random() * 50;
-          c.y = 25 + Math.random() * (H * 0.25);
-        }
-      }
-    }
-
     function updatePrisoners() {
       for (const pr of prisoners) {
         pr.x += pr.speed * pr.dir;
@@ -1401,51 +1444,209 @@
       return false;
     }
 
-    function drawCloud(cx, cy, scale) {
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 16 * scale, cy - 8 * scale, 22 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 36 * scale, cy, 18 * scale, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    // ==========================================
+    // RENDERIZAÇÃO PIXEL ART IDÊNTICA À IMAGEM
+    // ==========================================
 
-    function drawCitySkyline(GH) {
-      const horizonY = H - GH;
-      ctx.fillStyle = '#86d1cc';
+    function drawPixelCity(horizonY) {
+      ctx.fillStyle = '#80cbe5';
       
-      const bWidths = [36, 44, 28, 50, 38, 32];
-      const bHeights = [65, 90, 55, 100, 75, 60];
-      let curX = -((groundScroll * 0.3) % 100);
+      const bWidths = [24, 32, 18, 38, 28, 22, 34, 16, 40, 26];
+      const bHeights = [70, 110, 55, 125, 85, 65, 105, 45, 130, 90];
+      let curX = -((groundScroll * 0.2) % 120);
 
-      while (curX < W + 60) {
+      while (curX < W + 80) {
         for (let i = 0; i < bWidths.length; i++) {
           const bw = bWidths[i];
           const bh = bHeights[i];
-          ctx.fillRect(curX, horizonY - bh, bw - 2, bh);
-          curX += bw;
-        }
-      }
+          ctx.fillRect(curX, horizonY - bh, bw, bh);
 
-      ctx.fillStyle = '#55a832';
-      let bushX = -((groundScroll * 0.6) % 80);
-      while (bushX < W + 60) {
-        ctx.beginPath();
-        ctx.arc(bushX + 15, horizonY - 10, 16, 0, Math.PI * 2);
-        ctx.arc(bushX + 35, horizonY - 14, 20, 0, Math.PI * 2);
-        ctx.arc(bushX + 55, horizonY - 10, 16, 0, Math.PI * 2);
-        ctx.fill();
-        bushX += 65;
+          // Antena / Topo em pixel
+          if (i % 3 === 0) {
+            ctx.fillRect(curX + bw / 2 - 1, horizonY - bh - 10, 2, 10);
+          }
+          curX += bw + 3;
+        }
       }
     }
 
-    // DESENHO EM 2D DOS BONECOS 171 PEQUENOS COM 171 NA CABEÇA (SUPER LEVE)
+    function drawPixelBushes(horizonY) {
+      let bushX = -((groundScroll * 0.5) % 110);
+
+      while (bushX < W + 100) {
+        // Arbusto Esquerdo
+        drawSinglePixelBush(bushX + 10, horizonY - 14, 20);
+        // Arbusto Central Maior
+        drawSinglePixelBush(bushX + 44, horizonY - 22, 28);
+        // Arbusto Direito
+        drawSinglePixelBush(bushX + 82, horizonY - 12, 18);
+
+        bushX += 110;
+      }
+    }
+
+    function drawSinglePixelBush(cx, cy, r) {
+      // 1. Contorno Escuro
+      ctx.fillStyle = '#35621a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Base Verde Floresta
+      ctx.fillStyle = '#559c22';
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 3. Meio Verde Vibrante
+      ctx.fillStyle = '#73bf2e';
+      ctx.beginPath();
+      ctx.arc(cx - 2, cy - 3, r * 0.85, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Highlight Amarelo-Limão no Topo
+      ctx.fillStyle = '#b8e963';
+      ctx.beginPath();
+      ctx.arc(cx - 4, cy - 6, r * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawGround(GH) {
+      const groundY = H - GH;
+
+      // 1. Terra / Subsolo Arenoso Quente
+      ctx.fillStyle = isPrisonMode ? '#0f172a' : '#d88e58';
+      ctx.fillRect(0, groundY, W, GH);
+
+      // Padrão de pedras / degraus da terra
+      if (!isPrisonMode) {
+        ctx.fillStyle = '#b8743e';
+        let patchX = -((groundScroll) % 32);
+        while (patchX < W + 40) {
+          ctx.fillRect(patchX + 4, groundY + 16, 8, 4);
+          ctx.fillRect(patchX + 18, groundY + 28, 10, 5);
+          patchX += 32;
+        }
+      }
+
+      // 2. Faixa de Grama Verde Pixelada
+      ctx.fillStyle = isPrisonMode ? '#eab308' : '#73bf2e';
+      ctx.fillRect(0, groundY, W, 10);
+
+      // Linha de Luz no Topo da Grama
+      ctx.fillStyle = isPrisonMode ? '#fef08a' : '#9fe354';
+      ctx.fillRect(0, groundY, W, 2.5);
+
+      // Borda Superior Escura
+      ctx.fillStyle = isPrisonMode ? '#1e293b' : '#2b4d0c';
+      ctx.fillRect(0, groundY, W, 2);
+
+      // Franja de dentes de grama descendo na terra
+      if (!isPrisonMode) {
+        ctx.fillStyle = '#73bf2e';
+        let fringeX = -((groundScroll) % 16);
+        while (fringeX < W + 20) {
+          ctx.fillRect(fringeX, groundY + 10, 4, 4);
+          ctx.fillRect(fringeX + 6, groundY + 10, 6, 6);
+          fringeX += 16;
+        }
+      }
+    }
+
+    function drawPixelPipes(GH) {
+      const PW = W * PW_RATIO;
+      const collarH = 24;
+      const collarExtra = 4;
+
+      for (const p of pipes) {
+        if (isPrisonMode) {
+          // Canos da Prisão de Aço Escuro
+          ctx.fillStyle = '#374151';
+          ctx.fillRect(p.x, 0, PW, p.topH);
+          ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
+
+          ctx.fillStyle = '#1f2937';
+          ctx.fillRect(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
+          ctx.fillRect(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+
+          ctx.strokeStyle = '#111827';
+          ctx.lineWidth = 2.5;
+          ctx.strokeRect(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
+          ctx.strokeRect(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+        } else {
+          // CANOS RETRO RETOS COM FAIXAS DE LUZ (EXATAMENTE COMO NA IMAGEM)
+          
+          // --- CANO SUPERIOR (Caule) ---
+          drawPipeSegment(p.x, 0, PW, p.topH - collarH);
+          // Topo Collar Superior
+          drawPipeCollar(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
+
+          // --- CANO INFERIOR (Collar) ---
+          drawPipeCollar(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+          // Caule Inferior
+          drawPipeSegment(p.x, p.botY + collarH, PW, H - GH - (p.botY + collarH));
+        }
+      }
+    }
+
+    function drawPipeSegment(x, y, w, h) {
+      if (h <= 0) return;
+
+      // 1. Fundo Verde Principal
+      ctx.fillStyle = '#73bf2e';
+      ctx.fillRect(x, y, w, h);
+
+      // 2. Sombra Verde Escura à Direita
+      ctx.fillStyle = '#558022';
+      ctx.fillRect(x + w - 10, y, 10, h);
+
+      // 3. Faixa de Luz Clara (Verde Limão)
+      ctx.fillStyle = '#9ae243';
+      ctx.fillRect(x + 4, y, 8, h);
+
+      // 4. Brilho Puro Branco-Amarelado
+      ctx.fillStyle = '#d4f686';
+      ctx.fillRect(x + 6, y, 3.5, h);
+
+      // 5. Contorno Preto/Verde Escuro Sólido (3px)
+      ctx.strokeStyle = '#10360a';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(x, y, w, h);
+    }
+
+    function drawPipeCollar(x, y, w, h) {
+      // 1. Base
+      ctx.fillStyle = '#73bf2e';
+      ctx.fillRect(x, y, w, h);
+
+      // 2. Sombra Direita
+      ctx.fillStyle = '#558022';
+      ctx.fillRect(x + w - 12, y, 12, h);
+
+      // 3. Faixa de Luz
+      ctx.fillStyle = '#9ae243';
+      ctx.fillRect(x + 5, y, 9, h);
+
+      // 4. Brilho Puro
+      ctx.fillStyle = '#d4f686';
+      ctx.fillRect(x + 7, y, 4, h);
+
+      // 5. Linha de Sombra Inferior
+      ctx.fillStyle = '#3a6015';
+      ctx.fillRect(x, y + h - 3, w, 3);
+
+      // 6. Contorno Preto Sólido
+      ctx.strokeStyle = '#10360a';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, w, h);
+    }
+
     function drawSmall2DPrisoner171(px, py, dir, bob) {
       ctx.save();
       ctx.translate(px, py + bob);
       if (dir === -1) ctx.scale(-1, 1);
 
-      // 1. Plaquinha amarela brilhante "171"
+      // Plaquinha amarela brilhante "171"
       ctx.fillStyle = '#facc15';
       ctx.fillRect(-10, -26, 20, 9);
       ctx.strokeStyle = '#000000';
@@ -1457,7 +1658,7 @@
       ctx.textAlign = 'center';
       ctx.fillText('171', 0, -19);
 
-      // 2. Cabeça do preso
+      // Cabeça do preso
       ctx.fillStyle = '#f5d0a9';
       ctx.beginPath();
       ctx.arc(0, -10, 5, 0, Math.PI * 2);
@@ -1471,27 +1672,22 @@
       ctx.fillRect(-3, -15, 2.5, 4);
       ctx.fillRect(1.5, -15, 2.5, 4);
 
-      // Olho
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(1.5, -11, 1.5, 1.5);
-
-      // 3. Tronco listrado
+      // Tronco listrado
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(-4, -5, 8, 10);
       ctx.strokeRect(-4, -5, 8, 10);
-
       ctx.fillStyle = '#000000';
       ctx.fillRect(-4, -3, 8, 2);
       ctx.fillRect(-4, 1, 8, 2);
 
-      // 4. Pernas
+      // Pernas
       const legOffset = Math.sin(frameCount * 0.25 + px) * 3;
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-2 + legOffset, 12); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(2, 5); ctx.lineTo(2 - legOffset, 12); ctx.stroke();
 
-      // 5. Bola de Ferro
+      // Bola de Ferro
       ctx.fillStyle = '#1e293b';
       ctx.beginPath(); ctx.arc(-11, 11, 3, 0, Math.PI * 2); ctx.fill();
 
@@ -1502,19 +1698,21 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const GH = H * GH_RATIO;
+      const horizonY = H - GH;
 
       if (!isPrisonMode) {
-        ctx.fillStyle = cachedBgGrad || '#4ec0ca';
+        // CÉU AZUL NÍTIDO (DA IMAGEM DE REFERÊNCIA)
+        ctx.fillStyle = '#5ac5dc';
         ctx.fillRect(0, 0, W, H);
 
-        for (const c of clouds) {
-          drawCloud(c.x, c.y, c.scale);
-        }
+        // CIDADE EM PIXEL ART AO FUNDO
+        drawPixelCity(horizonY);
 
-        drawCitySkyline(GH);
+        // ARBUSTOS EM PIXEL ART
+        drawPixelBushes(horizonY);
 
       } else {
-        ctx.fillStyle = cachedJailGrad || '#0f172a';
+        ctx.fillStyle = '#0f172a';
         ctx.fillRect(0, 0, W, H);
 
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
@@ -1533,21 +1731,20 @@
         ctx.fillRect(0, 0, W, 20);
       }
 
-      // CANOS (RENDERIZAÇÃO RÁPIDA E LIMPA)
-      const PW = W * PW_RATIO;
-      for (const p of pipes) {
-        ctx.fillStyle = isPrisonMode ? '#4b5563' : '#73bf2e';
-        ctx.fillRect(p.x, 0, PW, p.topH);
-        ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
+      // CANOS VERDES ESTILIZADOS
+      drawPixelPipes(GH);
 
-        ctx.fillStyle = isPrisonMode ? '#374151' : '#558022';
-        ctx.fillRect(p.x - 4, p.topH - 22, PW + 8, 22);
-        ctx.fillRect(p.x - 4, p.botY, PW + 8, 22);
-
-        ctx.strokeStyle = isPrisonMode ? '#1f2937' : '#2b4d0c';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(p.x - 4, p.topH - 22, PW + 8, 22);
-        ctx.strokeRect(p.x - 4, p.botY, PW + 8, 22);
+      // ÍCONES FLUTUANTES DO LULA (POWER-UP NIKOLAS)
+      for (const fl of floatingLulaIcons) {
+        ctx.save();
+        ctx.translate(fl.x, fl.y + fl.bob);
+        ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffd700'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        if (lulaIconImg.complete) {
+          ctx.drawImage(lulaIconImg, -14, -14, 28, 28);
+        }
+        ctx.restore();
       }
 
       for (const lk of likesBonus) {
@@ -1555,14 +1752,10 @@
         ctx.fillText('💖', lk.x - 12, lk.y + 8);
       }
 
-      if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 24;
+      if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 64;
 
-      // SOLO DO JOGO
-      ctx.fillStyle = isPrisonMode ? '#0f172a' : '#ded895';
-      ctx.fillRect(0, H - GH, W, GH);
-
-      ctx.fillStyle = isPrisonMode ? '#eab308' : '#73bf2e';
-      ctx.fillRect(0, H - GH, W, 12);
+      // CHÃO COM GRAMA E TERRA EM PIXEL ART
+      drawGround(GH);
 
       // BONECOS 171 EM 2D ANDANDO NO CHÃO
       if (isPrisonMode) {
@@ -1625,9 +1818,8 @@
 
       frameCount++;
       lula.update();
-      updatePipes();
+      updatePipes(dt);
       updatePicanhas();
-      updateClouds();
       if (isPrisonMode) updatePrisoners();
 
       if (gameState.isTurboActive) {
@@ -1639,7 +1831,15 @@
 
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
-        try { sounds.playLulaNeymarDeath(); } catch(e){}
+        
+        // REGRAS DE ÁUDIO DE MORTE SOLICITADAS
+        if (activeCharacter.id === 'lula') {
+          try { sounds.playLulaDeathAudio(); } catch(e){}
+        } else if (score < 100) {
+          try { sounds.playNoAuraDeathAudio(); } catch(e){}
+        } else {
+          try { sounds.playLulaNeymarDeath(); } catch(e){}
+        }
 
         if (score > bestScore) {
           bestScore = score;
@@ -1709,13 +1909,13 @@
       if (!listEl) return;
 
       try {
-        const scores = await getTopScores('lula_scores_v2', 5);
+        const scores = await getTopScores('lula_scores_v2', 8);
         if (scores && scores.length > 0) {
           listEl.innerHTML = '';
           scores.forEach((item, i) => {
             const row = document.createElement('div');
             row.className = 'go-lb-row';
-            const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+            const medals = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.'];
             const safePlayer = escapeHTML(item.player || 'Anônimo');
             const safeScore = parseInt(item.score || 0, 10);
             row.innerHTML = `
@@ -1739,13 +1939,18 @@
       if (state === STATE.WAITING) {
         startOverlay.style.display = 'none';
         state = STATE.PLAYING;
-        pipes = []; picanhas = []; likesBonus = []; score = 0;
+        pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
+        hasPlayedBesta = false;
+        nikolasSlowTimer = 0; nikolasTripleTimer = 0;
         applyActiveCharacterModifiers();
         if (scoreHUD) scoreHUD.textContent = `0 🥩`;
         isPrisonMode = false;
         document.body.classList.remove('prison-mode');
         lula.init();
         lula.jump();
+
+        // Áudio Brasil Brasil no início em volume baixo
+        try { sounds.playBrasilIntro(); } catch(e){}
       } else if (state === STATE.PLAYING) {
         lula.jump();
       }
@@ -1754,13 +1959,17 @@
     function restartGame() {
       gameOverModal.style.display = 'none';
       state = STATE.PLAYING;
-      pipes = []; picanhas = []; likesBonus = []; score = 0;
+      pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
+      hasPlayedBesta = false;
+      nikolasSlowTimer = 0; nikolasTripleTimer = 0;
       applyActiveCharacterModifiers();
       if (scoreHUD) scoreHUD.textContent = `0 🥩`;
       isPrisonMode = false;
       document.body.classList.remove('prison-mode');
       lula.init();
       lula.jump();
+
+      try { sounds.playBrasilIntro(); } catch(e){}
     }
 
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
