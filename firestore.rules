@@ -2,12 +2,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Verificação Estrita de Administrador (Autenticado exclusivamente pelos e-mails autorizados)
+    // 1. Verificação Estrita de Administrador (Apenas a conta Google oficial com e-mail verificado)
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.email == 'insanodanieldoublegaming@gmail.com' ||
-        request.auth.token.email == 'danielzin173@gmail.com'
-      );
+      return request.auth != null 
+          && request.auth.token.email == 'insanodanieldoublegaming@gmail.com'
+          && request.auth.token.email_verified == true;
     }
 
     // 2. Sanitização Estrita de Nomes e Nicks (Anti-XSS / Anti-Script Injection)
@@ -18,7 +17,7 @@ service cloud.firestore {
           && val.matches('^[a-zA-Z0-9_\\- .À-ÿ]+$');
     }
 
-    // 3. Sanitização de Textos e Mensagens (Sem HTML / Script)
+    // 3. Sanitização de Textos e Mensagens (Sem tags HTML / Script)
     function isSafeText(val, maxLen) {
       return val is string
           && val.size() <= maxLen
@@ -37,7 +36,7 @@ service cloud.firestore {
           && d.score <= 50000;
     }
 
-    // 5. Validação de Usuários (Apenas hashes criptográficos, sem senhas puras, sem chaves extras)
+    // 5. Validação de Usuários (Apenas hashes criptográficos SHA-256, NUNCA aceita senha em texto puro)
     function isValidUserData() {
       let d = request.resource.data;
       return d.keys().hasOnly([
@@ -45,6 +44,7 @@ service cloud.firestore {
         'flappyScore', 'runnerScore', 'equippedBadge', 'selectedChar',
         'unlockedCharacters', 'lastSync', 'updatedAt', 'createdAt'
       ])
+      && !('password' in d) // Bloqueia terminantemente qualquer envio de senha em texto puro
       && isSafeUsername(d.username, 2, 30)
       && (!('hasPassword' in d) || d.hasPassword is bool)
       && (!('passwordHash' in d) || (d.passwordHash is string && d.passwordHash.size() <= 128 && !d.passwordHash.matches('.*<[^>]+>.*')))
@@ -80,21 +80,19 @@ service cloud.firestore {
     // REGRAS DAS COLEÇÕES COM CONTROLE DE ADMIN E ANTI-TAMPERING
     // -------------------------------------------------------------
 
-    // 1. Placar Flappy Lula
+    // 1. Placar Flappy Lula (Público, sem exclusão ou diminuição de pontuação)
     match /lula_scores_v2/{docId} {
       allow read: if true;
       allow create: if isValidScoreData();
-      // NUNCA permite diminuir ou zerar pontuação existente — somente subir recorde
       allow update: if isAdmin() || (
         isValidScoreData() 
         && request.resource.data.player == resource.data.player
         && request.resource.data.score >= resource.data.score
       );
-      // Somente Administrador autenticado pode excluir
       allow delete: if isAdmin();
     }
 
-    // 2. Placar Empresário 3D
+    // 2. Placar Empresário 3D (Público, sem exclusão ou diminuição)
     match /lula_runner_scores_v2/{docId} {
       allow read: if true;
       allow create: if isValidScoreData();
@@ -106,9 +104,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // 3. Perfis e Contas de Usuários
+    // 3. Perfis e Contas de Usuários (Leitura individual permitida para autenticação; Varredura em massa/Listagem bloqueada)
     match /lula_users_v2/{userId} {
-      allow read: if true;
+      allow get: if true;
+      allow list: if isAdmin(); // Impede invasores de varrerem ou baixarem a lista completa de contas
       allow create: if isValidUserData();
       allow update: if isAdmin() || (
         isValidUserData()
@@ -117,11 +116,10 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // 4. Feedbacks & Avaliações (Impedir edições/exclusões de terceiros)
+    // 4. Feedbacks & Avaliações (Somente Administrador pode editar/excluir)
     match /lula_feedbacks/{feedbackId} {
       allow read: if true;
       allow create: if isValidFeedbackData();
-      // Somente o Administrador pode editar ou remover feedbacks
       allow update, delete: if isAdmin();
     }
 
