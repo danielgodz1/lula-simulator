@@ -1198,18 +1198,15 @@
     btnGoChangeChar?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
     btnCloseCharModal?.addEventListener('click', closeCharacterModal);
 
-    btnEquipChar?.addEventListener('click', () => {
+    btnEquipChar?.addEventListener('click', (e) => {
+      if (e) e.stopPropagation();
       activeCharacter = pendingCharSelect;
       CharacterInventory.setSelectedCharacter(activeCharacter.id);
       applyActiveCharacterModifiers();
       updateEquippedHUD();
-      const shouldRestart = wasGameOverOpenBeforeCharModal || state !== STATE.PLAYING;
       wasGameOverOpenBeforeCharModal = false;
       closeCharacterModal();
-      if (shouldRestart) {
-        if (gameOverModal) gameOverModal.style.display = 'none';
-        handleStart();
-      }
+      restartGame();
     });
 
     let currentDifficulty = 'easy';
@@ -2041,8 +2038,9 @@
     function handleStart() {
       try { sounds.init(); } catch(e){}
 
-      if (state === STATE.WAITING) {
-        startOverlay.style.display = 'none';
+      if (state === STATE.WAITING || state === STATE.DEAD) {
+        if (startOverlay) startOverlay.style.display = 'none';
+        if (gameOverModal) gameOverModal.style.display = 'none';
         state = STATE.PLAYING;
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         hasPlayedBesta = false;
@@ -2063,8 +2061,10 @@
     }
 
     function restartGame() {
+      try { sounds.init(); } catch(e){}
       sounds.stopAllVoiceAndDeathAudios();
-      gameOverModal.style.display = 'none';
+      if (startOverlay) startOverlay.style.display = 'none';
+      if (gameOverModal) gameOverModal.style.display = 'none';
       state = STATE.PLAYING;
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       hasPlayedBesta = false;
