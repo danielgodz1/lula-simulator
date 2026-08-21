@@ -1013,11 +1013,12 @@
         W = Math.round(H * 0.70);
       }
 
-      // Resolução Retina HD máxima (2x / 2.5x) para eliminar embaçamento em celulares e monitores
-      dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+      // Resolução Retina HD máxima (2.0x a 3.0x) para máxima nitidez em telas de PC e celulares
+      dpr = Math.max(window.devicePixelRatio || 1, 2.0);
+      dpr = Math.min(dpr, 3.0);
       
-      // Tamanho nítido e bem definido do personagem
-      LR_RATIO = 0.046;
+      // Proporção ideal de diâmetro e nitidez do personagem
+      LR_RATIO = isMobile ? 0.046 : 0.052;
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
@@ -1393,13 +1394,19 @@
     }
 
     function spawnPicanhas(x) {
-      const emojis = ['🥩', '🍖', '🥓'];
-      for (let i = 0; i < 4; i++) {
+      let emojis = ['🥩', '🍖', '🥓'];
+      if (activeCharacter.id === 'dilma') {
+        emojis = ['🥔', '🍠', '🌾', '🌱', '🥔']; // Mandiocas e aipins da Dilma!
+      } else if (activeCharacter.id === 'marcal') {
+        emojis = ['💵', '💸', '💰', '🤑', '💎']; // Chuva de notas e dólares do Marçal!
+      }
+
+      for (let i = 0; i < 5; i++) {
         picanhas.push({
-          x: x + (Math.random() - 0.5) * 30,
+          x: x + (Math.random() - 0.5) * 32,
           y: H * 0.4 + (Math.random() - 0.5) * 50,
-          vx: (Math.random() - 0.5) * 3,
-          vy: -2 - Math.random() * 2.5,
+          vx: (Math.random() - 0.5) * 3.5,
+          vy: -2.2 - Math.random() * 2.8,
           emoji: emojis[Math.floor(Math.random() * emojis.length)],
           alpha: 1.0
         });
@@ -1849,6 +1856,30 @@
 
       frameCount++;
       lula.update();
+
+      // Rastro especial de voo: Chuva contínua de dinheiro para Marçal e mandiocas para Dilma
+      if (state === STATE.PLAYING) {
+        if (activeCharacter.id === 'marcal' && frameCount % 12 === 0) {
+          picanhas.push({
+            x: lula.x - 14,
+            y: lula.y + (Math.random() - 0.5) * 16,
+            vx: -2 - Math.random() * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            emoji: ['💵', '💸', '💰', '🤑'][Math.floor(Math.random() * 4)],
+            alpha: 0.95
+          });
+        } else if (activeCharacter.id === 'dilma' && frameCount % 15 === 0) {
+          picanhas.push({
+            x: lula.x - 14,
+            y: lula.y + (Math.random() - 0.5) * 16,
+            vx: -2 - Math.random() * 1.5,
+            vy: (Math.random() - 0.5) * 1.5,
+            emoji: '🥔',
+            alpha: 0.95
+          });
+        }
+      }
+
       updatePipes(dt);
       updatePicanhas();
       if (isPrisonMode) updatePrisoners();

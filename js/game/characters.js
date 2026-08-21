@@ -108,6 +108,48 @@ export const CHARACTERS = [
       state.isTurboAllowed = true;
       state.comboGoal = 4;
     }
+  },
+  {
+    id: 'dilma',
+    name: 'Dilma Rousseff',
+    nickname: 'A Estocadora de Vento',
+    title: 'Dilma Rousseff — A Estocadora',
+    desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas (pontua picanhas normalmente)!',
+    sprite: 'img/dilma.png',
+    requiredPicanhas: 80,
+    skillName: '🥔 Saudação à Mandioca',
+    skillDesc: 'Chuva de mandiocas e aipins nos canos! Acúmulo de picanhas padrão e voo suave.',
+    auraColor: '#ef4444',
+    modifier: (state) => {
+      state.HITBOX_R = 0.025;
+      state.GAP_RATIO = 0.42;
+      state.SPEED_MULT = 1.0;
+      state.EXTRA_SCORE_PER_PIPE = 1;
+      state.spawnExtraLikes = false;
+      state.hasShield = false;
+      state.isTurboAllowed = false;
+    }
+  },
+  {
+    id: 'marcal',
+    name: 'Pablo Marçal',
+    nickname: 'O Homem do Código',
+    title: 'Pablo Marçal — Mindset Quântico',
+    desc: 'Mais rápido, mindset desbloqueado: triplica todos os pontos (3X) e joga notas de dinheiro pelo ar!',
+    sprite: 'img/marcal.png',
+    requiredPicanhas: 150,
+    skillName: '💵 Mindset 3X & Chuva de Grana',
+    skillDesc: 'Velocidade 1.35x maior, triplica os pontos obtidos (3X) e solta chuva de notas e dólares!',
+    auraColor: '#0ea5e9',
+    modifier: (state) => {
+      state.HITBOX_R = 0.027;
+      state.GAP_RATIO = 0.40;
+      state.SPEED_MULT = 1.35;
+      state.EXTRA_SCORE_PER_PIPE = 3;
+      state.spawnExtraLikes = false;
+      state.hasShield = false;
+      state.isTurboAllowed = false;
+    }
   }
 ];
 
