@@ -42,11 +42,24 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 3. Perfis e Contas de Jogadores
+    // Função de validação abrangente para contas e perfis de usuários (Anti-Tampering)
+    function isValidUserDocument() {
+      let data = request.resource.data;
+      return isSafeUsername(data.username, 2, 30)
+          && (!('hasPassword' in data) || data.hasPassword is bool)
+          && (!('password' in data) || (data.password is string && data.password.size() <= 128 && !data.password.matches('.*<[^>]+>.*')))
+          && (!('totalPicanhas' in data) || (data.totalPicanhas is int && data.totalPicanhas >= 0 && data.totalPicanhas <= 1000000))
+          && (!('flappyScore' in data) || (data.flappyScore is int && data.flappyScore >= 0 && data.flappyScore <= 50000))
+          && (!('runnerScore' in data) || (data.runnerScore is int && data.runnerScore >= 0 && data.runnerScore <= 50000))
+          && (!('equippedBadge' in data) || (data.equippedBadge is string && data.equippedBadge.size() <= 60))
+          && (!('selectedChar' in data) || (data.selectedChar is string && data.selectedChar.size() <= 40))
+          && (!('unlockedCharacters' in data) || data.unlockedCharacters is list);
+    }
+
+    // 3. Perfis e Contas de Jogadores — Validação estrita de todos os campos
     match /lula_users_v2/{userId} {
       allow read: if true;
-      allow create, update: if isSafeUsername(request.resource.data.username, 2, 30)
-                           && (!('totalPicanhas' in request.resource.data) || request.resource.data.totalPicanhas is int);
+      allow create, update: if isValidUserDocument();
       allow delete: if false;
     }
 
