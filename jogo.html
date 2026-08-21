@@ -19,11 +19,10 @@
   <style>
     html, body {
       width: 100%;
-      height: 100%;
+      height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
       background: #080914;
       touch-action: none !important;
       overscroll-behavior: none !important;
@@ -35,84 +34,28 @@
       background: #11111d;
     }
 
-    .game-layout {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 20px;
-      padding: 76px 16px 16px;
+    .game-wrapper {
+      position: relative;
       flex: 1;
-      width: 100%;
-      max-width: 1200px;
-      touch-action: none;
-    }
-
-    .side-panel, .side-right {
-      width: 190px;
-      flex-shrink: 0;
+      width: 100vw;
+      height: calc(100vh - 60px);
+      margin-top: 60px;
+      overflow: hidden;
       display: flex;
-      flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      touch-action: none !important;
+      overscroll-behavior: none !important;
+      background: #0b0f19;
     }
 
-    .score-box {
-      background: rgba(10, 10, 20, 0.75);
-      backdrop-filter: blur(8px);
-      border: 2px solid var(--amarelo-brasil);
-      padding: 16px;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    }
-
-    .score-box label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .score-box span {
-      font-family: 'Bangers', cursive;
-      font-size: 44px;
-      color: var(--amarelo-brasil);
-      line-height: 1;
-    }
-
-    .info-box {
-      background: rgba(10, 10, 20, 0.65);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 14px;
-      padding: 14px;
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.7;
-    }
-
-    .info-box strong {
-      color: #ffffff;
-      display: block;
-      margin-bottom: 6px;
-    }
-
-    .key-badge {
-      display: inline-block;
-      background: rgba(255,223,0,0.15);
-      border: 1px solid rgba(255,223,0,0.4);
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      color: var(--amarelo-brasil);
-      font-weight: 700;
-    }
-
-    .canvas-container {
+    #canvasContainer {
       position: relative;
       display: flex;
-      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
     }
 
     canvas#gameCanvas {
@@ -129,31 +72,163 @@
       -webkit-touch-callout: none !important;
     }
 
-    /* BARRA SUPERIOR MOBILE COMPACTA */
-    .mobile-controls-bar {
+    /* HUD SUPERIOR FLUTUANTE (IGUAL AO EMPRESÁRIO 3D) */
+    #hudOverlay {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .hud-box {
+      background: rgba(10, 10, 20, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1.5px solid var(--amarelo-brasil);
+      padding: 8px 18px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      min-width: 100px;
+    }
+
+    .hud-box label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .hud-box span {
+      font-family: 'Bangers', cursive;
+      font-size: 26px;
+      color: var(--amarelo-brasil);
+      line-height: 1;
+    }
+
+    /* OVERLAY INICIAL DE START */
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 9, 20, 0.70);
+      backdrop-filter: blur(6px);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .start-card {
+      background: rgba(22, 27, 38, 0.96);
+      border: 2px solid var(--amarelo-brasil);
+      border-radius: 24px;
+      padding: 32px 36px;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(255, 223, 0, 0.3);
+    }
+
+    /* MODAL DE GAME OVER ESTILIZADO */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 9, 20, 0.88);
+      backdrop-filter: blur(12px);
+      z-index: 50;
       display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: rgba(22, 27, 38, 0.98);
+      border: 2px solid var(--vermelho-alert);
+      border-radius: 24px;
+      padding: 32px 36px;
+      max-width: 500px;
       width: 100%;
-      max-width: 520px;
-      gap: 8px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(204, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
+      animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-family: 'Bangers', cursive;
+      font-size: 46px;
+      color: var(--vermelho-alert);
+      letter-spacing: 2px;
       margin-bottom: 8px;
     }
 
-    /* ESTILOS PARA DISPOSITIVOS MÓVEIS (<= 900px) */
+    .modal-subtitle {
+      font-family: 'Bangers', cursive;
+      font-size: 24px;
+      color: var(--amarelo-brasil);
+      margin-bottom: 12px;
+    }
+
+    .modal-message {
+      font-size: 15px;
+      color: var(--text-main);
+      line-height: 1.6;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 20px;
+      white-space: pre-line;
+    }
+
+    .modal-score {
+      font-family: 'Bangers', cursive;
+      font-size: 30px;
+      color: var(--verde-neon);
+      margin-bottom: 20px;
+    }
+
+    /* RESPONSIVIDADE MOBILE (<= 900px) */
     @media (max-width: 900px) {
-      .game-layout {
-        flex-direction: column;
-        align-items: center;
-        padding: 72px 8px 12px;
+      .game-wrapper {
+        margin-top: 60px;
+        height: calc(100vh - 60px);
+      }
+      #hudOverlay {
+        top: 8px;
         gap: 6px;
+        width: 96%;
+        justify-content: center;
       }
-      .side-panel, .side-right {
-        display: none !important;
+      .hud-box {
+        min-width: auto;
+        padding: 6px 8px;
       }
-      .mobile-controls-bar {
-        display: flex;
+      .hud-box span {
+        font-size: 18px;
+      }
+      .hud-box label {
+        font-size: 9px;
+      }
+      .start-card, .modal-card {
+        padding: 24px 18px;
+      }
+      .start-card h1, .modal-title {
+        font-size: 32px !important;
       }
       canvas#gameCanvas {
-        border-radius: 14px;
+        border-radius: 12px;
       }
     }
 
@@ -164,19 +239,14 @@
       background: #000 !important;
     }
 
-    body.is-fullscreen nav,
-    body.is-fullscreen .side-panel,
-    body.is-fullscreen .side-right,
-    body.is-fullscreen .mobile-controls-bar {
+    body.is-fullscreen nav {
       display: none !important;
     }
 
-    body.is-fullscreen .game-layout {
-      padding: 0 !important;
-      margin: 0 !important;
-      max-width: 100vw !important;
-      width: 100vw !important;
+    body.is-fullscreen .game-wrapper {
+      margin-top: 0 !important;
       height: 100vh !important;
+      width: 100vw !important;
     }
 
     body.is-fullscreen canvas#gameCanvas {
@@ -186,27 +256,6 @@
       max-height: 100vh !important;
       border: none !important;
       border-radius: 0 !important;
-    }
-
-    /* BOTÃO FLUTUANTE DE SAÍDA DE TELA CHEIA */
-    #btnExitFullscreenFloating {
-      display: none;
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 200;
-      background: rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      color: #fff;
-      border-radius: 50px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-    }
-    body.is-fullscreen #btnExitFullscreenFloating {
-      display: block;
     }
   </style>
 </head>
@@ -225,61 +274,67 @@
     </ul>
   </nav>
 
-  <!-- BOTÃO FLUTUANTE DE SAÍDA DE TELA CHEIA -->
-  <button id="btnExitFullscreenFloating">🗗 Sair da Tela Cheia</button>
-
-  <!-- LAYOUT DO JOGO -->
-  <div class="game-layout">
-    <!-- PAINEL ESQUERDO (DESKTOP) -->
-    <div class="side-panel">
-      <div class="score-box">
-        <label>Pontuação</label>
-        <span id="scoreDisplay">0</span>
-      </div>
-      <div class="score-box" style="border-color: rgba(0,196,74,0.5);">
-        <label>Recorde</label>
-        <span id="bestDisplay" style="color: var(--verde-neon);">0</span>
-      </div>
-      <div class="info-box">
-        <strong>🕹️ Controles</strong>
-        <span class="key-badge">ESPAÇO</span> Pular<br>
-        <span class="key-badge">CLIQUE</span> Pular<br>
-        <span class="key-badge">TOQUE</span> Pular
-      </div>
-      <a href="correr.html" class="btn-secondary" style="font-size: 14px; padding: 10px; text-align: center;">🏃 Jogar Empresário 3D</a>
-    </div>
-
-    <!-- CANVAS FLAPPY BIRD -->
-    <div class="canvas-container">
-      <!-- BARRA DE CONTROLES MOBILE LIMPA (FÁCIL / DIFÍCIL / TELA CHEIA) -->
-      <div class="mobile-controls-bar">
-        <button id="btnEasyModeMobile" class="btn-primary" style="flex:1; padding:8px 6px; font-size:14px; background:var(--verde-neon); color:#000;">Fácil</button>
-        <button id="btnHardModeMobile" class="btn-secondary" style="flex:1; padding:8px 6px; font-size:14px;">Difícil ⚡</button>
-        <button id="btnFullscreenMobile" class="btn-secondary" style="flex:1.2; padding:8px 6px; font-size:14px; border-color:#38bdf8; color:#38bdf8;">⛶ Tela Cheia</button>
-      </div>
-
+  <!-- ÁREA DO JOGO FLAPPY LULA -->
+  <div class="game-wrapper">
+    <div id="canvasContainer">
       <canvas id="gameCanvas"></canvas>
     </div>
 
-    <!-- PAINEL DIREITO (DESKTOP) -->
-    <div class="side-right">
-      <div class="info-box" style="margin-bottom:12px;">
-        <strong>🎮 Modo de Jogo</strong>
-        <div style="display:flex; gap:8px; margin-top:8px;">
-          <button id="btnEasyMode" class="btn-primary" style="flex:1; padding:8px 4px; font-size:14px; background:var(--verde-neon); color:#000;">Fácil</button>
-          <button id="btnHardMode" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">Difícil ⚡</button>
-        </div>
+    <!-- HUD OVERLAY FLUTUANTE (IGUAL AO EMPRESÁRIO 3D) -->
+    <div id="hudOverlay">
+      <div class="hud-box">
+        <label>Picanhas</label>
+        <span id="scoreDisplayHUD">0 🥩</span>
       </div>
-      <button id="btnFullscreenFlappy" class="btn-secondary" style="font-size:14px; padding:10px 14px; width:100%; border-color:#38bdf8; color:#38bdf8; margin-bottom:12px;">
-        ⛶ Modo Tela Cheia
+      <div class="hud-box" style="border-color: var(--verde-neon);">
+        <label>Recorde</label>
+        <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
+      </div>
+      <button id="btnModeToggleHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#00e676; color:#00e676; font-size:14px; font-weight:700;" title="Alternar Modo">
+        ⚡ Fácil
       </button>
-      <div class="info-box">
-        <strong>🥩 Picanhas Caídas</strong>
-        <div id="picanhasLog" style="margin-top: 8px; font-size: 18px;"></div>
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;" title="Som">
+        🔊
+      </button>
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:#38bdf8; color:#38bdf8; font-size:18px;" title="Tela Cheia">
+        ⛶
+      </button>
+    </div>
+
+    <!-- OVERLAY INICIAL PARA ATIVAR SOM & COMEÇAR -->
+    <div class="start-overlay" id="startOverlay">
+      <div class="start-card">
+        <h1 style="font-family:'Bangers',cursive; font-size:42px; color:var(--amarelo-brasil); margin-bottom:10px;">
+          🐦 FLAPPY LULA
+        </h1>
+        <p style="color:var(--text-main); font-size:15px; margin-bottom:14px; line-height:1.6;">
+          Ajude o companheiro a voar entre os canos e coletar picanhas pelo caminho!
+        </p>
+        <div style="background:rgba(0,0,0,0.4); padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; color:var(--text-muted); text-align:left;">
+          🎮 <strong>Como Jogar:</strong><br>
+          • <strong>Toque na Tela / Clique / Espaço:</strong> Bater Asas e Voar<br>
+          • 🥩 <strong>Passe entre os Canos</strong> para pontuar picanhas<br>
+          • 🔒 <strong>Ao atingir 13 Pontos:</strong> Easter Egg do Modo Cadeia!
+        </div>
+        <button class="btn-primary" style="font-size:22px; padding:14px 28px; width:100%;">
+          🔊 TOQUE PARA JOGAR!
+        </button>
       </div>
-      <div class="info-box" id="modeInfoBox" style="border-color: rgba(0, 196, 74, 0.4);">
-        <strong>⚡ MODO FÁCIL ATIVADO</strong>
-        Velocidade suave e abertura ampla de canos para jogar tranquilo!
+    </div>
+
+    <!-- MODAL DE GAME OVER ESTILIZADO COM FOTO DO LULA CHORANDO -->
+    <div class="modal-overlay" id="gameOverModal">
+      <div class="modal-card">
+        <div class="modal-title">DEU RUIM COMPANHEIRO!</div>
+        <div style="margin: 8px auto 14px; width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--vermelho-alert); overflow: hidden; box-shadow: 0 0 25px rgba(239, 68, 68, 0.5);">
+          <img src="img/lula_cry.png" alt="Lula Chorando" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+        <div class="modal-subtitle" id="goSubtitle">PICANHA DERRAMADA!</div>
+        <div class="modal-message" id="goMessage">O companheiro não aguentou a pressão dos canos e foi de base!</div>
+        <div class="modal-score" id="goScore">0 PICANHAS COLETADAS</div>
+        <button class="btn-primary" id="btnRestartGame" style="width: 100%; font-size: 22px; padding: 14px;">
+          🔄 TENTAR NOVAMENTE
+        </button>
       </div>
     </div>
   </div>
@@ -289,7 +344,7 @@
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
 
-    // Badge do perfil
+    // Renderiza badge do perfil no cabeçalho
     auth.renderProfileBadge('nav');
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
@@ -297,6 +352,17 @@
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+
+    const scoreHUD = document.getElementById('scoreDisplayHUD');
+    const bestHUD = document.getElementById('bestDisplayHUD');
+    const btnModeHUD = document.getElementById('btnModeToggleHUD');
+    const btnSound = document.getElementById('btnSoundToggle');
+    const btnFullscreen = document.getElementById('btnFullscreenToggle');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverModal = document.getElementById('gameOverModal');
+    const goMessage = document.getElementById('goMessage');
+    const goScore = document.getElementById('goScore');
+    const btnRestart = document.getElementById('btnRestartGame');
 
     let currentMode = 'easy'; // 'easy' ou 'hard'
 
@@ -315,10 +381,10 @@
         W = window.innerWidth;
         H = window.innerHeight;
       } else if (isMobile) {
-        W = Math.min(window.innerWidth - 16, 520);
-        H = Math.max(400, Math.min(window.innerHeight - 130, 720));
+        W = Math.min(window.innerWidth - 12, 540);
+        H = Math.max(380, Math.min(window.innerHeight - 80, 720));
       } else {
-        const maxH = Math.min(window.innerHeight - 100, 680);
+        const maxH = Math.min(window.innerHeight - 90, 680);
         H = Math.max(maxH, 420);
         W = Math.round(H * 0.70);
       }
@@ -344,12 +410,7 @@
     let lulaLoaded = false;
     lulaImg.onload = () => lulaLoaded = true;
 
-    const lulaCryImg = new Image();
-    lulaCryImg.src = 'img/lula_cry.png';
-    let lulaCryLoaded = false;
-    lulaCryImg.onload = () => lulaCryLoaded = true;
-
-    // FÍSICA DINÂMICA COM LULA COMPACTO (FÁCIL vs DIFÍCIL)
+    // FÍSICA DINÂMICA COM LULA COMPACTO
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
     let PIPE_SPEED = 2.2;
@@ -362,12 +423,6 @@
 
     function setMode(mode) {
       currentMode = mode;
-      const btnEasy = document.getElementById('btnEasyMode');
-      const btnHard = document.getElementById('btnHardMode');
-      const btnEasyM = document.getElementById('btnEasyModeMobile');
-      const btnHardM = document.getElementById('btnHardModeMobile');
-      const infoBox = document.getElementById('modeInfoBox');
-
       if (mode === 'easy') {
         GRAVITY = 0.35;
         JUMP_POWER = -7.8;
@@ -375,16 +430,10 @@
         GAP_RATIO = 0.42;
         HITBOX_R = 0.026;
         SPAWN_FREQ = 120;
-        
-        [btnEasy, btnEasyM].forEach(b => {
-          if (b) { b.className = 'btn-primary'; b.style.background = 'var(--verde-neon)'; b.style.color = '#000'; }
-        });
-        [btnHard, btnHardM].forEach(b => {
-          if (b) { b.className = 'btn-secondary'; b.style.background = ''; b.style.color = ''; }
-        });
-        if (infoBox) {
-          infoBox.style.borderColor = 'rgba(0, 196, 74, 0.4)';
-          infoBox.innerHTML = '<strong>⚡ MODO FÁCIL ATIVADO</strong>Velocidade suave e abertura ampla para jogar relaxado!';
+        if (btnModeHUD) {
+          btnModeHUD.style.borderColor = '#00e676';
+          btnModeHUD.style.color = '#00e676';
+          btnModeHUD.textContent = '⚡ Fácil';
         }
       } else {
         GRAVITY = 0.46;
@@ -393,46 +442,62 @@
         GAP_RATIO = 0.28;
         HITBOX_R = 0.034;
         SPAWN_FREQ = 75;
-
-        [btnHard, btnHardM].forEach(b => {
-          if (b) { b.className = 'btn-primary'; b.style.background = 'var(--vermelho-alert)'; b.style.color = '#fff'; }
-        });
-        [btnEasy, btnEasyM].forEach(b => {
-          if (b) { b.className = 'btn-secondary'; b.style.background = ''; b.style.color = ''; }
-        });
-        if (infoBox) {
-          infoBox.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-          infoBox.innerHTML = '<strong>🔥 MODO DIFÍCIL ATIVADO</strong>Cenário veloz, canos estreitos e alta frequência! Desafio hardcore!';
+        if (btnModeHUD) {
+          btnModeHUD.style.borderColor = '#ef4444';
+          btnModeHUD.style.color = '#ef4444';
+          btnModeHUD.textContent = '🔥 Difícil';
         }
       }
     }
 
-    document.getElementById('btnEasyMode')?.addEventListener('click', () => setMode('easy'));
-    document.getElementById('btnHardMode')?.addEventListener('click', () => setMode('hard'));
-    document.getElementById('btnEasyModeMobile')?.addEventListener('click', () => setMode('easy'));
-    document.getElementById('btnHardModeMobile')?.addEventListener('click', () => setMode('hard'));
-
-    // Alternar modo Tela Cheia
-    function toggleFullscreen() {
-      if (!isFullscreenActive()) {
-        const el = document.documentElement;
-        if (el.requestFullscreen) {
-          el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-          el.webkitRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
-      }
+    if (btnModeHUD) {
+      btnModeHUD.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMode(currentMode === 'easy' ? 'hard' : 'easy');
+      });
     }
 
-    document.getElementById('btnFullscreenFlappy')?.addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); });
-    document.getElementById('btnFullscreenMobile')?.addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); });
-    document.getElementById('btnExitFullscreenFloating')?.addEventListener('click', (e) => { e.stopPropagation(); toggleFullscreen(); });
+    if (btnSound) {
+      btnSound.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try { sounds.init(); } catch(e){}
+        const isMuted = sounds.toggleMute();
+        btnSound.textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
+
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isFullscreenActive()) {
+          const el = document.documentElement;
+          if (el.requestFullscreen) {
+            el.requestFullscreen();
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          }
+          btnFullscreen.textContent = '🗗';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+          btnFullscreen.textContent = '⛶';
+        }
+      });
+    }
+
+    // FRASES HILÁRIAS DE MORTE DO LULA
+    const funnyDeathMessages = [
+      "O companheiro bateu no cano e derramou a picanha pelo chão!",
+      "Ficou preso no pedalinho do sítio de Atibaia!",
+      "A inflação subiu mais rápido do que as asas do presidente!",
+      "Caiu na fiscalização da Receita Federal e foi autuado!",
+      "O imposto de importação pesou mais do que a gravidade!",
+      "Tentou dar uma pedalada e bateu de cabeça na tubulação!",
+      "Bateu no cano e a picanha virou abóbora!"
+    ];
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
@@ -443,7 +508,7 @@
     let pipes = [], picanhas = [];
     let isPrisonMode = false;
 
-    document.getElementById('bestDisplay').textContent = bestScore;
+    if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
 
     const clouds = [
       { x: W * 0.1, y: H * 0.12, scale: 1.0, speed: 0.4 },
@@ -488,7 +553,7 @@
         if (!p.scored && p.x + PW < lula.x) {
           p.scored = true;
           score++;
-          document.getElementById('scoreDisplay').textContent = score;
+          if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
           spawnPicanhas(p.x + PW / 2);
 
           if (score === 13 && !isPrisonMode) {
@@ -675,61 +740,12 @@
         ctx.fillText('👨‍🦳', -R / 2, R / 2);
       }
       ctx.restore();
-
-      // HUD DE PONTUAÇÃO NATIVO DIRETO NO CANVAS
-      if (state === STATE.PLAYING) {
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 5;
-        ctx.font = `bold ${Math.max(32, H * 0.08)}px Bangers, cursive`;
-        ctx.textAlign = 'center';
-        ctx.strokeText(`${score} 🥩`, W / 2, Math.max(50, H * 0.12));
-        ctx.fillText(`${score} 🥩`, W / 2, Math.max(50, H * 0.12));
-
-        // Modo discreto no canto superior esquerdo
-        ctx.font = `bold 13px Inter, sans-serif`;
-        ctx.fillStyle = currentMode === 'easy' ? '#00e676' : '#ef4444';
-        ctx.textAlign = 'left';
-        ctx.fillText(currentMode === 'easy' ? '⚡ Modo Fácil' : '🔥 Modo Difícil', 14, 24);
-      } else if (state === STATE.WAITING) {
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fillRect(0, 0, W, H - GH);
-        ctx.fillStyle = '#ffdf00';
-        ctx.font = `bold ${Math.max(34, W * 0.12)}px Bangers, cursive`;
-        ctx.textAlign = 'center';
-        ctx.fillText('FLAPPY LULA', W / 2, H * 0.35);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${Math.max(16, W * 0.055)}px Bangers, cursive`;
-        ctx.fillText('TOQUE OU ESPAÇO PARA JOGAR', W / 2, H * 0.55);
-      } else if (state === STATE.DEAD) {
-        ctx.fillStyle = 'rgba(0,0,0,0.75)';
-        ctx.fillRect(0, 0, W, H - GH);
-        ctx.fillStyle = '#cc0000';
-        ctx.font = `bold ${Math.max(30, W * 0.10)}px Bangers, cursive`;
-        ctx.textAlign = 'center';
-        ctx.fillText('DEU RUIM COMPANHEIRO!', W / 2, H * 0.30);
-        
-        if (lulaCryLoaded) {
-          ctx.save();
-          ctx.beginPath(); ctx.arc(W / 2, H * 0.44, 45, 0, Math.PI * 2); ctx.clip();
-          ctx.drawImage(lulaCryImg, W / 2 - 45, H * 0.44 - 45, 90, 90);
-          ctx.restore();
-          ctx.strokeStyle = '#cc0000'; ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(W / 2, H * 0.44, 45, 0, Math.PI * 2); ctx.stroke();
-        }
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `${Math.max(18, W * 0.055)}px Bangers, cursive`;
-        ctx.fillText(`PONTUAÇÃO: ${score} PICANHAS · RECORDE: ${bestScore}`, W / 2, H * 0.62);
-        ctx.fillStyle = '#ffdf00';
-        ctx.font = `${Math.max(16, W * 0.05)}px Bangers, cursive`;
-        ctx.fillText('TOQUE AQUI PARA REINICIAR', W / 2, H * 0.72);
-      }
     }
 
     function loop() {
       frameCount++;
       lula.update(); updatePipes(); updatePicanhas(); updatePrisoners();
+
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
         
@@ -738,45 +754,95 @@
         if (score > bestScore) {
           bestScore = score;
           localStorage.setItem('lula_best', bestScore.toString());
-          document.getElementById('bestDisplay').textContent = bestScore;
+          if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
         }
+
         auth.updateUserScore('flappy', score);
         savePlayerScore('flappy', score);
+
+        // Exibe Modal Estilizado de Game Over
+        setTimeout(() => {
+          showGameOverScreen();
+        }, 350);
       }
+
       draw();
       requestAnimationFrame(loop);
     }
 
+    function showGameOverScreen() {
+      if (!gameOverModal) return;
+      const randMsg = funnyDeathMessages[Math.floor(Math.random() * funnyDeathMessages.length)];
+      if (goMessage) goMessage.textContent = randMsg;
+      if (goScore) goScore.textContent = `${score} PICANHAS COLETADAS · RECORDE: ${bestScore}`;
+      gameOverModal.style.display = 'flex';
+    }
+
     function handleStart() {
       try { sounds.init(); } catch(e){}
-      if (state === STATE.WAITING || state === STATE.DEAD) {
-        state = STATE.PLAYING; pipes = []; picanhas = []; score = 0;
+
+      if (state === STATE.WAITING) {
+        startOverlay.style.display = 'none';
+        state = STATE.PLAYING;
+        pipes = []; picanhas = []; score = 0;
+        if (scoreHUD) scoreHUD.textContent = `0 🥩`;
         isPrisonMode = false;
         document.body.classList.remove('prison-mode');
-        document.getElementById('scoreDisplay').textContent = 0;
-        lula.init(); lula.jump();
+        lula.init();
+        lula.jump();
+      } else if (state === STATE.DEAD) {
+        // Ignora se estiver na tela de Game Over até clicar em reiniciar
       } else if (state === STATE.PLAYING) {
         lula.jump();
       }
     }
 
+    function restartGame() {
+      gameOverModal.style.display = 'none';
+      state = STATE.PLAYING;
+      pipes = []; picanhas = []; score = 0;
+      if (scoreHUD) scoreHUD.textContent = `0 🥩`;
+      isPrisonMode = false;
+      document.body.classList.remove('prison-mode');
+      lula.init();
+      lula.jump();
+    }
+
+    if (startOverlay) {
+      startOverlay.onclick = handleStart;
+    }
+
+    if (btnRestart) {
+      btnRestart.onclick = restartGame;
+    }
+
     window.addEventListener('keydown', e => {
-      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleStart(); }
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
+          restartGame();
+        } else {
+          handleStart();
+        }
+      }
     });
 
-    // LISTENER GLOBAL DE TOQUE & CLIQUE (GARANTE RESPOSTA IMEDIATA EM QUALQUER TOQUE NA TELA)
-    const onUserInteraction = (e) => {
-      // Ignora toques em botões de configuração
-      if (e.target.closest('button, a, input, #playerProfileBadge')) return;
+    // LISTENER UNIVERSAL DE TOQUE (RESPONDE IMEDIATAMENTE AO TOQUE NA TELA)
+    const onUserTouch = (e) => {
+      if (e.target.closest('button, a, input, #playerProfileBadge, .modal-card, .start-card')) return;
       e.preventDefault();
-      handleStart();
+      if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
+        restartGame();
+      } else {
+        handleStart();
+      }
     };
 
-    canvas.addEventListener('pointerdown', onUserInteraction);
-    canvas.addEventListener('touchstart', onUserInteraction, { passive: false });
+    canvas.addEventListener('pointerdown', onUserTouch);
+    canvas.addEventListener('touchstart', onUserTouch, { passive: false });
     window.addEventListener('pointerdown', (e) => {
-      if (isFullscreenActive() || e.target === canvas || e.target.closest('.game-layout')) {
-        onUserInteraction(e);
+      if (isFullscreenActive() || e.target === canvas || e.target.closest('.game-wrapper')) {
+        onUserTouch(e);
       }
     });
 
