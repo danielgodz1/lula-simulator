@@ -1121,6 +1121,7 @@
       CHARACTERS.forEach(char => {
         const unlocked = CharacterInventory.isUnlocked(char.id);
         const isSelected = pendingCharSelect.id === char.id;
+        const unlockDesc = CharacterInventory.getUnlockDescription(char.id);
 
         const card = document.createElement('div');
         card.className = `char-card ${isSelected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
@@ -1130,8 +1131,8 @@
             <img src="${char.sprite}" alt="${char.name}">
           </div>
           <div style="font-weight:700; font-size:11.5px; color:#fff; margin-bottom:1px;">${char.name}</div>
-          <div style="font-size:10px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
-            ${unlocked ? char.nickname : `🔒 ${char.requiredPicanhas} 🥩`}
+          <div style="font-size:9.5px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600; line-height:1.2;">
+            ${unlocked ? char.nickname : unlockDesc}
           </div>
         `;
 
@@ -1139,6 +1140,8 @@
           if (unlocked) {
             pendingCharSelect = char;
             renderCharacterGrid();
+            updateCharDetailBox(char);
+          } else {
             updateCharDetailBox(char);
           }
         };
@@ -1893,6 +1896,15 @@
 
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
+
+        // Se jogou com a Dilma, registra pontuação para desbloquear o Pablo Marçal (200 pts)
+        if (activeCharacter.id === 'dilma') {
+          const prevDilmaBest = CharacterInventory.getDilmaBest();
+          const newDilmaBest = CharacterInventory.recordDilmaScore(score);
+          if (newDilmaBest >= 200 && prevDilmaBest < 200) {
+            showBannerAlert('🎉 PABLO MARÇAL DESBLOQUEADO (200 pts com a Dilma)!', false);
+          }
+        }
         
         // REGRAS DE ÁUDIO DE MORTE SOLICITADAS
         if (activeCharacter.id === 'lula') {

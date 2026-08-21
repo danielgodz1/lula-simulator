@@ -116,7 +116,7 @@ export const CHARACTERS = [
     title: 'Dilma Rousseff — A Estocadora',
     desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas (pontua picanhas normalmente)!',
     sprite: 'img/dilma.png',
-    requiredPicanhas: 80,
+    requiredPicanhas: 100, // Liberada com 100 picanhas
     skillName: '🥔 Saudação à Mandioca',
     skillDesc: 'Chuva de mandiocas e aipins nos canos! Acúmulo de picanhas padrão e voo suave.',
     auraColor: '#ef4444',
@@ -135,9 +135,9 @@ export const CHARACTERS = [
     name: 'Pablo Marçal',
     nickname: 'O Homem do Código',
     title: 'Pablo Marçal — Mindset Quântico',
-    desc: 'Mais rápido, mindset desbloqueado: triplica todos os pontos (3X) e joga notas de dinheiro pelo ar!',
+    desc: 'Requer liberar a Dilma e conquistar 200 pontos jogando com a Dilma! Velocidade acelerada, 3X pontos e chuva de dinheiro!',
     sprite: 'img/marcal.png',
-    requiredPicanhas: 150,
+    requiredPicanhas: 0, // Desbloqueio especial por missão da Dilma
     skillName: '💵 Mindset 3X & Chuva de Grana',
     skillDesc: 'Velocidade 1.35x maior, triplica os pontos obtidos (3X) e solta chuva de notas e dólares!',
     auraColor: '#0ea5e9',
@@ -155,6 +155,7 @@ export const CHARACTERS = [
 
 const SELECTED_CHAR_KEY = 'flappy_selected_character_id';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
+const DILMA_BEST_SCORE_KEY = 'flappy_dilma_record_score';
 
 export class CharacterInventory {
   static getTotalPicanhas() {
@@ -165,6 +166,19 @@ export class CharacterInventory {
     const val = Math.max(0, parseInt(amount, 10) || 0);
     localStorage.setItem(TOTAL_PICANHAS_KEY, val.toString());
     return val;
+  }
+
+  static getDilmaBest() {
+    return parseInt(localStorage.getItem(DILMA_BEST_SCORE_KEY) || '0', 10);
+  }
+
+  static recordDilmaScore(score) {
+    const num = parseInt(score, 10) || 0;
+    const current = this.getDilmaBest();
+    if (num > current) {
+      localStorage.setItem(DILMA_BEST_SCORE_KEY, num.toString());
+    }
+    return Math.max(num, current);
   }
 
   static addPicanhas(amount) {
@@ -212,7 +226,37 @@ export class CharacterInventory {
   static isUnlocked(charId) {
     const char = CHARACTERS.find(c => c.id === charId || c.id === this.mapLegacyId(charId));
     if (!char) return false;
+
+    // Desbloqueio Especial do Pablo Marçal
+    if (char.id === 'marcal') {
+      const isDilmaUnlocked = this.isUnlocked('dilma');
+      const dilmaBest = this.getDilmaBest();
+      return isDilmaUnlocked && dilmaBest >= 200;
+    }
+
     return this.getTotalPicanhas() >= char.requiredPicanhas;
+  }
+
+  static getUnlockDescription(charId) {
+    const char = CHARACTERS.find(c => c.id === charId || c.id === this.mapLegacyId(charId));
+    if (!char) return '';
+
+    if (char.id === 'marcal') {
+      const isDilmaUnlocked = this.isUnlocked('dilma');
+      const dilmaBest = this.getDilmaBest();
+      if (!isDilmaUnlocked) {
+        return `🔒 Requer liberar a Dilma (100 🥩)`;
+      }
+      if (dilmaBest < 200) {
+        return `🔒 Faça 200 pts com a Dilma (${dilmaBest}/200 pts)`;
+      }
+      return `✨ DESBLOQUEADO!`;
+    }
+
+    if (this.isUnlocked(char.id)) {
+      return `✨ DESBLOQUEADO`;
+    }
+    return `🔒 ${char.requiredPicanhas} 🥩`;
   }
 
   static mapLegacyId(id) {

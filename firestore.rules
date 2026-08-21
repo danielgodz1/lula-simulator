@@ -2,8 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Função de sanitização estrita para Nomes/Nicks (Anti-XSS / Anti-Script Injection)
-    // Permite apenas letras, números, espaços, hífens, sublinhados, pontos e acentos.
+    // 1. Verificação de Administrador (Autenticado via Google no Firebase)
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'insanodanieldoublegaming@gmail.com' ||
+        request.auth.token.email == 'danielzin173@gmail.com' ||
+        request.auth.token.firebase.sign_in_provider == 'google.com'
+      );
+    }
+
+    // 2. Sanitização Estrita de Nomes e Nicks (Anti-XSS / Anti-Script Injection)
     function isSafeUsername(val, minLen, maxLen) {
       return val is string 
           && val.size() >= minLen 
@@ -11,38 +19,24 @@ service cloud.firestore {
           && val.matches('^[a-zA-Z0-9_\\- .À-ÿ]+$');
     }
 
-    // Função de sanitização para comentários e mensagens (Sem tags HTML/Script)
+    // 3. Sanitização de Textos e Comentários (Sem HTML / Script)
     function isSafeText(val, maxLen) {
       return val is string
           && val.size() <= maxLen
-          && !val.matches('.*<[^>]+>.*') // Bloqueia qualquer tag HTML/Script (<...>)
+          && !val.matches('.*<[^>]+>.*')
           && !val.matches('.*javascript:.*')
           && !val.matches('.*data:text/html.*');
     }
 
-    // Função de validação de pontuação (Anti-Cheating & Anti-Hacking)
+    // 4. Validação de Pontuação Legítima (Anti-Cheating)
     function isValidScoreEntry() {
       return isSafeUsername(request.resource.data.player, 2, 30)
           && request.resource.data.score is int
           && request.resource.data.score >= 0
-          && request.resource.data.score <= 50000; // Bloqueia manipulação com valores absurdos
+          && request.resource.data.score <= 50000;
     }
 
-    // 1. Placar Flappy Lula — Leitura pública, gravação estritamente validada
-    match /lula_scores_v2/{docId} {
-      allow read: if true;
-      allow create, update: if isValidScoreEntry();
-      allow delete: if false; // Ninguém pode deletar o placar
-    }
-
-    // 2. Placar Empresário 3D — Leitura pública, gravação validada
-    match /lula_runner_scores_v2/{docId} {
-      allow read: if true;
-      allow create, update: if isValidScoreEntry();
-      allow delete: if false;
-    }
-
-    // Função de validação abrangente para contas e perfis de usuários (Anti-Tampering)
+    // 5. Validação Abrangente de Usuários (Anti-Tampering)
     function isValidUserDocument() {
       let data = request.resource.data;
       return isSafeUsername(data.username, 2, 30)
@@ -56,14 +50,48 @@ service cloud.firestore {
           && (!('unlockedCharacters' in data) || data.unlockedCharacters is list);
     }
 
-    // 3. Perfis e Contas de Jogadores — Validação estrita de todos os campos
-    match /lula_users_v2/{userId} {
+    // -------------------------------------------------------------
+    // REGRAS DAS COLEÇÕES COM CONTROLE DE ADMIN E ANTI-TAMPERING
+    // -------------------------------------------------------------
+
+    // 1. Placar Flappy Lula
+    match /lula_scores_v2/{docId} {
       allow read: if true;
-      allow create, update: if isValidUserDocument();
-      allow delete: if false;
+      allow create: if isValidScoreEntry();
+      // NUNCA permite diminuir ou zerar pontuação existente — somente subir recorde
+      allow update: if isAdmin() || (
+        isValidScoreEntry() 
+        && request.resource.data.player == resource.data.player
+        && request.resource.data.score >= resource.data.score
+      );
+      // Somente Administrador autenticado pode excluir
+      allow delete: if isAdmin();
     }
 
-    // 4. Feedbacks & Avaliações — Bloqueio total de XSS / Script Injection
+    // 2. Placar Empresário 3D
+    match /lula_runner_scores_v2/{docId} {
+      allow read: if true;
+      allow create: if isValidScoreEntry();
+      allow update: if isAdmin() || (
+        isValidScoreEntry() 
+        && request.resource.data.player == resource.data.player
+        && request.resource.data.score >= resource.data.score
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 3. Perfis e Contas de Usuários
+    match /lula_users_v2/{userId} {
+      allow read: if true;
+      allow create: if isValidUserDocument();
+      allow update: if isAdmin() || (
+        isValidUserDocument()
+        && request.resource.data.username == resource.data.username
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 4. Feedbacks & Avaliações (Impedir edições/exclusões de terceiros)
     match /lula_feedbacks/{feedbackId} {
       allow read: if true;
       allow create: if isSafeUsername(request.resource.data.name, 1, 40)
@@ -71,16 +99,17 @@ service cloud.firestore {
                     && request.resource.data.stars >= 1
                     && request.resource.data.stars <= 5
                     && isSafeText(request.resource.data.comment, 500);
-      allow update, delete: if false;
+      // Somente o Administrador pode editar ou remover feedbacks
+      allow update, delete: if isAdmin();
     }
 
-    // 5. Mensagens de Contato — 100% Privadas (Ninguém pode ler publicamente)
+    // 5. Mensagens de Contato (100% Privadas para o Administrador)
     match /lula_contatos/{contactId} {
-      allow read: if false; // Nenhum usuário tem permissão de leitura
+      allow read: if isAdmin();
       allow create: if isSafeUsername(request.resource.data.name, 1, 60)
                     && request.resource.data.email is string
                     && isSafeText(request.resource.data.message, 2000);
-      allow update, delete: if false;
+      allow update, delete: if isAdmin();
     }
   }
 }

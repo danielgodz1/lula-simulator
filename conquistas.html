@@ -598,9 +598,9 @@
         cardId: 'badgeDilma',
         fillId: 'fillDilma',
         textId: 'textDilma',
-        target: 80,
+        target: 100,
         title: 'Dilma Rousseff — A Estocadora de Vento',
-        req: '🥔 80 Picanhas Acumuladas',
+        req: '🥔 100 Picanhas Acumuladas',
         img: 'img/dilma.png',
         desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas pelo cenário (acumula picanhas normalmente)!'
       },
@@ -609,9 +609,9 @@
         cardId: 'badgeMarcal',
         fillId: 'fillMarcal',
         textId: 'textMarcal',
-        target: 150,
+        target: 200,
         title: 'Pablo Marçal — O Homem do Código',
-        req: '💵 150 Picanhas Acumuladas',
+        req: '💵 Liberar Dilma + Fazer 200 pts jogando com ela',
         img: 'img/marcal.png',
         desc: 'Mindset quântico e velocidade turbo: triplica todos os pontos obtidos (3X) e solta chuva de notas de dinheiro pelo ar!'
       }
@@ -624,8 +624,29 @@
       const fill = document.getElementById(b.fillId);
       const text = document.getElementById(b.textId);
 
-      const percent = Math.min(100, Math.round((totalPicanhas / b.target) * 100));
-      const isUnlocked = totalPicanhas >= b.target;
+      let percent = 0;
+      let isUnlocked = false;
+
+      if (b.id === 'marcal') {
+        isUnlocked = CharacterInventory.isUnlocked('marcal');
+        const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma');
+        const dilmaBest = CharacterInventory.getDilmaBest();
+
+        if (isUnlocked) {
+          percent = 100;
+          if (text) text.textContent = `✨ DESBLOQUEADO (${dilmaBest}/200 pts com a Dilma)`;
+        } else if (!isDilmaUnlocked) {
+          percent = Math.min(50, Math.round((totalPicanhas / 100) * 50));
+          if (text) text.textContent = `Passo 1: Liberar Dilma (${totalPicanhas}/100 🥩)`;
+        } else {
+          percent = 50 + Math.min(50, Math.round((dilmaBest / 200) * 50));
+          if (text) text.textContent = `Passo 2: Fazer 200 pts com a Dilma (${dilmaBest}/200 pts)`;
+        }
+      } else {
+        percent = Math.min(100, Math.round((totalPicanhas / b.target) * 100));
+        isUnlocked = totalPicanhas >= b.target;
+        if (text) text.textContent = `${totalPicanhas} / ${b.target} Picanhas (${percent}%)`;
+      }
 
       if (isUnlocked) {
         unlockedCount++;
@@ -637,7 +658,6 @@
       }
 
       if (fill) fill.style.width = `${percent}%`;
-      if (text) text.textContent = `${totalPicanhas} / ${b.target} Picanhas (${percent}%)`;
 
       card.onclick = () => openBadgeModal(b, isUnlocked);
     });
