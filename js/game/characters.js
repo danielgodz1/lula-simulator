@@ -186,10 +186,12 @@ export class CharacterInventory {
     const current = this.getTotalPicanhas();
     const updated = current + amount;
     localStorage.setItem(TOTAL_PICANHAS_KEY, updated.toString());
-
-    // Sincroniza em background com o Firestore
-    this.syncPicanhasToCloud(updated);
     return updated;
+  }
+
+  static async syncPicanhasNow() {
+    const total = this.getTotalPicanhas();
+    this.syncPicanhasToCloud(total);
   }
 
   static async syncPicanhasToCloud(total) {

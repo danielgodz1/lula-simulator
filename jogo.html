@@ -1923,6 +1923,7 @@
 
         auth.updateUserScore('flappy', score);
         savePlayerScore('flappy', score);
+        CharacterInventory.syncPicanhasNow();
 
         setTimeout(() => {
           showGameOverScreen();
