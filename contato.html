@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contato — Lula Simulator</title>
+  <meta name="description" content="Entre em contato com o desenvolvedor do Lula Simulator para sugestões, elogios e parcerias!">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="img/favicon.png">
@@ -13,12 +14,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
-  <!-- Estilos Globais Organizados -->
+  <!-- Estilos Globais -->
   <link rel="stylesheet" href="css/styles.css">
 
   <style>
     .page {
-      max-width: 720px;
+      max-width: 760px;
       margin: 0 auto;
       padding: 100px 24px 60px;
     }
@@ -31,37 +32,40 @@
     .page-header h1 {
       font-family: 'Bangers', cursive;
       font-size: 56px;
-      letter-spacing: 3px;
-      background: linear-gradient(135deg, var(--amarelo-brasil), var(--verde-neon));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+      color: var(--amarelo-brasil);
       margin-bottom: 8px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 16px;
     }
 
     .form-group {
       margin-bottom: 20px;
+      text-align: left;
     }
 
     .form-group label {
       display: block;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--text-muted);
+      color: var(--amarelo-brasil);
+      margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 6px;
     }
 
     .form-group input, .form-group textarea {
       width: 100%;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border-card);
       border-radius: 12px;
-      padding: 14px 18px;
+      padding: 12px 18px;
       color: #ffffff;
       font-size: 15px;
       font-family: inherit;
-      transition: border-color 0.2s ease;
     }
 
     .form-group input:focus, .form-group textarea:focus {
@@ -86,7 +90,6 @@
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
     <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <button class="nav-toggle-btn" id="btnNavToggle" aria-label="Abrir Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
@@ -143,6 +146,7 @@
 
   <script type="module">
     import { auth } from './js/auth.js';
+    import { sendContactMessage } from './js/firebase-config.js';
 
     auth.renderProfileBadge('nav');
     const curUser = auth.getCurrentUser();
@@ -162,47 +166,32 @@
       }
 
       const btn = document.getElementById('btnSendContact');
-      const alertBox = document.getElementById('statusAlert');
-
+      const statusAlert = document.getElementById('statusAlert');
       btn.disabled = true;
-      btn.textContent = 'Enviando e-mail... ⏳';
-      alertBox.style.display = 'none';
+      btn.textContent = 'Enviando...';
 
       try {
-        const response = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, subject, message })
-        });
-
-        const data = await response.json();
-
-        alertBox.style.display = 'block';
-        alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
-        alertBox.style.border = '1px solid #10b981';
-        alertBox.style.color = 'var(--verde-neon)';
-        alertBox.innerHTML = '✅ <strong>Mensagem enviada com sucesso!</strong> Seu e-mail foi entregue diretamente na caixa de entrada.';
+        const res = await sendContactMessage({ name, email, subject, message });
+        
+        statusAlert.style.display = 'block';
+        statusAlert.style.background = 'rgba(0, 230, 118, 0.2)';
+        statusAlert.style.border = '1px solid var(--verde-neon)';
+        statusAlert.style.color = 'var(--verde-neon)';
+        statusAlert.textContent = '✓ Mensagem enviada com sucesso! Agradecemos seu contato!';
 
         document.getElementById('ctSubject').value = '';
         document.getElementById('ctMessage').value = '';
       } catch (err) {
-        alertBox.style.display = 'block';
-        alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
-        alertBox.style.border = '1px solid #10b981';
-        alertBox.style.color = 'var(--verde-neon)';
-        alertBox.innerHTML = '✅ <strong>Mensagem enviada com sucesso!</strong> Recebemos sua mensagem.';
+        statusAlert.style.display = 'block';
+        statusAlert.style.background = 'rgba(239, 68, 68, 0.2)';
+        statusAlert.style.border = '1px solid var(--vermelho-alert)';
+        statusAlert.style.color = '#f87171';
+        statusAlert.textContent = 'Ocorreu um erro ao enviar a mensagem. Tente novamente mais tarde.';
       } finally {
         btn.disabled = false;
         btn.textContent = '🚀 ENVIAR MENSAGEM';
       }
     };
-
-    const btnNavToggle = document.getElementById('btnNavToggle');
-    const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navLinksList?.classList.toggle('open');
-    });
   </script>
 </body>
 </html>

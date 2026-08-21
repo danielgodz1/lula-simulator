@@ -511,30 +511,30 @@ class AuthManager {
       rightGroup.appendChild(badge);
     }
 
-    // Botão Hamburger Mobile
-    let toggleBtn = document.getElementById('navToggleBtn');
+    // Botão Hamburger Mobile — usa o existente ou cria se não houver
+    let toggleBtn = document.getElementById('navToggleBtn') || document.getElementById('btnNavToggle');
     if (!toggleBtn) {
       toggleBtn = document.createElement('button');
       toggleBtn.id = 'navToggleBtn';
       toggleBtn.className = 'nav-toggle-btn';
       toggleBtn.innerHTML = '☰ Menu';
       rightGroup.appendChild(toggleBtn);
+    }
 
-      const navLinks = nav.querySelector('.nav-links');
-      if (navLinks) {
-        toggleBtn.onclick = (e) => {
-          e.stopPropagation();
-          navLinks.classList.toggle('open');
-          toggleBtn.innerHTML = navLinks.classList.contains('open') ? '✕ Fechar' : '☰ Menu';
-        };
+    const navLinks = nav.querySelector('.nav-links');
+    if (navLinks && toggleBtn) {
+      toggleBtn.onclick = (e) => {
+        e.stopPropagation();
+        navLinks.classList.toggle('open');
+        toggleBtn.innerHTML = navLinks.classList.contains('open') ? '✕ Fechar' : '☰ Menu';
+      };
 
-        document.addEventListener('click', (e) => {
-          if (!nav.contains(e.target)) {
-            navLinks.classList.remove('open');
-            toggleBtn.innerHTML = '☰ Menu';
-          }
-        });
-      }
+      document.addEventListener('click', (e) => {
+        if (!nav.contains(e.target)) {
+          navLinks.classList.remove('open');
+          toggleBtn.innerHTML = '☰ Menu';
+        }
+      });
     }
 
     const user = this.getCurrentUser();

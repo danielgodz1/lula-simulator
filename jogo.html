@@ -37,7 +37,7 @@
 
     /* BARRA DE NAVEGAÇÃO */
     nav {
-      height: 54px;
+      height: 52px;
       padding: 0 16px;
     }
 
@@ -45,26 +45,13 @@
       font-size: 20px;
     }
 
-    .nav-toggle-btn {
-      display: none;
-      background: rgba(255, 223, 0, 0.15);
-      border: 1px solid var(--amarelo-brasil);
-      color: var(--amarelo-brasil);
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Bangers', cursive;
-    }
-
     .game-wrapper {
       position: relative;
       flex: 1;
       width: 100vw;
-      height: calc(100dvh - 54px);
-      height: calc(100vh - 54px);
-      margin-top: 54px;
+      height: calc(100dvh - 52px);
+      height: calc(100vh - 52px);
+      margin-top: 52px;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -87,7 +74,7 @@
       display: block;
       border: 3px solid var(--amarelo-brasil);
       border-radius: 18px;
-      box-shadow: 0 0 50px rgba(0, 0, 0, 0.6), 0 20px 60px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6), 0 15px 40px rgba(0, 0, 0, 0.8);
       cursor: pointer;
       touch-action: none !important;
       user-select: none !important;
@@ -97,44 +84,46 @@
       -webkit-touch-callout: none !important;
     }
 
-    /* HUD SUPERIOR FLUTUANTE RESPONSIVO (NUNCA FICA ATRÁS DO MENU) */
+    /* HUD SUPERIOR COMPACTO E FLUIDO EM UMA ÚNICA LINHA */
     #hudOverlay {
       position: absolute;
-      top: 10px;
+      top: 8px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 6px;
       z-index: 20;
       pointer-events: none;
-      flex-wrap: wrap;
+      align-items: center;
       justify-content: center;
       max-width: 96vw;
+      white-space: nowrap;
     }
 
     .hud-box {
-      background: rgba(10, 10, 20, 0.90);
-      backdrop-filter: blur(10px);
+      background: rgba(10, 10, 20, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 4px 10px;
-      border-radius: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
       text-align: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      min-width: 70px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
     }
 
     .hud-box label {
       display: block;
-      font-size: 9px;
+      font-size: 8px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       color: var(--text-muted);
-      margin-bottom: 1px;
+      margin-bottom: 0px;
     }
 
     .hud-box span {
       font-family: 'Bangers', cursive;
-      font-size: 18px;
+      font-size: 16px;
       color: var(--amarelo-brasil);
       line-height: 1;
     }
@@ -142,20 +131,20 @@
     /* BANNER DE AVISO DE CADEIA / LIBERDADE */
     #prisonBanner {
       position: absolute;
-      top: 70px;
+      top: 60px;
       left: 50%;
       transform: translateX(-50%) scale(0.8);
-      padding: 8px 20px;
+      padding: 6px 18px;
       border-radius: 50px;
       font-family: 'Bangers', cursive;
-      font-size: 18px;
+      font-size: 16px;
       letter-spacing: 1px;
       color: #fff;
       z-index: 25;
       pointer-events: none;
       opacity: 0;
-      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
       white-space: nowrap;
     }
 
@@ -164,7 +153,7 @@
       transform: translateX(-50%) scale(1);
     }
 
-    /* OVERLAYS & MODAIS FIXOS EM TODA A TELA (COMPATÍVEL COM ANDROID E IPHONE) */
+    /* OVERLAYS & MODAIS FIXOS E ROLÁVEIS */
     .start-overlay, .modal-overlay {
       position: fixed !important;
       inset: 0 !important;
@@ -172,8 +161,8 @@
       height: 100dvh !important;
       height: 100vh !important;
       background: rgba(8, 9, 20, 0.88);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       z-index: 1000 !important;
       display: flex;
       align-items: center;
@@ -186,17 +175,17 @@
     .start-card, .modal-card {
       background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--amarelo-brasil);
-      border-radius: 22px;
-      padding: 20px;
-      max-width: 520px;
+      border-radius: 20px;
+      padding: 18px;
+      max-width: 500px;
       width: 100%;
       max-height: 92dvh;
       max-height: 92vh;
       display: flex;
       flex-direction: column;
       text-align: center;
-      box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
-      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 40px rgba(255, 223, 0, 0.3);
+      animation: popIn 0.25s ease-out;
       box-sizing: border-box;
     }
 
@@ -205,32 +194,32 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       padding-right: 4px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .modal-footer-sticky {
       flex-shrink: 0;
       display: flex;
-      gap: 10px;
-      padding-top: 10px;
+      gap: 8px;
+      padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
+      from { transform: scale(0.9); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* MODAL DE GAME OVER ESTILO FLAPPY BIRD COM PLACAR LATERAL & CONTROLES */
+    /* MODAL DE GAME OVER */
     .game-over-container {
       background: rgba(20, 24, 36, 0.98);
       border: 3px solid #eab308;
-      border-radius: 22px;
-      padding: 16px;
-      max-width: 620px;
+      border-radius: 20px;
+      padding: 14px;
+      max-width: 600px;
       width: 100%;
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(234, 179, 8, 0.3);
-      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(234, 179, 8, 0.3);
+      animation: popIn 0.25s ease-out;
       text-align: center;
       max-height: 92dvh;
       max-height: 92vh;
@@ -240,20 +229,19 @@
 
     .go-header-title {
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 26px;
+      font-size: 24px;
       color: #ef4444;
-      text-shadow: 3px 3px 0px #fff, -2px -2px 0px #7f1d1d, 4px 4px 8px rgba(0,0,0,0.8);
-      margin-bottom: 10px;
+      text-shadow: 2px 2px 0px #fff, -1px -1px 0px #7f1d1d;
+      margin-bottom: 8px;
       letter-spacing: 2px;
     }
 
-    /* BARRA DE CONFIGURAÇÕES RÁPIDAS NO GAME OVER (PERSONAGEM & DIFICULDADE) */
     .go-quick-options {
       display: flex;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       background: rgba(0, 0, 0, 0.45);
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       align-items: center;
@@ -267,11 +255,11 @@
       gap: 8px;
       background: rgba(255, 255, 255, 0.08);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-radius: 10px;
       color: #fff;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       transition: all 0.2s ease;
     }
@@ -281,8 +269,8 @@
     }
 
     .go-char-picker-btn img {
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       border: 1.5px solid #ffd700;
       object-fit: cover;
@@ -294,9 +282,9 @@
     }
 
     .go-diff-btn {
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 8px;
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
       cursor: pointer;
       border: 1.5px solid transparent;
@@ -307,14 +295,12 @@
       background: var(--verde-neon);
       color: #000;
       border-color: #00e676;
-      box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
     }
 
     .go-diff-btn.active-hard {
       background: var(--vermelho-alert);
       color: #fff;
       border-color: #ef4444;
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
     }
 
     .go-diff-btn.inactive {
@@ -325,46 +311,43 @@
 
     .go-panels-grid {
       display: grid;
-      grid-template-columns: 1fr 1.15fr;
-      gap: 12px;
-      margin-bottom: 14px;
+      grid-template-columns: 1fr 1.1fr;
+      gap: 10px;
+      margin-bottom: 12px;
       text-align: left;
     }
 
-    /* PAINEL DA ESQUERDA: PONTOS & MEME */
     .go-left-panel {
       background: #dfd7b6;
-      border: 3px solid #543847;
-      border-radius: 14px;
-      padding: 12px 10px;
+      border: 2.5px solid #543847;
+      border-radius: 12px;
+      padding: 10px 8px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       color: #543847;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.15);
     }
 
     .go-score-box {
       display: flex;
       justify-content: space-around;
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       border-bottom: 2px dashed #b8ad88;
-      padding-bottom: 6px;
+      padding-bottom: 4px;
     }
 
     .go-score-item label {
       display: block;
       font-family: 'Press Start 2P', cursive;
-      font-size: 7.5px;
+      font-size: 7px;
       color: #e65100;
-      margin-bottom: 4px;
-      text-transform: uppercase;
+      margin-bottom: 2px;
     }
 
     .go-score-item span {
       font-family: 'Press Start 2P', cursive;
-      font-size: 16px;
+      font-size: 15px;
       color: #000;
     }
 
@@ -372,44 +355,43 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
-      padding: 0 4px;
+      margin-bottom: 6px;
+      padding: 0 2px;
     }
 
     .go-medal-row label {
       font-family: 'Press Start 2P', cursive;
-      font-size: 7.5px;
+      font-size: 7px;
       color: #e65100;
     }
 
     .go-medal-circle {
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: #c59b27;
-      border: 2px solid #543847;
+      border: 1.5px solid #543847;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
+      font-size: 16px;
     }
 
     .go-lula-meme-box {
       background: #ffffff;
-      border: 2px solid #543847;
-      border-radius: 10px;
-      padding: 6px 8px;
+      border: 1.5px solid #543847;
+      border-radius: 8px;
+      padding: 5px 6px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .go-lula-avatar {
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
-      border: 2px solid #ef4444;
+      border: 1.5px solid #ef4444;
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -421,18 +403,17 @@
     }
 
     .go-meme-text {
-      font-size: 10px;
+      font-size: 9.5px;
       color: #1e293b;
-      line-height: 1.25;
+      line-height: 1.2;
       font-weight: 600;
       font-style: italic;
     }
 
-    /* PAINEL DA DIREITA: PLACAR LEADERBOARD */
     .go-right-panel {
       background: #fbf8eb;
-      border: 3px solid #543847;
-      border-radius: 14px;
+      border: 2.5px solid #543847;
+      border-radius: 12px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -441,21 +422,21 @@
     .go-lb-header {
       background: #ef4444;
       color: #fff;
-      padding: 6px 8px;
+      padding: 5px 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
+      font-size: 7.5px;
       letter-spacing: 1px;
       text-transform: uppercase;
-      border-bottom: 3px solid #543847;
+      border-bottom: 2.5px solid #543847;
     }
 
     .go-lb-list {
       flex: 1;
       padding: 4px 6px;
-      max-height: 130px;
+      max-height: 120px;
       overflow-y: auto;
     }
 
@@ -463,9 +444,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 3px 4px;
+      padding: 2px 2px;
       border-bottom: 1px solid #e2d9bc;
-      font-size: 10px;
+      font-size: 9.5px;
       color: #334155;
     }
 
@@ -475,8 +456,8 @@
 
     .go-lb-rank {
       font-family: 'Press Start 2P', cursive;
-      font-size: 7.5px;
-      width: 16px;
+      font-size: 7px;
+      width: 14px;
       color: #b45309;
     }
 
@@ -491,11 +472,11 @@
 
     .go-lb-score {
       font-family: 'Press Start 2P', cursive;
-      font-size: 8.5px;
+      font-size: 8px;
       color: #15803d;
       background: #dcfce7;
-      padding: 2px 5px;
-      border-radius: 6px;
+      padding: 1px 4px;
+      border-radius: 4px;
       border: 1px solid #86efac;
     }
 
@@ -503,90 +484,89 @@
       background: #38bdf8;
       border-top: 2px solid #543847;
       color: #082f49;
-      padding: 5px 8px;
+      padding: 4px 6px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-weight: 900;
-      font-size: 10px;
+      font-size: 9.5px;
     }
 
-    /* BOTÕES INFERIORES DO GAME OVER */
     .go-buttons-row {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
     }
 
     .btn-pixel-play {
       flex: 1.5;
       background: #22c55e;
-      border: 3px solid #14532d;
+      border: 2px solid #14532d;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 11px;
-      padding: 10px 12px;
-      border-radius: 12px;
+      font-size: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 4px 0px #14532d;
+      box-shadow: 0 3px 0px #14532d;
       transition: transform 0.1s ease;
     }
 
     .btn-pixel-play:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
       background: #16a34a;
     }
 
     .btn-pixel-share {
       flex: 1;
       background: #0284c7;
-      border: 3px solid #0c4a6e;
+      border: 2px solid #0c4a6e;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 8.5px;
-      padding: 10px 6px;
-      border-radius: 12px;
+      font-size: 8px;
+      padding: 8px 4px;
+      border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 4px 0px #0c4a6e;
+      box-shadow: 0 3px 0px #0c4a6e;
     }
 
     .btn-pixel-badges {
       flex: 1;
       background: #eab308;
-      border: 3px solid #713f12;
+      border: 2px solid #713f12;
       color: #000;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 8.5px;
-      padding: 10px 6px;
-      border-radius: 12px;
+      font-size: 8px;
+      padding: 8px 4px;
+      border-radius: 10px;
       cursor: pointer;
       text-decoration: none;
-      box-shadow: 0 4px 0px #713f12;
+      box-shadow: 0 3px 0px #713f12;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    /* GRADE DE PERSONAGENS RESPONSIVA */
+    /* GRADE DE PERSONAGENS */
     .char-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
-      gap: 10px;
-      margin: 10px 0;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+      margin: 8px 0;
       max-height: 44vh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
-      padding: 4px;
+      padding: 2px;
     }
 
     .char-card {
       background: rgba(15, 23, 42, 0.85);
       border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      padding: 10px 6px;
+      border-radius: 12px;
+      padding: 8px 4px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       position: relative;
     }
 
@@ -598,7 +578,7 @@
     .char-card.selected {
       border-color: var(--verde-neon);
       background: rgba(0, 230, 118, 0.15);
-      box-shadow: 0 0 16px rgba(0, 230, 118, 0.4);
+      box-shadow: 0 0 12px rgba(0, 230, 118, 0.35);
     }
 
     .char-card.locked {
@@ -608,14 +588,14 @@
     }
 
     .char-avatar {
-      width: 58px;
-      height: 58px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      margin: 0 auto 6px;
+      margin: 0 auto 4px;
       border: 2px solid var(--amarelo-brasil);
       overflow: hidden;
       background: #000;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
     }
 
     .char-avatar img {
@@ -624,7 +604,6 @@
       object-fit: cover;
     }
 
-    /* AJUSTES PARA DISPOSITIVOS MÓVEIS (CELULARES ANDROID E IPHONE) */
     @media (max-width: 900px) {
       nav {
         height: 50px;
@@ -632,9 +611,6 @@
       }
       .nav-brand {
         font-size: 18px;
-      }
-      .nav-toggle-btn {
-        display: inline-flex;
       }
 
       .game-wrapper {
@@ -644,40 +620,38 @@
       }
 
       #hudOverlay {
-        top: 6px;
-        gap: 4px;
-        width: 98%;
+        top: 4px;
+        gap: 3px;
         max-width: 98vw;
       }
 
       .hud-box {
-        min-width: auto;
-        padding: 3px 6px;
-        border-radius: 10px;
+        padding: 2px 5px;
+        border-radius: 8px;
       }
 
       .hud-box span {
-        font-size: 14px;
+        font-size: 13px;
       }
 
       .hud-box label {
-        font-size: 7.5px;
+        font-size: 7px;
       }
 
       .char-grid {
         grid-template-columns: repeat(2, 1fr);
-        max-height: 38vh;
+        max-height: 36vh;
       }
 
       .start-card, .modal-card {
-        padding: 16px 14px;
-        border-radius: 18px;
+        padding: 14px 12px;
+        border-radius: 16px;
       }
 
       #prisonBanner {
-        top: 50px;
-        font-size: 15px;
-        padding: 5px 14px;
+        top: 46px;
+        font-size: 14px;
+        padding: 4px 12px;
       }
 
       .go-panels-grid {
@@ -685,28 +659,16 @@
       }
 
       .go-header-title {
-        font-size: 20px;
+        font-size: 18px;
       }
 
       .go-quick-options {
-        flex-direction: row;
-        justify-content: space-between;
-        padding: 6px 8px;
-      }
-
-      .go-char-picker-btn {
-        font-size: 11px;
-        padding: 4px 8px;
-      }
-
-      .go-diff-btn {
-        padding: 4px 8px;
-        font-size: 10px;
+        padding: 4px 6px;
       }
 
       .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges {
-        font-size: 8px;
-        padding: 8px 4px;
+        font-size: 7.5px;
+        padding: 7px 3px;
       }
     }
 
@@ -741,10 +703,9 @@
 </head>
 <body>
 
-  <!-- BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA -->
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
     <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <button class="nav-toggle-btn" id="btnNavToggle" aria-label="Abrir Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
@@ -765,7 +726,7 @@
     <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU -->
     <div id="prisonBanner">🚨 13 PONTOS: MODO CADEIA ATIVADO!</div>
 
-    <!-- HUD OVERLAY FLUTUANTE SUPERIOR -->
+    <!-- HUD OVERLAY SUPERIOR COMPACTO (1 ÚNICA LINHA LIMPA) -->
     <div id="hudOverlay">
       <div class="hud-box">
         <label>Picanhas</label>
@@ -775,19 +736,19 @@
         <label>Recorde</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
-      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#00e676; color:#00e676; font-size:11px; font-weight:700;" title="Alternar Dificuldade">
+      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#00e676; color:#00e676; font-size:11px; font-weight:700;" title="Alternar Dificuldade">
         ⚡ Fácil
       </button>
-      <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#eab308; color:#eab308; font-size:11px; font-weight:700;" title="Personagens Políticos">
+      <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#eab308; color:#eab308; font-size:11px; font-weight:700;" title="Personagens Políticos">
         🎭 Políticos
       </button>
-      <a href="conquistas.html" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#38bdf8; color:#38bdf8; font-size:11px; font-weight:700; text-decoration:none; display:flex; align-items:center;" title="Ver Badges e Conquistas">
+      <a href="conquistas.html" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#38bdf8; color:#38bdf8; font-size:11px; font-weight:700; text-decoration:none; display:flex; align-items:center;" title="Ver Badges">
         🏅 Badges
       </a>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:14px;" title="Som">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:13px;" title="Som">
         🔊
       </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#a855f7; color:#a855f7; font-size:14px;" title="Tela Cheia">
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:#a855f7; color:#a855f7; font-size:13px;" title="Tela Cheia">
         ⛶
       </button>
     </div>
@@ -795,80 +756,77 @@
     <!-- OVERLAY INICIAL DE START COM PREVIEW DO PERSONAGEM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
-        <h1 style="font-family:'Bangers',cursive; font-size:34px; color:var(--amarelo-brasil); margin-bottom:2px;">
+        <h1 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:2px;">
           🐦 FLAPPY LULA OFICIAL
         </h1>
-        <p style="color:var(--text-main); font-size:12px; margin-bottom:10px; line-height:1.35;">
+        <p style="color:var(--text-main); font-size:11.5px; margin-bottom:8px; line-height:1.3;">
           Voe entre os canos, junte picanhas para destravar o <strong>Selo de 50 Picanhas</strong> e o lendário <strong>Trio de 500 Picanhas</strong>!
         </p>
 
         <!-- SELETOR DE DIFICULDADE (FÁCIL / DIFÍCIL) -->
-        <div style="display:flex; gap:8px; margin-bottom:10px;">
-          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:6px 4px; font-size:12px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
-          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:6px 4px; font-size:12px;">🔥 Modo Difícil ⚡</button>
+        <div style="display:flex; gap:6px; margin-bottom:8px;">
+          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:5px 4px; font-size:11px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
+          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:5px 4px; font-size:11px;">🔥 Modo Difícil ⚡</button>
         </div>
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
-        <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:14px; padding:8px 12px; margin-bottom:12px; display:flex; align-items:center; gap:10px; text-align:left;">
-          <div style="width:48px; height:48px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
+        <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:6px 10px; margin-bottom:10px; display:flex; align-items:center; gap:8px; text-align:left;">
+          <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
             <img id="equippedCharImg" src="img/lula.png" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
-            <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:14px;">Lula da Silva</div>
-            <div id="equippedCharSkill" style="font-size:11px; color:var(--verde-neon); font-weight:600;">🕊️ Voo Tolerante & Picanha</div>
+            <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
+            <div id="equippedCharSkill" style="font-size:10.5px; color:var(--verde-neon); font-weight:600;">🕊️ Voo Tolerante & Picanha</div>
           </div>
-          <button id="btnOpenRosterStart" class="btn-primary" style="font-size:12px; padding:7px 12px; background:var(--amarelo-brasil); color:#000; font-weight:700; border-radius:8px;">
+          <button id="btnOpenRosterStart" class="btn-primary" style="font-size:11px; padding:6px 10px; background:var(--amarelo-brasil); color:#000; font-weight:700; border-radius:8px;">
             🎭 TROCAR
           </button>
         </div>
 
-        <button class="btn-primary" id="btnStartGameAction" style="font-size:20px; padding:12px 24px; width:100%;">
+        <button class="btn-primary" id="btnStartGameAction" style="font-size:18px; padding:10px 20px; width:100%;">
           🔊 TOQUE PARA JOGAR!
         </button>
       </div>
     </div>
 
-    <!-- MODAL DE SELEÇÃO DE PERSONAGENS (INVENTÁRIO COM BOTÕES SEMPRE FIXOS) -->
+    <!-- MODAL DE SELEÇÃO DE PERSONAGENS -->
     <div class="modal-overlay" id="charSelectModal" style="display:none;">
       <div class="modal-card">
-        <h2 style="font-family:'Bangers',cursive; font-size:30px; color:var(--amarelo-brasil); margin-bottom:2px;">
+        <h2 style="font-family:'Bangers',cursive; font-size:28px; color:var(--amarelo-brasil); margin-bottom:2px;">
           🎭 PERSONAGENS POLÍTICOS
         </h2>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12px; color:var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11.5px; color:var(--text-muted);">
           <span>Junte picanhas para liberar figuras históricas!</span>
           <span style="color:var(--verde-neon); font-weight:700;" id="totalPicanhasBadge">Total: 0 🥩</span>
         </div>
 
-        <!-- ÁREA ROLÁVEL COM A GRADE DE PERSONAGENS -->
         <div class="modal-body-scrollable">
           <div class="char-grid" id="charactersGrid"></div>
 
-          <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:8px 12px; text-align:left;">
-            <div id="detailCharTitle" style="font-weight:700; font-size:14px; color:var(--amarelo-brasil);">Lula da Silva</div>
-            <div id="detailCharSkill" style="font-size:11px; color:var(--verde-neon); font-weight:600; margin:2px 0;">Habilidade: Voo Tolerante & Picanha</div>
-            <div id="detailCharDesc" style="font-size:11px; color:var(--text-muted); line-height:1.35;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
+          <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:6px 10px; text-align:left;">
+            <div id="detailCharTitle" style="font-weight:700; font-size:13px; color:var(--amarelo-brasil);">Lula da Silva</div>
+            <div id="detailCharSkill" style="font-size:10.5px; color:var(--verde-neon); font-weight:600; margin:1px 0;">Habilidade: Voo Tolerante & Picanha</div>
+            <div id="detailCharDesc" style="font-size:10.5px; color:var(--text-muted); line-height:1.3;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
           </div>
         </div>
 
-        <!-- RODAPÉ FIXO COM BOTÕES SEMPRE VISÍVEIS -->
         <div class="modal-footer-sticky">
-          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:14px; padding:9px;">Voltar</button>
-          <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:15px; padding:9px;">✨ EQUIPAR E JOGAR</button>
+          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:13px; padding:8px;">Voltar</button>
+          <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:14px; padding:8px;">✨ EQUIPAR E JOGAR</button>
         </div>
       </div>
     </div>
 
-    <!-- MODAL DE GAME OVER ESTILO RETRO FLAPPY BIRD COM CONTROLES & PLACAR -->
+    <!-- MODAL DE GAME OVER -->
     <div class="modal-overlay" id="gameOverModal" style="display:none;">
       <div class="game-over-container">
         <div class="go-header-title">GAME OVER</div>
 
-        <!-- SELETOR RÁPIDO DE PERSONAGEM & DIFICULDADE DIRETO NO GAME OVER -->
         <div class="go-quick-options">
           <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
             <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem">
             <span id="goEquippedCharName">Lula da Silva</span>
-            <span style="color:var(--amarelo-brasil); font-size:11px; margin-left:2px;">✎ Trocar</span>
+            <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Trocar</span>
           </div>
 
           <div class="go-diff-toggles">
@@ -879,7 +837,6 @@
         
         <div class="go-panels-grid">
           
-          <!-- PAINEL DA ESQUERDA: RESULTADO & MEME DO LULA -->
           <div class="go-left-panel">
             <div class="go-score-box">
               <div class="go-score-item">
@@ -907,14 +864,13 @@
             </div>
           </div>
 
-          <!-- PAINEL DA DIREITA: PLACAR EM TEMPO REAL FIRESTORE -->
           <div class="go-right-panel">
             <div class="go-lb-header">
               🏆 TOP PLACAR NACIONAL
             </div>
             
             <div class="go-lb-list" id="goLeaderboardList">
-              <div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Carregando placar...</div>
+              <div style="text-align:center; padding:10px; font-size:9px; color:#64748b;">Carregando placar...</div>
             </div>
 
             <div class="go-lb-you-row">
@@ -925,7 +881,6 @@
 
         </div>
 
-        <!-- BOTÕES DE AÇÃO INFERIORES -->
         <div class="go-buttons-row">
           <button class="btn-pixel-play" id="btnRestartGame">
             ▶ JOGAR
@@ -952,16 +907,8 @@
       auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
     }
 
-    // Toggle menu mobile
-    const btnNavToggle = document.getElementById('btnNavToggle');
-    const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navLinksList?.classList.toggle('open');
-    });
-
     const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
 
     const scoreHUD = document.getElementById('scoreDisplayHUD');
     const bestHUD = document.getElementById('bestDisplayHUD');
@@ -978,7 +925,6 @@
     const totalPicanhasBadge = document.getElementById('totalPicanhasBadge');
     const prisonBanner = document.getElementById('prisonBanner');
 
-    // Elementos de personalização no Game Over
     const btnGoChangeChar = document.getElementById('btnGoChangeChar');
     const goEquippedCharImg = document.getElementById('goEquippedCharImg');
     const goEquippedCharName = document.getElementById('goEquippedCharName');
@@ -1016,15 +962,32 @@
       if (name) name.textContent = activeCharacter.name;
       if (skill) skill.textContent = activeCharacter.skillName;
 
-      // Atualiza também o avatar no Game Over
       if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.sprite;
       if (goEquippedCharName) goEquippedCharName.textContent = activeCharacter.name;
     }
 
-    let dpr = Math.max(window.devicePixelRatio || 1, 2);
+    let dpr = 1;
 
     function isFullscreenActive() {
       return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
+
+    // CACHE DE GRADIENTES PARA MÁXIMA PERFORMANCE (Zero Alocação no Loop)
+    let cachedBgGrad = null;
+    let cachedJailGrad = null;
+    let cachedPipeGrad = null;
+    let cachedJailPipeGrad = null;
+
+    function createCachedGradients(W, H) {
+      cachedBgGrad = ctx.createLinearGradient(0, 0, 0, H);
+      cachedBgGrad.addColorStop(0, '#4ec0ca');
+      cachedBgGrad.addColorStop(0.65, '#86d1cc');
+      cachedBgGrad.addColorStop(1, '#a6e2dc');
+
+      cachedJailGrad = ctx.createLinearGradient(0, 0, 0, H);
+      cachedJailGrad.addColorStop(0, '#0f172a');
+      cachedJailGrad.addColorStop(0.5, '#1e293b');
+      cachedJailGrad.addColorStop(1, '#090d16');
     }
 
     function calcSize() {
@@ -1038,19 +1001,23 @@
         W = window.innerWidth;
         H = window.innerHeight;
       } else if (isMobile) {
-        W = Math.min(window.innerWidth - 10, 520);
-        H = Math.max(370, Math.min(window.innerHeight - 60, 700));
+        W = Math.min(window.innerWidth - 10, 480);
+        H = Math.max(360, Math.min(window.innerHeight - 56, 680));
       } else {
-        const maxH = Math.min(window.innerHeight - 80, 680);
+        const maxH = Math.min(window.innerHeight - 80, 660);
         H = Math.max(maxH, 420);
         W = Math.round(H * 0.70);
       }
 
-      dpr = Math.max(window.devicePixelRatio || 1, 2);
+      // DPR Otimizado: 1.0 no mobile para 60FPS fluidos; 1.5 no PC
+      dpr = isMobile ? Math.min(window.devicePixelRatio || 1, 1.25) : Math.min(window.devicePixelRatio || 1, 1.5);
+
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
+
+      createCachedGradients(W, H);
 
       return { W, H };
     }
@@ -1065,7 +1032,6 @@
       characterSprites[char.id] = img;
     });
 
-    // FÍSICA BASE DO JOGO
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
     let BASE_PIPE_SPEED = 2.2;
@@ -1083,19 +1049,16 @@
     let pipes = [], picanhas = [], likesBonus = [];
     let isPrisonMode = false;
 
-    // NUVENS ESTILO FLAPPY BIRD
     const clouds = [
       { x: 40, y: 40, scale: 0.8, speed: 0.35 },
       { x: 220, y: 70, scale: 1.1, speed: 0.5 },
       { x: 380, y: 35, scale: 0.7, speed: 0.3 }
     ];
 
-    // BONECOS 171 ANDANDO NA CADEIA (PEQUENOS COM 171 NA CABEÇA)
     const prisoners = [
       { x: 40, speed: 0.85, dir: 1, bob: 0 },
       { x: 160, speed: 0.65, dir: -1, bob: 0 },
-      { x: 280, speed: 0.75, dir: 1, bob: 0 },
-      { x: 400, speed: 0.90, dir: -1, bob: 0 }
+      { x: 280, speed: 0.75, dir: 1, bob: 0 }
     ];
 
     if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
@@ -1135,10 +1098,9 @@
       prisonBanner.classList.add('show');
       setTimeout(() => {
         prisonBanner.classList.remove('show');
-      }, 2400);
+      }, 2200);
     }
 
-    // MODAL DE SELEÇÃO DE PERSONAGENS
     function renderCharacterGrid() {
       if (!charactersGrid) return;
       const totalPicanhas = CharacterInventory.getTotalPicanhas();
@@ -1157,8 +1119,8 @@
           <div class="char-avatar" style="border-color:${char.auraColor}">
             <img src="${char.sprite}" alt="${char.name}">
           </div>
-          <div style="font-weight:700; font-size:12px; color:#fff; margin-bottom:2px;">${char.name}</div>
-          <div style="font-size:10.5px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
+          <div style="font-weight:700; font-size:11.5px; color:#fff; margin-bottom:1px;">${char.name}</div>
+          <div style="font-size:10px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
             ${unlocked ? char.nickname : `🔒 ${char.requiredPicanhas} 🥩`}
           </div>
         `;
@@ -1207,7 +1169,6 @@
       }
     });
 
-    // SELEÇÃO DE DIFICULDADE (FÁCIL / DIFÍCIL)
     let currentDifficulty = 'easy';
     const btnDiffHUD = document.getElementById('btnDifficultyHUD');
     const btnEasyStart = document.getElementById('btnEasyModeStart');
@@ -1233,12 +1194,8 @@
           btnHardStart.style.background = '';
           btnHardStart.style.color = '';
         }
-        if (btnGoEasyDiff) {
-          btnGoEasyDiff.className = 'go-diff-btn active-easy';
-        }
-        if (btnGoHardDiff) {
-          btnGoHardDiff.className = 'go-diff-btn inactive';
-        }
+        if (btnGoEasyDiff) btnGoEasyDiff.className = 'go-diff-btn active-easy';
+        if (btnGoHardDiff) btnGoHardDiff.className = 'go-diff-btn inactive';
       } else {
         BASE_PIPE_SPEED = 3.8;
         SPAWN_FREQ = 80;
@@ -1257,12 +1214,8 @@
           btnEasyStart.style.background = '';
           btnEasyStart.style.color = '';
         }
-        if (btnGoEasyDiff) {
-          btnGoEasyDiff.className = 'go-diff-btn inactive';
-        }
-        if (btnGoHardDiff) {
-          btnGoHardDiff.className = 'go-diff-btn active-hard';
-        }
+        if (btnGoEasyDiff) btnGoEasyDiff.className = 'go-diff-btn inactive';
+        if (btnGoHardDiff) btnGoHardDiff.className = 'go-diff-btn active-hard';
       }
     }
 
@@ -1306,7 +1259,7 @@
 
     function spawnPipe() {
       const GH = H * GH_RATIO, GAP = H * gameState.GAP_RATIO;
-      const topH = GH + 30 + Math.random() * (H - GH - GAP - 70);
+      const topH = GH + 25 + Math.random() * (H - GH - GAP - 60);
       pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
 
       if (gameState.spawnExtraLikes && Math.random() > 0.45) {
@@ -1321,9 +1274,9 @@
     function updatePipes() {
       if (state !== STATE.PLAYING) return;
       
-      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.6 : BASE_PIPE_SPEED * gameState.SPEED_MULT);
+      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT);
 
-      if (frameCount % Math.round(SPAWN_FREQ / (gameState.isTurboActive ? 1.5 : gameState.SPEED_MULT)) === 0) {
+      if (frameCount % Math.round(SPAWN_FREQ / (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT)) === 0) {
         spawnPipe();
       }
 
@@ -1343,12 +1296,11 @@
             gameState.comboCount++;
             if (gameState.comboCount >= gameState.comboGoal) {
               gameState.isTurboActive = true;
-              gameState.turboTimer = 4.0;
+              gameState.turboTimer = 3.5;
               gameState.comboCount = 0;
             }
           }
 
-          // CICLO DINÂMICO A CADA 13 PONTOS: CADEIA <-> CÉU
           const cycle = Math.floor(score / 13);
           const shouldBePrison = (cycle % 2 === 1) && (score > 0);
 
@@ -1356,16 +1308,12 @@
             isPrisonMode = true;
             document.body.classList.add('prison-mode');
             showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO!`, true);
-            try {
-              sounds.speak(`${score} Pontos! Entrou na custódia companheiro!`, 1.0, 1.1);
-            } catch(e){}
+            try { sounds.speak(`${score} Pontos! Entrou na custódia companheiro!`, 1.0, 1.1); } catch(e){}
           } else if (!shouldBePrison && isPrisonMode) {
             isPrisonMode = false;
             document.body.classList.remove('prison-mode');
             showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! LIBERDADE!`, false);
-            try {
-              sounds.speak(`${score} Pontos! Liberdade provisória concedida!`, 1.0, 1.1);
-            } catch(e){}
+            try { sounds.speak(`${score} Pontos! Liberdade provisória concedida!`, 1.0, 1.1); } catch(e){}
           }
           
           try { sounds.playPicanhaMemeSound(); } catch(e){}
@@ -1375,7 +1323,7 @@
 
       for (const lk of likesBonus) {
         lk.x -= currentSpeed;
-        if (!lk.collected && Math.hypot(lula.x - lk.x, lula.y - lk.y) < 32) {
+        if (!lk.collected && Math.hypot(lula.x - lk.x, lula.y - lk.y) < 30) {
           lk.collected = true;
           score += 2;
           CharacterInventory.addPicanhas(2);
@@ -1387,13 +1335,13 @@
     }
 
     function spawnPicanhas(x) {
-      const emojis = ['🥩', '🍖', '🍻', '🥓'];
-      for (let i = 0; i < 5; i++) {
+      const emojis = ['🥩', '🍖', '🥓'];
+      for (let i = 0; i < 4; i++) {
         picanhas.push({
-          x: x + (Math.random() - 0.5) * 40,
-          y: H * 0.4 + (Math.random() - 0.5) * 60,
-          vx: (Math.random() - 0.5) * 4,
-          vy: -2 - Math.random() * 3,
+          x: x + (Math.random() - 0.5) * 30,
+          y: H * 0.4 + (Math.random() - 0.5) * 50,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -2 - Math.random() * 2.5,
           emoji: emojis[Math.floor(Math.random() * emojis.length)],
           alpha: 1.0
         });
@@ -1405,7 +1353,7 @@
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.25;
-        p.alpha -= 0.018;
+        p.alpha -= 0.022;
       }
       picanhas = picanhas.filter(p => p.alpha > 0);
     }
@@ -1413,9 +1361,9 @@
     function updateClouds() {
       for (const c of clouds) {
         c.x -= c.speed;
-        if (c.x < -120) {
-          c.x = W + 40 + Math.random() * 60;
-          c.y = 30 + Math.random() * (H * 0.25);
+        if (c.x < -100) {
+          c.x = W + 30 + Math.random() * 50;
+          c.y = 25 + Math.random() * (H * 0.25);
         }
       }
     }
@@ -1423,8 +1371,8 @@
     function updatePrisoners() {
       for (const pr of prisoners) {
         pr.x += pr.speed * pr.dir;
-        pr.bob = Math.sin(frameCount * 0.25 + pr.x) * 2;
-        if (pr.x > W - 30) pr.dir = -1;
+        pr.bob = Math.sin(frameCount * 0.2 + pr.x) * 1.5;
+        if (pr.x > W - 25) pr.dir = -1;
         if (pr.x < 15) pr.dir = 1;
       }
     }
@@ -1453,135 +1401,109 @@
     }
 
     function drawCloud(cx, cy, scale) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(cx, cy, 20 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 18 * scale, cy - 10 * scale, 25 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 42 * scale, cy, 22 * scale, 0, Math.PI * 2);
-      ctx.arc(cx + 20 * scale, cy + 6 * scale, 18 * scale, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 18 * scale, 0, Math.PI * 2);
+      ctx.arc(cx + 16 * scale, cy - 8 * scale, 22 * scale, 0, Math.PI * 2);
+      ctx.arc(cx + 36 * scale, cy, 18 * scale, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // DESENHO DA SILHUETA DA CIDADE RETRO
     function drawCitySkyline(GH) {
       const horizonY = H - GH;
       ctx.fillStyle = '#86d1cc';
       
-      const bWidths = [38, 48, 30, 56, 42, 34, 50, 44];
-      const bHeights = [70, 95, 60, 110, 85, 65, 100, 75];
-      let curX = -((groundScroll * 0.3) % 120);
+      const bWidths = [36, 44, 28, 50, 38, 32];
+      const bHeights = [65, 90, 55, 100, 75, 60];
+      let curX = -((groundScroll * 0.3) % 100);
 
-      while (curX < W + 80) {
+      while (curX < W + 60) {
         for (let i = 0; i < bWidths.length; i++) {
           const bw = bWidths[i];
           const bh = bHeights[i];
-          const by = horizonY - bh;
-          ctx.fillRect(curX, by, bw - 2, bh);
-          
-          ctx.fillStyle = '#a1e0db';
-          for (let wy = by + 6; wy < horizonY - 10; wy += 14) {
-            for (let wx = curX + 6; wx < curX + bw - 8; wx += 10) {
-              ctx.fillRect(wx, wy, 4, 6);
-            }
-          }
-          ctx.fillStyle = '#86d1cc';
+          ctx.fillRect(curX, horizonY - bh, bw - 2, bh);
           curX += bw;
         }
       }
 
       ctx.fillStyle = '#55a832';
-      let bushX = -((groundScroll * 0.6) % 90);
+      let bushX = -((groundScroll * 0.6) % 80);
       while (bushX < W + 60) {
         ctx.beginPath();
-        ctx.arc(bushX + 15, horizonY - 12, 18, 0, Math.PI * 2);
-        ctx.arc(bushX + 35, horizonY - 18, 22, 0, Math.PI * 2);
-        ctx.arc(bushX + 55, horizonY - 12, 18, 0, Math.PI * 2);
+        ctx.arc(bushX + 15, horizonY - 10, 16, 0, Math.PI * 2);
+        ctx.arc(bushX + 35, horizonY - 14, 20, 0, Math.PI * 2);
+        ctx.arc(bushX + 55, horizonY - 10, 16, 0, Math.PI * 2);
         ctx.fill();
-        bushX += 70;
+        bushX += 65;
       }
     }
 
-    // DESENHO EM 2D DOS BONECOS 171 PEQUENOS COM 171 NA CABEÇA
+    // DESENHO EM 2D DOS BONECOS 171 PEQUENOS COM 171 NA CABEÇA (SUPER LEVE)
     function drawSmall2DPrisoner171(px, py, dir, bob) {
       ctx.save();
       ctx.translate(px, py + bob);
       if (dir === -1) ctx.scale(-1, 1);
 
-      // 1. Plaquinha amarela brilhante escrito "171" em cima da cabeça
+      // 1. Plaquinha amarela brilhante "171"
       ctx.fillStyle = '#facc15';
+      ctx.fillRect(-10, -26, 20, 9);
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.5;
-      ctx.fillRect(-11, -28, 22, 10);
-      ctx.strokeRect(-11, -28, 22, 10);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-10, -26, 20, 9);
       
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 8px sans-serif';
+      ctx.font = 'bold 7.5px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('171', 0, -20);
+      ctx.fillText('171', 0, -19);
 
-      // 2. Cabeça redonda cartoon do preso
+      // 2. Cabeça do preso
       ctx.fillStyle = '#f5d0a9';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.arc(0, -11, 5.5, 0, Math.PI * 2);
+      ctx.arc(0, -10, 5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // Gorro listrado de cadeia
+      // Gorro listrado
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-5.5, -16.5, 11, 4.5);
+      ctx.fillRect(-5, -15, 10, 4);
       ctx.fillStyle = '#000000';
-      ctx.fillRect(-3, -16.5, 3, 4.5);
-      ctx.fillRect(1.5, -16.5, 3, 4.5);
+      ctx.fillRect(-3, -15, 2.5, 4);
+      ctx.fillRect(1.5, -15, 2.5, 4);
 
-      // Olhinho
+      // Olho
       ctx.fillStyle = '#000000';
-      ctx.fillRect(1.5, -12, 2, 2);
+      ctx.fillRect(1.5, -11, 1.5, 1.5);
 
-      // 3. Tronco listrado de presidiário (Preto e Branco)
+      // 3. Tronco listrado
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(-4.5, -5.5, 9, 11);
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.2;
-      ctx.strokeRect(-4.5, -5.5, 9, 11);
+      ctx.fillRect(-4, -5, 8, 10);
+      ctx.strokeRect(-4, -5, 8, 10);
 
-      // Listras horizontais pretas
       ctx.fillStyle = '#000000';
-      ctx.fillRect(-4.5, -3, 9, 2.5);
-      ctx.fillRect(-4.5, 1.5, 9, 2.5);
+      ctx.fillRect(-4, -3, 8, 2);
+      ctx.fillRect(-4, 1, 8, 2);
 
-      // 4. Pernas andando
-      const legOffset = Math.sin(frameCount * 0.3 + px) * 3.5;
+      // 4. Pernas
+      const legOffset = Math.sin(frameCount * 0.25 + px) * 3;
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(-2, 5.5); ctx.lineTo(-2 + legOffset, 14); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(2, 5.5); ctx.lineTo(2 - legOffset, 14); ctx.stroke();
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-2, 5); ctx.lineTo(-2 + legOffset, 12); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(2, 5); ctx.lineTo(2 - legOffset, 12); ctx.stroke();
 
-      // 5. Corrente e Bola de Ferro de Prisão no Tornozelo
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(-2 - legOffset, 13); ctx.lineTo(-12, 13); ctx.stroke();
+      // 5. Bola de Ferro
       ctx.fillStyle = '#1e293b';
-      ctx.beginPath(); ctx.arc(-14, 12, 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-11, 11, 3, 0, Math.PI * 2); ctx.fill();
 
       ctx.restore();
     }
 
     function draw() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
 
       const GH = H * GH_RATIO;
 
       if (!isPrisonMode) {
-        // CÉU RETRO FLAPPY BIRD AZUL
-        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-        bgGrad.addColorStop(0, '#4ec0ca');
-        bgGrad.addColorStop(0.65, '#86d1cc');
-        bgGrad.addColorStop(1, '#a6e2dc');
-        ctx.fillStyle = bgGrad;
+        ctx.fillStyle = cachedBgGrad || '#4ec0ca';
         ctx.fillRect(0, 0, W, H);
 
         for (const c of clouds) {
@@ -1591,87 +1513,45 @@
         drawCitySkyline(GH);
 
       } else {
-        // CENÁRIO REALISTA DE CADEIA
-        const jailGrad = ctx.createLinearGradient(0, 0, 0, H);
-        jailGrad.addColorStop(0, '#0f172a');
-        jailGrad.addColorStop(0.5, '#1e293b');
-        jailGrad.addColorStop(1, '#090d16');
-        ctx.fillStyle = jailGrad;
+        ctx.fillStyle = cachedJailGrad || '#0f172a';
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-        ctx.lineWidth = 1.5;
-        for (let y = 0; y < H - GH; y += 22) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 1;
+        for (let y = 0; y < H - GH; y += 26) {
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
         }
 
-        const spotX = W / 2 + Math.sin(frameCount * 0.03) * (W * 0.4);
-        const spotGrad = ctx.createRadialGradient(spotX, H * 0.4, 10, spotX, H * 0.4, 160);
-        spotGrad.addColorStop(0, 'rgba(255, 255, 200, 0.22)');
-        spotGrad.addColorStop(1, 'rgba(255, 255, 200, 0)');
-        ctx.fillStyle = spotGrad;
-        ctx.beginPath();
-        ctx.moveTo(W / 2, 0);
-        ctx.lineTo(spotX - 100, H - GH);
-        ctx.lineTo(spotX + 100, H - GH);
-        ctx.closePath();
-        ctx.fill();
-
-        for (let x = 16; x < W; x += 32) {
-          const barGrad = ctx.createLinearGradient(x - 3, 0, x + 3, 0);
-          barGrad.addColorStop(0, '#334155');
-          barGrad.addColorStop(0.4, '#94a3b8');
-          barGrad.addColorStop(0.8, '#475569');
-          barGrad.addColorStop(1, '#1e293b');
-          ctx.fillStyle = barGrad;
-          ctx.fillRect(x - 3, 0, 6, H - GH);
-
-          ctx.fillStyle = '#0f172a';
-          for (let ry = 20; ry < H - GH; ry += 60) {
-            ctx.beginPath(); ctx.arc(x, ry, 2, 0, Math.PI * 2); ctx.fill();
-          }
+        for (let x = 16; x < W; x += 36) {
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(x - 2.5, 0, 5, H - GH);
         }
 
-        const flash = Math.sin(frameCount * 0.18) > 0;
-        ctx.fillStyle = flash ? 'rgba(239, 68, 68, 0.28)' : 'rgba(59, 130, 246, 0.28)';
-        ctx.fillRect(0, 0, W, 24);
+        const flash = (frameCount % 30) < 15;
+        ctx.fillStyle = flash ? 'rgba(239, 68, 68, 0.20)' : 'rgba(59, 130, 246, 0.20)';
+        ctx.fillRect(0, 0, W, 20);
       }
 
-      // CANOS ESTILO FLAPPY BIRD
+      // CANOS (RENDERIZAÇÃO RÁPIDA E LIMPA)
       const PW = W * PW_RATIO;
       for (const p of pipes) {
-        const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x + PW, 0);
-        if (!isPrisonMode) {
-          pipeGrad.addColorStop(0, '#538021');
-          pipeGrad.addColorStop(0.18, '#73bf2e');
-          pipeGrad.addColorStop(0.65, '#9ce659');
-          pipeGrad.addColorStop(0.92, '#538021');
-        } else {
-          pipeGrad.addColorStop(0, '#374151');
-          pipeGrad.addColorStop(0.3, '#6b7280');
-          pipeGrad.addColorStop(0.7, '#9ca3af');
-          pipeGrad.addColorStop(1, '#1f2937');
-        }
-        
-        ctx.fillStyle = pipeGrad;
+        ctx.fillStyle = isPrisonMode ? '#4b5563' : '#73bf2e';
         ctx.fillRect(p.x, 0, PW, p.topH);
-        ctx.strokeStyle = isPrisonMode ? '#111827' : '#2b4d0c';
-        ctx.lineWidth = 3.5;
-        ctx.strokeRect(p.x, 0, PW, p.topH);
-
-        ctx.fillRect(p.x - 5, p.topH - 26, PW + 10, 26);
-        ctx.strokeRect(p.x - 5, p.topH - 26, PW + 10, 26);
-
         ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
-        ctx.strokeRect(p.x, p.botY, PW, H - GH - p.botY);
 
-        ctx.fillRect(p.x - 5, p.botY, PW + 10, 26);
-        ctx.strokeRect(p.x - 5, p.botY, PW + 10, 26);
+        ctx.fillStyle = isPrisonMode ? '#374151' : '#558022';
+        ctx.fillRect(p.x - 4, p.topH - 22, PW + 8, 22);
+        ctx.fillRect(p.x - 4, p.botY, PW + 8, 22);
+
+        ctx.strokeStyle = isPrisonMode ? '#1f2937' : '#2b4d0c';
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(p.x - 4, p.topH - 22, PW + 8, 22);
+        ctx.strokeRect(p.x - 4, p.botY, PW + 8, 22);
       }
 
       for (const lk of likesBonus) {
-        ctx.font = '28px sans-serif';
-        ctx.fillText('💖', lk.x - 14, lk.y + 10);
+        ctx.font = '24px sans-serif';
+        ctx.fillText('💖', lk.x - 12, lk.y + 8);
       }
 
       if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 24;
@@ -1680,38 +1560,10 @@
       ctx.fillStyle = isPrisonMode ? '#0f172a' : '#ded895';
       ctx.fillRect(0, H - GH, W, GH);
 
-      if (!isPrisonMode) {
-        ctx.fillStyle = '#73bf2e';
-        ctx.fillRect(0, H - GH, W, 14);
-        ctx.fillStyle = '#558022';
-        ctx.fillRect(0, H - GH + 12, W, 3);
+      ctx.fillStyle = isPrisonMode ? '#eab308' : '#73bf2e';
+      ctx.fillRect(0, H - GH, W, 12);
 
-        ctx.fillStyle = '#c8be7a';
-        for (let gx = -groundScroll; gx < W + 24; gx += 24) {
-          ctx.beginPath();
-          ctx.moveTo(gx, H - GH + 16);
-          ctx.lineTo(gx + 12, H - GH + 16);
-          ctx.lineTo(gx + 6, H);
-          ctx.lineTo(gx - 6, H);
-          ctx.closePath();
-          ctx.fill();
-        }
-      } else {
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(0, H - GH, W, 14);
-        ctx.fillStyle = '#000000';
-        for (let hx = 0; hx < W; hx += 24) {
-          ctx.beginPath();
-          ctx.moveTo(hx, H - GH);
-          ctx.lineTo(hx + 12, H - GH);
-          ctx.lineTo(hx + 4, H - GH + 14);
-          ctx.lineTo(hx - 8, H - GH + 14);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-
-      // BONECOS 171 EM 2D ANDANDO NO CHÃO COM 171 NA CABEÇA
+      // BONECOS 171 EM 2D ANDANDO NO CHÃO
       if (isPrisonMode) {
         const floorY = H - GH + 2;
         for (const pr of prisoners) {
@@ -1721,7 +1573,7 @@
 
       for (const p of picanhas) {
         ctx.globalAlpha = p.alpha;
-        ctx.font = '24px serif';
+        ctx.font = '20px serif';
         ctx.fillText(p.emoji, p.x, p.y);
         ctx.globalAlpha = 1.0;
       }
@@ -1730,11 +1582,11 @@
       if (state === STATE.PLAYING) {
         ctx.fillStyle = '#ffffff';
         ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 5;
-        ctx.font = '36px "Press Start 2P", "Bangers", cursive';
+        ctx.lineWidth = 4;
+        ctx.font = '32px "Press Start 2P", "Bangers", cursive';
         ctx.textAlign = 'center';
-        ctx.strokeText(score.toString(), W / 2, 70);
-        ctx.fillText(score.toString(), W / 2, 70);
+        ctx.strokeText(score.toString(), W / 2, 64);
+        ctx.fillText(score.toString(), W / 2, 64);
         ctx.textAlign = 'left';
       }
 
@@ -1744,20 +1596,15 @@
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      ctx.shadowColor = isPrisonMode ? '#ef4444' : (activeCharacter.auraColor || '#ffdf00');
-      ctx.shadowBlur = gameState.isTurboActive ? 26 : 14;
-
       ctx.beginPath(); ctx.arc(0, 0, R + 2, 0, Math.PI * 2);
       ctx.fillStyle = isPrisonMode ? '#dc2626' : (activeCharacter.auraColor || '#ffdf00');
       ctx.fill();
 
       if (gameState.hasShield && gameState.shieldCharges > 0) {
         ctx.strokeStyle = '#a855f7';
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.arc(0, 0, R + 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, 0, R + 6, 0, Math.PI * 2); ctx.stroke();
       }
-
-      ctx.shadowBlur = 0;
 
       const spriteImg = characterSprites[activeCharacter.id];
       if (spriteImg && spriteImg.complete) {
@@ -1770,7 +1617,11 @@
       ctx.restore();
     }
 
-    function loop() {
+    let lastTime = performance.now();
+    function loop(currentTime) {
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
+      lastTime = currentTime;
+
       frameCount++;
       lula.update();
       updatePipes();
@@ -1779,7 +1630,7 @@
       if (isPrisonMode) updatePrisoners();
 
       if (gameState.isTurboActive) {
-        gameState.turboTimer -= 0.016;
+        gameState.turboTimer -= dt;
         if (gameState.turboTimer <= 0) {
           gameState.isTurboActive = false;
         }
@@ -1800,7 +1651,7 @@
 
         setTimeout(() => {
           showGameOverScreen();
-        }, 350);
+        }, 300);
       }
 
       draw();
@@ -1827,7 +1678,6 @@
       updateEquippedHUD();
       setDifficulty(currentDifficulty);
 
-      // Medalha baseada na pontuação
       const medalEl = document.getElementById('goMedalCircle');
       if (score >= 50) {
         medalEl.textContent = '🥇';
@@ -1873,10 +1723,10 @@
             listEl.appendChild(row);
           });
         } else {
-          listEl.innerHTML = '<div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Nenhum recorde ainda. Seja o 1º!</div>';
+          listEl.innerHTML = '<div style="text-align:center; padding:10px; font-size:9px; color:#64748b;">Nenhum recorde ainda. Seja o 1º!</div>';
         }
       } catch(e) {
-        listEl.innerHTML = '<div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Recordes offline</div>';
+        listEl.innerHTML = '<div style="text-align:center; padding:10px; font-size:9px; color:#64748b;">Recordes offline</div>';
       }
     }
 
@@ -1893,7 +1743,6 @@
         document.body.classList.remove('prison-mode');
         lula.init();
         lula.jump();
-      } else if (state === STATE.DEAD) {
       } else if (state === STATE.PLAYING) {
         lula.jump();
       }
@@ -1935,7 +1784,7 @@
     });
 
     const onUserTouch = (e) => {
-      if (e.target.closest('button, a, input, #playerProfileBadge, .game-over-container, .modal-card, .start-card')) return;
+      if (e.target.closest('button, a, input, #playerProfileBadge, .game-over-container, .modal-card, .start-card, .nav-right-group')) return;
       e.preventDefault();
       if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
         restartGame();
@@ -1952,7 +1801,7 @@
       }
     });
 
-    loop();
+    requestAnimationFrame(loop);
   </script>
 
 </body>

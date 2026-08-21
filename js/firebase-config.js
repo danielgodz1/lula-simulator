@@ -1,16 +1,12 @@
-// js/firebase-config.js — Integração Firebase Firestore com Recorde Único por Usuário (v2)
+// js/firebase-config.js — Integração Segura com Firestore, Anti-Cheat e Validações de Banco
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyDummyKeyForFirestoreWebFallback-2026",
-  authDomain: "motoai-43ed4.firebaseapp.com",
   projectId: "motoai-43ed4",
-  storageBucket: "motoai-43ed4.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+  authDomain: "motoai-43ed4.firebaseapp.com",
+  storageBucket: "motoai-43ed4.appspot.com"
 };
 
-// 1. SALVAR RECORDE MÁXIMO DO JOGADOR (1 ENTRADA ÚNICA POR USUÁRIO)
-// Se a nova pontuação for maior que o recorde anterior, atualiza. Se for menor, NUNCA degrada nem sobrescreve!
+// 1. SALVAR RECORDE MÁXIMO DO JOGADOR COM VALIDAÇÃO ANTI-CHEAT
 export async function savePlayerScore(gameType, score) {
   let playerName = 'Jogador';
   try {
@@ -25,37 +21,50 @@ export async function savePlayerScore(gameType, score) {
     playerName = localStorage.getItem('lula_player') || 'Jogador';
   }
 
-  const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-  
-  // Salva no LocalStorage apenas se superar o recorde anterior
-  const localKey = gameType === 'runner' ? 'run_best' : 'lula_best';
-  const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
-  if (score > currentBest) {
-    localStorage.setItem(localKey, score.toString());
+  // Sanitização
+  playerName = (playerName || 'Jogador').trim().slice(0, 25);
+  const numScore = parseInt(score, 10);
+
+  // Anti-Cheat: Ignora valores inválidos ou negativos
+  if (isNaN(numScore) || numScore <= 0 || numScore > 50000) {
+    return;
   }
 
-  // Identificador único do documento do jogador
+  const localKey = gameType === 'runner' ? 'run_best' : 'lula_best';
+  const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
+  if (numScore > currentBest) {
+    localStorage.setItem(localKey, numScore.toString());
+  }
+
+  // 1. Tenta enviar pela API Serverless protegida (Vercel)
+  try {
+    const apiRes = await fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ player: playerName, score: numScore, game: gameType })
+    });
+    if (apiRes.ok) return;
+  } catch (e) {}
+
+  // 2. Fallback direto ao Firestore com documento único por jogador
+  const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
   const docId = encodeURIComponent(playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
 
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}/${docId}`;
     
-    // 1. Consulta o recorde existente do jogador no Firestore
+    // Consulta o recorde existente
     const checkRes = await fetch(url);
     if (checkRes.ok) {
       const data = await checkRes.json();
       const existingScore = parseInt(data.fields?.score?.integerValue || '0', 10);
-      // Se a pontuação obtida agora for menor ou igual ao recorde máximo já salvo, NÃO substitui!
-      if (score <= existingScore) {
-        return;
-      }
+      if (numScore <= existingScore) return;
     }
 
-    // 2. Grava/Atualiza com o novo recorde máximo
     const payload = {
       fields: {
         player: { stringValue: playerName },
-        score: { integerValue: Math.max(score, currentBest).toString() },
+        score: { integerValue: numScore.toString() },
         updatedAt: { timestampValue: new Date().toISOString() }
       }
     };
@@ -70,6 +79,19 @@ export async function savePlayerScore(gameType, score) {
 
 // 2. OBTER PLACAR ZERADO COM APENAS 1 RECORDE POR USUÁRIO
 export async function getTopScores(collectionName, limit = 15) {
+  // 1. Tenta API Serverless
+  const game = collectionName.includes('runner') ? 'runner' : 'flappy';
+  try {
+    const apiRes = await fetch(`/api/score?game=${game}&limit=${limit}`);
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data.success && Array.isArray(data.scores) && data.scores.length > 0) {
+        return data.scores;
+      }
+    }
+  } catch (e) {}
+
+  // 2. Fallback direto ao Firestore
   try {
     const targetColl = collectionName.endsWith('_v2') ? collectionName : `${collectionName}_v2`;
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=50`;
@@ -79,10 +101,12 @@ export async function getTopScores(collectionName, limit = 15) {
     if (data.documents && data.documents.length > 0) {
       const userMap = new Map();
       data.documents.forEach(doc => {
-        const player = doc.fields?.player?.stringValue || 'Anônimo';
+        const player = (doc.fields?.player?.stringValue || 'Anônimo').slice(0, 30);
         const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
-        if (!userMap.has(player) || score > userMap.get(player)) {
-          userMap.set(player, score);
+        if (score >= 0 && score <= 50000) {
+          if (!userMap.has(player) || score > userMap.get(player)) {
+            userMap.set(player, score);
+          }
         }
       });
 
@@ -94,15 +118,24 @@ export async function getTopScores(collectionName, limit = 15) {
   return [];
 }
 
-// 3. ENVIAR AVALIAÇÃO / FEEDBACK
+// 3. ENVIAR AVALIAÇÃO / FEEDBACK SEGURO
 export async function sendFeedback(feedbackData) {
+  try {
+    const apiRes = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(feedbackData)
+    });
+    if (apiRes.ok) return { success: true };
+  } catch (e) {}
+
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks`;
     const payload = {
       fields: {
-        name: { stringValue: feedbackData.name || 'Anônimo' },
+        name: { stringValue: (feedbackData.name || 'Anônimo').slice(0, 40) },
         stars: { integerValue: (feedbackData.stars || 5).toString() },
-        comment: { stringValue: feedbackData.comment || '' },
+        comment: { stringValue: (feedbackData.comment || '').slice(0, 500) },
         createdAt: { timestampValue: new Date().toISOString() }
       }
     };
@@ -111,10 +144,7 @@ export async function sendFeedback(feedbackData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (res.ok) {
-      const data = await res.json();
-      return { success: true, id: data.name ? data.name.split('/').pop() : 'doc_id' };
-    }
+    if (res.ok) return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
@@ -123,6 +153,16 @@ export async function sendFeedback(feedbackData) {
 
 // 4. OBTER AVALIAÇÕES
 export async function getFeedbacks(limit = 20) {
+  try {
+    const apiRes = await fetch(`/api/feedback?limit=${limit}`);
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data.success && Array.isArray(data.feedbacks) && data.feedbacks.length > 0) {
+        return data.feedbacks;
+      }
+    }
+  } catch (e) {}
+
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
     const res = await fetch(url);
@@ -143,13 +183,22 @@ export async function getFeedbacks(limit = 20) {
 // 5. ENVIAR MENSAGEM DE CONTATO
 export async function sendContactMessage(msgData) {
   try {
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(msgData)
+    });
+    if (res.ok) return { success: true };
+  } catch (e) {}
+
+  try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_contatos`;
     const payload = {
       fields: {
-        name: { stringValue: msgData.name || 'Anônimo' },
-        email: { stringValue: msgData.email || '' },
-        subject: { stringValue: msgData.subject || '' },
-        message: { stringValue: msgData.message || '' },
+        name: { stringValue: (msgData.name || 'Anônimo').slice(0, 60) },
+        email: { stringValue: (msgData.email || '').slice(0, 100) },
+        subject: { stringValue: (msgData.subject || '').slice(0, 100) },
+        message: { stringValue: (msgData.message || '').slice(0, 2000) },
         createdAt: { timestampValue: new Date().toISOString() }
       }
     };
@@ -158,32 +207,9 @@ export async function sendContactMessage(msgData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (res.ok) {
-      const data = await res.json();
-      return { success: true, id: data.name ? data.name.split('/').pop() : 'doc_id' };
-    }
+    if (res.ok) return { success: true };
   } catch (e) {
     return { success: false, error: e.message };
   }
   return { success: false, error: 'Offline fallback' };
-}
-
-// 6. OBTER MENSAGENS DE CONTATO
-export async function getContactMessages(limit = 20) {
-  try {
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_contatos?pageSize=${limit}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Firestore response error');
-    const data = await res.json();
-    if (data.documents && data.documents.length > 0) {
-      return data.documents.map(doc => ({
-        name: doc.fields?.name?.stringValue || 'Anônimo',
-        email: doc.fields?.email?.stringValue || '',
-        subject: doc.fields?.subject?.stringValue || '',
-        message: doc.fields?.message?.stringValue || '',
-        createdAt: doc.fields?.createdAt?.timestampValue || ''
-      }));
-    }
-  } catch (e) {}
-  return [];
 }

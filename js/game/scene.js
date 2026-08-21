@@ -90,12 +90,18 @@ export class GameScene {
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+    // 3. Renderizador WebGL Ultra Otimizado
+    const isMobile = window.innerWidth <= 900;
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: !isMobile,
+      alpha: true,
+      powerPreference: 'high-performance',
+      precision: isMobile ? 'mediump' : 'highp'
+    });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio || 1, 1.0) : Math.min(window.devicePixelRatio || 1, 1.5));
+    this.renderer.shadowMap.enabled = !isMobile || window.innerWidth > 600;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
@@ -104,12 +110,13 @@ export class GameScene {
     hemiLight.position.set(0, 80, 0);
     this.scene.add(hemiLight);
 
-    // 5. Luz Solar Direcional com Sombras
+    // 5. Luz Solar Direcional com Sombras Otimizadas
     this.sunLight = new THREE.DirectionalLight(0xfff7d6, 1.4);
     this.sunLight.position.set(40, 85, 30);
-    this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.width = 1024;
-    this.sunLight.shadow.mapSize.height = 1024;
+    this.sunLight.castShadow = this.renderer.shadowMap.enabled;
+    const shadowRes = isMobile ? 512 : 1024;
+    this.sunLight.shadow.mapSize.width = shadowRes;
+    this.sunLight.shadow.mapSize.height = shadowRes;
     this.sunLight.shadow.camera.near = 0.5;
     this.sunLight.shadow.camera.far = 200;
     this.sunLight.shadow.camera.left = -25;

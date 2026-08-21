@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Função de validação de pontuação (Anti-Cheating & Anti-Invasor)
+    function isValidScoreEntry() {
+      return request.resource.data.player is string
+          && request.resource.data.player.size() >= 2
+          && request.resource.data.player.size() <= 30
+          && request.resource.data.score is int
+          && request.resource.data.score >= 0
+          && request.resource.data.score <= 50000; // Impede injeção de valores astronômicos/hacks
+    }
+
+    // 1. Placar Flappy Lula — Leitura pública, gravação estritamente validada
+    match /lula_scores_v2/{docId} {
+      allow read: if true;
+      allow create, update: if isValidScoreEntry();
+      allow delete: if false; // Ninguém pode deletar o placar de outros jogadores
+    }
+
+    // 2. Placar Empresário 3D — Leitura pública, gravação validada
+    match /lula_runner_scores_v2/{docId} {
+      allow read: if true;
+      allow create, update: if isValidScoreEntry();
+      allow delete: if false;
+    }
+
+    // 3. Perfis e Contas de Jogadores
+    match /lula_users_v2/{userId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.username is string
+                           && request.resource.data.username.size() >= 2
+                           && request.resource.data.username.size() <= 30
+                           && (!('totalPicanhas' in request.resource.data) || request.resource.data.totalPicanhas is int);
+      allow delete: if false;
+    }
+
+    // 4. Feedbacks & Avaliações — Criação segura, imutável contra edições maliciosas
+    match /lula_feedbacks/{feedbackId} {
+      allow read: if true;
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() <= 40
+                    && request.resource.data.stars is int
+                    && request.resource.data.stars >= 1
+                    && request.resource.data.stars <= 5
+                    && request.resource.data.comment is string
+                    && request.resource.data.comment.size() <= 500;
+      allow update, delete: if false; // Comentários são gravados de forma permanente
+    }
+
+    // 5. Mensagens de Contato — Totalmente privadas (Ninguém pode ler publicamente)
+    match /lula_contatos/{contactId} {
+      allow read: if false; // Ninguém na web tem permissão de leitura
+      allow create: if request.resource.data.name is string
+                    && request.resource.data.name.size() <= 60
+                    && request.resource.data.email is string
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() <= 2000;
+      allow update, delete: if false;
+    }
+  }
+}
