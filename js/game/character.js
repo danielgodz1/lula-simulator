@@ -1,4 +1,4 @@
-// js/game/character.js — Modelo 3D do Empresário, Animações Procedurais e Controles
+// js/game/character.js — Modelo 3D do Empresário Realista, Animações Procedurais e Pulo Calibrado
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
 
@@ -15,12 +15,13 @@ export class Character {
     this.x = 0;
     this.y = 0;
     this.z = 0;
+    this.groundY = 0;
 
-    // Física e Ações
+    // Física e Pulo Calibrado (Apenas ligeiramente superior ao teto do vagão em 3.0m)
     this.isJumping = false;
     this.jumpVelocity = 0;
-    this.gravity = -0.62;
-    this.jumpForce = 9.8;
+    this.gravity = -0.72;
+    this.jumpForce = 7.8; // Salto calibrado para altura máxima suave de ~3.8m a 4.1m
 
     this.isSliding = false;
     this.slideTimer = 0;
@@ -37,8 +38,8 @@ export class Character {
     this.head = null;
     this.leftLeg = null;
     this.rightLeg = null;
-    this.leftArm = null;
-    this.rightArm = null;
+    this.leftArmGroup = null;
+    this.rightArmGroup = null;
     this.briefcase = null;
     this.shadow = null;
 
@@ -48,93 +49,170 @@ export class Character {
   }
 
   build() {
-    const suitMat = new THREE.MeshLambertMaterial({ color: 0x1e293b }); // Terno Azul Marinho
-    const shirtMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // Camisa Branca
-    const tieMat = new THREE.MeshLambertMaterial({ color: 0xef4444 });   // Gravata Vermelha
-    const skinMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b });  // Tom de Pele
-    const hairMat = new THREE.MeshLambertMaterial({ color: 0x1c1917 });  // Cabelo
-    const glassesMat = new THREE.MeshLambertMaterial({ color: 0x09090b });// Óculos Escuros
-    const shoeMat = new THREE.MeshLambertMaterial({ color: 0x111827 });  // Sapato
-    const leatherMat = new THREE.MeshLambertMaterial({ color: 0x78350f });// Maleta Executiva
-    const goldMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });  // Fivela Dourada
+    // Materiais Refinados para o Empresário de Luxo
+    const suitMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5, metalness: 0.1 }); // Terno Azul Marinho
+    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 }); // Camisa Branca
+    const tieMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 });   // Gravata Vermelha
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.6 });  // Tom de Pele
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.7 });  // Cabelo Penteado
+    const glassesFrameMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 }); // Armação Dourada
+    const glassesLensMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.8 }); // Lente Escura Ray-Ban
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });  // Sapato Social Preto
+    const soleMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });  // Sola Marrom
+    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });// Maleta Couro Nobre
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 }); // Detalhes Dourados / Relógio Rolex
 
-    // 1. Tronco
-    this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.95, 0.44), suitMat);
-    this.torso.position.y = 1.35;
+    // 1. Tronco com Paletó e Lapelas Modeladas
+    this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.98, 0.46), suitMat);
+    this.torso.position.y = 1.38;
     this.torso.castShadow = true;
     this.mesh.add(this.torso);
 
-    // Camisa e Gravata
-    const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.5, 0.04), shirtMat);
-    shirt.position.set(0, 1.5, 0.22);
+    // Lapelas do Paletó
+    const lapelLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.62, 0.06), suitMat);
+    lapelLeft.position.set(-0.20, 1.46, 0.23);
+    lapelLeft.rotation.z = -0.15;
+    this.mesh.add(lapelLeft);
+
+    const lapelRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.62, 0.06), suitMat);
+    lapelRight.position.set(0.20, 1.46, 0.23);
+    lapelRight.rotation.z = 0.15;
+    this.mesh.add(lapelRight);
+
+    // Camisa Social Branca e Colarinho
+    const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.54, 0.05), shirtMat);
+    shirt.position.set(0, 1.50, 0.22);
     this.mesh.add(shirt);
 
-    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.42, 0.05), tieMat);
-    tie.position.set(0, 1.45, 0.23);
+    // Gravata Vermelha 3D com Prendedor de Ouro
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.44, 0.06), tieMat);
+    tie.position.set(0, 1.45, 0.24);
     this.mesh.add(tie);
 
-    // 2. Cabeça
+    const tieClip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.07), goldMat);
+    tieClip.position.set(0, 1.46, 0.25);
+    this.mesh.add(tieClip);
+
+    // Lenço de Bolso Branco (Pocket Square)
+    const pocketSquare = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.03), shirtMat);
+    pocketSquare.position.set(-0.25, 1.62, 0.24);
+    this.mesh.add(pocketSquare);
+
+    // 2. Cabeça com Feições, Cabelo Modelado e Óculos Ray-Ban de Ouro
     this.head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.44), skinMat);
-    this.head.position.y = 2.05;
+    this.head.position.y = 2.10;
     this.head.castShadow = true;
     this.mesh.add(this.head);
 
-    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.46), hairMat);
-    hair.position.set(0, 0.22, -0.02);
-    this.head.add(hair);
+    // Cabelo Penteado para Trás com Volume
+    const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.20, 0.48), hairMat);
+    hairTop.position.set(0, 0.24, -0.02);
+    this.head.add(hairTop);
 
-    const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.12, 0.08), glassesMat);
-    glasses.position.set(0, 0.04, 0.22);
-    this.head.add(glasses);
+    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.32, 0.12), hairMat);
+    hairBack.position.set(0, 0.06, -0.22);
+    this.head.add(hairBack);
 
-    // 3. Braços com Articulação de Ombro (Garante que a maleta fique 100% firme na mão)
+    // Nariz 3D
+    const nose = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.10, 0.08), skinMat);
+    nose.position.set(0, -0.04, 0.24);
+    this.head.add(nose);
+
+    // Óculos Escuros Aviador com Armação Dourada e Lentes Espelhadas
+    const glassesFrame = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.14, 0.08), glassesFrameMat);
+    glassesFrame.position.set(0, 0.06, 0.22);
+    this.head.add(glassesFrame);
+
+    const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.09), glassesLensMat);
+    lensL.position.set(-0.11, 0.06, 0.23);
+    this.head.add(lensL);
+
+    const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.09), glassesLensMat);
+    lensR.position.set(0.11, 0.06, 0.23);
+    this.head.add(lensR);
+
+    // 3. Braços com Articulações e Relógio Rolex de Ouro
     this.leftArmGroup = new THREE.Group();
-    this.leftArmGroup.position.set(-0.48, 1.70, 0);
-    const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.18), suitMat);
+    this.leftArmGroup.position.set(-0.50, 1.74, 0);
+    const leftArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.72, 0.20), suitMat);
     leftArmMesh.position.y = -0.36;
     leftArmMesh.castShadow = true;
     this.leftArmGroup.add(leftArmMesh);
+
+    // Mão Esquerda
+    const leftHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), skinMat);
+    leftHand.position.set(0, -0.76, 0);
+    this.leftArmGroup.add(leftHand);
+
+    // Relógio Rolex de Ouro no Pulso Esquerdo
+    const rolex = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 16), goldMat);
+    rolex.position.set(0, -0.68, 0);
+    this.leftArmGroup.add(rolex);
     this.mesh.add(this.leftArmGroup);
 
+    // Braço Direito com a Maleta Fixa Firme
     this.rightArmGroup = new THREE.Group();
-    this.rightArmGroup.position.set(0.48, 1.70, 0);
-    const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.18), suitMat);
+    this.rightArmGroup.position.set(0.50, 1.74, 0);
+    const rightArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.72, 0.20), suitMat);
     rightArmMesh.position.y = -0.36;
     rightArmMesh.castShadow = true;
     this.rightArmGroup.add(rightArmMesh);
 
-    // Maleta Executiva Firmemente Presa na Mão Direita
-    this.briefcase = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.48), leatherMat);
-    this.briefcase.position.set(0.08, -0.65, 0.05); // Exatamente na mão
+    // Mão Direita Segurando a Maleta
+    const rightHand = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.15), skinMat);
+    rightHand.position.set(0, -0.76, 0);
+    this.rightArmGroup.add(rightHand);
+
+    // Maleta Executiva de Couro Nobre com Travas Douradas
+    this.briefcase = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.40, 0.52), leatherMat);
+    this.briefcase.position.set(0.06, -0.84, 0.06);
     this.briefcase.castShadow = true;
 
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.20), goldMat);
-    handle.position.set(0, 0.22, 0);
+    // Alça da Maleta
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.22), goldMat);
+    handle.position.set(0, 0.23, 0);
     this.briefcase.add(handle);
+
+    // Fechos Metálicos Dourados
+    [-0.14, 0.14].forEach(fz => {
+      const lock = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.06, 0.06), goldMat);
+      lock.position.set(0, 0.08, fz);
+      this.briefcase.add(lock);
+    });
 
     this.rightArmGroup.add(this.briefcase);
     this.mesh.add(this.rightArmGroup);
 
-    // 4. Pernas
-    this.leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.26), suitMat);
-    this.leftLeg.position.set(-0.2, 0.45, 0);
+    // 4. Pernas com Calça de Alfaiataria e Sapatos Sociais Bicolores
+    this.leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.88, 0.28), suitMat);
+    this.leftLeg.position.set(-0.21, 0.46, 0);
     this.leftLeg.castShadow = true;
-    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.15, 0.38), shoeMat);
-    leftShoe.position.set(0, -0.4, 0.06);
+
+    const leftShoe = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.42), shoeMat);
+    leftShoe.position.set(0, -0.42, 0.07);
     this.leftLeg.add(leftShoe);
+
+    const leftSole = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.04, 0.44), soleMat);
+    leftSole.position.set(0, -0.50, 0.07);
+    this.leftLeg.add(leftSole);
     this.mesh.add(this.leftLeg);
 
-    this.rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.85, 0.26), suitMat);
-    this.rightLeg.position.set(0.2, 0.45, 0);
+    this.rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.88, 0.28), suitMat);
+    this.rightLeg.position.set(0.21, 0.46, 0);
     this.rightLeg.castShadow = true;
-    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.15, 0.38), shoeMat);
-    rightShoe.position.set(0, -0.4, 0.06);
+
+    const rightShoe = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.42), shoeMat);
+    rightShoe.position.set(0, -0.42, 0.07);
     this.rightLeg.add(rightShoe);
+
+    const rightSole = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.04, 0.44), soleMat);
+    rightSole.position.set(0, -0.50, 0.07);
+    this.rightLeg.add(rightSole);
     this.mesh.add(this.rightLeg);
 
     // 5. Sombra no Chão
-    const shadowGeo = new THREE.PlaneGeometry(1.2, 1.2);
-    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 });
+    const shadowGeo = new THREE.PlaneGeometry(1.3, 1.3);
+    const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.40 });
     this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
     this.shadow.rotation.x = -Math.PI / 2;
     this.shadow.position.y = 0.03;
@@ -204,7 +282,7 @@ export class Character {
   jump() {
     if (!this.isDead && (!this.isJumping || Math.abs(this.y - this.groundY) < 0.15)) {
       this.isJumping = true;
-      this.jumpVelocity = this.superJump ? this.jumpForce * 1.35 : this.jumpForce;
+      this.jumpVelocity = this.superJump ? this.jumpForce * 1.25 : this.jumpForce;
       this.isSliding = false;
       gameAudio.playJump(this.superJump);
     }
@@ -239,7 +317,7 @@ export class Character {
     this.mesh.rotation.set(0, 0, 0);
     this.mesh.scale.set(1, 1, 1);
     if (this.briefcase) {
-      this.briefcase.position.set(0.08, -0.65, 0.05);
+      this.briefcase.position.set(0.06, -0.84, 0.06);
       this.briefcase.rotation.set(0, 0, 0);
     }
   }
@@ -267,10 +345,10 @@ export class Character {
     const laneDelta = this.targetX - this.x;
     this.mesh.rotation.z = -laneDelta * 0.14;
 
-    // 2. Física Vertical (Pulo, Teto do Trem e Gravidade Suave)
+    // 2. Física Vertical Calibrada (Pulo suave e aterrissagem precisa)
     if (this.isJumping) {
-      this.y += this.jumpVelocity * dt * 3.8;
-      this.jumpVelocity += this.gravity * dt * 60;
+      this.y += this.jumpVelocity * dt * 3.2;
+      this.jumpVelocity += this.gravity * dt * 55;
       if (this.jumpVelocity < 0 && this.y <= this.groundY) {
         this.y = this.groundY;
         this.isJumping = false;
@@ -279,9 +357,9 @@ export class Character {
     } else {
       // Ajuste suave quando sai ou sobe no teto do trem
       if (this.y > this.groundY) {
-        this.y = Math.max(this.groundY, this.y - 16 * dt);
+        this.y = Math.max(this.groundY, this.y - 18 * dt);
       } else if (this.y < this.groundY) {
-        this.y = Math.min(this.groundY, this.y + 20 * dt);
+        this.y = Math.min(this.groundY, this.y + 22 * dt);
       }
     }
 
@@ -311,10 +389,10 @@ export class Character {
       this.rightArmGroup.rotation.x = armSwing;
       this.head.rotation.y = Math.sin(this.animTime * 0.5) * 0.06;
     } else if (this.isJumping) {
-      this.leftLeg.rotation.x = -0.5;
-      this.rightLeg.rotation.x = -0.6;
-      this.leftArmGroup.rotation.x = 0.8;
-      this.rightArmGroup.rotation.x = 0.8;
+      this.leftLeg.rotation.x = -0.4;
+      this.rightLeg.rotation.x = -0.5;
+      this.leftArmGroup.rotation.x = 0.6;
+      this.rightArmGroup.rotation.x = 0.6;
     } else if (this.isSliding) {
       this.leftLeg.rotation.x = 0.95;
       this.rightLeg.rotation.x = 0.95;

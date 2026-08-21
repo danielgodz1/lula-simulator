@@ -654,6 +654,10 @@
     }
 
     function draw() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
       const GH = H * GH_RATIO;
 
       if (!isPrisonMode) {
