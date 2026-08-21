@@ -10,12 +10,24 @@ export const firebaseConfig = {
 };
 
 // 1. SALVAR RECORDE MÁXIMO DO JOGADOR (1 ENTRADA ÚNICA POR USUÁRIO)
-// Se a nova pontuação for maior que o recorde anterior, atualiza. Se for menor, mantém o recorde máximo!
+// Se a nova pontuação for maior que o recorde anterior, atualiza. Se for menor, NUNCA degrada nem sobrescreve!
 export async function savePlayerScore(gameType, score) {
-  const playerName = localStorage.getItem('lula_player') || 'Anonimo_1';
+  let playerName = 'Jogador';
+  try {
+    const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
+    if (rawUser) {
+      const u = JSON.parse(rawUser);
+      if (u && u.username) playerName = u.username;
+    }
+  } catch (e) {}
+
+  if (playerName === 'Jogador') {
+    playerName = localStorage.getItem('lula_player') || 'Jogador';
+  }
+
   const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
   
-  // Salva no LocalStorage se superar o recorde
+  // Salva no LocalStorage apenas se superar o recorde anterior
   const localKey = gameType === 'runner' ? 'run_best' : 'lula_best';
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
   if (score > currentBest) {
@@ -28,18 +40,18 @@ export async function savePlayerScore(gameType, score) {
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}/${docId}`;
     
-    // 1. Consulta o recorde existente do jogador
+    // 1. Consulta o recorde existente do jogador no Firestore
     const checkRes = await fetch(url);
     if (checkRes.ok) {
       const data = await checkRes.json();
       const existingScore = parseInt(data.fields?.score?.integerValue || '0', 10);
-      // Se a rodada atual fez menos ou igual ao recorde máximo, não substitui!
+      // Se a pontuação obtida agora for menor ou igual ao recorde máximo já salvo, NÃO substitui!
       if (score <= existingScore) {
         return;
       }
     }
 
-    // 2. Grava/Atualiza o novo recorde máximo no documento do usuário
+    // 2. Grava/Atualiza com o novo recorde máximo
     const payload = {
       fields: {
         player: { stringValue: playerName },
