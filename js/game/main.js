@@ -1,4 +1,4 @@
-// js/game/main.js — Loop Principal, Controle de Estados e Aceleração (Subway Surfers Brasil)
+// js/game/main.js — Loop Principal, Controle de Estados e Aceleração Calibrada (Subway Surfers Brasil)
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { GameScene } from './scene.js';
 import { gameAudio } from './audio.js';
@@ -21,10 +21,10 @@ export class Game {
     this.STATE = { WAITING: 0, PLAYING: 1, GAMEOVER: 2 };
     this.state = this.STATE.WAITING;
 
-    // Velocidade e Pontuação
-    this.baseSpeed = 38;
+    // Velocidade e Pontuação Calibrada
+    this.baseSpeed = 32; // Início suave e acessível
     this.speed = this.baseSpeed;
-    this.maxSpeed = 90;
+    this.maxSpeed = 68; // Velocidade máxima emocionante e controlável
     this.distance = 0; // Metros
     this.coins = 0;
     this.picanhas = 0;
@@ -115,7 +115,7 @@ export class Game {
   onCollectPowerup(type) {
     if (type === 'magnet') {
       this.magnetActive = true;
-      this.magnetTimer = 8.5;
+      this.magnetTimer = 9.0;
     } else if (type === 'superjump') {
       this.superJumpActive = true;
       this.superJumpTimer = 10.0;
@@ -140,10 +140,10 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.1);
 
     if (this.state === this.STATE.PLAYING) {
-      // 1. Aceleração Contínua com a Distância
+      // 1. Aceleração Gradual e Fluida com a Distância
       this.distance += this.speed * dt;
       if (this.speed < this.maxSpeed) {
-        this.speed += 0.55 * dt;
+        this.speed += 0.35 * dt;
       }
 
       // 2. Timers de Power-up
@@ -167,7 +167,7 @@ export class Game {
         this.obstacleManager.spawnSegmentEntities(newSeg, newZ);
       });
 
-      // 4. Atualização dos Obstáculos e Detecção de Colisão
+      // 4. Atualização dos Obstáculos e Detecção de Colisão Justa
       this.obstacleManager.update(
         moveZ,
         dt,
@@ -175,7 +175,8 @@ export class Game {
         (val) => this.onCollectCoin(val),
         (val) => this.onCollectPicanha(val),
         (type) => this.onCollectPowerup(type),
-        (obs) => this.onCrash(obs)
+        (obs) => this.onCrash(obs),
+        this.speed
       );
 
       this.updateHUD();
@@ -198,5 +199,4 @@ export function initGame() {
   if (!gameInstance) {
     gameInstance = new Game();
   }
-  return gameInstance;
 }

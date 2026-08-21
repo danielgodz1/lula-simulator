@@ -1,4 +1,4 @@
-// js/game/character.js — Modelo 3D do Empresário Realista, Animações Procedurais e Pulo Calibrado
+// js/game/character.js — Modelo 3D do Empresário Realista, Física de Salto Calibrada e Controles Snappy
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
 
@@ -17,11 +17,16 @@ export class Character {
     this.z = 0;
     this.groundY = 0;
 
-    // Física e Pulo Calibrado (Apenas ligeiramente superior ao teto do vagão em 3.0m)
+    // Física e Salto Refinado (Snappy & Ágil como Subway Surfers)
     this.isJumping = false;
     this.jumpVelocity = 0;
-    this.gravity = -0.72;
-    this.jumpForce = 7.8; // Salto calibrado para altura máxima suave de ~3.8m a 4.1m
+    this.gravity = -42; // Gravidade ágil
+    this.fallMultiplier = 1.35; // Queda mais rápida para evitar sensação de "flutuar"
+    this.jumpForce = 15.2; // Altura ideal para pular sobre CLT/Bolsa e alcançar moedas no ar (~2.7m a 3.1m)
+
+    // Assistentes de Salto (Coyote Time & Buffer)
+    this.jumpBufferTimer = 0;
+    this.coyoteTimer = 0;
 
     this.isSliding = false;
     this.slideTimer = 0;
@@ -32,6 +37,7 @@ export class Character {
 
     // Power-ups
     this.superJump = false;
+    this.magnetActive = false;
 
     // Partes do Corpo
     this.torso = null;
@@ -243,11 +249,11 @@ export class Character {
         const dx = e.changedTouches[0].clientX - touchX;
         const dy = e.changedTouches[0].clientY - touchY;
         if (Math.abs(dx) > Math.abs(dy)) {
-          if (dx > 35) this.moveRight();
-          else if (dx < -35) this.moveLeft();
+          if (dx > 25) this.moveRight();
+          else if (dx < -25) this.moveLeft();
         } else {
-          if (dy < -35) this.jump();
-          else if (dy > 35) this.slide();
+          if (dy < -25) this.jump();
+          else if (dy > 25) this.slide();
         }
       }, { passive: true });
     }
@@ -280,20 +286,35 @@ export class Character {
   }
 
   jump() {
-    if (!this.isDead && (!this.isJumping || Math.abs(this.y - this.groundY) < 0.15)) {
+    if (this.isDead) return;
+
+    // Se estiver no chão ou dentro da janela de Coyote Time
+    const canJumpNow = !this.isJumping || Math.abs(this.y - this.groundY) < 0.25 || this.coyoteTimer > 0;
+
+    if (canJumpNow) {
       this.isJumping = true;
-      this.jumpVelocity = this.superJump ? this.jumpForce * 1.25 : this.jumpForce;
+      this.jumpVelocity = this.superJump ? this.jumpForce * 1.3 : this.jumpForce;
       this.isSliding = false;
+      this.jumpBufferTimer = 0;
+      this.coyoteTimer = 0;
       gameAudio.playJump(this.superJump);
+    } else {
+      // Buffer para acionar salto se pressionado 0.15s antes de tocar o chão
+      this.jumpBufferTimer = 0.18;
     }
   }
 
   slide() {
-    if (!this.isSliding && !this.isDead) {
-      this.isSliding = true;
-      this.slideTimer = this.slideDuration;
-      gameAudio.playSlide();
+    if (this.isDead) return;
+
+    // Se estiver no ar, faz um Fast-Fall (mergulho rápido para o chão)
+    if (this.isJumping && this.jumpVelocity > -10) {
+      this.jumpVelocity = -28;
     }
+
+    this.isSliding = true;
+    this.slideTimer = this.slideDuration;
+    gameAudio.playSlide();
   }
 
   die() {
@@ -310,8 +331,12 @@ export class Character {
     this.y = 0;
     this.groundY = 0;
     this.isJumping = false;
+    this.jumpVelocity = 0;
+    this.jumpBufferTimer = 0;
+    this.coyoteTimer = 0;
     this.isSliding = false;
     this.superJump = false;
+    this.magnetActive = false;
 
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(0, 0, 0);
@@ -338,47 +363,64 @@ export class Character {
       return;
     }
 
-    // 1. Transição Lateral Suave (Lerp)
-    this.x += (this.targetX - this.x) * (20 * dt);
+    // 1. Transição Lateral Rápida e Responsiva (Lerp)
+    this.x += (this.targetX - this.x) * (26 * dt);
     this.mesh.position.x = this.x;
 
     const laneDelta = this.targetX - this.x;
-    this.mesh.rotation.z = -laneDelta * 0.14;
+    this.mesh.rotation.z = -laneDelta * 0.16;
 
-    // 2. Física Vertical Calibrada (Pulo suave e aterrissagem precisa)
+    // 2. Timers de Pulo (Coyote & Buffer)
+    if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
+    if (this.coyoteTimer > 0) this.coyoteTimer -= dt;
+
+    const isOnGround = Math.abs(this.y - this.groundY) < 0.05 && !this.isJumping;
+    if (isOnGround) {
+      this.coyoteTimer = 0.12;
+    }
+
+    // 3. Física Vertical Calibrada (Pulo Snappy com Gravidade Dinâmica)
     if (this.isJumping) {
-      this.y += this.jumpVelocity * dt * 3.2;
-      this.jumpVelocity += this.gravity * dt * 55;
-      if (this.jumpVelocity < 0 && this.y <= this.groundY) {
+      const currentGravity = this.jumpVelocity < 0 ? (this.gravity * this.fallMultiplier) : this.gravity;
+      this.y += this.jumpVelocity * dt;
+      this.jumpVelocity += currentGravity * dt;
+
+      // Aterrissagem no chão ou no teto do trem
+      if (this.jumpVelocity <= 0 && this.y <= this.groundY) {
         this.y = this.groundY;
         this.isJumping = false;
         this.jumpVelocity = 0;
+
+        // Se havia salto no buffer, executa imediatamente
+        if (this.jumpBufferTimer > 0) {
+          this.jump();
+        }
       }
     } else {
       // Ajuste suave quando sai ou sobe no teto do trem
       if (this.y > this.groundY) {
-        this.y = Math.max(this.groundY, this.y - 18 * dt);
+        this.y = Math.max(this.groundY, this.y - 26 * dt);
       } else if (this.y < this.groundY) {
-        this.y = Math.min(this.groundY, this.y + 22 * dt);
+        this.y = Math.min(this.groundY, this.y + 30 * dt);
       }
     }
 
-    // 3. Slide / Agachamento
+    // 4. Slide / Agachamento
     if (this.isSliding) {
       this.slideTimer -= dt;
       if (this.slideTimer <= 0) this.isSliding = false;
     }
 
     if (this.isSliding) {
-      this.mesh.scale.set(1.0, 0.42, 1.35);
-      this.mesh.position.y = 0.22;
+      this.mesh.scale.set(1.0, 0.40, 1.35);
+      this.mesh.position.y = this.groundY + 0.22;
     } else {
       this.mesh.scale.set(1.0, 1.0, 1.0);
       this.mesh.position.y = this.y;
     }
 
-    // 4. Animação de Membros com a Maleta Fixa na Mão
-    this.animTime += dt * (speed * 0.4);
+    // 5. Animação de Membros
+    this.animTime += dt * (speed * 0.42);
     const legSwing = Math.sin(this.animTime) * 0.85;
     const armSwing = Math.sin(this.animTime) * 0.75;
 
