@@ -281,6 +281,9 @@
         <label>Recorde</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
+      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#00e676; color:#00e676; font-size:14px; font-weight:700;" title="Alternar Dificuldade">
+        ⚡ Fácil
+      </button>
       <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#eab308; font-size:14px; font-weight:700;" title="Inventário de Personagens">
         🎭 Personagens
       </button>
@@ -301,6 +304,12 @@
         <p style="color:var(--text-main); font-size:14px; margin-bottom:12px; line-height:1.5;">
           Colete picanhas entre os canos e desbloqueie novos personagens com habilidades únicas!
         </p>
+
+        <!-- SELETOR DE DIFICULDADE (FÁCIL / DIFÍCIL) -->
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:8px 4px; font-size:14px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
+          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">🔥 Modo Difícil ⚡</button>
+        </div>
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.4); border:1.5px solid var(--amarelo-brasil); border-radius:16px; padding:12px; margin-bottom:16px; display:flex; align-items:center; gap:12px; text-align:left;">
@@ -595,8 +604,63 @@
       handleStart();
     });
 
+    // SELEÇÃO DE DIFICULDADE (FÁCIL / DIFÍCIL)
+    let currentDifficulty = 'easy'; // 'easy' ou 'hard'
+    const btnDiffHUD = document.getElementById('btnDifficultyHUD');
+    const btnEasyStart = document.getElementById('btnEasyModeStart');
+    const btnHardStart = document.getElementById('btnHardModeStart');
+
+    function setDifficulty(diff) {
+      currentDifficulty = diff;
+      if (diff === 'easy') {
+        BASE_PIPE_SPEED = 2.2;
+        SPAWN_FREQ = 120;
+        if (btnDiffHUD) {
+          btnDiffHUD.style.borderColor = '#00e676';
+          btnDiffHUD.style.color = '#00e676';
+          btnDiffHUD.textContent = '⚡ Fácil';
+        }
+        if (btnEasyStart) {
+          btnEasyStart.className = 'btn-primary';
+          btnEasyStart.style.background = 'var(--verde-neon)';
+          btnEasyStart.style.color = '#000';
+        }
+        if (btnHardStart) {
+          btnHardStart.className = 'btn-secondary';
+          btnHardStart.style.background = '';
+          btnHardStart.style.color = '';
+        }
+      } else {
+        BASE_PIPE_SPEED = 3.8;
+        SPAWN_FREQ = 80;
+        if (btnDiffHUD) {
+          btnDiffHUD.style.borderColor = '#ef4444';
+          btnDiffHUD.style.color = '#ef4444';
+          btnDiffHUD.textContent = '🔥 Difícil';
+        }
+        if (btnHardStart) {
+          btnHardStart.className = 'btn-primary';
+          btnHardStart.style.background = 'var(--vermelho-alert)';
+          btnHardStart.style.color = '#fff';
+        }
+        if (btnEasyStart) {
+          btnEasyStart.className = 'btn-secondary';
+          btnEasyStart.style.background = '';
+          btnEasyStart.style.color = '';
+        }
+      }
+    }
+
+    btnDiffHUD?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setDifficulty(currentDifficulty === 'easy' ? 'hard' : 'easy');
+    });
+    btnEasyStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('easy'); });
+    btnHardStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('hard'); });
+
     // INICIALIZA HABILIDADES
     applyActiveCharacterModifiers();
+    setDifficulty('easy');
 
     if (btnSound) {
       btnSound.addEventListener('click', (e) => {
