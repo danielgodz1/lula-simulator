@@ -50,6 +50,14 @@ export async function savePlayerScore(gameType, score) {
 export async function getTopScores(collectionName, limit = 300) {
   const isRunner = collectionName.includes('runner');
   const game = isRunner ? 'runner' : 'flappy';
+  const cacheKey = `lula_cache_scores_${game}`;
+
+  const getCached = () => {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      return cached ? JSON.parse(cached) : [];
+    } catch(e) { return []; }
+  };
 
   // 1. Tenta API Serverless
   try {
@@ -57,6 +65,7 @@ export async function getTopScores(collectionName, limit = 300) {
     if (apiRes.ok) {
       const data = await apiRes.json();
       if (data.success && Array.isArray(data.scores) && data.scores.length > 0) {
+        localStorage.setItem(cacheKey, JSON.stringify(data.scores));
         return data.scores;
       }
     }
@@ -88,32 +97,18 @@ export async function getTopScores(collectionName, limit = 300) {
       }
     }
 
-    // Consulta também a coleção de usuários
-    try {
-      const usersUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2?pageSize=300`;
-      const uRes = await fetch(usersUrl);
-      if (uRes.ok) {
-        const uData = await uRes.json();
-        if (uData.documents && uData.documents.length > 0) {
-          uData.documents.forEach(doc => {
-            const rawPlayer = doc.fields?.username?.stringValue || doc.name.split('/').pop() || 'Jogador';
-            const player = rawPlayer.replace(/<[^>]*>?/gm, '').trim();
-            const score = parseInt(doc.fields?.[userScoreField]?.integerValue || '0', 10);
-            if (score > 0 && score <= 50000) {
-              const key = player.toLowerCase();
-              if (!userMap.has(key) || score > userMap.get(key).score) {
-                userMap.set(key, { player, score });
-              }
-            }
-          });
-        }
-      }
-    } catch (e) {}
-
-    const list = Array.from(userMap.values());
-    list.sort((a, b) => b.score - a.score);
-    return list.slice(0, limit);
+    if (userMap.size > 0) {
+      const list = Array.from(userMap.values());
+      list.sort((a, b) => b.score - a.score);
+      const resList = list.slice(0, limit);
+      localStorage.setItem(cacheKey, JSON.stringify(resList));
+      return resList;
+    }
   } catch (e) {}
+
+  // 3. Fallback de Cache Resiliente
+  const cached = getCached();
+  if (cached.length > 0) return cached.slice(0, limit);
 
   return [];
 }
@@ -151,13 +146,22 @@ export async function sendFeedback(feedbackData) {
   return { success: false, error: 'Offline fallback' };
 }
 
-// 4. OBTER AVALIAÇÕES
+// 4. OBTER AVALIAÇÕES COM CACHE RESILIENTE
 export async function getFeedbacks(limit = 20) {
+  const cacheKey = 'lula_cache_feedbacks';
+  const getCached = () => {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      return cached ? JSON.parse(cached) : [];
+    } catch(e) { return []; }
+  };
+
   try {
     const apiRes = await fetch(`/api/feedback?limit=${limit}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
       if (data.success && Array.isArray(data.feedbacks) && data.feedbacks.length > 0) {
+        localStorage.setItem(cacheKey, JSON.stringify(data.feedbacks));
         return data.feedbacks;
       }
     }
@@ -166,17 +170,24 @@ export async function getFeedbacks(limit = 20) {
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Firestore response error');
-    const data = await res.json();
-    if (data.documents && data.documents.length > 0) {
-      return data.documents.map(doc => ({
-        name: doc.fields?.name?.stringValue || 'Anônimo',
-        stars: parseInt(doc.fields?.stars?.integerValue || '5', 10),
-        comment: doc.fields?.comment?.stringValue || '',
-        createdAt: doc.fields?.createdAt?.timestampValue || ''
-      }));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.documents && data.documents.length > 0) {
+        const list = data.documents.map(doc => ({
+          name: doc.fields?.name?.stringValue || 'Anônimo',
+          stars: parseInt(doc.fields?.stars?.integerValue || '5', 10),
+          comment: doc.fields?.comment?.stringValue || '',
+          createdAt: doc.fields?.createdAt?.timestampValue || ''
+        }));
+        localStorage.setItem(cacheKey, JSON.stringify(list));
+        return list;
+      }
     }
   } catch (e) {}
+
+  const cached = getCached();
+  if (cached.length > 0) return cached.slice(0, limit);
+
   return [];
 }
 
