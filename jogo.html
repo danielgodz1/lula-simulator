@@ -1449,23 +1449,42 @@
     // ==========================================
 
     function drawPixelCity(horizonY) {
-      ctx.fillStyle = '#80cbe5';
-      
-      const bWidths = [24, 32, 18, 38, 28, 22, 34, 16, 40, 26];
-      const bHeights = [70, 110, 55, 125, 85, 65, 105, 45, 130, 90];
-      let curX = -((groundScroll * 0.2) % 120);
+      const bWidths = [38, 48, 28, 54, 42, 34, 46, 30, 58, 38];
+      const bHeights = [80, 120, 65, 135, 95, 75, 115, 55, 140, 100];
+      let curX = -((groundScroll * 0.2) % 160);
 
-      while (curX < W + 80) {
+      while (curX < W + 120) {
         for (let i = 0; i < bWidths.length; i++) {
           const bw = bWidths[i];
           const bh = bHeights[i];
-          ctx.fillRect(curX, horizonY - bh, bw, bh);
+          const bx = curX;
+          const by = horizonY - bh;
 
-          // Antena / Topo em pixel
-          if (i % 3 === 0) {
-            ctx.fillRect(curX + bw / 2 - 1, horizonY - bh - 10, 2, 10);
+          // 1. Corpo do Prédio (Tom azul-celeste suave da imagem)
+          ctx.fillStyle = '#80cadb';
+          ctx.fillRect(bx, by, bw, bh);
+
+          // 2. Antena / Spire no Topo
+          if (i % 2 === 0) {
+            ctx.fillStyle = '#6cb7ca';
+            ctx.fillRect(bx + Math.floor(bw / 2) - 1, by - 12, 2, 12);
+            ctx.fillRect(bx + Math.floor(bw / 2) - 2, by - 14, 4, 2);
           }
-          curX += bw + 3;
+
+          // 3. Janelinhas em Grade (Exatamente como na Imagem de Referência)
+          ctx.fillStyle = '#c6ebf4';
+          const cols = Math.floor((bw - 8) / 8);
+          const rows = Math.floor((bh - 16) / 10);
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const wx = bx + 6 + c * 8;
+              const wy = by + 10 + r * 10;
+              ctx.fillRect(wx, wy, 3, 3);
+            }
+          }
+
+          curX += bw + 5;
         }
       }
     }

@@ -36,44 +36,13 @@ export async function savePlayerScore(gameType, score) {
     localStorage.setItem(localKey, numScore.toString());
   }
 
-  // 1. Tenta enviar pela API Serverless protegida (Vercel)
+  // Envio obrigatório pela API Serverless protegida (Vercel) com validação e sanitização
   try {
-    const apiRes = await fetch('/api/score', {
+    await fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ player: playerName, score: numScore, game: gameType })
     });
-    if (apiRes.ok) return;
-  } catch (e) {}
-
-  // 2. Fallback direto ao Firestore com documento único por jogador
-  const collectionName = gameType === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-  const docId = encodeURIComponent(playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
-
-  try {
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collectionName}/${docId}`;
-    
-    // Consulta o recorde existente
-    const checkRes = await fetch(url);
-    if (checkRes.ok) {
-      const data = await checkRes.json();
-      const existingScore = parseInt(data.fields?.score?.integerValue || '0', 10);
-      if (numScore <= existingScore) return;
-    }
-
-    const payload = {
-      fields: {
-        player: { stringValue: playerName },
-        score: { integerValue: numScore.toString() },
-        updatedAt: { timestampValue: new Date().toISOString() }
-      }
-    };
-
-    fetch(url, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(() => {});
   } catch (e) {}
 }
 
