@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Flappy Lula — Lula Simulator</title>
 
   <!-- Favicon -->
@@ -19,6 +19,7 @@
   <style>
     html, body {
       width: 100%;
+      height: 100dvh;
       height: 100vh;
       overflow: hidden;
       display: flex;
@@ -34,12 +35,36 @@
       background: #0f101d;
     }
 
+    /* BARRA DE NAVEGAÇÃO */
+    nav {
+      height: 54px;
+      padding: 0 16px;
+    }
+
+    .nav-brand {
+      font-size: 20px;
+    }
+
+    .nav-toggle-btn {
+      display: none;
+      background: rgba(255, 223, 0, 0.15);
+      border: 1px solid var(--amarelo-brasil);
+      color: var(--amarelo-brasil);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Bangers', cursive;
+    }
+
     .game-wrapper {
       position: relative;
       flex: 1;
       width: 100vw;
-      height: calc(100vh - 60px);
-      margin-top: 60px;
+      height: calc(100dvh - 54px);
+      height: calc(100vh - 54px);
+      margin-top: 54px;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -72,43 +97,44 @@
       -webkit-touch-callout: none !important;
     }
 
-    /* HUD SUPERIOR FLUTUANTE */
+    /* HUD SUPERIOR FLUTUANTE RESPONSIVO (NUNCA FICA ATRÁS DO MENU) */
     #hudOverlay {
       position: absolute;
-      top: 16px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 10px;
-      z-index: 10;
+      gap: 6px;
+      z-index: 20;
       pointer-events: none;
       flex-wrap: wrap;
       justify-content: center;
+      max-width: 96vw;
     }
 
     .hud-box {
-      background: rgba(10, 10, 20, 0.88);
+      background: rgba(10, 10, 20, 0.90);
       backdrop-filter: blur(10px);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 6px 14px;
-      border-radius: 14px;
+      padding: 4px 10px;
+      border-radius: 12px;
       text-align: center;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      min-width: 85px;
+      min-width: 70px;
     }
 
     .hud-box label {
       display: block;
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1px;
       color: var(--text-muted);
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .hud-box span {
       font-family: 'Bangers', cursive;
-      font-size: 22px;
+      font-size: 18px;
       color: var(--amarelo-brasil);
       line-height: 1;
     }
@@ -116,14 +142,14 @@
     /* BANNER DE AVISO DE CADEIA / LIBERDADE */
     #prisonBanner {
       position: absolute;
-      top: 80px;
+      top: 70px;
       left: 50%;
       transform: translateX(-50%) scale(0.8);
-      padding: 10px 24px;
+      padding: 8px 20px;
       border-radius: 50px;
       font-family: 'Bangers', cursive;
-      font-size: 22px;
-      letter-spacing: 1.5px;
+      font-size: 18px;
+      letter-spacing: 1px;
       color: #fff;
       z-index: 25;
       pointer-events: none;
@@ -138,29 +164,56 @@
       transform: translateX(-50%) scale(1);
     }
 
-    /* OVERLAYS & MODAIS */
+    /* OVERLAYS & MODAIS FIXOS EM TODA A TELA (COMPATÍVEL COM ANDROID E IPHONE) */
     .start-overlay, .modal-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(8, 9, 20, 0.85);
-      backdrop-filter: blur(10px);
-      z-index: 40;
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      height: 100vh !important;
+      background: rgba(8, 9, 20, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000 !important;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 12px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .start-card, .modal-card {
       background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--amarelo-brasil);
-      border-radius: 24px;
-      padding: 24px 28px;
+      border-radius: 22px;
+      padding: 20px;
       max-width: 520px;
       width: 100%;
+      max-height: 92dvh;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
       text-align: center;
       box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
       animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-sizing: border-box;
+    }
+
+    .modal-body-scrollable {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 4px;
+      margin-bottom: 12px;
+    }
+
+    .modal-footer-sticky {
+      flex-shrink: 0;
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     @keyframes popIn {
@@ -170,25 +223,27 @@
 
     /* MODAL DE GAME OVER ESTILO FLAPPY BIRD COM PLACAR LATERAL & CONTROLES */
     .game-over-container {
-      background: rgba(20, 24, 36, 0.96);
+      background: rgba(20, 24, 36, 0.98);
       border: 3px solid #eab308;
-      border-radius: 24px;
-      padding: 20px;
-      max-width: 630px;
-      width: 95%;
+      border-radius: 22px;
+      padding: 16px;
+      max-width: 620px;
+      width: 100%;
       box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(234, 179, 8, 0.3);
       animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       text-align: center;
-      max-height: 90vh;
+      max-height: 92dvh;
+      max-height: 92vh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .go-header-title {
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 30px;
+      font-size: 26px;
       color: #ef4444;
       text-shadow: 3px 3px 0px #fff, -2px -2px 0px #7f1d1d, 4px 4px 8px rgba(0,0,0,0.8);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       letter-spacing: 2px;
     }
 
@@ -196,10 +251,10 @@
     .go-quick-options {
       display: flex;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       background: rgba(0, 0, 0, 0.45);
-      padding: 8px 12px;
-      border-radius: 14px;
+      padding: 8px 10px;
+      border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.1);
       align-items: center;
       justify-content: space-between;
@@ -222,14 +277,14 @@
     }
 
     .go-char-picker-btn:hover {
-      background: rgba(234, 179, 8, 0.2);
+      background: rgba(234, 179, 8, 0.25);
     }
 
     .go-char-picker-btn img {
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      border: 1px solid #ffd700;
+      border: 1.5px solid #ffd700;
       object-fit: cover;
     }
 
@@ -239,7 +294,7 @@
     }
 
     .go-diff-btn {
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 8px;
       font-size: 11px;
       font-weight: 700;
@@ -271,8 +326,8 @@
     .go-panels-grid {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
-      gap: 14px;
-      margin-bottom: 16px;
+      gap: 12px;
+      margin-bottom: 14px;
       text-align: left;
     }
 
@@ -280,8 +335,8 @@
     .go-left-panel {
       background: #dfd7b6;
       border: 3px solid #543847;
-      border-radius: 16px;
-      padding: 14px 12px;
+      border-radius: 14px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -293,15 +348,15 @@
       display: flex;
       justify-content: space-around;
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       border-bottom: 2px dashed #b8ad88;
-      padding-bottom: 8px;
+      padding-bottom: 6px;
     }
 
     .go-score-item label {
       display: block;
       font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
+      font-size: 7.5px;
       color: #e65100;
       margin-bottom: 4px;
       text-transform: uppercase;
@@ -309,7 +364,7 @@
 
     .go-score-item span {
       font-family: 'Press Start 2P', cursive;
-      font-size: 18px;
+      font-size: 16px;
       color: #000;
     }
 
@@ -317,42 +372,42 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       padding: 0 4px;
     }
 
     .go-medal-row label {
       font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
+      font-size: 7.5px;
       color: #e65100;
     }
 
     .go-medal-circle {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: #c59b27;
       border: 2px solid #543847;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
+      font-size: 18px;
       box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
     }
 
     .go-lula-meme-box {
       background: #ffffff;
       border: 2px solid #543847;
-      border-radius: 12px;
-      padding: 8px;
+      border-radius: 10px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
     .go-lula-avatar {
-      width: 42px;
-      height: 42px;
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
       border: 2px solid #ef4444;
       overflow: hidden;
@@ -366,9 +421,9 @@
     }
 
     .go-meme-text {
-      font-size: 10.5px;
+      font-size: 10px;
       color: #1e293b;
-      line-height: 1.3;
+      line-height: 1.25;
       font-weight: 600;
       font-style: italic;
     }
@@ -377,7 +432,7 @@
     .go-right-panel {
       background: #fbf8eb;
       border: 3px solid #543847;
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -386,12 +441,12 @@
     .go-lb-header {
       background: #ef4444;
       color: #fff;
-      padding: 7px 8px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Press Start 2P', cursive;
-      font-size: 8.5px;
+      font-size: 8px;
       letter-spacing: 1px;
       text-transform: uppercase;
       border-bottom: 3px solid #543847;
@@ -400,7 +455,7 @@
     .go-lb-list {
       flex: 1;
       padding: 4px 6px;
-      max-height: 145px;
+      max-height: 130px;
       overflow-y: auto;
     }
 
@@ -408,9 +463,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 4px;
+      padding: 3px 4px;
       border-bottom: 1px solid #e2d9bc;
-      font-size: 10.5px;
+      font-size: 10px;
       color: #334155;
     }
 
@@ -420,8 +475,8 @@
 
     .go-lb-rank {
       font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
-      width: 18px;
+      font-size: 7.5px;
+      width: 16px;
       color: #b45309;
     }
 
@@ -436,7 +491,7 @@
 
     .go-lb-score {
       font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
+      font-size: 8.5px;
       color: #15803d;
       background: #dcfce7;
       padding: 2px 5px;
@@ -453,7 +508,7 @@
       align-items: center;
       justify-content: space-between;
       font-weight: 900;
-      font-size: 10.5px;
+      font-size: 10px;
     }
 
     /* BOTÕES INFERIORES DO GAME OVER */
@@ -470,7 +525,7 @@
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
       font-size: 11px;
-      padding: 11px 12px;
+      padding: 10px 12px;
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 0px #14532d;
@@ -488,8 +543,8 @@
       border: 3px solid #0c4a6e;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 9px;
-      padding: 11px 8px;
+      font-size: 8.5px;
+      padding: 10px 6px;
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 0px #0c4a6e;
@@ -501,8 +556,8 @@
       border: 3px solid #713f12;
       color: #000;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 9px;
-      padding: 11px 8px;
+      font-size: 8.5px;
+      padding: 10px 6px;
       border-radius: 12px;
       cursor: pointer;
       text-decoration: none;
@@ -512,39 +567,23 @@
       justify-content: center;
     }
 
-    @media (max-width: 600px) {
-      .go-panels-grid {
-        grid-template-columns: 1fr;
-      }
-      .go-header-title {
-        font-size: 22px;
-      }
-      .go-quick-options {
-        flex-direction: column;
-        gap: 6px;
-      }
-      .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges {
-        font-size: 8px;
-        padding: 9px 5px;
-      }
-    }
-
-    /* INVENTÁRIO DE PERSONAGENS */
+    /* GRADE DE PERSONAGENS RESPONSIVA */
     .char-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-      margin: 16px 0;
-      max-height: 50vh;
+      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+      gap: 10px;
+      margin: 10px 0;
+      max-height: 44vh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       padding: 4px;
     }
 
     .char-card {
       background: rgba(15, 23, 42, 0.85);
       border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 12px 8px;
+      border-radius: 14px;
+      padding: 10px 6px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -558,8 +597,8 @@
 
     .char-card.selected {
       border-color: var(--verde-neon);
-      background: rgba(0, 230, 118, 0.12);
-      box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
+      background: rgba(0, 230, 118, 0.15);
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.4);
     }
 
     .char-card.locked {
@@ -569,14 +608,14 @@
     }
 
     .char-avatar {
-      width: 66px;
-      height: 66px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      margin: 0 auto 8px;
-      border: 2.5px solid var(--amarelo-brasil);
+      margin: 0 auto 6px;
+      border: 2px solid var(--amarelo-brasil);
       overflow: hidden;
       background: #000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
 
     .char-avatar img {
@@ -585,34 +624,89 @@
       object-fit: cover;
     }
 
+    /* AJUSTES PARA DISPOSITIVOS MÓVEIS (CELULARES ANDROID E IPHONE) */
     @media (max-width: 900px) {
-      .game-wrapper {
-        margin-top: 60px;
-        height: calc(100vh - 60px);
+      nav {
+        height: 50px;
+        padding: 0 12px;
       }
+      .nav-brand {
+        font-size: 18px;
+      }
+      .nav-toggle-btn {
+        display: inline-flex;
+      }
+
+      .game-wrapper {
+        margin-top: 50px;
+        height: calc(100dvh - 50px);
+        height: calc(100vh - 50px);
+      }
+
       #hudOverlay {
         top: 6px;
         gap: 4px;
         width: 98%;
-        justify-content: center;
+        max-width: 98vw;
       }
+
       .hud-box {
         min-width: auto;
-        padding: 4px 6px;
+        padding: 3px 6px;
+        border-radius: 10px;
       }
+
       .hud-box span {
-        font-size: 16px;
+        font-size: 14px;
       }
+
       .hud-box label {
-        font-size: 8px;
+        font-size: 7.5px;
       }
+
       .char-grid {
         grid-template-columns: repeat(2, 1fr);
+        max-height: 38vh;
       }
+
+      .start-card, .modal-card {
+        padding: 16px 14px;
+        border-radius: 18px;
+      }
+
       #prisonBanner {
-        top: 60px;
-        font-size: 16px;
-        padding: 6px 16px;
+        top: 50px;
+        font-size: 15px;
+        padding: 5px 14px;
+      }
+
+      .go-panels-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .go-header-title {
+        font-size: 20px;
+      }
+
+      .go-quick-options {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 6px 8px;
+      }
+
+      .go-char-picker-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+
+      .go-diff-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+
+      .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges {
+        font-size: 8px;
+        padding: 8px 4px;
       }
     }
 
@@ -628,14 +722,17 @@
 
     body.is-fullscreen .game-wrapper {
       margin-top: 0 !important;
+      height: 100dvh !important;
       height: 100vh !important;
       width: 100vw !important;
     }
 
     body.is-fullscreen canvas#gameCanvas {
       width: 100vw !important;
+      height: 100dvh !important;
       height: 100vh !important;
       max-width: 100vw !important;
+      max-height: 100dvh !important;
       max-height: 100vh !important;
       border: none !important;
       border-radius: 0 !important;
@@ -644,10 +741,11 @@
 </head>
 <body>
 
-  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA -->
   <nav>
     <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <ul class="nav-links">
+    <button class="nav-toggle-btn" id="btnNavToggle" aria-label="Abrir Menu">☰ Menu</button>
+    <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
@@ -677,19 +775,19 @@
         <label>Recorde</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
-      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#00e676; color:#00e676; font-size:13px; font-weight:700;" title="Alternar Dificuldade">
+      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#00e676; color:#00e676; font-size:11px; font-weight:700;" title="Alternar Dificuldade">
         ⚡ Fácil
       </button>
-      <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#eab308; color:#eab308; font-size:13px; font-weight:700;" title="Personagens Políticos">
+      <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#eab308; color:#eab308; font-size:11px; font-weight:700;" title="Personagens Políticos">
         🎭 Políticos
       </button>
-      <a href="conquistas.html" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:13px; font-weight:700; text-decoration:none; display:flex; align-items:center;" title="Ver Badges e Conquistas">
+      <a href="conquistas.html" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#38bdf8; color:#38bdf8; font-size:11px; font-weight:700; text-decoration:none; display:flex; align-items:center;" title="Ver Badges e Conquistas">
         🏅 Badges
       </a>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Som">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:14px;" title="Som">
         🔊
       </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#a855f7; color:#a855f7; font-size:16px;" title="Tela Cheia">
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:4px 8px; border-color:#a855f7; color:#a855f7; font-size:14px;" title="Tela Cheia">
         ⛶
       </button>
     </div>
@@ -697,65 +795,71 @@
     <!-- OVERLAY INICIAL DE START COM PREVIEW DO PERSONAGEM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
-        <h1 style="font-family:'Bangers',cursive; font-size:38px; color:var(--amarelo-brasil); margin-bottom:4px;">
+        <h1 style="font-family:'Bangers',cursive; font-size:34px; color:var(--amarelo-brasil); margin-bottom:2px;">
           🐦 FLAPPY LULA OFICIAL
         </h1>
-        <p style="color:var(--text-main); font-size:13px; margin-bottom:12px; line-height:1.4;">
+        <p style="color:var(--text-main); font-size:12px; margin-bottom:10px; line-height:1.35;">
           Voe entre os canos, junte picanhas para destravar o <strong>Selo de 50 Picanhas</strong> e o lendário <strong>Trio de 500 Picanhas</strong>!
         </p>
 
         <!-- SELETOR DE DIFICULDADE (FÁCIL / DIFÍCIL) -->
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:7px 4px; font-size:13px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
-          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:7px 4px; font-size:13px;">🔥 Modo Difícil ⚡</button>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:6px 4px; font-size:12px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
+          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:6px 4px; font-size:12px;">🔥 Modo Difícil ⚡</button>
         </div>
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
-        <div id="equippedCharCard" style="background:rgba(0,0,0,0.4); border:1.5px solid var(--amarelo-brasil); border-radius:16px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:12px; text-align:left;">
-          <div style="width:54px; height:54px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
+        <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:14px; padding:8px 12px; margin-bottom:12px; display:flex; align-items:center; gap:10px; text-align:left;">
+          <div style="width:48px; height:48px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
             <img id="equippedCharImg" src="img/lula.png" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
-            <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:15px;">Lula da Silva</div>
-            <div id="equippedCharSkill" style="font-size:12px; color:var(--verde-neon); font-weight:600;">🕊️ Voo Tolerante & Picanha</div>
+            <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:14px;">Lula da Silva</div>
+            <div id="equippedCharSkill" style="font-size:11px; color:var(--verde-neon); font-weight:600;">🕊️ Voo Tolerante & Picanha</div>
           </div>
-          <button id="btnOpenRosterStart" class="btn-secondary" style="font-size:12px; padding:6px 12px;">Trocar</button>
+          <button id="btnOpenRosterStart" class="btn-primary" style="font-size:12px; padding:7px 12px; background:var(--amarelo-brasil); color:#000; font-weight:700; border-radius:8px;">
+            🎭 TROCAR
+          </button>
         </div>
 
-        <button class="btn-primary" id="btnStartGameAction" style="font-size:22px; padding:12px 28px; width:100%;">
+        <button class="btn-primary" id="btnStartGameAction" style="font-size:20px; padding:12px 24px; width:100%;">
           🔊 TOQUE PARA JOGAR!
         </button>
       </div>
     </div>
 
-    <!-- MODAL DE SELEÇÃO DE PERSONAGENS (INVENTÁRIO) -->
-    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:90;">
-      <div class="modal-card" style="max-width:580px;">
-        <h2 style="font-family:'Bangers',cursive; font-size:36px; color:var(--amarelo-brasil); margin-bottom:4px;">
-          🎭 PERSONAGENS POLÍTICOS REAIS
+    <!-- MODAL DE SELEÇÃO DE PERSONAGENS (INVENTÁRIO COM BOTÕES SEMPRE FIXOS) -->
+    <div class="modal-overlay" id="charSelectModal" style="display:none;">
+      <div class="modal-card">
+        <h2 style="font-family:'Bangers',cursive; font-size:30px; color:var(--amarelo-brasil); margin-bottom:2px;">
+          🎭 PERSONAGENS POLÍTICOS
         </h2>
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:13px; color:var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12px; color:var(--text-muted);">
           <span>Junte picanhas para liberar figuras históricas!</span>
           <span style="color:var(--verde-neon); font-weight:700;" id="totalPicanhasBadge">Total: 0 🥩</span>
         </div>
 
-        <div class="char-grid" id="charactersGrid"></div>
+        <!-- ÁREA ROLÁVEL COM A GRADE DE PERSONAGENS -->
+        <div class="modal-body-scrollable">
+          <div class="char-grid" id="charactersGrid"></div>
 
-        <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:10px 14px; margin-bottom:14px; text-align:left;">
-          <div id="detailCharTitle" style="font-weight:700; font-size:15px; color:var(--amarelo-brasil);">Lula da Silva</div>
-          <div id="detailCharSkill" style="font-size:12px; color:var(--verde-neon); font-weight:600; margin:2px 0;">Habilidade: Voo Tolerante & Picanha</div>
-          <div id="detailCharDesc" style="font-size:12px; color:var(--text-muted); line-height:1.4;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
+          <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:8px 12px; text-align:left;">
+            <div id="detailCharTitle" style="font-weight:700; font-size:14px; color:var(--amarelo-brasil);">Lula da Silva</div>
+            <div id="detailCharSkill" style="font-size:11px; color:var(--verde-neon); font-weight:600; margin:2px 0;">Habilidade: Voo Tolerante & Picanha</div>
+            <div id="detailCharDesc" style="font-size:11px; color:var(--text-muted); line-height:1.35;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
+          </div>
         </div>
 
-        <div style="display:flex; gap:10px;">
-          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:15px; padding:10px;">Voltar</button>
-          <button id="btnEquipChar" class="btn-primary" style="flex:1.5; font-size:17px; padding:10px;">✨ EQUIPAR E JOGAR</button>
+        <!-- RODAPÉ FIXO COM BOTÕES SEMPRE VISÍVEIS -->
+        <div class="modal-footer-sticky">
+          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:14px; padding:9px;">Voltar</button>
+          <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:15px; padding:9px;">✨ EQUIPAR E JOGAR</button>
         </div>
       </div>
     </div>
 
     <!-- MODAL DE GAME OVER ESTILO RETRO FLAPPY BIRD COM CONTROLES & PLACAR -->
-    <div class="modal-overlay" id="gameOverModal" style="display:none; z-index:70;">
+    <div class="modal-overlay" id="gameOverModal" style="display:none;">
       <div class="game-over-container">
         <div class="go-header-title">GAME OVER</div>
 
@@ -810,7 +914,7 @@
             </div>
             
             <div class="go-lb-list" id="goLeaderboardList">
-              <div style="text-align:center; padding:14px; font-size:10px; color:#64748b;">Carregando placar...</div>
+              <div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Carregando placar...</div>
             </div>
 
             <div class="go-lb-you-row">
@@ -847,6 +951,14 @@
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
     }
+
+    // Toggle menu mobile
+    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navLinksList = document.getElementById('navLinksList');
+    btnNavToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navLinksList?.classList.toggle('open');
+    });
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -926,10 +1038,10 @@
         W = window.innerWidth;
         H = window.innerHeight;
       } else if (isMobile) {
-        W = Math.min(window.innerWidth - 12, 540);
-        H = Math.max(380, Math.min(window.innerHeight - 80, 720));
+        W = Math.min(window.innerWidth - 10, 520);
+        H = Math.max(370, Math.min(window.innerHeight - 60, 700));
       } else {
-        const maxH = Math.min(window.innerHeight - 90, 680);
+        const maxH = Math.min(window.innerHeight - 80, 680);
         H = Math.max(maxH, 420);
         W = Math.round(H * 0.70);
       }
@@ -1045,8 +1157,8 @@
           <div class="char-avatar" style="border-color:${char.auraColor}">
             <img src="${char.sprite}" alt="${char.name}">
           </div>
-          <div style="font-weight:700; font-size:13px; color:#fff; margin-bottom:2px;">${char.name}</div>
-          <div style="font-size:11px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
+          <div style="font-weight:700; font-size:12px; color:#fff; margin-bottom:2px;">${char.name}</div>
+          <div style="font-size:10.5px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
             ${unlocked ? char.nickname : `🔒 ${char.requiredPicanhas} 🥩`}
           </div>
         `;
@@ -1761,10 +1873,10 @@
             listEl.appendChild(row);
           });
         } else {
-          listEl.innerHTML = '<div style="text-align:center; padding:14px; font-size:10px; color:#64748b;">Nenhum recorde ainda. Seja o 1º!</div>';
+          listEl.innerHTML = '<div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Nenhum recorde ainda. Seja o 1º!</div>';
         }
       } catch(e) {
-        listEl.innerHTML = '<div style="text-align:center; padding:14px; font-size:10px; color:#64748b;">Recordes offline</div>';
+        listEl.innerHTML = '<div style="text-align:center; padding:12px; font-size:9.5px; color:#64748b;">Recordes offline</div>';
       }
     }
 

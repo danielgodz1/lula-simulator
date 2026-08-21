@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Empresário Fugindo 3D — Lula Simulator</title>
 
   <!-- Favicon -->
@@ -18,6 +18,8 @@
 
   <style>
     html, body {
+      width: 100%;
+      height: 100dvh;
       height: 100vh;
       overflow: hidden;
       display: flex;
@@ -25,18 +27,42 @@
       background: #0f172a;
       touch-action: none !important;
       overscroll-behavior: none !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+    }
+
+    nav {
+      height: 52px;
+      padding: 0 16px;
+    }
+
+    .nav-brand {
+      font-size: 20px;
+    }
+
+    .nav-toggle-btn {
+      display: none;
+      background: rgba(255, 223, 0, 0.15);
+      border: 1px solid var(--amarelo-brasil);
+      color: var(--amarelo-brasil);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Bangers', cursive;
     }
 
     .game-wrapper {
       position: relative;
       flex: 1;
       width: 100vw;
-      height: calc(100vh - 60px);
-      margin-top: 60px;
+      height: calc(100dvh - 52px);
+      height: calc(100vh - 52px);
+      margin-top: 52px;
       overflow: hidden;
       touch-action: none !important;
       overscroll-behavior: none !important;
-      /* FUNDO REALISTA ENSOLARADO DA FAVELA DO RIO DE JANEIRO */
       background: url('img/favela.png') center center / cover no-repeat;
     }
 
@@ -49,150 +75,174 @@
 
     #hudOverlay {
       position: absolute;
-      top: 16px;
+      top: 10px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
-      z-index: 10;
+      gap: 8px;
+      z-index: 20;
       pointer-events: none;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 96vw;
     }
 
     .hud-box {
-      background: rgba(10, 10, 20, 0.85);
+      background: rgba(10, 10, 20, 0.88);
       backdrop-filter: blur(10px);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 8px 20px;
-      border-radius: 14px;
+      padding: 5px 12px;
+      border-radius: 12px;
       text-align: center;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      min-width: 110px;
+      min-width: 75px;
     }
 
     .hud-box label {
       display: block;
-      font-size: 10px;
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       color: var(--text-muted);
-      margin-bottom: 2px;
+      margin-bottom: 1px;
     }
 
     .hud-box span {
       font-family: 'Bangers', cursive;
-      font-size: 26px;
+      font-size: 20px;
       color: var(--amarelo-brasil);
       line-height: 1;
     }
 
     #mobileControls {
       position: absolute;
-      bottom: 24px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       display: none;
-      gap: 14px;
-      z-index: 15;
+      gap: 12px;
+      z-index: 30;
     }
 
     .mob-btn {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       background: rgba(255, 223, 0, 0.25);
       border: 2px solid var(--amarelo-brasil);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
+      font-size: 24px;
       cursor: pointer;
       color: var(--amarelo-brasil);
       backdrop-filter: blur(8px);
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.6);
     }
 
     @media (max-width: 900px) {
-      .game-wrapper {
-        margin-top: 120px;
-        height: calc(100vh - 120px);
+      nav {
+        height: 50px;
+        padding: 0 12px;
       }
-      #hudOverlay {
-        top: 8px;
-        gap: 6px;
-        width: 96%;
-        justify-content: center;
-      }
-      .hud-box {
-        min-width: auto;
-        padding: 6px 8px;
-      }
-      .hud-box span {
+      .nav-brand {
         font-size: 18px;
       }
-      .hud-box label {
-        font-size: 9px;
+      .nav-toggle-btn {
+        display: inline-flex;
       }
+
+      .game-wrapper {
+        margin-top: 50px;
+        height: calc(100dvh - 50px);
+        height: calc(100vh - 50px);
+      }
+
+      #hudOverlay {
+        top: 6px;
+        gap: 4px;
+        width: 98%;
+        max-width: 98vw;
+      }
+
+      .hud-box {
+        min-width: auto;
+        padding: 3px 6px;
+        border-radius: 10px;
+      }
+
+      .hud-box span {
+        font-size: 15px;
+      }
+
+      .hud-box label {
+        font-size: 8px;
+      }
+
       #mobileControls {
         display: flex;
-        bottom: 16px;
+        bottom: 14px;
         gap: 10px;
       }
+
       .mob-btn {
-        width: 52px;
-        height: 52px;
-        font-size: 22px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
       }
+
       .start-card, .modal-card {
-        padding: 24px 18px;
+        padding: 20px 16px;
+        border-radius: 18px;
       }
+
       .start-card h1, .modal-title {
         font-size: 32px !important;
       }
     }
 
-    .start-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(8, 9, 20, 0.65);
-      backdrop-filter: blur(6px);
-      z-index: 40;
+    .start-overlay, .modal-overlay {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100dvh !important;
+      height: 100vh !important;
+      background: rgba(8, 9, 20, 0.80);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000 !important;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      padding: 12px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .start-card {
-      background: rgba(22, 27, 38, 0.95);
+      background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--amarelo-brasil);
       border-radius: 24px;
-      padding: 36px 40px;
+      padding: 28px 32px;
       max-width: 520px;
-      width: 90%;
+      width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
       text-align: center;
-      box-shadow: 0 0 50px rgba(255, 223, 0, 0.3);
-    }
-
-    .modal-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(8, 9, 20, 0.88);
-      backdrop-filter: blur(12px);
-      z-index: 50;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
+      box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
     }
 
     .modal-card {
-      background: rgba(22, 27, 38, 0.95);
+      background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--vermelho-alert);
       border-radius: 24px;
-      padding: 36px 40px;
-      max-width: 540px;
+      padding: 28px 32px;
+      max-width: 520px;
       width: 100%;
+      max-height: 92dvh;
+      overflow-y: auto;
       text-align: center;
       box-shadow: 0 0 50px rgba(204, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
       animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -205,45 +255,46 @@
 
     .modal-title {
       font-family: 'Bangers', cursive;
-      font-size: 52px;
+      font-size: 46px;
       color: var(--vermelho-alert);
       letter-spacing: 2px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .modal-subtitle {
       font-family: 'Bangers', cursive;
-      font-size: 28px;
+      font-size: 24px;
       color: var(--amarelo-brasil);
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .modal-message {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-main);
-      line-height: 1.6;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 16px 20px;
+      line-height: 1.5;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 12px 16px;
       border-radius: 14px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 24px;
+      margin-bottom: 18px;
       white-space: pre-line;
     }
 
     .modal-dist {
       font-family: 'Bangers', cursive;
-      font-size: 32px;
+      font-size: 28px;
       color: var(--verde-neon);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
 
-  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA -->
   <nav>
     <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <ul class="nav-links">
+    <button class="nav-toggle-btn" id="btnNavToggle" aria-label="Abrir Menu">☰ Menu</button>
+    <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html" class="active">🏃 Empresário 3D</a></li>
@@ -271,10 +322,10 @@
         <label>Velocidade</label>
         <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
       </div>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;" title="Som">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Som">
         🔊
       </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:#38bdf8; color:#38bdf8; font-size:18px;" title="Tela Cheia">
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:16px;" title="Tela Cheia">
         ⛶
       </button>
     </div>
@@ -290,33 +341,33 @@
     <!-- OVERLAY INICIAL PARA ATIVAR SOM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
-        <h1 style="font-family:'Bangers',cursive; font-size:44px; color:var(--amarelo-brasil); margin-bottom:10px;">
+        <h1 style="font-family:'Bangers',cursive; font-size:38px; color:var(--amarelo-brasil); margin-bottom:8px;">
           🏃 EMPRESÁRIO NA FAVELA 3D
         </h1>
-        <p style="color:var(--text-main); font-size:15px; margin-bottom:14px; line-height:1.6;">
+        <p style="color:var(--text-main); font-size:14px; margin-bottom:12px; line-height:1.5;">
           Corra pelos trilhos da <strong>Favela do Rio</strong> desviando da <strong>CLT 44h</strong>, <strong>Bolsa Família</strong>, <strong>Auxílio Brasil</strong> e <strong>Trens de Metrô</strong> em 3D real!
         </p>
-        <div style="background:rgba(0,0,0,0.4); padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; color:var(--text-muted); text-align:left;">
+        <div style="background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:12px; margin-bottom:16px; font-size:12px; color:var(--text-muted); text-align:left;">
           🎮 <strong>Como Jogar (Subway Surfers):</strong><br>
-          • <strong>← → / A D:</strong> Mudar de Faixa (Desvie de Trens e Cartões)<br>
-          • <strong>↑ / W / Espaço:</strong> Pular Barreiras e Carteiras de Trabalho<br>
-          • <strong>↓ / S:</strong> Deslizar / Slide por baixo de Varais e Fios<br>
+          • <strong>← → / A D / Swipe:</strong> Mudar de Faixa<br>
+          • <strong>↑ / W / Espaço / Swipe Cima:</strong> Pular Barreiras<br>
+          • <strong>↓ / S / Swipe Baixo:</strong> Deslizar / Slide por baixo de Varais<br>
           • 🥩 <strong>Pegue Picanhas e Moedas</strong> para multiplicar seu lucro!
         </div>
-        <button class="btn-primary" style="font-size:24px; padding:14px 32px; width:100%;">
-          🔊 CLIQUE PARA INICIAR A CORRIDA!
+        <button class="btn-primary" style="font-size:20px; padding:12px 28px; width:100%;">
+          🔊 TOQUE PARA INICIAR A CORRIDA!
         </button>
       </div>
     </div>
 
     <!-- MODAL DE GAME OVER 3D -->
-    <div class="modal-overlay" id="gameOverModal">
+    <div class="modal-overlay" id="gameOverModal" style="display:none;">
       <div class="modal-card">
         <div class="modal-title">CAPTURADO!</div>
         <div class="modal-subtitle" id="goTitle">OBSTÁCULO</div>
         <div class="modal-message" id="goMessage">Você foi pego pelo sistema!</div>
         <div class="modal-dist" id="goDistance">0 KM PERCORRIDOS</div>
-        <button class="btn-primary" id="btnRestart">
+        <button class="btn-primary" id="btnRestart" style="width:100%; font-size:20px; padding:12px 24px;">
           🔄 REINICIAR CORRIDA 3D
         </button>
       </div>
@@ -330,7 +381,14 @@
     // Renderiza badge do perfil no cabeçalho
     auth.renderProfileBadge('nav');
 
-    // Se o jogador não estiver identificado, abre o modal de login/cadastro/anônimo
+    // Menu Mobile Toggle
+    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navLinksList = document.getElementById('navLinksList');
+    btnNavToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navLinksList?.classList.toggle('open');
+    });
+
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => {
         auth.renderProfileBadge('nav');

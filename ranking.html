@@ -138,7 +138,8 @@
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
     <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <ul class="nav-links">
+    <button class="nav-toggle-btn" id="btnNavToggle" aria-label="Abrir Menu">☰ Menu</button>
+    <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
@@ -254,6 +255,13 @@
     }
 
     loadRankingData();
+
+    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navLinksList = document.getElementById('navLinksList');
+    btnNavToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navLinksList?.classList.toggle('open');
+    });
   </script>
 
 </body>
