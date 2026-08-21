@@ -35,16 +35,17 @@ html, body {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  touch-action: pan-y;
 }
 
-/* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA */
+/* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA COM HAMBURGER MENU */
 nav {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 100;
-  background: rgba(8, 9, 20, 0.94);
+  background: rgba(8, 9, 20, 0.95);
   backdrop-filter: blur(14px);
   border-bottom: 2px solid var(--amarelo-brasil);
   padding: 0 24px;
@@ -93,6 +94,29 @@ nav {
   color: var(--amarelo-brasil);
   background: rgba(255, 223, 0, 0.15);
   border: 1px solid rgba(255, 223, 0, 0.35);
+}
+
+.nav-right-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Botão Hamburger Menu Mobile */
+.nav-toggle-btn {
+  display: none;
+  background: rgba(255, 223, 0, 0.15);
+  border: 1px solid var(--amarelo-brasil);
+  color: var(--amarelo-brasil);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 1px;
 }
 
 /* 4. BOTÕES REUTILIZÁVEIS */
@@ -164,48 +188,64 @@ nav {
 
 /* 6. RODAPÉ */
 footer {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.7);
   border-top: 2px solid var(--verde-brasil);
-  padding: 20px;
+  padding: 24px 20px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
   margin-top: 40px;
+  line-height: 1.7;
 }
 
 footer strong {
   color: var(--amarelo-brasil);
 }
 
-/* 7. RESPONSIVIDADE GLOBAL PARA DISPOSITIVOS MÓVEIS (320px - 900px) */
+/* 7. RESPONSIVIDADE & MOBILE DRAWER MENU */
 @media (max-width: 900px) {
   nav {
-    height: auto;
-    padding: 10px 14px;
-    flex-direction: column;
-    gap: 8px;
+    padding: 0 16px;
+    height: 60px;
   }
 
   .nav-brand {
     font-size: 20px;
   }
 
+  .nav-toggle-btn {
+    display: inline-flex;
+  }
+
+  /* Drawer menu suspenso elegante */
   .nav-links {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
     width: 100%;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-    margin: 0;
-    padding: 0;
+    background: rgba(10, 12, 22, 0.98);
+    backdrop-filter: blur(20px);
+    border-bottom: 2px solid var(--amarelo-brasil);
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8);
+    animation: slideDownNav 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .nav-links.open {
+    display: flex;
   }
 
   .nav-links a {
-    font-size: 13px;
-    padding: 8px 4px;
-    text-align: center;
-    justify-content: center;
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 18px;
+    justify-content: flex-start;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
   }
 
   .nav-links a.active {
@@ -213,15 +253,13 @@ footer strong {
     border-color: var(--amarelo-brasil);
   }
 
-  #playerProfileBadge {
-    font-size: 12px;
-    width: 100%;
-    justify-content: center;
-    margin-top: 2px;
+  @keyframes slideDownNav {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .page {
-    padding-top: 135px !important;
+    padding-top: 85px !important;
   }
 
   .card {
@@ -236,21 +274,5 @@ footer strong {
   .btn-primary, .btn-secondary {
     font-size: 18px;
     padding: 12px 20px;
-  }
-}
-
-@media (max-width: 480px) {
-  .nav-links {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-  }
-
-  .nav-links a {
-    font-size: 12px;
-    padding: 7px 3px;
-  }
-
-  .page {
-    padding-top: 140px !important;
   }
 }

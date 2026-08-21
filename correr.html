@@ -17,12 +17,14 @@
   <link rel="stylesheet" href="css/styles.css">
 
   <style>
-    body {
+    html, body {
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       background: #0f172a;
+      touch-action: none !important;
+      overscroll-behavior: none !important;
     }
 
     .game-wrapper {
@@ -32,6 +34,8 @@
       height: calc(100vh - 60px);
       margin-top: 60px;
       overflow: hidden;
+      touch-action: none !important;
+      overscroll-behavior: none !important;
       /* FUNDO REALISTA ENSOLARADO DA FAVELA DO RIO DE JANEIRO */
       background: url('img/favela.png') center center / cover no-repeat;
     }
@@ -40,6 +44,7 @@
       width: 100%;
       height: 100%;
       display: block;
+      touch-action: none !important;
     }
 
     #hudOverlay {
@@ -48,7 +53,7 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 16px;
+      gap: 12px;
       z-index: 10;
       pointer-events: none;
     }
@@ -265,8 +270,11 @@
         <label>Velocidade</label>
         <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
       </div>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 14px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;" title="Som">
         🔊
+      </button>
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:#38bdf8; color:#38bdf8; font-size:18px;" title="Tela Cheia">
+        ⛶
       </button>
     </div>
 
@@ -325,6 +333,34 @@
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => {
         auth.renderProfileBadge('nav');
+      });
+    }
+
+    // Trava rolagem acidental da página ao fazer swipe no jogo
+    window.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    // Alternar modo Tela Cheia
+    const btnFullscreen = document.getElementById('btnFullscreenToggle');
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          }
+          btnFullscreen.textContent = '🗗';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+          btnFullscreen.textContent = '⛶';
+        }
       });
     }
 

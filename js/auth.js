@@ -342,17 +342,52 @@ class AuthManager {
     };
   }
 
-  // 6. ADICIONAR BADGE DE PERFIL NO HEADER
+  // 6. ADICIONAR BADGE DE PERFIL E TOGGLE HAMBURGER NO HEADER
   renderProfileBadge(containerSelector = 'nav') {
     const nav = document.querySelector(containerSelector);
     if (!nav) return;
+
+    let rightGroup = document.getElementById('navRightGroup');
+    if (!rightGroup) {
+      rightGroup = document.createElement('div');
+      rightGroup.id = 'navRightGroup';
+      rightGroup.className = 'nav-right-group';
+      nav.appendChild(rightGroup);
+    }
 
     let badge = document.getElementById('playerProfileBadge');
     if (!badge) {
       badge = document.createElement('div');
       badge.id = 'playerProfileBadge';
-      badge.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--amarelo-brasil); margin-left:auto;';
-      nav.appendChild(badge);
+      badge.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--amarelo-brasil);';
+      rightGroup.appendChild(badge);
+    }
+
+    // Botão Hamburger Mobile
+    let toggleBtn = document.getElementById('navToggleBtn');
+    if (!toggleBtn) {
+      toggleBtn = document.createElement('button');
+      toggleBtn.id = 'navToggleBtn';
+      toggleBtn.className = 'nav-toggle-btn';
+      toggleBtn.innerHTML = '☰ Menu';
+      rightGroup.appendChild(toggleBtn);
+
+      const navLinks = nav.querySelector('.nav-links');
+      if (navLinks) {
+        toggleBtn.onclick = (e) => {
+          e.stopPropagation();
+          navLinks.classList.toggle('open');
+          toggleBtn.innerHTML = navLinks.classList.contains('open') ? '✕ Fechar' : '☰ Menu';
+        };
+
+        // Fecha menu ao clicar em qualquer link ou fora
+        document.addEventListener('click', (e) => {
+          if (!nav.contains(e.target)) {
+            navLinks.classList.remove('open');
+            toggleBtn.innerHTML = '☰ Menu';
+          }
+        });
+      }
     }
 
     const user = this.getCurrentUser();
@@ -373,7 +408,7 @@ class AuthManager {
         <button id="btnLoginProfile" style="
           background: rgba(255,223,0,0.2); border: 1px solid var(--amarelo-brasil);
           color: var(--amarelo-brasil); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-weight: 700;
-        ">🔑 Entrar / Criar Conta</button>
+        ">🔑 Entrar</button>
       `;
       document.getElementById('btnLoginProfile').onclick = () => {
         this.mountAuthModal(() => this.renderProfileBadge(containerSelector));

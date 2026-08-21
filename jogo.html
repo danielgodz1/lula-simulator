@@ -208,6 +208,9 @@
           <button id="btnHardMode" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">Difícil ⚡</button>
         </div>
       </div>
+      <button id="btnFullscreenFlappy" class="btn-secondary" style="font-size:14px; padding:10px 14px; width:100%; border-color:#38bdf8; color:#38bdf8; margin-bottom:12px;">
+        ⛶ Modo Tela Cheia
+      </button>
       <div class="info-box">
         <strong>🥩 Picanhas Caídas</strong>
         <div id="picanhasLog" style="margin-top: 8px; font-size: 18px;"></div>
@@ -671,16 +674,32 @@
       if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleStart(); }
     });
 
-    // Eventos com preventDefault para evitar qualquer seleção de texto ou caixa azul no navegador
-    canvas.addEventListener('selectstart', e => e.preventDefault());
-    canvas.addEventListener('contextmenu', e => e.preventDefault());
-    canvas.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      handleStart();
-    });
-    canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      handleStart();
+    // Alternar modo Tela Cheia
+    const btnFullscreenFlappy = document.getElementById('btnFullscreenFlappy');
+    if (btnFullscreenFlappy) {
+      btnFullscreenFlappy.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+          }
+          btnFullscreenFlappy.textContent = '🗗 Sair da Tela Cheia';
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+          btnFullscreenFlappy.textContent = '⛶ Modo Tela Cheia';
+        }
+      });
+    }
+
+    // Trava rolagem acidental da página ao tocar no canvas
+    window.addEventListener('touchmove', (e) => {
+      if (e.target === canvas) e.preventDefault();
     }, { passive: false });
 
     loop();
