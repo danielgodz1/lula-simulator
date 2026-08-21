@@ -77,10 +77,12 @@ export async function savePlayerScore(gameType, score) {
   } catch (e) {}
 }
 
-// 2. OBTER PLACAR ZERADO COM APENAS 1 RECORDE POR USUÁRIO
-export async function getTopScores(collectionName, limit = 15) {
+// 2. OBTER PLACAR COM TODOS OS JOGADORES QUE TÊM PONTOS NO SISTEMA
+export async function getTopScores(collectionName, limit = 300) {
+  const isRunner = collectionName.includes('runner');
+  const game = isRunner ? 'runner' : 'flappy';
+
   // 1. Tenta API Serverless
-  const game = collectionName.includes('runner') ? 'runner' : 'flappy';
   try {
     const apiRes = await fetch(`/api/score?game=${game}&limit=${limit}`);
     if (apiRes.ok) {
@@ -91,30 +93,59 @@ export async function getTopScores(collectionName, limit = 15) {
     }
   } catch (e) {}
 
-  // 2. Fallback direto ao Firestore
+  // 2. Fallback direto ao Firestore com agregação completa
   try {
     const targetColl = collectionName.endsWith('_v2') ? collectionName : `${collectionName}_v2`;
-    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=50`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Firestore response error');
-    const data = await res.json();
-    if (data.documents && data.documents.length > 0) {
-      const userMap = new Map();
-      data.documents.forEach(doc => {
-        const player = (doc.fields?.player?.stringValue || 'Anônimo').slice(0, 30);
-        const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
-        if (score >= 0 && score <= 50000) {
-          if (!userMap.has(player) || score > userMap.get(player)) {
-            userMap.set(player, score);
-          }
-        }
-      });
+    const userScoreField = isRunner ? 'runnerScore' : 'flappyScore';
+    const userMap = new Map();
 
-      const list = Array.from(userMap.entries()).map(([player, score]) => ({ player, score }));
-      list.sort((a, b) => b.score - a.score);
-      return list.slice(0, limit);
+    // Consulta a coleção de placares
+    const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${targetColl}?pageSize=300`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.documents && data.documents.length > 0) {
+        data.documents.forEach(doc => {
+          const rawPlayer = doc.fields?.player?.stringValue || doc.name.split('/').pop() || 'Anônimo';
+          const player = rawPlayer.replace(/<[^>]*>?/gm, '').trim();
+          const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
+          if (score > 0 && score <= 50000) {
+            const key = player.toLowerCase();
+            if (!userMap.has(key) || score > userMap.get(key).score) {
+              userMap.set(key, { player, score });
+            }
+          }
+        });
+      }
     }
+
+    // Consulta também a coleção de usuários
+    try {
+      const usersUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2?pageSize=300`;
+      const uRes = await fetch(usersUrl);
+      if (uRes.ok) {
+        const uData = await uRes.json();
+        if (uData.documents && uData.documents.length > 0) {
+          uData.documents.forEach(doc => {
+            const rawPlayer = doc.fields?.username?.stringValue || doc.name.split('/').pop() || 'Jogador';
+            const player = rawPlayer.replace(/<[^>]*>?/gm, '').trim();
+            const score = parseInt(doc.fields?.[userScoreField]?.integerValue || '0', 10);
+            if (score > 0 && score <= 50000) {
+              const key = player.toLowerCase();
+              if (!userMap.has(key) || score > userMap.get(key).score) {
+                userMap.set(key, { player, score });
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    const list = Array.from(userMap.values());
+    list.sort((a, b) => b.score - a.score);
+    return list.slice(0, limit);
   } catch (e) {}
+
   return [];
 }
 

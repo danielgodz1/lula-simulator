@@ -1,4 +1,4 @@
-// api/score.js — Vercel Serverless Function com validação estrita anti-cheat e proteção contra Script Injection
+// api/score.js — Vercel Serverless Function com retorno de TODOS os jogadores e validação segura
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
-  // Função interna de sanitização
   const sanitize = (str, maxLen = 30) => {
     if (!str || typeof str !== 'string') return 'Jogador';
     return str
@@ -25,48 +24,75 @@ export default async function handler(req, res) {
       .slice(0, maxLen) || 'Jogador';
   };
 
-  // GET: Obter placar sanitizado
+  // GET: Obter TODOS os jogadores que possuem pontuação válida
   if (req.method === 'GET') {
-    const { game, limit = 15 } = req.query;
-    const collectionName = game === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+    const { game, limit = 300 } = req.query;
+    const isRunner = game === 'runner';
+    const collectionName = isRunner ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+    const userScoreField = isRunner ? 'runnerScore' : 'flappyScore';
 
     try {
-      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}?pageSize=50`;
-      const fireRes = await fetch(url);
-      if (!fireRes.ok) throw new Error('Firestore response error');
-      const data = await fireRes.json();
-      
-      if (data.documents && data.documents.length > 0) {
-        const userMap = new Map();
-        data.documents.forEach(doc => {
-          const rawPlayer = doc.fields?.player?.stringValue || 'Anônimo';
-          const player = sanitize(rawPlayer, 30);
-          const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
-          if (!isNaN(score) && score >= 0 && score <= 50000) {
-            if (!userMap.has(player) || score > userMap.get(player)) {
-              userMap.set(player, score);
-            }
-          }
-        });
+      const userMap = new Map();
 
-        const list = Array.from(userMap.entries()).map(([player, score]) => ({ player, score }));
-        list.sort((a, b) => b.score - a.score);
-        return res.status(200).json({ success: true, scores: list.slice(0, Math.min(50, parseInt(limit, 10) || 15)) });
+      // 1. Consulta a coleção de placares (pageSize=300)
+      const scoresUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}?pageSize=300`;
+      const fireRes = await fetch(scoresUrl);
+      if (fireRes.ok) {
+        const data = await fireRes.json();
+        if (data.documents && data.documents.length > 0) {
+          data.documents.forEach(doc => {
+            const rawPlayer = doc.fields?.player?.stringValue || doc.name.split('/').pop();
+            const player = sanitize(rawPlayer, 30);
+            const score = parseInt(doc.fields?.score?.integerValue || '0', 10);
+            if (!isNaN(score) && score > 0 && score <= 50000) {
+              const key = player.toLowerCase();
+              if (!userMap.has(key) || score > userMap.get(key).score) {
+                userMap.set(key, { player, score });
+              }
+            }
+          });
+        }
       }
-      return res.status(200).json({ success: true, scores: [] });
+
+      // 2. Consulta também a coleção de contas (lula_users_v2) para garantir 100% de cobertura
+      try {
+        const usersUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2?pageSize=300`;
+        const usersRes = await fetch(usersUrl);
+        if (usersRes.ok) {
+          const uData = await usersRes.json();
+          if (uData.documents && uData.documents.length > 0) {
+            uData.documents.forEach(doc => {
+              const rawPlayer = doc.fields?.username?.stringValue || doc.name.split('/').pop();
+              const player = sanitize(rawPlayer, 30);
+              const score = parseInt(doc.fields?.[userScoreField]?.integerValue || '0', 10);
+              if (!isNaN(score) && score > 0 && score <= 50000) {
+                const key = player.toLowerCase();
+                if (!userMap.has(key) || score > userMap.get(key).score) {
+                  userMap.set(key, { player, score });
+                }
+              }
+            });
+          }
+        }
+      } catch (e) {}
+
+      const list = Array.from(userMap.values());
+      list.sort((a, b) => b.score - a.score);
+
+      const maxLimit = Math.min(500, parseInt(limit, 10) || 300);
+      return res.status(200).json({ success: true, count: list.length, scores: list.slice(0, maxLimit) });
     } catch (err) {
       return res.status(200).json({ success: false, scores: [] });
     }
   }
 
-  // POST: Gravação segura de pontuação com validação anti-cheat
+  // POST: Gravação de pontuação segura
   if (req.method === 'POST') {
     const { player, score, game } = req.body || {};
 
     const cleanPlayer = sanitize(player, 25);
     const numScore = parseInt(score, 10);
 
-    // Validações Anti-Hacker / Anti-Cheat
     if (!cleanPlayer || cleanPlayer.length < 2) {
       return res.status(400).json({ success: false, error: 'Nome de jogador inválido' });
     }
@@ -75,13 +101,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Pontuação fora dos limites permitidos' });
     }
 
-    const collectionName = game === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+    const isRunner = game === 'runner';
+    const collectionName = isRunner ? 'lula_runner_scores_v2' : 'lula_scores_v2';
     const docId = encodeURIComponent(cleanPlayer.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
 
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}/${docId}`;
       
-      // 1. Verifica se já existe pontuação superior
       const checkRes = await fetch(url);
       if (checkRes.ok) {
         const data = await checkRes.json();
@@ -91,7 +117,6 @@ export default async function handler(req, res) {
         }
       }
 
-      // 2. Salva o novo recorde com payload sanitizado
       const payload = {
         fields: {
           player: { stringValue: cleanPlayer },
