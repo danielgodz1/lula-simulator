@@ -1,4 +1,4 @@
-// js/game/scene.js — Configuração de Cena, Câmera em 3ª Pessoa, Sol Radiante e Iluminação Tropical
+// js/game/scene.js — Configuração de Cena, Câmera em 3ª Pessoa, Sol Tropical Realista e Iluminação Volumétrica
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
 export class GameScene {
@@ -8,25 +8,89 @@ export class GameScene {
     this.camera = null;
     this.renderer = null;
     this.sunLight = null;
+    this.sunGroup = null;
+    this.sunRays = null;
     this.targetCameraX = 0;
     this.init();
+  }
+
+  // Gera textura procedural de brilho solar suave com gradiente radial de alta fidelidade
+  createSunTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const center = size / 2;
+
+    const grad = ctx.createRadialGradient(center, center, 0, center, center, center);
+    grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    grad.addColorStop(0.12, 'rgba(255, 250, 200, 0.95)');
+    grad.addColorStop(0.28, 'rgba(255, 215, 0, 0.75)');
+    grad.addColorStop(0.50, 'rgba(251, 146, 60, 0.40)');
+    grad.addColorStop(0.75, 'rgba(249, 115, 22, 0.15)');
+    grad.addColorStop(1.0, 'rgba(234, 88, 12, 0.0)');
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
+  }
+
+  // Gera textura de raios solares estelares
+  createSunRaysTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const center = size / 2;
+
+    ctx.clearRect(0, 0, size, size);
+
+    // Raios principais em estrela
+    const rayCount = 12;
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i * Math.PI) / (rayCount / 2);
+      const grad = ctx.createRadialGradient(center, center, 0, center, center, center);
+      grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.6)');
+      grad.addColorStop(0.3, 'rgba(255, 223, 0, 0.35)');
+      grad.addColorStop(0.7, 'rgba(249, 115, 22, 0.1)');
+      grad.addColorStop(1.0, 'rgba(255, 255, 255, 0)');
+
+      ctx.save();
+      ctx.translate(center, center);
+      ctx.rotate(angle);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(-12, 0);
+      ctx.lineTo(0, -center);
+      ctx.lineTo(12, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    return texture;
   }
 
   init() {
     if (!this.container) return;
 
-    // 1. Cena com Céu Ensolarado Carioca e Neblina Suave Dourada
+    // 1. Cena com Céu Tropical Carioca e Neblina Suave
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x38bdf8); // Céu Azul Vibrante
-    this.scene.fog = new THREE.FogExp2(0xbae6fd, 0.0035);
+    this.scene.background = new THREE.Color(0x38bdf8);
+    this.scene.fog = new THREE.FogExp2(0xbae6fd, 0.0032);
 
-    // 2. Câmera em 3ª Pessoa com Profundidade
+    // 2. Câmera em 3ª Pessoa
     const aspect = this.container.clientWidth / this.container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 600);
+    this.camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 800);
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL de Alta Performance
+    // 3. Renderizador WebGL
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -35,54 +99,71 @@ export class GameScene {
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Luz Hemisférica Tropical Ensolarada
-    const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x475569, 0.95);
+    // 4. Luz Hemisférica Tropical
+    const hemiLight = new THREE.HemisphereLight(0xfffbeb, 0x475569, 1.0);
     hemiLight.position.set(0, 80, 0);
     this.scene.add(hemiLight);
 
-    // 5. Sol Dourado com Sombras Suaves
-    this.sunLight = new THREE.DirectionalLight(0xfff4cc, 1.35);
-    this.sunLight.position.set(35, 75, 20);
+    // 5. Luz Solar Direcional com Sombras
+    this.sunLight = new THREE.DirectionalLight(0xfff7d6, 1.4);
+    this.sunLight.position.set(40, 85, 30);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 1024;
     this.sunLight.shadow.mapSize.height = 1024;
     this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = 180;
-    this.sunLight.shadow.camera.left = -22;
-    this.sunLight.shadow.camera.right = 22;
-    this.sunLight.shadow.camera.top = 22;
-    this.sunLight.shadow.camera.bottom = -22;
+    this.sunLight.shadow.camera.far = 200;
+    this.sunLight.shadow.camera.left = -25;
+    this.sunLight.shadow.camera.right = 25;
+    this.sunLight.shadow.camera.top = 25;
+    this.sunLight.shadow.camera.bottom = -25;
     this.scene.add(this.sunLight);
 
-    // 6. Sol 3D Brilhante Visível no Horizonte com Halo Dourado
-    const sunGroup = new THREE.Group();
-    sunGroup.position.set(10, 42, -320);
+    // 6. Sol 3D Realista Volumétrico com Sprites e Halo Dourado
+    this.sunGroup = new THREE.Group();
+    this.sunGroup.position.set(12, 54, -300);
 
-    // Núcleo Branco/Dourado do Sol
-    const sunCoreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const sunCore = new THREE.Mesh(new THREE.SphereGeometry(7.5, 32, 32), sunCoreMat);
-    sunGroup.add(sunCore);
+    const sunTexture = this.createSunTexture(512);
+    const sunRaysTexture = this.createSunRaysTexture(512);
 
-    // Corona de Brilho Solar Radiante
-    const sunCoronaMat = new THREE.MeshBasicMaterial({
-      color: 0xfde047,
+    // Núcleo Solar de Brilho Intenso
+    const sunCoreMat = new THREE.SpriteMaterial({
+      map: sunTexture,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
       transparent: true,
-      opacity: 0.85
+      color: 0xffffff
     });
-    const sunCorona = new THREE.Mesh(new THREE.SphereGeometry(14.0, 32, 32), sunCoronaMat);
-    sunGroup.add(sunCorona);
+    const sunCoreSprite = new THREE.Sprite(sunCoreMat);
+    sunCoreSprite.scale.set(65, 65, 1);
+    this.sunGroup.add(sunCoreSprite);
 
-    // Halo Externo Translúcido
-    const sunHaloMat = new THREE.MeshBasicMaterial({
-      color: 0xf59e0b,
+    // Halo Volumétrico Atmosférico Grande
+    const sunHaloMat = new THREE.SpriteMaterial({
+      map: sunTexture,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
       transparent: true,
-      opacity: 0.40,
-      side: THREE.DoubleSide
+      color: 0xffa500,
+      opacity: 0.75
     });
-    const sunHalo = new THREE.Mesh(new THREE.RingGeometry(15.0, 32.0, 32), sunHaloMat);
-    sunGroup.add(sunHalo);
+    const sunHaloSprite = new THREE.Sprite(sunHaloMat);
+    sunHaloSprite.scale.set(130, 130, 1);
+    this.sunGroup.add(sunHaloSprite);
 
-    this.scene.add(sunGroup);
+    // Raios Solares Radiantes
+    const sunRaysMat = new THREE.SpriteMaterial({
+      map: sunRaysTexture,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+      color: 0xffdf00,
+      opacity: 0.60
+    });
+    this.sunRays = new THREE.Sprite(sunRaysMat);
+    this.sunRays.scale.set(160, 160, 1);
+    this.sunGroup.add(this.sunRays);
+
+    this.scene.add(this.sunGroup);
 
     // 7. Redimensionamento Responsivo
     window.addEventListener('resize', () => this.onResize());
@@ -97,17 +178,19 @@ export class GameScene {
     this.renderer.setSize(width, height);
   }
 
-  // Atualização da Câmera com Suavização (Lag/Smoothing dinâmico)
   updateCamera(characterX, speed, baseSpeed, dt) {
     if (!this.camera) return;
 
-    // Suavização horizontal da câmera (Lag sutil que dá sensação de velocidade)
     this.targetCameraX = characterX * 0.35;
     this.camera.position.x += (this.targetCameraX - this.camera.position.x) * (12 * dt);
 
-    // Abertura de Campo de Visão (FOV) progressivo conforme acelera
     this.camera.fov = 65 + (speed - baseSpeed) * 0.16;
     this.camera.updateProjectionMatrix();
+
+    // Rotação sutil dos raios solares
+    if (this.sunRays && this.sunRays.material) {
+      this.sunRays.material.rotation += 0.08 * dt;
+    }
   }
 
   render() {

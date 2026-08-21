@@ -1,47 +1,38 @@
-// js/game/characters.js — Sistema Modular de Inventário de Personagens e Habilidades
-//
-// COMO ADICIONAR UM NOVO PERSONAGEM:
-// 1. Adicione um novo objeto no array CHARACTERS abaixo com:
-//    - id: identificador único em string (ex: 'astronauta')
-//    - name: Nome do personagem
-//    - title: Título/Arquétipo
-//    - desc: Descrição visual
-//    - sprite: Caminho da imagem em 'img/nome_da_imagem.png'
-//    - requiredPicanhas: Pontuação total acumulada necessária para destravar (0 para inicial)
-//    - skillName: Nome da habilidade especial
-//    - skillDesc: Resumo do efeito na gameplay
-//    - auraColor: Cor da aura de salto em hexadecimal (ex: '#ffdf00')
-//    - modifier: Função que ajusta parâmetros do gameState (ex: hitbox, speed, jump, special)
+// js/game/characters.js — Sistema de Personagens Políticos Reais e Sincronização Cloud de Picanhas
+import { firebaseConfig } from '../firebase-config.js';
 
 export const CHARACTERS = [
   {
-    id: 'president',
-    name: 'O Presidente Popular',
-    title: 'Arquétipo Carismático',
-    desc: 'Terno simples, aceno de mão e visual caloroso.',
+    id: 'lula',
+    name: 'Lula da Silva',
+    nickname: 'O Presidente',
+    title: 'Lula da Silva — O Presidente',
+    desc: 'Terno presidencial, carisma popular e voo macio distribuindo picanha para o povo.',
     sprite: 'img/lula.png',
-    requiredPicanhas: 0, // Sempre desbloqueado
-    skillName: '🕊️ Pulo Tolerante',
-    skillDesc: 'Hitbox menor e mais generosa. Pulo macio e tolerante a erros.',
+    requiredPicanhas: 0, // Sempre liberado
+    skillName: '🕊️ Voo Tolerante & Picanha',
+    skillDesc: 'Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.',
     auraColor: '#ffdf00',
     modifier: (state) => {
-      state.HITBOX_R = 0.024; // Hitbox reduzida
+      state.HITBOX_R = 0.024;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.hasShield = false;
       state.isTurboAllowed = false;
+      state.spawnExtraLikes = false;
     }
   },
   {
-    id: 'first_lady',
-    name: 'A Primeira-Dama Influencer',
-    title: 'Arquétipo Fashionista',
-    desc: 'Estilo moderno, óculos escuros e aura reluzente ao pular.',
-    sprite: 'img/first_lady.png',
+    id: 'janja',
+    name: 'Janja da Silva',
+    nickname: 'A Primeira-Dama',
+    title: 'Janja da Silva — A Primeira-Dama',
+    desc: 'Óculos modernos, visual vibrante e presença marcante com chuva de corações bônus.',
+    sprite: 'img/janja.png',
     requiredPicanhas: 25,
-    skillName: '💖 Chuva de Curtidas',
-    skillDesc: 'Curtidas e corações bônus aparecem no trajeto dando +2 pontos extras.',
+    skillName: '💖 Chuva de Curtidas (+2 pts)',
+    skillDesc: 'Curtidas e corações bônus aparecem no trajeto concedendo +2 pontos adicionais.',
     auraColor: '#ec4899',
     modifier: (state) => {
       state.HITBOX_R = 0.026;
@@ -54,59 +45,65 @@ export const CHARACTERS = [
     }
   },
   {
-    id: 'young_viral',
-    name: 'O Jovem Conservador Viral',
-    title: 'Arquétipo Orador de Palco',
-    desc: 'Microfone na mão e energia de comício vibrante.',
-    sprite: 'img/young_viral.png',
+    id: 'nikolas',
+    name: 'Nikolas Ferreira',
+    nickname: 'O Deputado Viral',
+    title: 'Nikolas Ferreira — O Deputado Viral',
+    desc: 'Microfone em punho e gravata verde-amarela. Velocidade turbo com dobro de picanhas!',
+    sprite: 'img/nikolas.png',
     requiredPicanhas: 60,
-    skillName: '⚡ Ritmo Acelerado (2x Pontos)',
+    skillName: '⚡ Ritmo Acelerado (2x Picanhas)',
     skillDesc: 'Velocidade 1.35x maior, porém cada cano ultrapassado vale 2 picanhas!',
     auraColor: '#06b6d4',
     modifier: (state) => {
       state.HITBOX_R = 0.028;
       state.GAP_RATIO = 0.40;
-      state.SPEED_MULT = 1.35; // Mais rápido
-      state.EXTRA_SCORE_PER_PIPE = 2; // Dobro de pontos
+      state.SPEED_MULT = 1.35;
+      state.EXTRA_SCORE_PER_PIPE = 2;
+      state.spawnExtraLikes = false;
       state.hasShield = false;
       state.isTurboAllowed = false;
     }
   },
   {
-    id: 'minister',
-    name: 'O Ministro Linha-Dura',
-    title: 'Arquétipo Guardião da Toga',
-    desc: 'Toga clássica estilizada e olhar firme da justiça.',
-    sprite: 'img/minister.png',
+    id: 'moraes',
+    name: 'Alexandre de Moraes',
+    nickname: 'Xandão do STF',
+    title: 'Alexandre de Moraes — Xandão',
+    desc: 'Toga da Suprema Corte e martelo da justiça. Possui escudo blindado contra colisões.',
+    sprite: 'img/moraes.png',
     requiredPicanhas: 120,
-    skillName: '🛡️ Escudo da Lei',
-    skillDesc: 'Possui 1 Escudo Protetor por partida. Resiste à 1ª colisão sem morrer!',
+    skillName: '🛡️ Mandado Blindado (Escudo)',
+    skillDesc: 'Possui 1 Escudo Protetor por partida. Quebra o 1º cano sem morrer!',
     auraColor: '#a855f7',
     modifier: (state) => {
       state.HITBOX_R = 0.026;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
-      state.hasShield = true; // Escudo protetor
+      state.spawnExtraLikes = false;
+      state.hasShield = true;
       state.shieldCharges = 1;
       state.isTurboAllowed = false;
     }
   },
   {
-    id: 'ex_president',
-    name: 'O Ex-Presidente Nostálgico',
-    title: 'Arquétipo Patriota Clássico',
-    desc: 'Farda verde-oliva cerimonial e óculos escuros aviador.',
-    sprite: 'img/ex_president.png',
+    id: 'bolsonaro',
+    name: 'Jair Bolsonaro',
+    nickname: 'O Capitão',
+    title: 'Jair Bolsonaro — O Capitão',
+    desc: 'Faixa presidencial e pose clássica. Acumule 4 canos perfeitos para ativar o Modo Turbo!',
+    sprite: 'img/bolsonaro.png',
     requiredPicanhas: 200,
-    skillName: '🚀 Modo Turbo Combo',
-    skillDesc: 'Após 4 canos perfeitos sem bater, ativa 4s de super velocidade e ímã!',
+    skillName: '🚀 Modo Turbo Patriota',
+    skillDesc: 'A cada 4 canos perfeitos sem bater, ativa 4s de super velocidade e ímã de picanha!',
     auraColor: '#22c55e',
     modifier: (state) => {
       state.HITBOX_R = 0.026;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
+      state.spawnExtraLikes = false;
       state.hasShield = false;
       state.isTurboAllowed = true;
       state.comboGoal = 4;
@@ -122,32 +119,85 @@ export class CharacterInventory {
     return parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
   }
 
+  static setTotalPicanhas(amount) {
+    const val = Math.max(0, parseInt(amount, 10) || 0);
+    localStorage.setItem(TOTAL_PICANHAS_KEY, val.toString());
+    return val;
+  }
+
   static addPicanhas(amount) {
     if (amount <= 0) return this.getTotalPicanhas();
     const current = this.getTotalPicanhas();
     const updated = current + amount;
     localStorage.setItem(TOTAL_PICANHAS_KEY, updated.toString());
+
+    // Sincroniza em background com o Firestore
+    this.syncPicanhasToCloud(updated);
     return updated;
   }
 
+  static async syncPicanhasToCloud(total) {
+    try {
+      let playerName = '';
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u && u.username) playerName = u.username;
+      }
+      if (!playerName) {
+        playerName = localStorage.getItem('lula_player') || '';
+      }
+      if (!playerName) return;
+
+      const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=lastSync`;
+      
+      const payload = {
+        fields: {
+          totalPicanhas: { integerValue: total.toString() },
+          lastSync: { timestampValue: new Date().toISOString() }
+        }
+      };
+
+      fetch(docUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
   static isUnlocked(charId) {
-    const char = CHARACTERS.find(c => c.id === charId);
+    const char = CHARACTERS.find(c => c.id === charId || c.id === this.mapLegacyId(charId));
     if (!char) return false;
     return this.getTotalPicanhas() >= char.requiredPicanhas;
   }
 
+  static mapLegacyId(id) {
+    const map = {
+      'president': 'lula',
+      'first_lady': 'janja',
+      'young_viral': 'nikolas',
+      'minister': 'moraes',
+      'ex_president': 'bolsonaro'
+    };
+    return map[id] || id;
+  }
+
   static getSelectedCharacter() {
-    const savedId = localStorage.getItem(SELECTED_CHAR_KEY) || 'president';
+    let savedId = localStorage.getItem(SELECTED_CHAR_KEY) || 'lula';
+    savedId = this.mapLegacyId(savedId);
     const found = CHARACTERS.find(c => c.id === savedId);
     if (found && this.isUnlocked(found.id)) {
       return found;
     }
-    return CHARACTERS[0]; // Padrão
+    return CHARACTERS[0];
   }
 
   static setSelectedCharacter(charId) {
-    if (this.isUnlocked(charId)) {
-      localStorage.setItem(SELECTED_CHAR_KEY, charId);
+    const mapped = this.mapLegacyId(charId);
+    if (this.isUnlocked(mapped)) {
+      localStorage.setItem(SELECTED_CHAR_KEY, mapped);
       return true;
     }
     return false;
