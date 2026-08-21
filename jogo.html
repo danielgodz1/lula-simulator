@@ -168,33 +168,111 @@
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* MODAL DE GAME OVER ESTILO FLAPPY BIRD COM PLACAR LATERAL */
+    /* MODAL DE GAME OVER ESTILO FLAPPY BIRD COM PLACAR LATERAL & CONTROLES */
     .game-over-container {
       background: rgba(20, 24, 36, 0.96);
       border: 3px solid #eab308;
       border-radius: 24px;
-      padding: 24px;
-      max-width: 620px;
+      padding: 20px;
+      max-width: 630px;
       width: 95%;
       box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(234, 179, 8, 0.3);
       animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       text-align: center;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .go-header-title {
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 32px;
+      font-size: 30px;
       color: #ef4444;
       text-shadow: 3px 3px 0px #fff, -2px -2px 0px #7f1d1d, 4px 4px 8px rgba(0,0,0,0.8);
-      margin-bottom: 18px;
+      margin-bottom: 12px;
       letter-spacing: 2px;
+    }
+
+    /* BARRA DE CONFIGURAÇÕES RÁPIDAS NO GAME OVER (PERSONAGEM & DIFICULDADE) */
+    .go-quick-options {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 8px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .go-char-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid var(--amarelo-brasil);
+      padding: 5px 10px;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .go-char-picker-btn:hover {
+      background: rgba(234, 179, 8, 0.2);
+    }
+
+    .go-char-picker-btn img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid #ffd700;
+      object-fit: cover;
+    }
+
+    .go-diff-toggles {
+      display: flex;
+      gap: 6px;
+    }
+
+    .go-diff-btn {
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .go-diff-btn.active-easy {
+      background: var(--verde-neon);
+      color: #000;
+      border-color: #00e676;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+    }
+
+    .go-diff-btn.active-hard {
+      background: var(--vermelho-alert);
+      color: #fff;
+      border-color: #ef4444;
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    .go-diff-btn.inactive {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
     .go-panels-grid {
       display: grid;
       grid-template-columns: 1fr 1.15fr;
-      gap: 16px;
-      margin-bottom: 20px;
+      gap: 14px;
+      margin-bottom: 16px;
       text-align: left;
     }
 
@@ -203,7 +281,7 @@
       background: #dfd7b6;
       border: 3px solid #543847;
       border-radius: 16px;
-      padding: 16px 14px;
+      padding: 14px 12px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -215,9 +293,9 @@
       display: flex;
       justify-content: space-around;
       text-align: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       border-bottom: 2px dashed #b8ad88;
-      padding-bottom: 10px;
+      padding-bottom: 8px;
     }
 
     .go-score-item label {
@@ -231,7 +309,7 @@
 
     .go-score-item span {
       font-family: 'Press Start 2P', cursive;
-      font-size: 20px;
+      font-size: 18px;
       color: #000;
     }
 
@@ -239,26 +317,26 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding: 0 6px;
+      margin-bottom: 10px;
+      padding: 0 4px;
     }
 
     .go-medal-row label {
       font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
+      font-size: 8px;
       color: #e65100;
     }
 
     .go-medal-circle {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: #c59b27;
       border: 2px solid #543847;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
     }
 
@@ -266,15 +344,15 @@
       background: #ffffff;
       border: 2px solid #543847;
       border-radius: 12px;
-      padding: 10px;
+      padding: 8px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .go-lula-avatar {
-      width: 46px;
-      height: 46px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       border: 2px solid #ef4444;
       overflow: hidden;
@@ -288,9 +366,9 @@
     }
 
     .go-meme-text {
-      font-size: 11px;
+      font-size: 10.5px;
       color: #1e293b;
-      line-height: 1.35;
+      line-height: 1.3;
       font-weight: 600;
       font-style: italic;
     }
@@ -308,12 +386,12 @@
     .go-lb-header {
       background: #ef4444;
       color: #fff;
-      padding: 8px 10px;
+      padding: 7px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
+      font-size: 8.5px;
       letter-spacing: 1px;
       text-transform: uppercase;
       border-bottom: 3px solid #543847;
@@ -321,8 +399,8 @@
 
     .go-lb-list {
       flex: 1;
-      padding: 6px 8px;
-      max-height: 160px;
+      padding: 4px 6px;
+      max-height: 145px;
       overflow-y: auto;
     }
 
@@ -330,9 +408,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 4px 6px;
+      padding: 4px 4px;
       border-bottom: 1px solid #e2d9bc;
-      font-size: 11px;
+      font-size: 10.5px;
       color: #334155;
     }
 
@@ -342,8 +420,8 @@
 
     .go-lb-rank {
       font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
-      width: 20px;
+      font-size: 8px;
+      width: 18px;
       color: #b45309;
     }
 
@@ -353,15 +431,15 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding: 0 6px;
+      padding: 0 4px;
     }
 
     .go-lb-score {
       font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
+      font-size: 9px;
       color: #15803d;
       background: #dcfce7;
-      padding: 2px 6px;
+      padding: 2px 5px;
       border-radius: 6px;
       border: 1px solid #86efac;
     }
@@ -370,18 +448,18 @@
       background: #38bdf8;
       border-top: 2px solid #543847;
       color: #082f49;
-      padding: 6px 10px;
+      padding: 5px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-weight: 900;
-      font-size: 11px;
+      font-size: 10.5px;
     }
 
     /* BOTÕES INFERIORES DO GAME OVER */
     .go-buttons-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
     }
 
@@ -391,8 +469,8 @@
       border: 3px solid #14532d;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 12px;
-      padding: 12px 14px;
+      font-size: 11px;
+      padding: 11px 12px;
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 0px #14532d;
@@ -410,8 +488,8 @@
       border: 3px solid #0c4a6e;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 10px;
-      padding: 12px 10px;
+      font-size: 9px;
+      padding: 11px 8px;
       border-radius: 12px;
       cursor: pointer;
       box-shadow: 0 4px 0px #0c4a6e;
@@ -423,8 +501,8 @@
       border: 3px solid #713f12;
       color: #000;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 10px;
-      padding: 12px 10px;
+      font-size: 9px;
+      padding: 11px 8px;
       border-radius: 12px;
       cursor: pointer;
       text-decoration: none;
@@ -439,11 +517,15 @@
         grid-template-columns: 1fr;
       }
       .go-header-title {
-        font-size: 24px;
+        font-size: 22px;
+      }
+      .go-quick-options {
+        flex-direction: column;
+        gap: 6px;
       }
       .btn-pixel-play, .btn-pixel-share, .btn-pixel-badges {
-        font-size: 9px;
-        padding: 10px 6px;
+        font-size: 8px;
+        padding: 9px 5px;
       }
     }
 
@@ -647,7 +729,7 @@
     </div>
 
     <!-- MODAL DE SELEÇÃO DE PERSONAGENS (INVENTÁRIO) -->
-    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:60;">
+    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:90;">
       <div class="modal-card" style="max-width:580px;">
         <h2 style="font-family:'Bangers',cursive; font-size:36px; color:var(--amarelo-brasil); margin-bottom:4px;">
           🎭 PERSONAGENS POLÍTICOS REAIS
@@ -672,10 +754,24 @@
       </div>
     </div>
 
-    <!-- MODAL DE GAME OVER ESTILO RETRO FLAPPY BIRD COM PLACAR LATERAL -->
+    <!-- MODAL DE GAME OVER ESTILO RETRO FLAPPY BIRD COM CONTROLES & PLACAR -->
     <div class="modal-overlay" id="gameOverModal" style="display:none; z-index:70;">
       <div class="game-over-container">
         <div class="go-header-title">GAME OVER</div>
+
+        <!-- SELETOR RÁPIDO DE PERSONAGEM & DIFICULDADE DIRETO NO GAME OVER -->
+        <div class="go-quick-options">
+          <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
+            <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem">
+            <span id="goEquippedCharName">Lula da Silva</span>
+            <span style="color:var(--amarelo-brasil); font-size:11px; margin-left:2px;">✎ Trocar</span>
+          </div>
+
+          <div class="go-diff-toggles">
+            <button id="btnGoEasyDiff" class="go-diff-btn active-easy">⚡ Fácil</button>
+            <button id="btnGoHardDiff" class="go-diff-btn inactive">🔥 Difícil</button>
+          </div>
+        </div>
         
         <div class="go-panels-grid">
           
@@ -770,6 +866,13 @@
     const totalPicanhasBadge = document.getElementById('totalPicanhasBadge');
     const prisonBanner = document.getElementById('prisonBanner');
 
+    // Elementos de personalização no Game Over
+    const btnGoChangeChar = document.getElementById('btnGoChangeChar');
+    const goEquippedCharImg = document.getElementById('goEquippedCharImg');
+    const goEquippedCharName = document.getElementById('goEquippedCharName');
+    const btnGoEasyDiff = document.getElementById('btnGoEasyDiff');
+    const btnGoHardDiff = document.getElementById('btnGoHardDiff');
+
     let activeCharacter = CharacterInventory.getSelectedCharacter();
     let pendingCharSelect = activeCharacter;
 
@@ -800,6 +903,10 @@
       if (img) img.src = activeCharacter.sprite;
       if (name) name.textContent = activeCharacter.name;
       if (skill) skill.textContent = activeCharacter.skillName;
+
+      // Atualiza também o avatar no Game Over
+      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.sprite;
+      if (goEquippedCharName) goEquippedCharName.textContent = activeCharacter.name;
     }
 
     let dpr = Math.max(window.devicePixelRatio || 1, 2);
@@ -838,19 +945,13 @@
 
     let { W, H } = calcSize();
 
-    // CACHE DE SPRITES DOS PERSONAGENS E PRESO 171
+    // CACHE DE SPRITES DOS PERSONAGENS
     const characterSprites = {};
     CHARACTERS.forEach(char => {
       const img = new Image();
       img.src = char.sprite;
       characterSprites[char.id] = img;
     });
-
-    const preso171Img = new Image();
-    preso171Img.src = 'img/preso171.png';
-
-    const lulaCryImg = new Image();
-    lulaCryImg.src = 'img/lula_cry.png';
 
     // FÍSICA BASE DO JOGO
     let GRAVITY    = 0.35;
@@ -870,18 +971,19 @@
     let pipes = [], picanhas = [], likesBonus = [];
     let isPrisonMode = false;
 
-    // NUVENS E PRÉDIOS ESTILO CARTOON FLAPPY BIRD
+    // NUVENS ESTILO FLAPPY BIRD
     const clouds = [
       { x: 40, y: 40, scale: 0.8, speed: 0.35 },
       { x: 220, y: 70, scale: 1.1, speed: 0.5 },
       { x: 380, y: 35, scale: 0.7, speed: 0.3 }
     ];
 
-    // BONECOS 171 ANDANDO NA CADEIA
+    // BONECOS 171 ANDANDO NA CADEIA (PEQUENOS COM 171 NA CABEÇA)
     const prisoners = [
-      { x: 60, speed: 0.9, dir: 1, bob: 0 },
-      { x: 240, speed: 0.7, dir: -1, bob: 0 },
-      { x: 420, speed: 0.85, dir: 1, bob: 0 }
+      { x: 40, speed: 0.85, dir: 1, bob: 0 },
+      { x: 160, speed: 0.65, dir: -1, bob: 0 },
+      { x: 280, speed: 0.75, dir: 1, bob: 0 },
+      { x: 400, speed: 0.90, dir: -1, bob: 0 }
     ];
 
     if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
@@ -980,6 +1082,7 @@
 
     btnCharSelectHUD?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
     btnOpenRosterStart?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
+    btnGoChangeChar?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
     btnCloseCharModal?.addEventListener('click', closeCharacterModal);
 
     btnEquipChar?.addEventListener('click', () => {
@@ -987,7 +1090,9 @@
       CharacterInventory.setSelectedCharacter(activeCharacter.id);
       applyActiveCharacterModifiers();
       closeCharacterModal();
-      handleStart();
+      if (state !== STATE.PLAYING) {
+        handleStart();
+      }
     });
 
     // SELEÇÃO DE DIFICULDADE (FÁCIL / DIFÍCIL)
@@ -1016,6 +1121,12 @@
           btnHardStart.style.background = '';
           btnHardStart.style.color = '';
         }
+        if (btnGoEasyDiff) {
+          btnGoEasyDiff.className = 'go-diff-btn active-easy';
+        }
+        if (btnGoHardDiff) {
+          btnGoHardDiff.className = 'go-diff-btn inactive';
+        }
       } else {
         BASE_PIPE_SPEED = 3.8;
         SPAWN_FREQ = 80;
@@ -1034,6 +1145,12 @@
           btnEasyStart.style.background = '';
           btnEasyStart.style.color = '';
         }
+        if (btnGoEasyDiff) {
+          btnGoEasyDiff.className = 'go-diff-btn inactive';
+        }
+        if (btnGoHardDiff) {
+          btnGoHardDiff.className = 'go-diff-btn active-hard';
+        }
       }
     }
 
@@ -1043,6 +1160,9 @@
     });
     btnEasyStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('easy'); });
     btnHardStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('hard'); });
+
+    btnGoEasyDiff?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('easy'); });
+    btnGoHardDiff?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('hard'); });
 
     applyActiveCharacterModifiers();
     setDifficulty('easy');
@@ -1191,9 +1311,9 @@
     function updatePrisoners() {
       for (const pr of prisoners) {
         pr.x += pr.speed * pr.dir;
-        pr.bob = Math.sin(frameCount * 0.15 + pr.x) * 4;
-        if (pr.x > W - 40) pr.dir = -1;
-        if (pr.x < 10) pr.dir = 1;
+        pr.bob = Math.sin(frameCount * 0.25 + pr.x) * 2;
+        if (pr.x > W - 30) pr.dir = -1;
+        if (pr.x < 15) pr.dir = 1;
       }
     }
 
@@ -1230,7 +1350,7 @@
       ctx.fill();
     }
 
-    // DESENHO DA SILHUETA DA CIDADE (FLAPPY BIRD RETRO SKYLINE)
+    // DESENHO DA SILHUETA DA CIDADE RETRO
     function drawCitySkyline(GH) {
       const horizonY = H - GH;
       ctx.fillStyle = '#86d1cc';
@@ -1246,7 +1366,6 @@
           const by = horizonY - bh;
           ctx.fillRect(curX, by, bw - 2, bh);
           
-          // Janelinhas retro
           ctx.fillStyle = '#a1e0db';
           for (let wy = by + 6; wy < horizonY - 10; wy += 14) {
             for (let wx = curX + 6; wx < curX + bw - 8; wx += 10) {
@@ -1258,7 +1377,6 @@
         }
       }
 
-      // Arbustos redondos verdes em primeiro plano
       ctx.fillStyle = '#55a832';
       let bushX = -((groundScroll * 0.6) % 90);
       while (bushX < W + 60) {
@@ -1269,6 +1387,73 @@
         ctx.fill();
         bushX += 70;
       }
+    }
+
+    // DESENHO EM 2D DOS BONECOS 171 PEQUENOS COM 171 NA CABEÇA
+    function drawSmall2DPrisoner171(px, py, dir, bob) {
+      ctx.save();
+      ctx.translate(px, py + bob);
+      if (dir === -1) ctx.scale(-1, 1);
+
+      // 1. Plaquinha amarela brilhante escrito "171" em cima da cabeça
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(-11, -28, 22, 10);
+      ctx.strokeRect(-11, -28, 22, 10);
+      
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('171', 0, -20);
+
+      // 2. Cabeça redonda cartoon do preso
+      ctx.fillStyle = '#f5d0a9';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(0, -11, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Gorro listrado de cadeia
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-5.5, -16.5, 11, 4.5);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(-3, -16.5, 3, 4.5);
+      ctx.fillRect(1.5, -16.5, 3, 4.5);
+
+      // Olhinho
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(1.5, -12, 2, 2);
+
+      // 3. Tronco listrado de presidiário (Preto e Branco)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-4.5, -5.5, 9, 11);
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(-4.5, -5.5, 9, 11);
+
+      // Listras horizontais pretas
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(-4.5, -3, 9, 2.5);
+      ctx.fillRect(-4.5, 1.5, 9, 2.5);
+
+      // 4. Pernas andando
+      const legOffset = Math.sin(frameCount * 0.3 + px) * 3.5;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-2, 5.5); ctx.lineTo(-2 + legOffset, 14); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(2, 5.5); ctx.lineTo(2 - legOffset, 14); ctx.stroke();
+
+      // 5. Corrente e Bola de Ferro de Prisão no Tornozelo
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-2 - legOffset, 13); ctx.lineTo(-12, 13); ctx.stroke();
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath(); ctx.arc(-14, 12, 3.5, 0, Math.PI * 2); ctx.fill();
+
+      ctx.restore();
     }
 
     function draw() {
@@ -1287,12 +1472,10 @@
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, W, H);
 
-        // Nuvens
         for (const c of clouds) {
           drawCloud(c.x, c.y, c.scale);
         }
 
-        // Cidade Flappy Bird e Arbustos no horizonte
         drawCitySkyline(GH);
 
       } else {
@@ -1304,14 +1487,12 @@
         ctx.fillStyle = jailGrad;
         ctx.fillRect(0, 0, W, H);
 
-        // Tijolos de concreto
         ctx.strokeStyle = 'rgba(255,255,255,0.05)';
         ctx.lineWidth = 1.5;
         for (let y = 0; y < H - GH; y += 22) {
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
         }
 
-        // Holofote de vigia varrendo a cadeia
         const spotX = W / 2 + Math.sin(frameCount * 0.03) * (W * 0.4);
         const spotGrad = ctx.createRadialGradient(spotX, H * 0.4, 10, spotX, H * 0.4, 160);
         spotGrad.addColorStop(0, 'rgba(255, 255, 200, 0.22)');
@@ -1324,7 +1505,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Grades de aço maciço
         for (let x = 16; x < W; x += 32) {
           const barGrad = ctx.createLinearGradient(x - 3, 0, x + 3, 0);
           barGrad.addColorStop(0, '#334155');
@@ -1345,7 +1525,7 @@
         ctx.fillRect(0, 0, W, 24);
       }
 
-      // TUBULAÇÃO / CANOS ESTILO FLAPPY BIRD
+      // CANOS ESTILO FLAPPY BIRD
       const PW = W * PW_RATIO;
       for (const p of pipes) {
         const pipeGrad = ctx.createLinearGradient(p.x, 0, p.x + PW, 0);
@@ -1367,15 +1547,12 @@
         ctx.lineWidth = 3.5;
         ctx.strokeRect(p.x, 0, PW, p.topH);
 
-        // Aba/Colar do cano superior
         ctx.fillRect(p.x - 5, p.topH - 26, PW + 10, 26);
         ctx.strokeRect(p.x - 5, p.topH - 26, PW + 10, 26);
 
-        // Cano inferior
         ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
         ctx.strokeRect(p.x, p.botY, PW, H - GH - p.botY);
 
-        // Aba/Colar do cano inferior
         ctx.fillRect(p.x - 5, p.botY, PW + 10, 26);
         ctx.strokeRect(p.x - 5, p.botY, PW + 10, 26);
       }
@@ -1387,18 +1564,16 @@
 
       if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 24;
 
-      // SOLO DO JOGO RETRO FLAPPY BIRD
+      // SOLO DO JOGO
       ctx.fillStyle = isPrisonMode ? '#0f172a' : '#ded895';
       ctx.fillRect(0, H - GH, W, GH);
 
-      // Linha superior de grama cartoon
       if (!isPrisonMode) {
         ctx.fillStyle = '#73bf2e';
         ctx.fillRect(0, H - GH, W, 14);
         ctx.fillStyle = '#558022';
         ctx.fillRect(0, H - GH + 12, W, 3);
 
-        // Textura quadriculada/listrada no chão
         ctx.fillStyle = '#c8be7a';
         for (let gx = -groundScroll; gx < W + 24; gx += 24) {
           ctx.beginPath();
@@ -1410,7 +1585,6 @@
           ctx.fill();
         }
       } else {
-        // Faixa zebrada da prisão
         ctx.fillStyle = '#eab308';
         ctx.fillRect(0, H - GH, W, 14);
         ctx.fillStyle = '#000000';
@@ -1425,17 +1599,11 @@
         }
       }
 
-      // BONECOS 171 ANDANDO NA CADEIA
-      if (isPrisonMode && preso171Img.complete) {
-        const pSize = GH * 0.85;
+      // BONECOS 171 EM 2D ANDANDO NO CHÃO COM 171 NA CABEÇA
+      if (isPrisonMode) {
+        const floorY = H - GH + 2;
         for (const pr of prisoners) {
-          ctx.save();
-          ctx.translate(pr.x, H - GH + 2 + pr.bob);
-          if (pr.dir === -1) {
-            ctx.scale(-1, 1);
-          }
-          ctx.drawImage(preso171Img, -pSize / 2, 0, pSize, pSize);
-          ctx.restore();
+          drawSmall2DPrisoner171(pr.x, floorY, pr.dir, pr.bob);
         }
       }
 
@@ -1544,6 +1712,9 @@
       document.getElementById('goCurrentScoreVal').textContent = score.toString();
       document.getElementById('goHighScoreVal').textContent = bestScore.toString();
 
+      updateEquippedHUD();
+      setDifficulty(currentDifficulty);
+
       // Medalha baseada na pontuação
       const medalEl = document.getElementById('goMedalCircle');
       if (score >= 50) {
@@ -1567,7 +1738,6 @@
 
       gameOverModal.style.display = 'flex';
 
-      // Carrega Top 5 do Firestore para o painel da direita
       loadGameOverLeaderboard();
     }
 
