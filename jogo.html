@@ -72,14 +72,14 @@
       -webkit-touch-callout: none !important;
     }
 
-    /* HUD SUPERIOR FLUTUANTE (IGUAL AO EMPRESÁRIO 3D) */
+    /* HUD SUPERIOR FLUTUANTE */
     #hudOverlay {
       position: absolute;
       top: 16px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
       pointer-events: none;
     }
@@ -88,118 +88,115 @@
       background: rgba(10, 10, 20, 0.88);
       backdrop-filter: blur(10px);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 8px 18px;
+      padding: 6px 16px;
       border-radius: 14px;
       text-align: center;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      min-width: 100px;
+      min-width: 90px;
     }
 
     .hud-box label {
       display: block;
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       color: var(--text-muted);
       margin-bottom: 2px;
     }
 
     .hud-box span {
       font-family: 'Bangers', cursive;
-      font-size: 26px;
+      font-size: 24px;
       color: var(--amarelo-brasil);
       line-height: 1;
     }
 
-    /* OVERLAY INICIAL DE START */
-    .start-overlay {
+    /* OVERLAYS & MODAIS */
+    .start-overlay, .modal-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(8, 9, 20, 0.70);
-      backdrop-filter: blur(6px);
+      background: rgba(8, 9, 20, 0.85);
+      backdrop-filter: blur(10px);
       z-index: 40;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      padding: 16px;
     }
 
-    .start-card {
-      background: rgba(22, 27, 38, 0.96);
+    .start-card, .modal-card {
+      background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--amarelo-brasil);
       border-radius: 24px;
-      padding: 32px 36px;
-      max-width: 480px;
-      width: 90%;
-      text-align: center;
-      box-shadow: 0 0 50px rgba(255, 223, 0, 0.3);
-    }
-
-    /* MODAL DE GAME OVER ESTILIZADO */
-    .modal-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(8, 9, 20, 0.88);
-      backdrop-filter: blur(12px);
-      z-index: 50;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-card {
-      background: rgba(22, 27, 38, 0.98);
-      border: 2px solid var(--vermelho-alert);
-      border-radius: 24px;
-      padding: 32px 36px;
-      max-width: 500px;
+      padding: 28px 30px;
+      max-width: 520px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 0 50px rgba(204, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
-      animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
-    @keyframes modalPop {
-      from { transform: scale(0.8); opacity: 0; }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
 
-    .modal-title {
-      font-family: 'Bangers', cursive;
-      font-size: 46px;
-      color: var(--vermelho-alert);
-      letter-spacing: 2px;
-      margin-bottom: 8px;
+    /* INVENTÁRIO DE PERSONAGENS */
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+      max-height: 52vh;
+      overflow-y: auto;
+      padding: 4px;
     }
 
-    .modal-subtitle {
-      font-family: 'Bangers', cursive;
-      font-size: 24px;
-      color: var(--amarelo-brasil);
-      margin-bottom: 12px;
+    .char-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
     }
 
-    .modal-message {
-      font-size: 15px;
-      color: var(--text-main);
-      line-height: 1.6;
-      background: rgba(0, 0, 0, 0.4);
-      padding: 14px 18px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 20px;
-      white-space: pre-line;
+    .char-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--amarelo-brasil);
     }
 
-    .modal-score {
-      font-family: 'Bangers', cursive;
-      font-size: 30px;
-      color: var(--verde-neon);
-      margin-bottom: 20px;
+    .char-card.selected {
+      border-color: var(--verde-neon);
+      background: rgba(0, 230, 118, 0.12);
+      box-shadow: 0 0 20px rgba(0, 230, 118, 0.4);
     }
 
-    /* RESPONSIVIDADE MOBILE (<= 900px) */
+    .char-card.locked {
+      opacity: 0.55;
+      filter: grayscale(0.8);
+      cursor: not-allowed;
+    }
+
+    .char-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+      border: 2px solid var(--amarelo-brasil);
+      overflow: hidden;
+      background: #000;
+    }
+
+    .char-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* RESPONSIVIDADE MOBILE */
     @media (max-width: 900px) {
       .game-wrapper {
         margin-top: 60px;
@@ -213,22 +210,16 @@
       }
       .hud-box {
         min-width: auto;
-        padding: 6px 8px;
+        padding: 4px 6px;
       }
       .hud-box span {
-        font-size: 18px;
+        font-size: 17px;
       }
       .hud-box label {
         font-size: 9px;
       }
-      .start-card, .modal-card {
-        padding: 24px 18px;
-      }
-      .start-card h1, .modal-title {
-        font-size: 32px !important;
-      }
-      canvas#gameCanvas {
-        border-radius: 12px;
+      .char-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -280,7 +271,7 @@
       <canvas id="gameCanvas"></canvas>
     </div>
 
-    <!-- HUD OVERLAY FLUTUANTE (IGUAL AO EMPRESÁRIO 3D) -->
+    <!-- HUD OVERLAY FLUTUANTE SUPERIOR -->
     <div id="hudOverlay">
       <div class="hud-box">
         <label>Picanhas</label>
@@ -290,8 +281,8 @@
         <label>Recorde</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
-      <button id="btnModeToggleHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#00e676; color:#00e676; font-size:14px; font-weight:700;" title="Alternar Modo">
-        ⚡ Fácil
+      <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#eab308; font-size:14px; font-weight:700;" title="Inventário de Personagens">
+        🎭 Personagens
       </button>
       <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:8px 12px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:18px;" title="Som">
         🔊
@@ -301,37 +292,80 @@
       </button>
     </div>
 
-    <!-- OVERLAY INICIAL PARA ATIVAR SOM & COMEÇAR -->
+    <!-- OVERLAY INICIAL DE START COM PREVIEW DO PERSONAGEM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
-        <h1 style="font-family:'Bangers',cursive; font-size:42px; color:var(--amarelo-brasil); margin-bottom:10px;">
+        <h1 style="font-family:'Bangers',cursive; font-size:40px; color:var(--amarelo-brasil); margin-bottom:6px;">
           🐦 FLAPPY LULA
         </h1>
-        <p style="color:var(--text-main); font-size:15px; margin-bottom:14px; line-height:1.6;">
-          Ajude o companheiro a voar entre os canos e coletar picanhas pelo caminho!
+        <p style="color:var(--text-main); font-size:14px; margin-bottom:12px; line-height:1.5;">
+          Colete picanhas entre os canos e desbloqueie novos personagens com habilidades únicas!
         </p>
-        <div style="background:rgba(0,0,0,0.4); padding:12px; border-radius:12px; margin-bottom:20px; font-size:13px; color:var(--text-muted); text-align:left;">
-          🎮 <strong>Como Jogar:</strong><br>
-          • <strong>Toque na Tela / Clique / Espaço:</strong> Bater Asas e Voar<br>
-          • 🥩 <strong>Passe entre os Canos</strong> para pontuar picanhas<br>
-          • 🔒 <strong>Ao atingir 13 Pontos:</strong> Easter Egg do Modo Cadeia!
+
+        <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
+        <div id="equippedCharCard" style="background:rgba(0,0,0,0.4); border:1.5px solid var(--amarelo-brasil); border-radius:16px; padding:12px; margin-bottom:16px; display:flex; align-items:center; gap:12px; text-align:left;">
+          <div style="width:54px; height:54px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0;">
+            <img id="equippedCharImg" src="img/lula.png" style="width:100%; height:100%; object-fit:cover;">
+          </div>
+          <div style="flex:1;">
+            <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:15px;">O Presidente Popular</div>
+            <div id="equippedCharSkill" style="font-size:12px; color:var(--verde-neon); font-weight:600;">🕊️ Pulo Tolerante</div>
+          </div>
+          <button id="btnOpenRosterStart" class="btn-secondary" style="font-size:12px; padding:6px 10px;">Trocar</button>
         </div>
-        <button class="btn-primary" style="font-size:22px; padding:14px 28px; width:100%;">
+
+        <button class="btn-primary" id="btnStartGameAction" style="font-size:22px; padding:14px 28px; width:100%;">
           🔊 TOQUE PARA JOGAR!
         </button>
       </div>
     </div>
 
-    <!-- MODAL DE GAME OVER ESTILIZADO COM FOTO DO LULA CHORANDO -->
-    <div class="modal-overlay" id="gameOverModal">
+    <!-- MODAL DE SELEÇÃO DE PERSONAGENS (INVENTÁRIO) -->
+    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:60;">
+      <div class="modal-card" style="max-width:580px;">
+        <h2 style="font-family:'Bangers',cursive; font-size:36px; color:var(--amarelo-brasil); margin-bottom:4px;">
+          🎭 INVENTÁRIO DE PERSONAGENS
+        </h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-size:13px; color:var(--text-muted);">
+          <span>Acumule picanhas para desbloquear novos arquétipos!</span>
+          <span style="color:var(--verde-neon); font-weight:700;" id="totalPicanhasBadge">Total: 0 🥩</span>
+        </div>
+
+        <!-- GRADE DE PERSONAGENS -->
+        <div class="char-grid" id="charactersGrid"></div>
+
+        <!-- DETALHES DO PERSONAGEM SELECIONADO -->
+        <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:14px; padding:12px 16px; margin-bottom:16px; text-align:left;">
+          <div id="detailCharTitle" style="font-weight:700; font-size:16px; color:var(--amarelo-brasil);">O Presidente Popular</div>
+          <div id="detailCharSkill" style="font-size:13px; color:var(--verde-neon); font-weight:600; margin:3px 0;">Habilidade: Pulo Tolerante</div>
+          <div id="detailCharDesc" style="font-size:12px; color:var(--text-muted); line-height:1.5;">Hitbox menor e mais generosa. Pulo macio e tolerante a erros.</div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:16px; padding:10px;">Voltar</button>
+          <button id="btnEquipChar" class="btn-primary" style="flex:1.5; font-size:18px; padding:10px;">✨ EQUIPAR E JOGAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE GAME OVER ESTILIZADO -->
+    <div class="modal-overlay" id="gameOverModal" style="display:none;">
       <div class="modal-card">
-        <div class="modal-title">DEU RUIM COMPANHEIRO!</div>
-        <div style="margin: 10px auto 16px; width: 110px; height: 110px; border-radius: 50%; border: 3.5px solid var(--vermelho-alert); overflow: hidden; box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); background: rgba(0,0,0,0.5);">
+        <div class="modal-title" style="font-family:'Bangers',cursive; font-size:44px; color:var(--vermelho-alert); letter-spacing:2px; margin-bottom:8px;">
+          DEU RUIM COMPANHEIRO!
+        </div>
+        <div style="margin: 8px auto 14px; width: 96px; height: 96px; border-radius: 50%; border: 3.5px solid var(--vermelho-alert); overflow: hidden; box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); background: rgba(0,0,0,0.5);">
           <img src="img/lula_cry.png" alt="Lula Chorando" style="width: 100%; height: 100%; object-fit: cover; display: block;">
         </div>
-        <div class="modal-subtitle" id="goSubtitle">PICANHA DERRAMADA!</div>
-        <div class="modal-message" id="goMessage">O companheiro não aguentou a pressão dos canos e foi de base!</div>
-        <div class="modal-score" id="goScore">0 PICANHAS COLETADAS</div>
+        <div class="modal-subtitle" id="goSubtitle" style="font-family:'Bangers',cursive; font-size:24px; color:var(--amarelo-brasil); margin-bottom:10px;">
+          PICANHA DERRAMADA!
+        </div>
+        <div class="modal-message" id="goMessage" style="font-size:14px; color:var(--text-main); line-height:1.5; background:rgba(0,0,0,0.4); padding:12px 16px; border-radius:14px; border:1px solid rgba(255,255,255,0.1); margin-bottom:16px;">
+          O companheiro não aguentou a pressão dos canos e foi de base!
+        </div>
+        <div class="modal-score" id="goScore" style="font-family:'Bangers',cursive; font-size:26px; color:var(--verde-neon); margin-bottom:18px;">
+          0 PICANHAS COLETADAS
+        </div>
         <button class="btn-primary" id="btnRestartGame" style="width: 100%; font-size: 22px; padding: 14px;">
           🔄 TENTAR NOVAMENTE
         </button>
@@ -343,8 +377,9 @@
     import { savePlayerScore } from './js/firebase-config.js';
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
+    import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
 
-    // Renderiza badge do perfil no cabeçalho
+    // Renderiza badge do perfil
     auth.renderProfileBadge('nav');
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
@@ -355,16 +390,52 @@
 
     const scoreHUD = document.getElementById('scoreDisplayHUD');
     const bestHUD = document.getElementById('bestDisplayHUD');
-    const btnModeHUD = document.getElementById('btnModeToggleHUD');
     const btnSound = document.getElementById('btnSoundToggle');
     const btnFullscreen = document.getElementById('btnFullscreenToggle');
     const startOverlay = document.getElementById('startOverlay');
     const gameOverModal = document.getElementById('gameOverModal');
-    const goMessage = document.getElementById('goMessage');
-    const goScore = document.getElementById('goScore');
-    const btnRestart = document.getElementById('btnRestartGame');
+    const charSelectModal = document.getElementById('charSelectModal');
+    const btnCharSelectHUD = document.getElementById('btnCharSelectHUD');
+    const btnOpenRosterStart = document.getElementById('btnOpenRosterStart');
+    const btnCloseCharModal = document.getElementById('btnCloseCharModal');
+    const btnEquipChar = document.getElementById('btnEquipChar');
+    const charactersGrid = document.getElementById('charactersGrid');
+    const totalPicanhasBadge = document.getElementById('totalPicanhasBadge');
 
-    let currentMode = 'easy'; // 'easy' ou 'hard'
+    let activeCharacter = CharacterInventory.getSelectedCharacter();
+    let pendingCharSelect = activeCharacter;
+
+    // ESTADO GLOBAL DO JOGO COM MODIFICADORES DE PERSONAGEM
+    const gameState = {
+      HITBOX_R: 0.026,
+      GAP_RATIO: 0.42,
+      SPEED_MULT: 1.0,
+      EXTRA_SCORE_PER_PIPE: 1,
+      spawnExtraLikes: false,
+      hasShield: false,
+      shieldCharges: 0,
+      isTurboAllowed: false,
+      isTurboActive: false,
+      turboTimer: 0,
+      comboCount: 0,
+      comboGoal: 4
+    };
+
+    function applyActiveCharacterModifiers() {
+      CharacterInventory.applyModifier(activeCharacter, gameState);
+      updateEquippedHUD();
+    }
+
+    function updateEquippedHUD() {
+      const img = document.getElementById('equippedCharImg');
+      const name = document.getElementById('equippedCharName');
+      const skill = document.getElementById('equippedCharSkill');
+      if (img) img.src = activeCharacter.sprite;
+      if (name) name.textContent = activeCharacter.name;
+      if (skill) skill.textContent = activeCharacter.skillName;
+    }
+
+    let dpr = Math.max(window.devicePixelRatio || 1, 2);
 
     function isFullscreenActive() {
       return !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -389,124 +460,36 @@
         W = Math.round(H * 0.70);
       }
 
-      // Suporte a telas Retina / HiDPI (2x - 3x) para nitidez cristalina absoluta
-      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+      dpr = Math.max(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
 
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-
       return { W, H };
     }
+
     let { W, H } = calcSize();
 
-    const resizeGame = () => {
-      const s = calcSize();
-      W = s.W; H = s.H;
-      lula.init();
-    };
+    // CACHE DE SPRITES DOS PERSONAGENS
+    const characterSprites = {};
+    CHARACTERS.forEach(char => {
+      const img = new Image();
+      img.src = char.sprite;
+      characterSprites[char.id] = img;
+    });
 
-    window.addEventListener('resize', resizeGame);
-    document.addEventListener('fullscreenchange', resizeGame);
-    document.addEventListener('webkitfullscreenchange', resizeGame);
+    const lulaCryImg = new Image();
+    lulaCryImg.src = 'img/lula_cry.png';
 
-    const lulaImg = new Image();
-    lulaImg.src = 'img/lula.png';
-    let lulaLoaded = false;
-    lulaImg.onload = () => lulaLoaded = true;
-
-    // FÍSICA DINÂMICA COM AVATAR HD NÍTIDO E HITBOX JUSTA
+    // FÍSICA BASE DO JOGO
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
-    let PIPE_SPEED = 2.2;
-    let GAP_RATIO  = 0.42;
+    let BASE_PIPE_SPEED = 2.2;
     let PW_RATIO   = 0.14;
     let GH_RATIO   = 0.12;
     let LR_RATIO   = 0.046;
-    let HITBOX_R   = 0.026;
     let SPAWN_FREQ = 120;
-
-    function setMode(mode) {
-      currentMode = mode;
-      if (mode === 'easy') {
-        GRAVITY = 0.35;
-        JUMP_POWER = -7.8;
-        PIPE_SPEED = 2.2;
-        GAP_RATIO = 0.42;
-        HITBOX_R = 0.026;
-        SPAWN_FREQ = 120;
-        if (btnModeHUD) {
-          btnModeHUD.style.borderColor = '#00e676';
-          btnModeHUD.style.color = '#00e676';
-          btnModeHUD.textContent = '⚡ Fácil';
-        }
-      } else {
-        GRAVITY = 0.46;
-        JUMP_POWER = -8.8;
-        PIPE_SPEED = 4.0;
-        GAP_RATIO = 0.28;
-        HITBOX_R = 0.034;
-        SPAWN_FREQ = 75;
-        if (btnModeHUD) {
-          btnModeHUD.style.borderColor = '#ef4444';
-          btnModeHUD.style.color = '#ef4444';
-          btnModeHUD.textContent = '🔥 Difícil';
-        }
-      }
-    }
-
-    if (btnModeHUD) {
-      btnModeHUD.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setMode(currentMode === 'easy' ? 'hard' : 'easy');
-      });
-    }
-
-    if (btnSound) {
-      btnSound.addEventListener('click', (e) => {
-        e.stopPropagation();
-        try { sounds.init(); } catch(e){}
-        const isMuted = sounds.toggleMute();
-        btnSound.textContent = isMuted ? '🔇' : '🔊';
-      });
-    }
-
-    if (btnFullscreen) {
-      btnFullscreen.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!isFullscreenActive()) {
-          const el = document.documentElement;
-          if (el.requestFullscreen) {
-            el.requestFullscreen();
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          }
-          btnFullscreen.textContent = '🗗';
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          }
-          btnFullscreen.textContent = '⛶';
-        }
-      });
-    }
-
-    // FRASES HILÁRIAS DE MORTE DO LULA
-    const funnyDeathMessages = [
-      "O companheiro bateu no cano e derramou a picanha pelo chão!",
-      "Ficou preso no pedalinho do sítio de Atibaia!",
-      "A inflação subiu mais rápido do que as asas do presidente!",
-      "Caiu na fiscalização da Receita Federal e foi autuado!",
-      "O imposto de importação pesou mais do que a gravidade!",
-      "Tentou dar uma pedalada e bateu de cabeça na tubulação!",
-      "Bateu no cano e a picanha virou abóbora!"
-    ];
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
@@ -514,21 +497,10 @@
     let bestScore = parseInt(localStorage.getItem('lula_best') || '0', 10);
     let frameCount = 0;
     let groundScroll = 0;
-    let pipes = [], picanhas = [];
+    let pipes = [], picanhas = [], likesBonus = [];
     let isPrisonMode = false;
 
     if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
-
-    const clouds = [
-      { x: W * 0.1, y: H * 0.12, scale: 1.0, speed: 0.4 },
-      { x: W * 0.5, y: H * 0.20, scale: 0.8, speed: 0.3 },
-      { x: W * 0.8, y: H * 0.08, scale: 1.2, speed: 0.5 }
-    ];
-
-    const prisoners = [
-      { x: -50, speed: 1.2, dir: 1, anim: 0, clothes: '#000000' },
-      { x: W + 50, speed: 1.5, dir: -1, anim: 0, clothes: '#000000' }
-    ];
 
     const lula = {
       get x() { return W * 0.24; },
@@ -547,23 +519,155 @@
     };
     lula.init();
 
+    const resizeGame = () => {
+      const s = calcSize();
+      W = s.W; H = s.H;
+      lula.init();
+    };
+
+    window.addEventListener('resize', resizeGame);
+    document.addEventListener('fullscreenchange', resizeGame);
+    document.addEventListener('webkitfullscreenchange', resizeGame);
+
+    // MODAL DE SELEÇÃO DE PERSONAGENS
+    function renderCharacterGrid() {
+      if (!charactersGrid) return;
+      const totalPicanhas = CharacterInventory.getTotalPicanhas();
+      if (totalPicanhasBadge) totalPicanhasBadge.textContent = `Total: ${totalPicanhas} 🥩`;
+
+      charactersGrid.innerHTML = '';
+
+      CHARACTERS.forEach(char => {
+        const unlocked = CharacterInventory.isUnlocked(char.id);
+        const isSelected = pendingCharSelect.id === char.id;
+
+        const card = document.createElement('div');
+        card.className = `char-card ${isSelected ? 'selected' : ''} ${!unlocked ? 'locked' : ''}`;
+        
+        card.innerHTML = `
+          <div class="char-avatar" style="border-color:${char.auraColor}">
+            <img src="${char.sprite}" alt="${char.name}">
+          </div>
+          <div style="font-weight:700; font-size:13px; color:#fff; margin-bottom:2px;">${char.name}</div>
+          <div style="font-size:11px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600;">
+            ${unlocked ? char.skillName : `🔒 ${char.requiredPicanhas} 🥩`}
+          </div>
+        `;
+
+        card.onclick = () => {
+          if (unlocked) {
+            pendingCharSelect = char;
+            renderCharacterGrid();
+            updateCharDetailBox(char);
+          }
+        };
+
+        charactersGrid.appendChild(card);
+      });
+    }
+
+    function updateCharDetailBox(char) {
+      document.getElementById('detailCharTitle').textContent = char.name;
+      document.getElementById('detailCharSkill').textContent = `Habilidade: ${char.skillName}`;
+      document.getElementById('detailCharDesc').textContent = char.skillDesc;
+    }
+
+    function openCharacterModal() {
+      pendingCharSelect = activeCharacter;
+      renderCharacterGrid();
+      updateCharDetailBox(activeCharacter);
+      charSelectModal.style.display = 'flex';
+    }
+
+    function closeCharacterModal() {
+      charSelectModal.style.display = 'none';
+    }
+
+    btnCharSelectHUD?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
+    btnOpenRosterStart?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
+    btnCloseCharModal?.addEventListener('click', closeCharacterModal);
+
+    btnEquipChar?.addEventListener('click', () => {
+      activeCharacter = pendingCharSelect;
+      CharacterInventory.setSelectedCharacter(activeCharacter.id);
+      applyActiveCharacterModifiers();
+      closeCharacterModal();
+      handleStart();
+    });
+
+    // INICIALIZA HABILIDADES
+    applyActiveCharacterModifiers();
+
+    if (btnSound) {
+      btnSound.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try { sounds.init(); } catch(e){}
+        const isMuted = sounds.toggleMute();
+        btnSound.textContent = isMuted ? '🔇' : '🔊';
+      });
+    }
+
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isFullscreenActive()) {
+          const el = document.documentElement;
+          if (el.requestFullscreen) el.requestFullscreen();
+          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+          btnFullscreen.textContent = '🗗';
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          btnFullscreen.textContent = '⛶';
+        }
+      });
+    }
+
     function spawnPipe() {
-      const GH = H * GH_RATIO, GAP = H * GAP_RATIO;
+      const GH = H * GH_RATIO, GAP = H * gameState.GAP_RATIO;
       const topH = GH + 30 + Math.random() * (H - GH - GAP - 70);
       pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
+
+      // Spawn de Curtidas extras para A Primeira-Dama Influencer
+      if (gameState.spawnExtraLikes && Math.random() > 0.45) {
+        likesBonus.push({
+          x: W + 10 + (W * PW_RATIO) / 2,
+          y: topH + GAP / 2,
+          collected: false
+        });
+      }
     }
 
     function updatePipes() {
       if (state !== STATE.PLAYING) return;
-      if (frameCount % SPAWN_FREQ === 0) spawnPipe();
+      
+      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.6 : BASE_PIPE_SPEED * gameState.SPEED_MULT);
+
+      if (frameCount % Math.round(SPAWN_FREQ / (gameState.isTurboActive ? 1.5 : gameState.SPEED_MULT)) === 0) {
+        spawnPipe();
+      }
+
       const PW = W * PW_RATIO;
       for (const p of pipes) {
-        p.x -= PIPE_SPEED;
+        p.x -= currentSpeed;
         if (!p.scored && p.x + PW < lula.x) {
           p.scored = true;
-          score++;
+          const pointsEarned = gameState.EXTRA_SCORE_PER_PIPE;
+          score += pointsEarned;
+          CharacterInventory.addPicanhas(pointsEarned);
+
           if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
           spawnPicanhas(p.x + PW / 2);
+
+          // Lógica do Modo Turbo Combo do Ex-Presidente
+          if (gameState.isTurboAllowed) {
+            gameState.comboCount++;
+            if (gameState.comboCount >= gameState.comboGoal) {
+              gameState.isTurboActive = true;
+              gameState.turboTimer = 4.0;
+              gameState.comboCount = 0;
+            }
+          }
 
           if (score === 13 && !isPrisonMode) {
             isPrisonMode = true;
@@ -577,6 +681,19 @@
         }
       }
       pipes = pipes.filter(p => p.x + PW > -10);
+
+      // Atualiza curtidas bônus
+      for (const lk of likesBonus) {
+        lk.x -= currentSpeed;
+        if (!lk.collected && Math.hypot(lula.x - lk.x, lula.y - lk.y) < 32) {
+          lk.collected = true;
+          score += 2;
+          CharacterInventory.addPicanhas(2);
+          if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
+          try { sounds.playJump(); } catch(e){}
+        }
+      }
+      likesBonus = likesBonus.filter(lk => lk.x > -20 && !lk.collected);
     }
 
     function spawnPicanhas(x) {
@@ -603,54 +720,28 @@
       picanhas = picanhas.filter(p => p.alpha > 0);
     }
 
-    function updatePrisoners() {
-      if (!isPrisonMode) return;
-      for (const pr of prisoners) {
-        pr.x += pr.speed * pr.dir;
-        pr.anim += 0.15;
-        if (pr.x > W + 80) { pr.x = -80; pr.dir = 1; }
-        if (pr.x < -80) { pr.x = W + 80; pr.dir = -1; }
-      }
-    }
-
     function checkCollision() {
-      const R = H * HITBOX_R;
+      const R = H * gameState.HITBOX_R;
       const GH = H * GH_RATIO;
       if (lula.y - R <= 0 || lula.y + R >= H - GH) return true;
 
       const PW = W * PW_RATIO;
-      for (const p of pipes) {
+      for (let i = 0; i < pipes.length; i++) {
+        const p = pipes[i];
         if (lula.x + R > p.x && lula.x - R < p.x + PW) {
-          if (lula.y - R < p.topH || lula.y + R > p.botY) return true;
+          if (lula.y - R < p.topH || lula.y + R > p.botY) {
+            // Escudo do Ministro Linha-Dura quebra o cano sem morrer
+            if (gameState.hasShield && gameState.shieldCharges > 0) {
+              gameState.shieldCharges--;
+              pipes.splice(i, 1); // Destrói o cano
+              try { sounds.playPicanhaMemeSound(); } catch(e){}
+              return false;
+            }
+            return true;
+          }
         }
       }
       return false;
-    }
-
-    function drawCloud(c) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, 18 * c.scale, 0, Math.PI * 2);
-      ctx.arc(c.x + 14 * c.scale, c.y - 10 * c.scale, 22 * c.scale, 0, Math.PI * 2);
-      ctx.arc(c.x + 34 * c.scale, c.y - 6 * c.scale, 18 * c.scale, 0, Math.PI * 2);
-      ctx.arc(c.x + 48 * c.scale, c.y, 14 * c.scale, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawPrisoner(p) {
-      ctx.save();
-      ctx.translate(p.x, H - H * GH_RATIO - 38);
-      ctx.fillStyle = '#000';
-      ctx.beginPath(); ctx.arc(0, -18, 9, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = p.clothes;
-      ctx.fillRect(-8, -9, 16, 26);
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-      for (let y = -6; y < 16; y += 6) {
-        ctx.beginPath(); ctx.moveTo(-8, y); ctx.lineTo(8, y); ctx.stroke();
-      }
-      ctx.restore();
     }
 
     function draw() {
@@ -667,12 +758,6 @@
         bgGrad.addColorStop(1, '#e0f2fe');
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, W, H);
-
-        for (const c of clouds) {
-          drawCloud(c);
-          c.x -= c.speed;
-          if (c.x < -80) c.x = W + 80;
-        }
       } else {
         ctx.fillStyle = '#1e1e2f';
         ctx.fillRect(0, 0, W, H);
@@ -710,25 +795,19 @@
         ctx.strokeRect(p.x - 5, p.botY, PW + 10, 24);
       }
 
-      if (state === STATE.PLAYING) groundScroll = (groundScroll + PIPE_SPEED) % 24;
+      // Desenha curtidas bônus (Primeira-Dama)
+      for (const lk of likesBonus) {
+        ctx.font = '28px sans-serif';
+        ctx.fillText('💖', lk.x - 14, lk.y + 10);
+      }
+
+      if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 24;
 
       ctx.fillStyle = isPrisonMode ? '#222233' : '#ded895';
       ctx.fillRect(0, H - GH, W, GH);
 
       ctx.fillStyle = isPrisonMode ? '#dc2626' : '#73bf2e';
       ctx.fillRect(0, H - GH, W, 14);
-
-      if (isPrisonMode) {
-        prisoners.forEach(p => drawPrisoner(p));
-      } else {
-        ctx.strokeStyle = '#cbbd6b'; ctx.lineWidth = 3;
-        for (let x = -groundScroll; x < W + 24; x += 24) {
-          ctx.beginPath();
-          ctx.moveTo(x, H - GH + 18);
-          ctx.lineTo(x - 12, H);
-          ctx.stroke();
-        }
-      }
 
       for (const p of picanhas) {
         ctx.globalAlpha = p.alpha;
@@ -737,25 +816,33 @@
         ctx.globalAlpha = 1.0;
       }
 
+      // RENDERIZAÇÃO DO PERSONAGEM EQUIPADO COM AURA E MODIFICADOR
       const R = H * LR_RATIO;
       ctx.save();
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      // Sombra suave para destacar o personagem do fundo
-      ctx.shadowColor = isPrisonMode ? 'rgba(239, 68, 68, 0.75)' : 'rgba(255, 223, 0, 0.75)';
-      ctx.shadowBlur = 12;
+      // Aura especial do Personagem
+      ctx.shadowColor = isPrisonMode ? '#ef4444' : (activeCharacter.auraColor || '#ffdf00');
+      ctx.shadowBlur = gameState.isTurboActive ? 24 : 14;
 
       ctx.beginPath(); ctx.arc(0, 0, R + 2, 0, Math.PI * 2);
-      ctx.fillStyle = isPrisonMode ? '#dc2626' : '#ffdf00';
+      ctx.fillStyle = isPrisonMode ? '#dc2626' : (activeCharacter.auraColor || '#ffdf00');
       ctx.fill();
 
-      // Desativa sombra para desenhar a imagem interna com máxima nitidez
+      // Escudo visual do Ministro Linha-Dura
+      if (gameState.hasShield && gameState.shieldCharges > 0) {
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, R + 8, 0, Math.PI * 2); ctx.stroke();
+      }
+
       ctx.shadowBlur = 0;
 
-      if (lulaLoaded) {
+      const spriteImg = characterSprites[activeCharacter.id];
+      if (spriteImg && spriteImg.complete) {
         ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.clip();
-        ctx.drawImage(lulaImg, -R, -R, R * 2, R * 2);
+        ctx.drawImage(spriteImg, -R, -R, R * 2, R * 2);
       } else {
         ctx.font = `${R * 1.2}px serif`;
         ctx.fillText('👨‍🦳', -R / 2, R / 2);
@@ -765,11 +852,20 @@
 
     function loop() {
       frameCount++;
-      lula.update(); updatePipes(); updatePicanhas(); updatePrisoners();
+      lula.update();
+      updatePipes();
+      updatePicanhas();
+
+      // Timer do Modo Turbo
+      if (gameState.isTurboActive) {
+        gameState.turboTimer -= 0.016;
+        if (gameState.turboTimer <= 0) {
+          gameState.isTurboActive = false;
+        }
+      }
 
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
-        
         try { sounds.playLulaNeymarDeath(); } catch(e){}
 
         if (score > bestScore) {
@@ -781,7 +877,6 @@
         auth.updateUserScore('flappy', score);
         savePlayerScore('flappy', score);
 
-        // Exibe Modal Estilizado de Game Over
         setTimeout(() => {
           showGameOverScreen();
         }, 350);
@@ -793,9 +888,17 @@
 
     function showGameOverScreen() {
       if (!gameOverModal) return;
+      const funnyDeathMessages = [
+        "O companheiro bateu no cano e derramou a picanha pelo chão!",
+        "Ficou preso no pedalinho do sítio de Atibaia!",
+        "A inflação subiu mais rápido do que as asas do presidente!",
+        "Caiu na fiscalização da Receita Federal e foi autuado!",
+        "O imposto de importação pesou mais do que a gravidade!",
+        "Tentou dar uma pedalada e bateu de cabeça na tubulação!"
+      ];
       const randMsg = funnyDeathMessages[Math.floor(Math.random() * funnyDeathMessages.length)];
-      if (goMessage) goMessage.textContent = randMsg;
-      if (goScore) goScore.textContent = `${score} PICANHAS COLETADAS · RECORDE: ${bestScore}`;
+      document.getElementById('goMessage').textContent = randMsg;
+      document.getElementById('goScore').textContent = `${score} PICANHAS COLETADAS · RECORDE: ${bestScore}`;
       gameOverModal.style.display = 'flex';
     }
 
@@ -805,14 +908,15 @@
       if (state === STATE.WAITING) {
         startOverlay.style.display = 'none';
         state = STATE.PLAYING;
-        pipes = []; picanhas = []; score = 0;
+        pipes = []; picanhas = []; likesBonus = []; score = 0;
+        applyActiveCharacterModifiers();
         if (scoreHUD) scoreHUD.textContent = `0 🥩`;
         isPrisonMode = false;
         document.body.classList.remove('prison-mode');
         lula.init();
         lula.jump();
       } else if (state === STATE.DEAD) {
-        // Ignora se estiver na tela de Game Over até clicar em reiniciar
+        // Aguarda clique em reiniciar
       } else if (state === STATE.PLAYING) {
         lula.jump();
       }
@@ -821,7 +925,8 @@
     function restartGame() {
       gameOverModal.style.display = 'none';
       state = STATE.PLAYING;
-      pipes = []; picanhas = []; score = 0;
+      pipes = []; picanhas = []; likesBonus = []; score = 0;
+      applyActiveCharacterModifiers();
       if (scoreHUD) scoreHUD.textContent = `0 🥩`;
       isPrisonMode = false;
       document.body.classList.remove('prison-mode');
@@ -829,13 +934,8 @@
       lula.jump();
     }
 
-    if (startOverlay) {
-      startOverlay.onclick = handleStart;
-    }
-
-    if (btnRestart) {
-      btnRestart.onclick = restartGame;
-    }
+    document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
+    document.getElementById('btnRestartGame')?.addEventListener('click', restartGame);
 
     window.addEventListener('keydown', e => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
@@ -848,7 +948,6 @@
       }
     });
 
-    // LISTENER UNIVERSAL DE TOQUE (RESPONDE IMEDIATAMENTE AO TOQUE NA TELA)
     const onUserTouch = (e) => {
       if (e.target.closest('button, a, input, #playerProfileBadge, .modal-card, .start-card')) return;
       e.preventDefault();

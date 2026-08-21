@@ -227,8 +227,12 @@ export class Environment {
     }
   }
 
-  update(speed, dt) {
-    const moveZ = speed * dt;
+  reset() {
+    this.buildInitialTrack();
+  }
+
+  update(moveZ, onRecycle) {
+    if (typeof moveZ !== 'number' || isNaN(moveZ)) return;
 
     for (let i = 0; i < this.segments.length; i++) {
       const seg = this.segments[i];
@@ -240,6 +244,9 @@ export class Environment {
           if (s.position.z < minZ) minZ = s.position.z;
         }
         seg.position.z = minZ - SEGMENT_LENGTH;
+        if (typeof onRecycle === 'function') {
+          onRecycle(seg, seg.position.z);
+        }
       }
     }
   }
