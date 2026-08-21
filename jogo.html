@@ -172,6 +172,18 @@
       -webkit-overflow-scrolling: touch;
     }
 
+    #startScreen {
+      z-index: 1000 !important;
+    }
+
+    #gameOverModal {
+      z-index: 1500 !important;
+    }
+
+    #charSelectModal {
+      z-index: 3000 !important;
+    }
+
     .start-card, .modal-card {
       background: rgba(22, 27, 38, 0.98);
       border: 2px solid var(--amarelo-brasil);
@@ -1156,15 +1168,29 @@
       document.getElementById('detailCharDesc').textContent = char.desc;
     }
 
+    let wasGameOverOpenBeforeCharModal = false;
+
     function openCharacterModal() {
       pendingCharSelect = activeCharacter;
       renderCharacterGrid();
       updateCharDetailBox(activeCharacter);
+
+      if (gameOverModal && gameOverModal.style.display === 'flex') {
+        wasGameOverOpenBeforeCharModal = true;
+        gameOverModal.style.display = 'none';
+      } else {
+        wasGameOverOpenBeforeCharModal = false;
+      }
+
       charSelectModal.style.display = 'flex';
     }
 
     function closeCharacterModal() {
       charSelectModal.style.display = 'none';
+      if (wasGameOverOpenBeforeCharModal && gameOverModal) {
+        updateEquippedHUD();
+        gameOverModal.style.display = 'flex';
+      }
     }
 
     btnCharSelectHUD?.addEventListener('click', (e) => { e.stopPropagation(); openCharacterModal(); });
@@ -1176,8 +1202,12 @@
       activeCharacter = pendingCharSelect;
       CharacterInventory.setSelectedCharacter(activeCharacter.id);
       applyActiveCharacterModifiers();
+      updateEquippedHUD();
+      const shouldRestart = wasGameOverOpenBeforeCharModal || state !== STATE.PLAYING;
+      wasGameOverOpenBeforeCharModal = false;
       closeCharacterModal();
-      if (state !== STATE.PLAYING) {
+      if (shouldRestart) {
+        if (gameOverModal) gameOverModal.style.display = 'none';
         handleStart();
       }
     });
