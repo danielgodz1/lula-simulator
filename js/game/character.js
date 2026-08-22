@@ -1,32 +1,30 @@
-// js/game/character.js — Empresário 3D com Slide 90º Rente ao Chão, AABB Dinâmica Precisa no Pulo e Controles Nativos
+// js/game/character.js — Modelo 3D com Sapatos Dourados Alados Equipáveis, Ímã na Mão Esquerda e Slide 90º
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
 
-export const LANES = [-2.8, 0, 2.8]; // Esquerda, Centro, Direita
+export const LANES = [-2.8, 0, 2.8];
 
 export class Character {
   constructor(scene) {
     this.scene = scene;
     this.mesh = new THREE.Group();
 
-    // Posição e Faixas
-    this.currentLane = 1; // Centro
+    this.currentLane = 1;
     this.targetX = 0;
     this.x = 0;
     this.y = 0;
     this.z = 0;
     this.groundY = 0;
 
-    // Física e Salto
+    // Física
     this.isJumping = false;
     this.jumpVelocity = 0;
     this.gravity = -38;
     this.jumpForce = 17.5;
     this.fallMultiplier = 1.15;
-
     this.jumpBufferTimer = 0;
 
-    // Slide / Deslize de 90 Graus
+    // Slide
     this.isSliding = false;
     this.slideTimer = 0;
     this.slideDuration = 0.58;
@@ -48,6 +46,15 @@ export class Character {
     this.briefcase = null;
     this.shadow = null;
 
+    // Itens Equipáveis de Power-up
+    this.lShoeNormal = null;
+    this.rShoeNormal = null;
+    this.lShoeGolden = null;
+    this.rShoeGolden = null;
+    this.lWing = null;
+    this.rWing = null;
+    this.handMagnet = null;
+
     this.animTime = 0;
     this.build();
     this.setupControls();
@@ -63,7 +70,13 @@ export class Character {
     const glassesLensMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.8 });
     const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
     const leatherMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
-    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 });
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      metalness: 0.85,
+      roughness: 0.2,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.35
+    });
 
     // 1. Tronco com Paletó
     this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.96, 0.44), suitMat);
@@ -116,16 +129,30 @@ export class Character {
     this.head.add(glasses);
     this.mesh.add(this.head);
 
-    // 3. Pernas
+    // 3. Pernas e Sapatos Equipáveis
     this.leftLeg = new THREE.Group();
     this.leftLeg.position.set(-0.22, 0.90, 0);
     const lPants = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.90, 0.36), suitMat);
     lPants.position.y = -0.45;
     lPants.castShadow = true;
-    const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
-    lShoe.position.set(0, -0.90, 0.08);
-    lShoe.castShadow = true;
-    this.leftLeg.add(lPants, lShoe);
+
+    // Sapato Normal Esquerdo
+    this.lShoeNormal = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
+    this.lShoeNormal.position.set(0, -0.90, 0.08);
+    this.lShoeNormal.castShadow = true;
+
+    // Sapato Dourado Alado Esquerdo (Super Pulo)
+    this.lShoeGolden = new THREE.Group();
+    this.lShoeGolden.position.set(0, -0.90, 0.08);
+    const lGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    lGoldBoot.castShadow = true;
+    this.lWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.lWing.rotation.set(0, 0, Math.PI / 2);
+    this.lWing.position.set(-0.22, 0.08, -0.05);
+    this.lShoeGolden.add(lGoldBoot, this.lWing);
+    this.lShoeGolden.visible = false;
+
+    this.leftLeg.add(lPants, this.lShoeNormal, this.lShoeGolden);
     this.mesh.add(this.leftLeg);
 
     this.rightLeg = new THREE.Group();
@@ -133,13 +160,27 @@ export class Character {
     const rPants = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.90, 0.36), suitMat);
     rPants.position.y = -0.45;
     rPants.castShadow = true;
-    const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
-    rShoe.position.set(0, -0.90, 0.08);
-    rShoe.castShadow = true;
-    this.rightLeg.add(rPants, rShoe);
+
+    // Sapato Normal Direito
+    this.rShoeNormal = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
+    this.rShoeNormal.position.set(0, -0.90, 0.08);
+    this.rShoeNormal.castShadow = true;
+
+    // Sapato Dourado Alado Direito (Super Pulo)
+    this.rShoeGolden = new THREE.Group();
+    this.rShoeGolden.position.set(0, -0.90, 0.08);
+    const rGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    rGoldBoot.castShadow = true;
+    this.rWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.rWing.rotation.set(0, 0, -Math.PI / 2);
+    this.rWing.position.set(0.22, 0.08, -0.05);
+    this.rShoeGolden.add(rGoldBoot, this.rWing);
+    this.rShoeGolden.visible = false;
+
+    this.rightLeg.add(rPants, this.rShoeNormal, this.rShoeGolden);
     this.mesh.add(this.rightLeg);
 
-    // 4. Braços e Maleta
+    // 4. Braço Esquerdo com Ímã Equipável na Mão
     this.leftArmGroup = new THREE.Group();
     this.leftArmGroup.position.set(-0.52, 1.76, 0);
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.86, 0.28), suitMat);
@@ -147,9 +188,18 @@ export class Character {
     lArm.castShadow = true;
     const lHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.20, 0.22), skinMat);
     lHand.position.y = -0.92;
-    this.leftArmGroup.add(lArm, lHand);
+
+    // ÍMÃ 3D EM FERRADURA NA MÃO ESQUERDA
+    this.handMagnet = this.createHandMagnet3D();
+    this.handMagnet.position.set(0, -1.02, 0.20);
+    this.handMagnet.rotation.set(Math.PI / 6, 0, 0);
+    this.handMagnet.scale.set(0.75, 0.75, 0.75);
+    this.handMagnet.visible = false;
+
+    this.leftArmGroup.add(lArm, lHand, this.handMagnet);
     this.mesh.add(this.leftArmGroup);
 
+    // 5. Braço Direito com Maleta e Rolex
     this.rightArmGroup = new THREE.Group();
     this.rightArmGroup.position.set(0.52, 1.76, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.86, 0.28), suitMat);
@@ -174,7 +224,7 @@ export class Character {
     this.rightArmGroup.add(this.briefcase);
     this.mesh.add(this.rightArmGroup);
 
-    // 5. Sombra
+    // 6. Sombra
     const shadowGeo = new THREE.PlaneGeometry(1.4, 2.2);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
     this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -183,6 +233,33 @@ export class Character {
     this.mesh.add(this.shadow);
 
     this.scene.add(this.mesh);
+  }
+
+  // Cria o Ímã 3D em Ferradura Vermelho e Prata
+  createHandMagnet3D() {
+    const magnetGroup = new THREE.Group();
+
+    const redMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.6, roughness: 0.3 });
+    const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 });
+
+    // Arco Curvo Superior do Ímã
+    const baseArc = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.16, 0.16), redMat);
+    baseArc.position.y = 0.28;
+    magnetGroup.add(baseArc);
+
+    // Hastes Vermelhas Laterais
+    [-0.20, 0.20].forEach(hx => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.36, 0.16), redMat);
+      arm.position.set(hx, 0.10, 0);
+      magnetGroup.add(arm);
+
+      // Pontas de Aço Prateadas (Polos N/S)
+      const tip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.14, 0.17), silverMat);
+      tip.position.set(hx, -0.15, 0);
+      magnetGroup.add(tip);
+    });
+
+    return magnetGroup;
   }
 
   setupControls() {
@@ -267,7 +344,7 @@ export class Character {
       this.jumpVelocity = this.superJump ? this.jumpForce * 1.35 : this.jumpForce;
       this.isSliding = false;
       this.slideTimer = 0;
-      gameAudio.playJump();
+      gameAudio.playJump(this.superJump);
     } else {
       this.jumpBufferTimer = 0.15;
     }
@@ -276,21 +353,17 @@ export class Character {
   slide() {
     if (this.isDead) return;
     if (this.isJumping) {
-      this.jumpVelocity = -22; // Fast fall
+      this.jumpVelocity = -22;
     }
     this.isSliding = true;
     this.slideTimer = this.slideDuration;
     gameAudio.playSlide();
   }
 
-  /**
-   * Retorna a AABB dinâmica amarrada estritamente à posição Y atual do jogador
-   */
   getAABB() {
     const halfWidth = 0.38;
     const halfDepth = 0.38;
 
-    // Em slide: altura cortada pela metade (0.80m). Normal: 2.10m
     const boxHeight = this.isSliding ? 0.80 : 2.10;
     const minY = this.y;
     const maxY = this.y + boxHeight;
@@ -320,7 +393,18 @@ export class Character {
     const laneDiff = (this.targetX - this.x);
     this.mesh.rotation.z = -laneDiff * 0.08;
 
-    // 2. Física do Pulo e Bounding Box Y Dinâmica
+    // 2. Atualização Visual dos Power-ups Equipados
+    const isSuper = this.superJump;
+    if (this.lShoeGolden) this.lShoeGolden.visible = isSuper;
+    if (this.rShoeGolden) this.rShoeGolden.visible = isSuper;
+    if (this.lShoeNormal) this.lShoeNormal.visible = !isSuper;
+    if (this.rShoeNormal) this.rShoeNormal.visible = !isSuper;
+
+    if (this.handMagnet) {
+      this.handMagnet.visible = this.magnetActive;
+    }
+
+    // 3. Física do Pulo
     if (this.isJumping) {
       this.y += this.jumpVelocity * dt;
       const currentGrav = this.jumpVelocity < 0 ? this.gravity * this.fallMultiplier : this.gravity;
@@ -340,7 +424,7 @@ export class Character {
 
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
 
-    // 3. Timer e Animação de Deslize (Slide) de 90 Graus
+    // 4. Slide 90 Graus
     if (this.isSliding) {
       this.slideTimer -= dt;
       if (this.slideTimer <= 0) {
@@ -357,7 +441,6 @@ export class Character {
     this.animTime += dt * (speed / 16);
 
     if (this.isSliding) {
-      // Modelo 3D rotaciona 90 graus no eixo X (deitado deslizando no asfalto)
       this.mesh.rotation.x = -Math.PI / 2.2;
       this.mesh.position.y = 0.32;
 
@@ -380,6 +463,13 @@ export class Character {
       this.leftArmGroup.rotation.x = -1.2;
       this.rightArmGroup.rotation.x = -0.6;
 
+      // Asas dos sapatos batem no ar ao pular
+      if (this.superJump && this.lWing && this.rWing) {
+        const wingFlap = Math.sin(this.animTime * 14) * 0.35;
+        this.lWing.rotation.x = wingFlap;
+        this.rWing.rotation.x = -wingFlap;
+      }
+
       this.shadow.scale.set(0.65, 0.65, 1);
       this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
     } else {
@@ -394,9 +484,14 @@ export class Character {
       this.leftLeg.rotation.x = legSwing;
       this.rightLeg.rotation.x = -legSwing;
 
-      this.leftArmGroup.rotation.x = -legSwing * 0.85;
-      this.rightArmGroup.rotation.x = legSwing * 0.85;
+      // Se estiver segurando o ímã, o braço esquerdo fica levemente projetado à frente atraindo moedas
+      if (this.magnetActive) {
+        this.leftArmGroup.rotation.x = 0.4 + Math.sin(this.animTime * 1.5) * 0.15;
+      } else {
+        this.leftArmGroup.rotation.x = -legSwing * 0.85;
+      }
 
+      this.rightArmGroup.rotation.x = legSwing * 0.85;
       this.briefcase.rotation.x = Math.sin(this.animTime * 1.2) * 0.35;
 
       this.shadow.scale.set(1.0, 1.0, 1);
@@ -423,6 +518,12 @@ export class Character {
     this.deathAnimTime = 0;
     this.superJump = false;
     this.magnetActive = false;
+
+    if (this.lShoeGolden) this.lShoeGolden.visible = false;
+    if (this.rShoeGolden) this.rShoeGolden.visible = false;
+    if (this.lShoeNormal) this.lShoeNormal.visible = true;
+    if (this.rShoeNormal) this.rShoeNormal.visible = true;
+    if (this.handMagnet) this.handMagnet.visible = false;
 
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(0, 0, 0);

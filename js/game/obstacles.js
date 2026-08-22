@@ -1,4 +1,4 @@
-// js/game/obstacles.js — Moedas Douradas Luminosas, Documentos Brasileiros Realistas em Card Flutuante e Áudio Espacial
+// js/game/obstacles.js — Moedas Douradas, Cards Realistas, Ícones 3D de Sapatos Dourados & Ímã em Ferradura
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { gameAudio } from './audio.js';
@@ -15,7 +15,7 @@ export class ObstacleManager {
     this.textureLoader = new THREE.TextureLoader();
     this.picanhaTexture = this.textureLoader.load('img/picanha.png');
 
-    // Materiais com Emissão e Brilho Dourado (Zero Moedas Pretas)
+    // Materiais Reutilizáveis
     this.materials = {
       trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.3 }),
       trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.4 }),
@@ -40,7 +40,6 @@ export class ObstacleManager {
         new THREE.MeshLambertMaterial({ color: 0x22c55e }),
         new THREE.MeshLambertMaterial({ color: 0xfacc15 })
       ],
-      // Moeda de Ouro com Alto Brilho e Textura R$
       goldCoin: new THREE.MeshStandardMaterial({
         map: textureAtlas.goldCoinTexture,
         color: 0xffd700,
@@ -50,9 +49,27 @@ export class ObstacleManager {
         emissiveIntensity: 0.35,
         side: THREE.DoubleSide
       }),
-      magnetPowerup: new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.3 }),
-      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 }),
-      // Materiais dos Cards Realistas com Dupla Face
+      // Materiais dos Power-ups 3D
+      goldShoeMat: new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        metalness: 0.85,
+        roughness: 0.2,
+        emissive: 0xb45309,
+        emissiveIntensity: 0.4
+      }),
+      magnetRedMat: new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        metalness: 0.6,
+        roughness: 0.3,
+        emissive: 0x991b1b,
+        emissiveIntensity: 0.25
+      }),
+      magnetSilverMat: new THREE.MeshStandardMaterial({
+        color: 0xf1f5f9,
+        metalness: 0.9,
+        roughness: 0.1
+      }),
+      // Cards
       cltCardMat: new THREE.MeshStandardMaterial({
         map: textureAtlas.cltTexture,
         roughness: 0.3,
@@ -75,7 +92,6 @@ export class ObstacleManager {
 
     this.geometries = {
       coin: new THREE.CylinderGeometry(0.48, 0.48, 0.08, 20),
-      powerup: new THREE.BoxGeometry(0.85, 0.85, 0.85),
       train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
       documentCard: new THREE.PlaneGeometry(2.3, 1.45),
       socialCard: new THREE.PlaneGeometry(2.3, 1.45)
@@ -127,13 +143,11 @@ export class ObstacleManager {
           break;
 
         case 1:
-          // Card Flutuante da Carteira CLT 44H
           this.createCLTFloatingCard(parent, LANES[chosenLane], localZ);
           this.createCoinArc(parent, LANES[chosenLane], localZ);
           break;
 
         case 2:
-          // Card Flutuante Bolsa Família ou Auxílio Brasil
           const isBolsa = Math.random() > 0.5;
           this.createSocialBenefitCard(parent, LANES[chosenLane], localZ, isBolsa);
           const safeLane2 = (chosenLane + 2) % 3;
@@ -217,7 +231,6 @@ export class ObstacleManager {
     if (isMoving) this.movingTrains.push(obstacleObj);
   }
 
-  // 1. CARTEIRA DE TRABALHO CLT (Card Plano Realista com Suporte e Rotação)
   createCLTFloatingCard(parent, laneX, localZ) {
     const cardGroup = new THREE.Group();
     cardGroup.position.set(laneX, 1.05, localZ);
@@ -226,7 +239,6 @@ export class ObstacleManager {
     card.castShadow = true;
     cardGroup.add(card);
 
-    // Suporte sutil de chão
     const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
     stand.position.y = -1.0;
     cardGroup.add(stand);
@@ -255,7 +267,6 @@ export class ObstacleManager {
     });
   }
 
-  // 2. CARTÃO BOLSA FAMÍLIA OU AUXÍLIO BRASIL (Card Plano Realista)
   createSocialBenefitCard(parent, laneX, localZ, isBolsa = true) {
     const cardGroup = new THREE.Group();
     cardGroup.position.set(laneX, 1.15, localZ);
@@ -412,27 +423,77 @@ export class ObstacleManager {
     });
   }
 
+  // 3. ÍCONES 3D REALISTAS DOS POWER-UPS
   createPowerupItem(parent, laneX, localZ, type = 'magnet') {
-    const pMesh = new THREE.Mesh(
-      this.geometries.powerup,
-      type === 'magnet' ? this.materials.magnetPowerup : this.materials.superJumpPowerup
-    );
-    pMesh.position.set(laneX, 1.1, localZ);
-    pMesh.castShadow = true;
-    parent.add(pMesh);
+    const pGroup = new THREE.Group();
+    pGroup.position.set(laneX, 1.15, localZ);
+
+    if (type === 'superjump') {
+      // MODELO 3D DE SAPATOS SOCIAIS DOURADOS ALADOS (SUPER PULO)
+      const shoeGroup = new THREE.Group();
+
+      [-0.22, 0.22].forEach((sx, idx) => {
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.56), this.materials.goldShoeMat);
+        shoe.position.x = sx;
+        shoe.castShadow = true;
+
+        // Asinha Dourada Lateral
+        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.30, 4), this.materials.goldShoeMat);
+        wing.rotation.set(0, 0, idx === 0 ? Math.PI / 2 : -Math.PI / 2);
+        wing.position.set(idx === 0 ? sx - 0.20 : sx + 0.20, 0.08, -0.05);
+
+        shoeGroup.add(shoe, wing);
+      });
+
+      // Mola / Anel de Energia Dourada
+      const spring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.04, 8, 16), this.materials.goldShoeMat);
+      spring.rotation.x = Math.PI / 2;
+      spring.position.y = -0.15;
+      shoeGroup.add(spring);
+
+      pGroup.add(shoeGroup);
+    } else {
+      // MODELO 3D DO ÍMÃ EM FERRADURA VERMELHO E PRATA (ÍMÃ)
+      const magnet3D = new THREE.Group();
+
+      // Arco Curvo Superior Vermelho
+      const arc = new THREE.Mesh(new THREE.BoxGeometry(0.70, 0.22, 0.22), this.materials.magnetRedMat);
+      arc.position.y = 0.35;
+      arc.castShadow = true;
+      magnet3D.add(arc);
+
+      // Hastes Laterais Vermelhas com Pontas Prateadas
+      [-0.26, 0.26].forEach(hx => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.48, 0.22), this.materials.magnetRedMat);
+        leg.position.set(hx, 0.12, 0);
+        leg.castShadow = true;
+        magnet3D.add(leg);
+
+        // Pontas de Aço Prateadas (Polos)
+        const pole = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.18, 0.24), this.materials.magnetSilverMat);
+        pole.position.set(hx, -0.22, 0);
+        pole.castShadow = true;
+        magnet3D.add(pole);
+      });
+
+      pGroup.add(magnet3D);
+    }
+
+    parent.add(pGroup);
 
     this.powerups.push({
       type: type,
-      mesh: pMesh,
+      mesh: pGroup,
       parent: parent,
       laneX: laneX,
-      y: 1.1,
+      y: 1.15,
+      baseY: 1.15,
       collected: false,
       getAABB() {
-        const pz = parent.position.z + pMesh.position.z;
+        const pz = parent.position.z + pGroup.position.z;
         return {
           minX: laneX - 0.65, maxX: laneX + 0.65,
-          minY: 0.4, maxY: 1.8,
+          minY: 0.4, maxY: 1.9,
           minZ: pz - 0.65, maxZ: pz + 0.65
         };
       }
@@ -456,13 +517,11 @@ export class ObstacleManager {
       if (trainWorldZ < 90 && trainWorldZ > -90) {
         train.mesh.position.z += train.moveSpeed * dt;
 
-        // Som de passagem com fade in/out
         if (Math.abs(trainWorldZ) < 18 && !train.passSoundPlayed) {
           train.passSoundPlayed = true;
           gameAudio.playTrainPass(0.14);
         }
 
-        // Buzina de alerta se o jogador estiver na mesma faixa
         if (trainWorldZ < -8 && trainWorldZ > -40 && Math.abs(player.x - train.laneX) < 1.2 && !train.hornPlayed) {
           train.hornPlayed = true;
           gameAudio.playTrainHorn();
@@ -523,12 +582,13 @@ export class ObstacleManager {
       }
     }
 
-    // E. Coleta de Power-ups
+    // E. Rotação e Coleta de Power-ups 3D (Sapatos Dourados e Ímã em Ferradura)
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const pup = this.powerups[i];
       if (pup.collected) continue;
 
-      pup.mesh.rotation.y += 2.5 * dt;
+      pup.mesh.rotation.y += 2.6 * dt;
+      pup.mesh.position.y = pup.baseY + Math.sin(elapsedTime * 3.5 + pup.laneX) * 0.10;
 
       const pupAABB = pup.getAABB();
       const overlapX = playerAABB.maxX > pupAABB.minX && playerAABB.minX < pupAABB.maxX;
