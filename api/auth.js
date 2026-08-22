@@ -251,11 +251,12 @@ export default async function handler(req, res) {
         });
       } catch (err) {
         console.error('❌ Erro no login de usuário no Firestore via Admin SDK:', err);
-        const errMsg = err.message || '';
-        if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded')) {
+        const errMsg = (err.message || '') + ' ' + (err.details || '') + ' ' + (err.code || '');
+
+        if (err.code === 8 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded') || errMsg.includes('quota')) {
           return res.status(503).json({
             success: false,
-            error: 'Limite diário gratuito de leituras do banco atingido (Quota Exceeded). Tente novamente mais tarde.'
+            error: 'O banco de dados atingiu a cota diária gratuita de 50.000 leituras do Firebase (Quota Exceeded). O Google Cloud reinicia a cota às 04:00 da manhã (horário de Brasília).'
           });
         }
         if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
@@ -264,7 +265,10 @@ export default async function handler(req, res) {
             error: 'Servidor em configuração: Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não foram cadastradas na Vercel.'
           });
         }
-        return res.status(500).json({ success: false, error: 'Erro durante autenticação no servidor.' });
+        return res.status(500).json({
+          success: false,
+          error: `Erro ao conectar com o banco de dados: ${err.message || 'Falha no servidor.'}`
+        });
       }
     }
   }

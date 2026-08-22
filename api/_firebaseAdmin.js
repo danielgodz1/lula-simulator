@@ -1,12 +1,18 @@
-// api/_firebaseAdmin.js — Inicialização Centralizada e Segura do Firebase Admin SDK
+// api/_firebaseAdmin.js — Inicialização Centralizada e Segura do Firebase Admin SDK com Tratamento de Chaves
 import admin from 'firebase-admin';
 
 const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-// Formata quebras de linha da chave privada vindas de variáveis de ambiente da Vercel
-const privateKey = rawPrivateKey ? rawPrivateKey.replace(/\\n/g, '\n') : undefined;
+// Tratamento robusto para a chave privada (remove aspas externas se houver e formata quebras de linha)
+let privateKey = rawPrivateKey ? rawPrivateKey.trim() : undefined;
+if (privateKey) {
+  if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+    privateKey = privateKey.slice(1, -1);
+  }
+  privateKey = privateKey.replace(/\\n/g, '\n');
+}
 
 if (!admin.apps.length) {
   try {
@@ -20,7 +26,7 @@ if (!admin.apps.length) {
       });
       console.log('✅ Firebase Admin SDK inicializado com sucesso via Credential Cert.');
     } else {
-      console.warn('⚠️ Firebase Admin SDK: FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não configuradas. Inicializando com Project ID.');
+      console.warn('⚠️ Firebase Admin SDK: FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não configuradas. Inicializando apenas com Project ID.');
       admin.initializeApp({
         projectId
       });
