@@ -308,15 +308,44 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 10. IMPACTO / MORTE (TOCA "PENSE NO LULA")
+  // 10. IMPACTO / MORTE (TOCA "PENSE NO LULA" DO SEGUNDO 6 AO 10)
   playCrash() {
     if (this.isMuted) return;
     try {
       this.stopAllVoiceAudios();
       const deathAudio = new Audio('audios/pense-no-lula.mp3');
       deathAudio.volume = 0.90;
+
+      const onCanPlay = () => {
+        deathAudio.currentTime = 6.0;
+        deathAudio.play().catch(() => {});
+      };
+
+      if (deathAudio.readyState >= 2) {
+        onCanPlay();
+      } else {
+        deathAudio.addEventListener('canplay', onCanPlay, { once: true });
+        deathAudio.currentTime = 6.0;
+        deathAudio.play().catch(() => {});
+      }
+
+      // Interrompe com precisão no segundo 10
+      const stopListener = () => {
+        if (deathAudio.currentTime >= 10.0) {
+          deathAudio.pause();
+          deathAudio.removeEventListener('timeupdate', stopListener);
+        }
+      };
+      deathAudio.addEventListener('timeupdate', stopListener);
+
+      setTimeout(() => {
+        try {
+          deathAudio.pause();
+          deathAudio.removeEventListener('timeupdate', stopListener);
+        } catch (e) {}
+      }, 4200);
+
       this.activeAudios.push(deathAudio);
-      deathAudio.play().catch(() => {});
     } catch (e) {}
 
     this.ensureContext();
