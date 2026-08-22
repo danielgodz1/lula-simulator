@@ -1,4 +1,4 @@
-// api/auth.js — Autenticação de Alta Segurança com Firebase Admin SDK Real
+// api/auth.js — Autenticação Segura com Firebase Admin SDK, Migração Automática de Contas Legadas e Limpeza de Documentos Públicos
 import crypto from 'crypto';
 import admin, { db } from './_firebaseAdmin.js';
 
@@ -58,20 +58,27 @@ export default async function handler(req, res) {
           credRef.get()
         ]);
 
-        if (credSnap.exists || (userSnap.exists && userSnap.data()?.hasPassword === true)) {
+        const hasCredsInSubcollection = credSnap.exists;
+        const hasLegacyPasswordInMainDoc = userSnap.exists && (
+          userSnap.data()?.hasPassword === true ||
+          !!userSnap.data()?.passwordHash ||
+          !!userSnap.data()?.password
+        );
+
+        if (hasCredsInSubcollection || hasLegacyPasswordInMainDoc) {
           return res.status(409).json({
             success: false,
             error: 'Este nome já está cadastrado com senha. Escolha outro nome ou faça login.'
           });
         }
 
-        // Gera salt criptográfico e hash estritamente no servidor (nunca confia no cliente)
+        // Gera salt criptográfico e hash estritamente no servidor
         const salt = generateRandomSalt();
         const finalHash = hashWithSalt(cleanPass, salt);
 
         const batch = db.batch();
 
-        // 1. Grava credenciais na subcoleção privada (acessível exclusivamente pelo Admin SDK)
+        // 1. Grava credenciais na subcoleção privada (acessível apenas pelo Admin SDK)
         batch.set(credRef, {
           passwordHash: finalHash,
           passwordSalt: salt,
@@ -80,7 +87,7 @@ export default async function handler(req, res) {
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Grava ou mescla perfil público (sem vazar hashes nem salts)
+        // 2. Grava ou mescla perfil público (garantindo que NENHUM hash ou salt fique no doc público)
         const existingData = userSnap.exists ? userSnap.data() : {};
         const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
         const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
@@ -110,12 +117,25 @@ export default async function handler(req, res) {
         });
       } catch (err) {
         console.error('❌ Erro no registro de usuário no Firestore via Admin SDK:', err);
+        const errMsg = err.message || '';
+        if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded')) {
+          return res.status(503).json({
+            success: false,
+            error: 'Limite diário gratuito do Firebase atingido. Tente novamente mais tarde.'
+          });
+        }
+        if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+          return res.status(500).json({
+            success: false,
+            error: 'Servidor em configuração: Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não cadastradas na Vercel.'
+          });
+        }
         return res.status(500).json({ success: false, error: 'Erro ao registrar credenciais no servidor.' });
       }
     }
 
     // =========================================================================
-    // 2. LOGIN SEGURO (COM BUSCA VIA ADMIN SDK E MIGRAÇÃO AUTOMÁTICA DE SALT)
+    // 2. LOGIN SEGURO (COM SUPORTE A CONTAS MODERNAS, LEGADAS E LIMPEZA AUTOMÁTICA)
     // =========================================================================
     if (action === 'login') {
       if (!cleanPass) {
@@ -123,7 +143,7 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Busca perfil público e subcoleção privada via Admin SDK (ignora regras restritivas do cliente)
+        // Busca perfil público e subcoleção privada via Admin SDK
         const [userSnap, credSnap] = await Promise.all([
           userRef.get(),
           credRef.get()
@@ -137,7 +157,8 @@ export default async function handler(req, res) {
         const credData = credSnap.exists ? credSnap.data() : null;
 
         // Se o usuário existir mas não possuir credenciais cadastradas
-        if (!credData && userData && userData.hasPassword === false) {
+        const hasAnyPassword = credData?.hasPassword || userData?.hasPassword || userData?.passwordHash || userData?.password;
+        if (!hasAnyPassword) {
           return res.status(400).json({
             success: false,
             error: `O jogador "${cleanName}" ainda não possui senha cadastrada. Você pode criar uma senha na aba "Criar Conta".`
@@ -146,23 +167,35 @@ export default async function handler(req, res) {
 
         let isMatch = false;
         let needsMigration = false;
+        let cleanupUserDataFields = false;
 
-        if (credData && credData.passwordSalt && credData.passwordHash) {
-          // 1. Conta Moderna: Hash SHA-256 com Salt Individual
-          const calculatedHash = hashWithSalt(cleanPass, credData.passwordSalt);
-          if (calculatedHash === credData.passwordHash) {
+        // 1. Extrai credenciais da subcoleção privada OU do documento principal legado
+        const effectiveSalt = credData?.passwordSalt || userData?.passwordSalt || '';
+        const effectiveHash = credData?.passwordHash || userData?.passwordHash || '';
+        const effectivePlain = credData?.password || userData?.password || '';
+
+        // Se existirem credenciais antigas no documento principal, marca para limpeza automática
+        if (userData?.passwordHash || userData?.passwordSalt || userData?.password) {
+          cleanupUserDataFields = true;
+          needsMigration = true;
+        }
+
+        if (effectiveSalt && effectiveHash) {
+          // A. Conta Moderna: Hash SHA-256 com Salt Individual
+          const calculatedHash = hashWithSalt(cleanPass, effectiveSalt);
+          if (calculatedHash === effectiveHash) {
             isMatch = true;
           }
-        } else if (credData && credData.passwordHash) {
-          // 2. Conta Legada: Salt Fixo
+        } else if (effectiveHash) {
+          // B. Conta Legada: Salt Fixo
           const legacyHash = hashWithSalt(cleanPass, 'lula_simulator_sec_salt_2026_');
-          if (legacyHash === credData.passwordHash || cleanPass === credData.passwordHash) {
+          if (legacyHash === effectiveHash || cleanPass === effectiveHash) {
             isMatch = true;
             needsMigration = true;
           }
-        } else if (credData && credData.password) {
-          // 3. Conta Legada: Texto Puro
-          if (cleanPass === credData.password) {
+        } else if (effectivePlain) {
+          // C. Conta Legada: Texto Puro
+          if (cleanPass === effectivePlain) {
             isMatch = true;
             needsMigration = true;
           }
@@ -172,20 +205,37 @@ export default async function handler(req, res) {
           return res.status(401).json({ success: false, error: 'Palavra-chave incorreta!' });
         }
 
-        // Migração automática de contas antigas para Salt Criptográfico Individual
-        if (needsMigration) {
+        // Migração automática e limpeza de campos confidenciais do documento público
+        if (needsMigration || cleanupUserDataFields || !credSnap.exists) {
           try {
             const newSalt = generateRandomSalt();
             const newHash = hashWithSalt(cleanPass, newSalt);
-            await credRef.set({
+
+            const batch = db.batch();
+
+            // Grava na subcoleção privada protegida
+            batch.set(credRef, {
               passwordHash: newHash,
               passwordSalt: newSalt,
               hasPassword: true,
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
-            console.log(`🔒 Conta "${cleanName}" migrada automaticamente para Salt Criptográfico Individual.`);
+
+            // Se haviam hashes/senhas no documento público, remove-os definitivamente
+            if (cleanupUserDataFields) {
+              batch.update(userRef, {
+                password: admin.firestore.FieldValue.delete(),
+                passwordHash: admin.firestore.FieldValue.delete(),
+                passwordSalt: admin.firestore.FieldValue.delete(),
+                hasPassword: true,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              });
+            }
+
+            await batch.commit();
+            console.log(`🔒 Conta "${cleanName}" migrada com sucesso: Salt Individual gerado e campos limpos do documento público.`);
           } catch (migErr) {
-            console.error('⚠️ Falha não-bloqueante na migração de salt:', migErr);
+            console.error('⚠️ Falha não-bloqueante na migração/limpeza:', migErr);
           }
         }
 
@@ -201,6 +251,19 @@ export default async function handler(req, res) {
         });
       } catch (err) {
         console.error('❌ Erro no login de usuário no Firestore via Admin SDK:', err);
+        const errMsg = err.message || '';
+        if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded')) {
+          return res.status(503).json({
+            success: false,
+            error: 'Limite diário gratuito de leituras do banco atingido (Quota Exceeded). Tente novamente mais tarde.'
+          });
+        }
+        if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+          return res.status(500).json({
+            success: false,
+            error: 'Servidor em configuração: Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não foram cadastradas na Vercel.'
+          });
+        }
         return res.status(500).json({ success: false, error: 'Erro durante autenticação no servidor.' });
       }
     }
