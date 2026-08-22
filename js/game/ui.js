@@ -1,11 +1,13 @@
-// js/game/ui.js — Gerenciador de HUD, Controles de Áudio e Modal de Game Over com Frases Hilárias
+// js/game/ui.js — Gerenciador de HUD, Modal de Seleção de Personagens 3D, Áudio e Game Over
 import { gameAudio } from './audio.js';
+import { RUNNER_CHARACTERS, RunnerInventory } from './characters.js';
 
 export class UIManager {
   constructor() {
     this.distDisplay = document.getElementById('distDisplay');
     this.bestDisplay = document.getElementById('bestDisplay');
     this.speedDisplay = document.getElementById('speedDisplay');
+    this.coinsDisplay = document.getElementById('coinsDisplay');
     this.btnSoundToggle = document.getElementById('btnSoundToggle');
 
     this.startOverlay = document.getElementById('startOverlay');
@@ -15,7 +17,16 @@ export class UIManager {
     this.goDistance = document.getElementById('goDistance');
     this.btnRestart = document.getElementById('btnRestart');
 
+    // Modal de Seleção de Personagens
+    this.charSelectModal = document.getElementById('charSelectModal');
+    this.btnCloseCharSelect = document.getElementById('btnCloseCharSelect');
+    this.characterCardsContainer = document.getElementById('characterCardsContainer');
+    this.charModalCoinBalance = document.getElementById('charModalCoinBalance');
+
+    this.onCharacterChanged = null;
+
     this.setupSoundButton();
+    this.setupCharacterSelect();
   }
 
   setupSoundButton() {
@@ -28,9 +39,138 @@ export class UIManager {
     }
   }
 
-  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '') {
+  setupCharacterSelect() {
+    const openBtns = [
+      document.getElementById('btnOpenCharSelect'),
+      document.getElementById('btnOpenCharSelectStart'),
+      document.getElementById('btnOpenCharSelectGO')
+    ];
+
+    openBtns.forEach(btn => {
+      if (btn) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.openCharacterModal();
+        });
+      }
+    });
+
+    if (this.btnCloseCharSelect) {
+      this.btnCloseCharSelect.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.closeCharacterModal();
+      });
+    }
+  }
+
+  openCharacterModal() {
+    if (!this.charSelectModal) return;
+    this.renderCharacterCards();
+    this.charSelectModal.style.display = 'flex';
+  }
+
+  closeCharacterModal() {
+    if (!this.charSelectModal) return;
+    this.charSelectModal.style.display = 'none';
+  }
+
+  renderCharacterCards() {
+    if (!this.characterCardsContainer) return;
+    const totalCoins = RunnerInventory.getTotalCoins();
+    if (this.charModalCoinBalance) {
+      this.charModalCoinBalance.textContent = `💰 ${totalCoins} MOEDAS`;
+    }
+
+    const selectedChar = RunnerInventory.getSelectedCharacter();
+    this.characterCardsContainer.innerHTML = '';
+
+    RUNNER_CHARACTERS.forEach(char => {
+      const isUnlocked = RunnerInventory.isUnlocked(char.id);
+      const isEquipped = selectedChar.id === char.id;
+
+      const card = document.createElement('div');
+      card.className = 'character-card-runner';
+      card.style.cssText = `
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid ${isEquipped ? 'var(--amarelo-brasil)' : isUnlocked ? '#38bdf8' : '#475569'};
+        border-radius: 16px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        box-shadow: ${isEquipped ? '0 0 20px rgba(255, 223, 0, 0.3)' : 'none'};
+      `;
+
+      card.innerHTML = `
+        <div style="width:70px; height:70px; border-radius:50%; background:rgba(0,0,0,0.4); border:2px solid ${char.themeColor || '#eab308'}; display:flex; align-items:center; justify-content:center; margin-bottom:8px; overflow:hidden;">
+          <img src="${char.sprite || 'img/favela.png'}" alt="${char.name}" style="width:100%; height:100%; object-fit:cover;">
+        </div>
+        <div style="font-family:'Bangers',cursive; font-size:19px; color:${char.themeColor || '#fef08a'}; margin-bottom:2px;">
+          ${char.name}
+        </div>
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:8px; min-height:30px; line-height:1.3;">
+          ${char.desc}
+        </div>
+        <div style="margin-top:auto; width:100%;">
+          ${isEquipped ? `
+            <button class="btn-primary" style="width:100%; padding:7px 0; font-size:14px; background:#16a34a; border-color:#22c55e; cursor:default;">
+              ✓ EQUIPADO
+            </button>
+          ` : isUnlocked ? `
+            <button class="btn-primary btn-equip-char" data-id="${char.id}" style="width:100%; padding:7px 0; font-size:14px; background:#0284c7; border-color:#38bdf8; cursor:pointer;">
+              EQUIPAR
+            </button>
+          ` : `
+            <button class="btn-primary btn-unlock-char" data-id="${char.id}" style="width:100%; padding:7px 0; font-size:13px; background:#ca8a04; border-color:#eab308; cursor:pointer;">
+              🔒 DESBLOQUEAR (${char.cost} 💰)
+            </button>
+          `}
+        </div>
+      `;
+
+      // Eventos de clique
+      const equipBtn = card.querySelector('.btn-equip-char');
+      if (equipBtn) {
+        equipBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          RunnerInventory.setSelectedCharacter(char.id);
+          if (typeof this.onCharacterChanged === 'function') {
+            this.onCharacterChanged(char.id);
+          }
+          gameAudio.playPowerup();
+          this.renderCharacterCards();
+        });
+      }
+
+      const unlockBtn = card.querySelector('.btn-unlock-char');
+      if (unlockBtn) {
+        unlockBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const res = RunnerInventory.unlockCharacter(char.id);
+          if (res.success) {
+            RunnerInventory.setSelectedCharacter(char.id);
+            if (typeof this.onCharacterChanged === 'function') {
+              this.onCharacterChanged(char.id);
+            }
+            gameAudio.playPicanhaCollect();
+            alert(`🎉 Parabéns! ${res.message}`);
+          } else {
+            alert(`⚠️ ${res.message}`);
+          }
+          this.renderCharacterCards();
+        });
+      }
+
+      this.characterCardsContainer.appendChild(card);
+    });
+  }
+
+  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '', totalCoins = 0) {
     if (this.distDisplay) this.distDisplay.textContent = `${distanceKm} km`;
     if (this.bestDisplay) this.bestDisplay.textContent = `${bestDistanceKm} km`;
+    if (this.coinsDisplay) this.coinsDisplay.textContent = `💰 ${totalCoins || coins}`;
     if (this.speedDisplay) {
       const timePrefix = timeOfDayStr ? `${timeOfDayStr} · ` : '';
       this.speedDisplay.textContent = `${timePrefix}${speedRatio.toFixed(1)}x ${powerupStatus}`;
@@ -40,10 +180,14 @@ export class UIManager {
   showStartScreen(onStart) {
     if (this.startOverlay) {
       this.startOverlay.style.display = 'flex';
-      this.startOverlay.onclick = () => {
-        this.startOverlay.style.display = 'none';
-        onStart();
-      };
+      const startBtn = document.getElementById('btnStartGame');
+      if (startBtn) {
+        startBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.startOverlay.style.display = 'none';
+          onStart();
+        };
+      }
     }
   }
 
@@ -102,7 +246,7 @@ export class UIManager {
     if (this.goTitle) this.goTitle.textContent = obstacle ? obstacle.name : 'OBSTÁCULO';
     if (this.goMessage) this.goMessage.textContent = funnyMsg;
     if (this.goDistance) {
-      this.goDistance.textContent = `${distanceKm} KM PERCORRIDOS · R$ ${coins} LUCRO · 🥩 ${picanhas} PICANHAS`;
+      this.goDistance.textContent = `${distanceKm} KM PERCORRIDOS · +R$ ${coins} MOEDAS · 🥩 ${picanhas} PICANHAS`;
     }
 
     this.gameOverModal.style.display = 'flex';
@@ -119,3 +263,4 @@ export class UIManager {
     if (this.gameOverModal) this.gameOverModal.style.display = 'none';
   }
 }
+

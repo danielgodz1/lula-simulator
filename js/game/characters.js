@@ -297,3 +297,121 @@ export class CharacterInventory {
     }
   }
 }
+
+// ============================================================================
+// SISTEMA DE PERSONAGENS 3D E ECONOMIA DE MOEDAS DO EMPRESÁRIO 3D
+// ============================================================================
+
+export const RUNNER_CHARACTERS = [
+  {
+    id: 'empresario',
+    name: 'Empresário Faria Lima',
+    nickname: 'O Faria Limer',
+    title: 'Empresário Faria Lima — O Faria Limer',
+    desc: 'Terno italiano, gravata vermelha, óculos escuros, maleta de couro e fugindo das obrigações trabalhistas na favela.',
+    cost: 0, // Personagem inicial gratuito
+    sprite: 'img/favela.png',
+    themeColor: '#38bdf8'
+  },
+  {
+    id: 'lula',
+    name: 'Lula da Silva',
+    nickname: 'O Presidente',
+    title: 'Lula da Silva — O Presidente',
+    desc: 'Caricatura satírica do Presidente em fuga! Cabelo e barba grisalha volumosa, terno azul-marinho presidencial e faixa presidencial verde-amarela cruzada no peito.',
+    cost: 300, // 300 moedas
+    sprite: 'img/lula.png',
+    themeColor: '#ffdf00'
+  },
+  {
+    id: 'bolsonaro',
+    name: 'Jair Bolsonaro',
+    nickname: 'O Capitão',
+    title: 'Jair Bolsonaro — O Capitão',
+    desc: 'Caricatura satírica do Capitão! Corte de cabelo característico, terno escuro, gravata verde-amarela e faixa presidencial verde-amarela.',
+    cost: 500, // 500 moedas
+    sprite: 'img/bolsonaro.png',
+    themeColor: '#22c55e'
+  }
+];
+
+const RUNNER_COINS_KEY = 'runner_total_coins';
+const RUNNER_UNLOCKED_KEY = 'runner_unlocked_characters';
+const RUNNER_SELECTED_KEY = 'runner_selected_character';
+
+export class RunnerInventory {
+  static getTotalCoins() {
+    return parseInt(localStorage.getItem(RUNNER_COINS_KEY) || '0', 10);
+  }
+
+  static setTotalCoins(amount) {
+    const val = Math.max(0, parseInt(amount, 10) || 0);
+    localStorage.setItem(RUNNER_COINS_KEY, val.toString());
+    return val;
+  }
+
+  static addCoins(amount) {
+    if (amount <= 0) return this.getTotalCoins();
+    const current = this.getTotalCoins();
+    const updated = current + amount;
+    localStorage.setItem(RUNNER_COINS_KEY, updated.toString());
+    return updated;
+  }
+
+  static getUnlockedCharacters() {
+    try {
+      const raw = localStorage.getItem(RUNNER_UNLOCKED_KEY);
+      const list = raw ? JSON.parse(raw) : ['empresario'];
+      if (!Array.isArray(list)) return ['empresario'];
+      if (!list.includes('empresario')) list.push('empresario');
+      return list;
+    } catch(e) {
+      return ['empresario'];
+    }
+  }
+
+  static isUnlocked(charId) {
+    if (charId === 'empresario') return true;
+    const unlocked = this.getUnlockedCharacters();
+    return unlocked.includes(charId);
+  }
+
+  static unlockCharacter(charId) {
+    const char = RUNNER_CHARACTERS.find(c => c.id === charId);
+    if (!char) return { success: false, message: 'Personagem não encontrado.' };
+    if (this.isUnlocked(charId)) return { success: true, message: 'Já desbloqueado!' };
+
+    const totalCoins = this.getTotalCoins();
+    if (totalCoins < char.cost) {
+      return { success: false, message: `Moedas insuficientes! Requer ${char.cost} moedas (Você tem ${totalCoins}).` };
+    }
+
+    // Deduz moedas e adiciona aos desbloqueados
+    this.setTotalCoins(totalCoins - char.cost);
+    const unlocked = this.getUnlockedCharacters();
+    if (!unlocked.includes(charId)) {
+      unlocked.push(charId);
+      localStorage.setItem(RUNNER_UNLOCKED_KEY, JSON.stringify(unlocked));
+    }
+
+    return { success: true, message: `${char.name} desbloqueado com sucesso!` };
+  }
+
+  static getSelectedCharacter() {
+    const savedId = localStorage.getItem(RUNNER_SELECTED_KEY) || 'empresario';
+    if (this.isUnlocked(savedId)) {
+      const found = RUNNER_CHARACTERS.find(c => c.id === savedId);
+      if (found) return found;
+    }
+    return RUNNER_CHARACTERS[0];
+  }
+
+  static setSelectedCharacter(charId) {
+    if (this.isUnlocked(charId)) {
+      localStorage.setItem(RUNNER_SELECTED_KEY, charId);
+      return true;
+    }
+    return false;
+  }
+}
+

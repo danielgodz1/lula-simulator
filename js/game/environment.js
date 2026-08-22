@@ -11,22 +11,22 @@ export class Environment {
     this.scene = scene;
     this.segments = [];
 
-    // Materiais Compartilhados Globais com Suporte a Emissão Noturna
+    // Materiais Compartilhados Globais PBR com Suporte a Emissão Noturna
     this.sharedMaterials = {
-      asphalt: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
-      gravel: new THREE.MeshLambertMaterial({ color: 0x3f3f46 }),
-      curb: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
+      asphalt: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, metalness: 0.1 }),
+      gravel: new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.90, metalness: 0.1 }),
+      curb: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.70, metalness: 0.1 }),
       yellowStripe: new THREE.MeshBasicMaterial({ color: 0xfacc15 }),
-      railTie: new THREE.MeshLambertMaterial({ color: 0x5c3a21 }),
-      steelRail: new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.9, roughness: 0.2 }),
-      concreteWall: new THREE.MeshLambertMaterial({ color: 0x64748b }),
-      graffitiWall: new THREE.MeshLambertMaterial({ map: textureAtlas.atlasTexture }),
-      waterTank: new THREE.MeshLambertMaterial({ map: textureAtlas.waterTankTexture, color: 0x0284c7 }),
-      concretePole: new THREE.MeshLambertMaterial({ color: 0x475569 }),
+      railTie: new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.80, metalness: 0.1 }),
+      steelRail: new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 }),
+      concreteWall: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.75, metalness: 0.1 }),
+      graffitiWall: new THREE.MeshStandardMaterial({ map: textureAtlas.atlasTexture, roughness: 0.60, metalness: 0.1 }),
+      waterTank: new THREE.MeshStandardMaterial({ map: textureAtlas.waterTankTexture, color: 0x0284c7, roughness: 0.40, metalness: 0.2 }),
+      concretePole: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.70, metalness: 0.1 }),
       wire: new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 1.5 }),
-      dumpster: new THREE.MeshLambertMaterial({ color: 0x16a34a }),
-      rebar: new THREE.MeshLambertMaterial({ color: 0x9a3412 }),
-      antenna: new THREE.MeshLambertMaterial({ color: 0x64748b }),
+      dumpster: new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.45, metalness: 0.35 }),
+      rebar: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.60, metalness: 0.45 }),
+      antenna: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.30, metalness: 0.85 }),
       // Janelas Dinâmicas (Acendem em amarelo/âmbar à noite)
       windowMat: new THREE.MeshStandardMaterial({
         color: 0x0284c7,
@@ -52,7 +52,7 @@ export class Environment {
       0x78716c  // Reboco Concreto
     ];
 
-    this.houseMaterials = this.houseColors.map(c => new THREE.MeshLambertMaterial({ color: c }));
+    this.houseMaterials = this.houseColors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0.05 }));
 
     this.init();
   }

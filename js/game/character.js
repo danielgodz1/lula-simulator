@@ -1,6 +1,7 @@
-// js/game/character.js — Modelo 3D com Sapatos Dourados Alados Equipáveis, Ímã na Mão Esquerda e Slide 90º
+// js/game/character.js — Modelo 3D com Suporte Multi-Personagem (Empresário, Lula, Bolsonaro), Materiais PBR e Agilidade Escalável
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
+import { RunnerInventory } from './characters.js';
 
 export const LANES = [-2.8, 0, 2.8];
 
@@ -9,6 +10,8 @@ export class Character {
     this.scene = scene;
     this.mesh = new THREE.Group();
 
+    this.characterId = RunnerInventory.getSelectedCharacter().id;
+
     this.currentLane = 1;
     this.targetX = 0;
     this.x = 0;
@@ -16,7 +19,8 @@ export class Character {
     this.z = 0;
     this.groundY = 0;
 
-    // Física
+    // Física e Agilidade Escalável
+    this.baseSpeed = 32;
     this.isJumping = false;
     this.jumpVelocity = 0;
     this.gravity = -38;
@@ -60,86 +64,242 @@ export class Character {
     this.setupControls();
   }
 
+  setCharacter(charId) {
+    if (this.characterId === charId && this.torso) return;
+    this.characterId = charId;
+    this.build();
+  }
+
+  clearMesh() {
+    while (this.mesh.children.length > 0) {
+      const obj = this.mesh.children[0];
+      this.mesh.remove(obj);
+    }
+  }
+
   build() {
-    const suitMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5, metalness: 0.1 });
-    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
-    const tieMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 });
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.6 });
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.7 });
-    const glassesFrameMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.2 });
-    const glassesLensMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.8 });
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
-    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
+    this.clearMesh();
+
+    const charId = this.characterId || 'empresario';
+
+    // Paletas PBR por Personagem
+    let suitColor = 0x1e293b;
+    let shirtColor = 0xf8fafc;
+    let tieColor = 0xdc2626;
+    let skinColor = 0xf59e0b;
+    let hairColor = 0x18181b;
+    let shoeColor = 0x0f172a;
+    let leatherColor = 0x78350f;
+
+    if (charId === 'lula') {
+      suitColor = 0x0f172a; // Azul marinho presidencial escuro
+      shirtColor = 0xf8fafc;
+      tieColor = 0xdc2626; // Gravata vermelha
+      skinColor = 0xf5d0a9;
+      hairColor = 0xd4d4d8; // Cabelo e barba grisalha volumosa
+      leatherColor = 0x1e293b;
+    } else if (charId === 'bolsonaro') {
+      suitColor = 0x18181b; // Terno preto / chumbo escuro
+      shirtColor = 0xf8fafc;
+      tieColor = 0x16a34a; // Gravata verde
+      skinColor = 0xf5d0a9;
+      hairColor = 0x3e2723; // Cabelo castanho escuro
+      leatherColor = 0x18181b;
+    }
+
+    // Materiais PBR
+    const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.5, metalness: 0.1 });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.35, metalness: 0.05 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: tieColor, roughness: 0.4, metalness: 0.1 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.55, metalness: 0.05 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.75, metalness: 0.05 });
+    const glassesFrameMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.9, roughness: 0.15 });
+    const glassesLensMat = new THREE.MeshStandardMaterial({ color: 0x09090b, roughness: 0.1, metalness: 0.85 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: shoeColor, roughness: 0.2, metalness: 0.15 });
+    const leatherMat = new THREE.MeshStandardMaterial({ color: leatherColor, roughness: 0.25, metalness: 0.15 });
+    
+    // Faixa Presidencial Verde-Amarela com Brilho Acetinado
+    const sashGreenMat = new THREE.MeshStandardMaterial({
+      color: 0x16a34a,
+      roughness: 0.25,
+      metalness: 0.1,
+      emissive: 0x052e16,
+      emissiveIntensity: 0.25
+    });
+    const sashYellowMat = new THREE.MeshStandardMaterial({
+      color: 0xfacc15,
+      roughness: 0.25,
+      metalness: 0.1,
+      emissive: 0x713f12,
+      emissiveIntensity: 0.25
+    });
+
     const goldMat = new THREE.MeshStandardMaterial({
       color: 0xffd700,
-      metalness: 0.85,
-      roughness: 0.2,
+      metalness: 0.9,
+      roughness: 0.15,
       emissive: 0xb45309,
       emissiveIntensity: 0.35
     });
 
-    // 1. Tronco com Paletó
+    // 1. Tronco com Paletó PBR
     this.torso = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.96, 0.44), suitMat);
     this.torso.position.y = 1.38;
     this.torso.castShadow = true;
+    this.torso.receiveShadow = true;
     this.mesh.add(this.torso);
 
     const lapelLeft = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.60, 0.06), suitMat);
     lapelLeft.position.set(-0.20, 1.46, 0.22);
     lapelLeft.rotation.z = -0.15;
+    lapelLeft.castShadow = true;
     this.mesh.add(lapelLeft);
 
     const lapelRight = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.60, 0.06), suitMat);
     lapelRight.position.set(0.20, 1.46, 0.22);
     lapelRight.rotation.z = 0.15;
+    lapelRight.castShadow = true;
     this.mesh.add(lapelRight);
 
     const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.52, 0.05), shirtMat);
     shirt.position.set(0, 1.50, 0.21);
     this.mesh.add(shirt);
 
-    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.44, 0.06), tieMat);
-    tie.position.set(0, 1.45, 0.23);
-    this.mesh.add(tie);
+    // Gravata Customizada
+    if (charId === 'bolsonaro') {
+      // Gravata Verde-Amarela Patriota
+      const tieG = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.44, 0.06), sashGreenMat);
+      tieG.position.set(-0.025, 1.45, 0.23);
+      const tieY = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.44, 0.06), sashYellowMat);
+      tieY.position.set(0.025, 1.45, 0.23);
+      this.mesh.add(tieG, tieY);
+    } else {
+      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.44, 0.06), tieMat);
+      tie.position.set(0, 1.45, 0.23);
+      this.mesh.add(tie);
+    }
 
     const tieClip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.03, 0.07), goldMat);
     tieClip.position.set(0, 1.46, 0.24);
     this.mesh.add(tieClip);
 
-    // 2. Cabeça
+    // FAIXA PRESIDENCIAL 3D (LULA E BOLSONARO)
+    if (charId === 'lula' || charId === 'bolsonaro') {
+      const sashGroup = new THREE.Group();
+      sashGroup.position.set(0, 1.40, 0.23);
+      sashGroup.rotation.z = -Math.PI / 4.2;
+
+      const sashGreen = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.85, 0.03), sashGreenMat);
+      sashGreen.position.x = -0.06;
+      const sashYellow = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.85, 0.03), sashYellowMat);
+      sashYellow.position.x = 0.06;
+      sashGroup.add(sashGreen, sashYellow);
+
+      // Roseta Dourada Presidencial na Faixa
+      const rosette = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.04, 12), goldMat);
+      rosette.rotation.x = Math.PI / 2;
+      rosette.position.set(0, -0.32, 0.03);
+      sashGroup.add(rosette);
+
+      this.mesh.add(sashGroup);
+    }
+
+    // 2. Cabeça e Caricatura Satírica 3D
     this.head = new THREE.Group();
     this.head.position.set(0, 2.12, 0);
 
     const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.54, 0.52), skinMat);
     headMesh.castShadow = true;
+    headMesh.receiveShadow = true;
     this.head.add(headMesh);
 
-    const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.18, 0.56), hairMat);
-    hairTop.position.set(0, 0.26, 0);
-    this.head.add(hairTop);
+    if (charId === 'lula') {
+      // CABELO E BARBA GRISALHA VOLUMOSA DO LULA
+      const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.22, 0.58), hairMat);
+      hairTop.position.set(0, 0.26, -0.02);
+      hairTop.castShadow = true;
+      this.head.add(hairTop);
 
-    const glasses = new THREE.Group();
-    glasses.position.set(0, 0.04, 0.28);
-    const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.04), glassesLensMat);
-    lensL.position.x = -0.12;
-    const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.04), glassesLensMat);
-    lensR.position.x = 0.12;
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.03, 0.04), glassesFrameMat);
-    glasses.add(lensL, lensR, bridge);
-    this.head.add(glasses);
+      // Barba Volumosa e Bigode Característico
+      const beardBase = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.32, 0.32), hairMat);
+      beardBase.position.set(0, -0.16, 0.16);
+      beardBase.castShadow = true;
+
+      const mustache = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.10, 0.12), hairMat);
+      mustache.position.set(0, -0.04, 0.28);
+
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.12), skinMat);
+      nose.position.set(0, 0.04, 0.28);
+
+      // Olhos Expressivos
+      [-0.14, 0.14].forEach(ex => {
+        const eyeW = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.06, 0.04), shirtMat);
+        eyeW.position.set(ex, 0.10, 0.27);
+        const eyeP = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), glassesLensMat);
+        eyeP.position.set(ex, 0.10, 0.28);
+        this.head.add(eyeW, eyeP);
+      });
+
+      this.head.add(beardBase, mustache, nose);
+
+    } else if (charId === 'bolsonaro') {
+      // CORTE DE CABELO CARACTERÍSTICO DO BOLSONARO
+      const hairCap = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.20, 0.56), hairMat);
+      hairCap.position.set(0, 0.26, 0);
+      hairCap.castShadow = true;
+
+      // Topete lateral levemente inclinado
+      const hairSwoop = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.12, 0.20), hairMat);
+      hairSwoop.position.set(-0.10, 0.32, 0.18);
+      hairSwoop.rotation.z = -0.12;
+
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.15, 0.12), skinMat);
+      nose.position.set(0, 0.02, 0.28);
+
+      // Olhos Expressivos do Capitão
+      [-0.13, 0.13].forEach(ex => {
+        const eyeW = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.06, 0.04), shirtMat);
+        eyeW.position.set(ex, 0.08, 0.27);
+        const eyeP = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05), glassesLensMat);
+        eyeP.position.set(ex, 0.08, 0.28);
+        this.head.add(eyeW, eyeP);
+      });
+
+      this.head.add(hairCap, hairSwoop, nose);
+
+    } else {
+      // CABELO E ÓCULOS ESCUROS DO EMPRESÁRIO FARIA LIMA
+      const hairTop = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.18, 0.56), hairMat);
+      hairTop.position.set(0, 0.26, 0);
+      hairTop.castShadow = true;
+      this.head.add(hairTop);
+
+      const glasses = new THREE.Group();
+      glasses.position.set(0, 0.04, 0.28);
+      const lensL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.04), glassesLensMat);
+      lensL.position.x = -0.12;
+      const lensR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.04), glassesLensMat);
+      lensR.position.x = 0.12;
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.03, 0.04), glassesFrameMat);
+      glasses.add(lensL, lensR, bridge);
+      this.head.add(glasses);
+    }
+
     this.mesh.add(this.head);
 
-    // 3. Pernas e Sapatos Equipáveis
+    // 3. Pernas e Sapatos Equipáveis PBR
     this.leftLeg = new THREE.Group();
     this.leftLeg.position.set(-0.22, 0.90, 0);
     const lPants = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.90, 0.36), suitMat);
     lPants.position.y = -0.45;
     lPants.castShadow = true;
+    lPants.receiveShadow = true;
 
     // Sapato Normal Esquerdo
     this.lShoeNormal = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
     this.lShoeNormal.position.set(0, -0.90, 0.08);
     this.lShoeNormal.castShadow = true;
+    this.lShoeNormal.receiveShadow = true;
 
     // Sapato Dourado Alado Esquerdo (Super Pulo)
     this.lShoeGolden = new THREE.Group();
@@ -160,11 +320,13 @@ export class Character {
     const rPants = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.90, 0.36), suitMat);
     rPants.position.y = -0.45;
     rPants.castShadow = true;
+    rPants.receiveShadow = true;
 
     // Sapato Normal Direito
     this.rShoeNormal = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.50), shoeMat);
     this.rShoeNormal.position.set(0, -0.90, 0.08);
     this.rShoeNormal.castShadow = true;
+    this.rShoeNormal.receiveShadow = true;
 
     // Sapato Dourado Alado Direito (Super Pulo)
     this.rShoeGolden = new THREE.Group();
@@ -186,6 +348,7 @@ export class Character {
     const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.86, 0.28), suitMat);
     lArm.position.y = -0.43;
     lArm.castShadow = true;
+    lArm.receiveShadow = true;
     const lHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.20, 0.22), skinMat);
     lHand.position.y = -0.92;
 
@@ -199,12 +362,13 @@ export class Character {
     this.leftArmGroup.add(lArm, lHand, this.handMagnet);
     this.mesh.add(this.leftArmGroup);
 
-    // 5. Braço Direito com Maleta e Rolex
+    // 5. Braço Direito com Maleta e Relógio
     this.rightArmGroup = new THREE.Group();
     this.rightArmGroup.position.set(0.52, 1.76, 0);
     const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.86, 0.28), suitMat);
     rArm.position.y = -0.43;
     rArm.castShadow = true;
+    rArm.receiveShadow = true;
     const rHand = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.20, 0.22), skinMat);
     rHand.position.y = -0.92;
 
@@ -216,6 +380,7 @@ export class Character {
     this.briefcase.position.set(0, -0.96, 0.05);
     const caseBody = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.52, 0.70), leatherMat);
     caseBody.castShadow = true;
+    caseBody.receiveShadow = true;
     const lock1 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.08), goldMat);
     lock1.position.set(0, 0.12, 0.22);
     const lock2 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.06, 0.08), goldMat);
@@ -224,7 +389,7 @@ export class Character {
     this.rightArmGroup.add(this.briefcase);
     this.mesh.add(this.rightArmGroup);
 
-    // 6. Sombra
+    // 6. Sombra Suave
     const shadowGeo = new THREE.PlaneGeometry(1.4, 2.2);
     const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
     this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
@@ -232,7 +397,9 @@ export class Character {
     this.shadow.position.y = 0.03;
     this.mesh.add(this.shadow);
 
-    this.scene.add(this.mesh);
+    if (!this.scene.children.includes(this.mesh)) {
+      this.scene.add(this.mesh);
+    }
   }
 
   // Cria o Ímã 3D em Ferradura Vermelho e Prata
@@ -386,8 +553,10 @@ export class Character {
       return;
     }
 
-    // 1. Interpolação Linear nas 3 Faixas
-    this.x += (this.targetX - this.x) * Math.min(1.0, 18.0 * dt);
+    // 1. Interpolação Linear nas 3 Faixas (escala agilidade com a velocidade de 1x a 10x)
+    const speedFactor = Math.max(1.0, speed / this.baseSpeed);
+    const lerpRate = 18.0 + (speedFactor - 1.0) * 3.8;
+    this.x += (this.targetX - this.x) * Math.min(1.0, lerpRate * dt);
     this.mesh.position.x = this.x;
 
     const laneDiff = (this.targetX - this.x);

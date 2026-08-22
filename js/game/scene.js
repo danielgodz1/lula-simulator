@@ -9,6 +9,7 @@ export class GameScene {
     this.camera = null;
     this.renderer = null;
     this.sunLight = null;
+    this.fillLight = null;
     this.hemiLight = null;
     this.playerSpotLight = null;
     this.sunGroup = null;
@@ -175,24 +176,32 @@ export class GameScene {
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL
+    // 3. Renderizador WebGL com Configuração PBR Realista
     const isMobile = window.innerWidth <= 900;
+    const isWeakDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || isMobile;
+
     this.renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile,
+      antialias: true,
       alpha: false,
       powerPreference: 'high-performance',
       precision: isMobile ? 'mediump' : 'highp'
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    this.currentPixelRatio = isMobile 
-      ? Math.min(window.devicePixelRatio || 1, 1.25)
-      : Math.min(window.devicePixelRatio || 1, 2.0);
+    this.currentPixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2.0);
     this.renderer.setPixelRatio(this.currentPixelRatio);
 
-    this.renderer.shadowMap.enabled = !isMobile || window.innerWidth > 550;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    // Mapeamento de Tons ACES Filmic e Espaço de Cores sRGB
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
+    if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    }
+
+    // Sombras Suaves PCFSoft
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
@@ -209,30 +218,38 @@ export class GameScene {
     this.skyDome.position.set(0, -10, -50);
     this.scene.add(this.skyDome);
 
-    // 5. Morro de Favela Densa em Parallax (Substitui as montanhas geométricas triangulares)
+    // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Luzes
-    this.hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 0.85);
+    // 6. Iluminação em Camadas
+    // A. Luz Hemisférica (Céu / Chão)
+    this.hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 0.65);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.1);
+    // B. Luz Direcional Principal (Sol / Sombras Longas Dinâmicas)
+    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.25);
     this.sunLight.position.set(35, 75, 40);
-    this.sunLight.castShadow = this.renderer.shadowMap.enabled;
-    const shadowRes = isMobile ? 512 : 1024;
+    this.sunLight.castShadow = true;
+    const shadowRes = isWeakDevice ? 1024 : 2048;
     this.sunLight.shadow.mapSize.width = shadowRes;
     this.sunLight.shadow.mapSize.height = shadowRes;
     this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = 240;
-    this.sunLight.shadow.camera.left = -28;
-    this.sunLight.shadow.camera.right = 28;
-    this.sunLight.shadow.camera.top = 28;
-    this.sunLight.shadow.camera.bottom = -28;
-    this.sunLight.shadow.bias = -0.0005;
+    this.sunLight.shadow.camera.far = 260;
+    this.sunLight.shadow.camera.left = -30;
+    this.sunLight.shadow.camera.right = 30;
+    this.sunLight.shadow.camera.top = 30;
+    this.sunLight.shadow.camera.bottom = -30;
+    this.sunLight.shadow.bias = -0.001;
     this.scene.add(this.sunLight);
 
-    // Luz Noturna na Pista
+    // C. Luz Secundária de Preenchimento (Fill Light oposta, tom azul suave sem sombra)
+    this.fillLight = new THREE.DirectionalLight(0x93c5fd, 0.35);
+    this.fillLight.position.set(-35, 45, -20);
+    this.fillLight.castShadow = false;
+    this.scene.add(this.fillLight);
+
+    // D. Luz Noturna na Pista
     this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.0, 35, 1.5);
     this.playerSpotLight.position.set(0, 5.2, 2.0);
     this.scene.add(this.playerSpotLight);
@@ -366,44 +383,64 @@ export class GameScene {
       this.scene.fog.color.setHex(0x312e81);
       this.hemiLight.color.setHex(0xc7d2fe);
       this.hemiLight.groundColor.setHex(0x1e1b4b);
-      this.hemiLight.intensity = 0.75;
+      this.hemiLight.intensity = 0.70;
       this.sunLight.color.setHex(0xfecdd3);
-      this.sunLight.intensity = 0.95;
+      this.sunLight.intensity = 1.05;
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0xa5b4fc);
+        this.fillLight.intensity = 0.30;
+      }
       this.playerSpotLight.intensity = 0.85;
     } else if (t < 0.45) {
       // Manhã
       this.scene.fog.color.setHex(0xbae6fd);
       this.hemiLight.color.setHex(0xffedd5);
       this.hemiLight.groundColor.setHex(0x475569);
-      this.hemiLight.intensity = 1.05;
+      this.hemiLight.intensity = 0.85;
       this.sunLight.color.setHex(0xfffbeb);
-      this.sunLight.intensity = 1.45;
+      this.sunLight.intensity = 1.35;
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0x93c5fd);
+        this.fillLight.intensity = 0.40;
+      }
       this.playerSpotLight.intensity = 0.0;
     } else if (t < 0.65) {
       // Meio-Dia
       this.scene.fog.color.setHex(0xe0f2fe);
       this.hemiLight.color.setHex(0xffffff);
-      this.hemiLight.intensity = 1.15;
+      this.hemiLight.intensity = 0.95;
       this.sunLight.color.setHex(0xffffff);
-      this.sunLight.intensity = 1.55;
+      this.sunLight.intensity = 1.45;
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0xbfdbfe);
+        this.fillLight.intensity = 0.35;
+      }
       this.playerSpotLight.intensity = 0.0;
     } else if (t < 0.85) {
       // Pôr do Sol
       this.scene.fog.color.setHex(0xfcd34d);
       this.hemiLight.color.setHex(0xfb923c);
       this.hemiLight.groundColor.setHex(0x334155);
-      this.hemiLight.intensity = 0.95;
+      this.hemiLight.intensity = 0.80;
       this.sunLight.color.setHex(0xf97316);
-      this.sunLight.intensity = 1.30;
+      this.sunLight.intensity = 1.25;
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0xfdba74);
+        this.fillLight.intensity = 0.35;
+      }
       this.playerSpotLight.intensity = 0.35;
     } else {
       // Noite
       this.scene.fog.color.setHex(0x0f172a);
       this.hemiLight.color.setHex(0x38bdf8);
       this.hemiLight.groundColor.setHex(0x020617);
-      this.hemiLight.intensity = 0.55;
+      this.hemiLight.intensity = 0.45;
       this.sunLight.color.setHex(0x60a5fa);
-      this.sunLight.intensity = 0.40;
+      this.sunLight.intensity = 0.35;
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0x1e3a8a);
+        this.fillLight.intensity = 0.20;
+      }
       this.playerSpotLight.intensity = 1.45;
     }
 

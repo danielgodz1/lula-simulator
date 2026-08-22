@@ -328,10 +328,17 @@
         <label>Recorde</label>
         <span id="bestDisplay" style="color: var(--verde-neon);">0 km</span>
       </div>
+      <div class="hud-box" style="border-color: #ffd700;">
+        <label>Moedas</label>
+        <span id="coinsDisplay" style="color: #ffd700;">💰 0</span>
+      </div>
       <div class="hud-box" style="border-color: #3b82f6;">
         <label>Velocidade</label>
         <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
       </div>
+      <button id="btnOpenCharSelect" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#fef08a; font-size:15px; font-weight:bold; font-family:'Bangers',cursive;" title="Selecionar Personagem">
+        🎭 PERSONAGENS
+      </button>
       <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Som">
         🔊
       </button>
@@ -359,14 +366,37 @@
         </p>
         <div style="background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:12px; margin-bottom:16px; font-size:12px; color:var(--text-muted); text-align:left;">
           🎮 <strong>Como Jogar (Subway Surfers):</strong><br>
-          • <strong>← → / A D / Swipe:</strong> Mudar de Faixa<br>
+          • <strong>← → / A D / Swipe:</strong> Mudar de Faixa (Agilidade Dinâmica)<br>
           • <strong>↑ / W / Espaço / Swipe Cima:</strong> Pular Barreiras<br>
           • <strong>↓ / S / Swipe Baixo:</strong> Deslizar / Slide por baixo de Varais<br>
-          • 🥩 <strong>Pegue Picanhas e Moedas</strong> para multiplicar seu lucro!
+          • ⚡ <strong>Velocidade Acelerada:</strong> Aumenta gradativamente até 10.0x!<br>
+          • 💰 <strong>Colete Moedas e Picanhas</strong> para liberar novos personagens!
         </div>
-        <button class="btn-primary" id="btnStartGame" style="font-size:20px; padding:12px 28px; width:100%;">
-          🔊 TOQUE PARA INICIAR A CORRIDA!
-        </button>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <button class="btn-primary" id="btnStartGame" style="font-size:20px; padding:12px 28px; width:100%;">
+            🔊 TOQUE PARA INICIAR A CORRIDA!
+          </button>
+          <button class="btn-secondary" id="btnOpenCharSelectStart" style="font-size:16px; padding:10px 20px; width:100%; border-color:#eab308; color:#fef08a; font-family:'Bangers',cursive; letter-spacing:1px;">
+            🎭 ESCOLHER PERSONAGEM (LULA / BOLSONARO)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL DE SELEÇÃO DE PERSONAGENS 3D -->
+    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:1100;">
+      <div class="modal-card" style="max-width: 680px; border-color: var(--amarelo-brasil); box-shadow: 0 0 60px rgba(255, 223, 0, 0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+          <div class="modal-title" style="color:var(--amarelo-brasil); margin-bottom:0; font-size:32px;">🎭 PERSONAGENS 3D</div>
+          <button id="btnCloseCharSelect" style="background:none; border:none; color:#f87171; font-size:26px; cursor:pointer; font-weight:bold; padding:4px 8px;">✖</button>
+        </div>
+        <div style="background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:var(--text-muted);">Saldo Acumulado de Moedas:</span>
+          <span id="charModalCoinBalance" style="font-family:'Bangers',cursive; font-size:22px; color:#ffd700;">💰 0 MOEDAS</span>
+        </div>
+        <div id="characterCardsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+          <!-- Cards gerados dinamicamente via UI Manager -->
+        </div>
       </div>
     </div>
 
@@ -384,6 +414,11 @@
           <a href="index.html" class="btn-secondary" style="flex:1; font-size:16px; padding:12px 10px; display:flex; align-items:center; justify-content:center; text-decoration:none; border-radius:12px;">
             🏠 INÍCIO
           </a>
+        </div>
+        <div style="margin-top:10px;">
+          <button class="btn-secondary" id="btnOpenCharSelectGO" style="width:100%; font-size:16px; padding:10px 14px; border-color:#eab308; color:#fef08a; font-family:'Bangers',cursive; letter-spacing:1px;">
+            🎭 TROCAR DE PERSONAGEM
+          </button>
         </div>
 
         <!-- BOTÃO SMARTLINK RECOMPENSA PICANHAS BÔNUS -->

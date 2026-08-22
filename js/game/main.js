@@ -8,6 +8,7 @@ import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
 import { savePlayerScore } from '../firebase-config.js';
 import { auth } from '../auth.js';
+import { RunnerInventory } from './characters.js';
 
 export class Game {
   constructor() {
@@ -17,14 +18,19 @@ export class Game {
     this.obstacleManager = new ObstacleManager(this.sceneManager.scene);
     this.ui = new UIManager();
 
+    // Conecta a troca de personagem em tempo real na cena
+    this.ui.onCharacterChanged = (charId) => {
+      this.character.setCharacter(charId);
+    };
+
     // Estados do Jogo
     this.STATE = { WAITING: 0, PLAYING: 1, GAMEOVER: 2 };
     this.state = this.STATE.WAITING;
 
-    // Velocidade e Pontuação Calibrada
+    // Velocidade Calibrada (1.0x até 10.0x)
     this.baseSpeed = 32;
     this.speed = this.baseSpeed;
-    this.maxSpeed = 68;
+    this.maxSpeed = 320; // 10.0x baseSpeed
     this.distance = 0;
     this.coins = 0;
     this.picanhas = 0;
@@ -41,6 +47,10 @@ export class Game {
   }
 
   init() {
+    // Aplica o personagem ativo salvo no inventário
+    const selectedChar = RunnerInventory.getSelectedCharacter();
+    this.character.setCharacter(selectedChar.id);
+
     this.ui.showStartScreen(() => this.start());
 
     for (let i = 2; i < this.environment.segments.length; i++) {
@@ -100,12 +110,14 @@ export class Game {
 
   onCollectCoin(value) {
     this.coins += value;
+    RunnerInventory.addCoins(value);
     this.updateHUD();
   }
 
   onCollectPicanha(value) {
     this.picanhas++;
     this.coins += value;
+    RunnerInventory.addCoins(value);
     this.updateHUD();
   }
 
@@ -129,7 +141,8 @@ export class Game {
     if (this.superJumpActive) powerupText += '👟 ';
 
     const timeStr = this.sceneManager.getFormattedTime();
-    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr);
+    const totalCoins = RunnerInventory.getTotalCoins();
+    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr, totalCoins);
   }
 
   loop() {
@@ -146,7 +159,7 @@ export class Game {
       // 2. Aceleração e Distância
       this.distance += this.speed * dt;
       if (this.speed < this.maxSpeed) {
-        this.speed += 0.35 * dt;
+        this.speed += 0.85 * dt;
       }
 
       // 3. Timers de Power-up

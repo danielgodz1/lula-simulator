@@ -11,19 +11,20 @@ export class ObstacleManager {
     this.coins = [];
     this.powerups = [];
     this.movingTrains = [];
+    this.particles = [];
 
     this.textureLoader = new THREE.TextureLoader();
     this.picanhaTexture = this.textureLoader.load('img/picanha.png');
 
-    // Materiais Reutilizáveis
+    // Materiais PBR Reutilizáveis
     this.materials = {
-      trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.3 }),
-      trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.4 }),
+      trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.75, roughness: 0.25 }),
+      trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.6, roughness: 0.35 }),
       trainWindow: new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9 }),
       headlight: new THREE.MeshStandardMaterial({
         color: 0xfef08a,
         emissive: 0xfef08a,
-        emissiveIntensity: 1.2
+        emissiveIntensity: 1.3
       }),
       headlightBeam: new THREE.MeshBasicMaterial({
         color: 0xfef08a,
@@ -35,25 +36,41 @@ export class ObstacleManager {
       }),
       clotheslineWire: new THREE.LineBasicMaterial({ color: 0x475569 }),
       clothes: [
-        new THREE.MeshLambertMaterial({ color: 0xef4444 }),
-        new THREE.MeshLambertMaterial({ color: 0x3b82f6 }),
-        new THREE.MeshLambertMaterial({ color: 0x22c55e }),
-        new THREE.MeshLambertMaterial({ color: 0xfacc15 })
+        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.6 }),
+        new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.6 }),
+        new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.6 }),
+        new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.6 })
       ],
       goldCoin: new THREE.MeshStandardMaterial({
         map: textureAtlas.goldCoinTexture,
         color: 0xffd700,
-        metalness: 0.4,
-        roughness: 0.25,
+        metalness: 0.95,
+        roughness: 0.15,
         emissive: 0xb45309,
         emissiveIntensity: 0.35,
         side: THREE.DoubleSide
       }),
+      goldCoinRim: new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        metalness: 0.95,
+        roughness: 0.15,
+        emissive: 0xb45309,
+        emissiveIntensity: 0.35
+      }),
+      goldParticle: new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xfacc15,
+        emissiveIntensity: 0.85,
+        roughness: 0.1,
+        metalness: 0.9
+      }),
+      meatMat: new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.5 }),
+      fatMat: new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.4 }),
       // Materiais dos Power-ups 3D
       goldShoeMat: new THREE.MeshStandardMaterial({
         color: 0xffd700,
-        metalness: 0.85,
-        roughness: 0.2,
+        metalness: 0.9,
+        roughness: 0.15,
         emissive: 0xb45309,
         emissiveIntensity: 0.4
       }),
@@ -91,7 +108,9 @@ export class ObstacleManager {
     };
 
     this.geometries = {
-      coin: new THREE.CylinderGeometry(0.48, 0.48, 0.08, 20),
+      coinCore: new THREE.CylinderGeometry(0.46, 0.46, 0.08, 24),
+      coinRim: new THREE.TorusGeometry(0.46, 0.045, 8, 24),
+      particle: new THREE.BoxGeometry(0.09, 0.09, 0.09),
       train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
       documentCard: new THREE.PlaneGeometry(2.3, 1.45),
       socialCard: new THREE.PlaneGeometry(2.3, 1.45)
@@ -118,6 +137,14 @@ export class ObstacleManager {
     });
 
     this.powerups = this.powerups.filter(p => {
+      if (p.parent === parent) {
+        parent.remove(p.mesh);
+        return false;
+      }
+      return true;
+    });
+
+    this.particles = this.particles.filter(p => {
       if (p.parent === parent) {
         parent.remove(p.mesh);
         return false;
@@ -364,22 +391,32 @@ export class ObstacleManager {
   }
 
   createSingleCoin(parent, laneX, y, localZ) {
-    const coin = new THREE.Mesh(this.geometries.coin, this.materials.goldCoin);
-    coin.rotation.x = Math.PI / 2;
-    coin.position.set(laneX, y, localZ);
-    coin.castShadow = true;
-    parent.add(coin);
+    const coinGroup = new THREE.Group();
+    coinGroup.position.set(laneX, y, localZ);
+
+    const core = new THREE.Mesh(this.geometries.coinCore, this.materials.goldCoin);
+    core.rotation.x = Math.PI / 2;
+    core.castShadow = true;
+    core.receiveShadow = true;
+
+    const rim = new THREE.Mesh(this.geometries.coinRim, this.materials.goldCoinRim);
+    rim.castShadow = true;
+    rim.receiveShadow = true;
+
+    coinGroup.add(core, rim);
+    parent.add(coinGroup);
 
     this.coins.push({
-      mesh: coin,
+      mesh: coinGroup,
       parent: parent,
       laneX: laneX,
+      baseY: y,
       y: y,
       value: 1,
       collected: false,
       isPicanha: false,
       getAABB() {
-        const pz = parent.position.z + coin.position.z;
+        const pz = parent.position.z + coinGroup.position.z;
         return {
           minX: laneX - 0.5, maxX: laneX + 0.5,
           minY: y - 0.5, maxY: y + 0.5,
@@ -389,26 +426,58 @@ export class ObstacleManager {
     });
   }
 
+  spawnCoinParticles(x, y, z, parent) {
+    const count = 7;
+    for (let i = 0; i < count; i++) {
+      const pMesh = new THREE.Mesh(this.geometries.particle, this.materials.goldParticle);
+      pMesh.position.set(x, y, z);
+      parent.add(pMesh);
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const speed = 2.5 + Math.random() * 3.5;
+      this.particles.push({
+        mesh: pMesh,
+        parent: parent,
+        vx: Math.cos(angle) * speed,
+        vy: 3.5 + Math.random() * 4.0,
+        vz: Math.sin(angle) * speed,
+        life: 0.45,
+        maxLife: 0.45
+      });
+    }
+  }
+
   createPicanhaCollectible(parent, laneX, localZ) {
     const picanhaGroup = new THREE.Group();
     picanhaGroup.position.set(laneX, 0.9, localZ);
 
-    const meatMat = new THREE.MeshLambertMaterial({ color: 0xb91c1c });
-    const fatMat = new THREE.MeshLambertMaterial({ color: 0xfef08a });
-
-    const meat = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.35), meatMat);
-    const fatCap = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.18, 0.38), fatMat);
+    const meat = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.35), this.materials.meatMat);
+    const fatCap = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.18, 0.38), this.materials.fatMat);
     fatCap.position.y = 0.28;
 
     picanhaGroup.add(meat, fatCap);
     picanhaGroup.castShadow = true;
+    picanhaGroup.receiveShadow = true;
     parent.add(picanhaGroup);
 
     this.coins.push({
       mesh: picanhaGroup,
       parent: parent,
       laneX: laneX,
+      baseY: 0.9,
       y: 0.9,
+      value: 5,
+      collected: false,
+      isPicanha: true,
+      getAABB() {
+        const pz = parent.position.z + picanhaGroup.position.z;
+        return {
+          minX: laneX - 0.6, maxX: laneX + 0.6,
+          minY: 0.3, maxY: 1.5,
+          minZ: pz - 0.6, maxZ: pz + 0.6
+        };
+      }
+    });
+  }
       value: 5,
       collected: false,
       isPicanha: true,
@@ -545,14 +614,17 @@ export class ObstacleManager {
       }
     }
 
-    // D. Coleta de Moedas e Picanhas
+    // D. Coleta de Moedas e Picanhas com Rotação Y Contínua e Partículas
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i];
       if (coin.collected) continue;
 
       const coinWorldZ = coin.parent.position.z + coin.mesh.position.z;
 
-      coin.mesh.rotation.z += 3.5 * dt;
+      coin.mesh.rotation.y += 3.6 * dt;
+      if (coin.baseY !== undefined) {
+        coin.mesh.position.y = coin.baseY + Math.sin(elapsedTime * 4.2 + coin.laneX) * 0.08;
+      }
 
       if (player.magnetActive && !player.isDead) {
         const distZ = Math.abs(player.z - coinWorldZ);
@@ -569,6 +641,7 @@ export class ObstacleManager {
 
       if (overlapX && overlapY && overlapZ) {
         coin.collected = true;
+        this.spawnCoinParticles(coin.mesh.position.x, coin.mesh.position.y, coin.mesh.position.z, coin.parent);
         coin.parent.remove(coin.mesh);
         this.coins.splice(i, 1);
 
@@ -597,10 +670,30 @@ export class ObstacleManager {
 
       if (overlapX && overlapY && overlapZ) {
         pup.collected = true;
+        this.spawnCoinParticles(pup.mesh.position.x, pup.mesh.position.y, pup.mesh.position.z, pup.parent);
         pup.parent.remove(pup.mesh);
         this.powerups.splice(i, 1);
         gameAudio.playPowerup();
         if (typeof onCollectPowerup === 'function') onCollectPowerup(pup.type);
+      }
+    }
+
+    // F. Atualização de Partículas Douradas PBR
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.mesh.position.z += p.vz * dt;
+      p.vy -= 18.0 * dt;
+      const scale = Math.max(0.01, p.life / p.maxLife);
+      p.mesh.scale.set(scale, scale, scale);
+      p.mesh.rotation.x += 4.0 * dt;
+      p.mesh.rotation.y += 5.0 * dt;
+
+      if (p.life <= 0) {
+        p.parent.remove(p.mesh);
+        this.particles.splice(i, 1);
       }
     }
   }
@@ -609,9 +702,11 @@ export class ObstacleManager {
     this.obstacles.forEach(o => o.parent.remove(o.mesh));
     this.coins.forEach(c => c.parent.remove(c.mesh));
     this.powerups.forEach(p => p.parent.remove(p.mesh));
+    this.particles.forEach(p => p.parent.remove(p.mesh));
     this.obstacles = [];
     this.coins = [];
     this.powerups = [];
+    this.particles = [];
     this.movingTrains = [];
   }
 }
