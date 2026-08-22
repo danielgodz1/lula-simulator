@@ -297,6 +297,7 @@ export class UIManager {
   }
 
   openCharacterModal() {
+    gameAudio.stopAllVoiceAudios();
     if (!this.charSelectModal) return;
     this.previewCharId = RunnerInventory.getSelectedCharacter().id;
     this.renderCharacterCards();
@@ -311,6 +312,7 @@ export class UIManager {
   }
 
   closeCharacterModal() {
+    gameAudio.stopAllVoiceAudios();
     this.stop3DPreviewLoop();
     if (!this.charSelectModal) return;
     this.charSelectModal.style.display = 'none';
@@ -511,7 +513,9 @@ export class UIManager {
     this.gameOverModal.style.display = 'flex';
 
     if (this.btnRestart) {
-      this.btnRestart.onclick = () => {
+      this.btnRestart.onclick = (e) => {
+        if (e) e.stopPropagation();
+        gameAudio.stopAllVoiceAudios();
         this.gameOverModal.style.display = 'none';
         onRestart();
       };

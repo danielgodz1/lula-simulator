@@ -72,6 +72,8 @@ export class Game {
 
   start() {
     gameAudio.init();
+    gameAudio.stopAllVoiceAudios();
+    gameAudio.playStartVinheta();
     gameAudio.startAmbience();
     this.state = this.STATE.PLAYING;
     this.speed = this.baseSpeed;
@@ -82,6 +84,7 @@ export class Game {
   }
 
   restart() {
+    gameAudio.stopAllVoiceAudios();
     this.ui.hideGameOver();
     this.environment.reset();
     this.obstacleManager.reset();

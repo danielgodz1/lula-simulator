@@ -12,6 +12,7 @@ export class GameAudio {
     this.lastTrainPassTime = 0;
     this.lastTrainHornTime = 0;
     this.initialized = false;
+    this.activeAudios = [];
   }
 
   init() {
@@ -165,15 +166,9 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 5. COLETAR PICANHA (+5 BÔNUS COM ÁUDIO "PENSE NO LULA")
+  // 5. COLETAR PICANHA (+5 BÔNUS)
   playPicanhaCollect() {
     if (this.isMuted) return;
-    try {
-      const audio = new Audio('audios/pense-no-lula.mp3');
-      audio.volume = 0.90;
-      audio.play().catch(() => {});
-    } catch (e) {}
-
     this.ensureContext();
     if (!this.ctx) return;
     try {
@@ -301,13 +296,27 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 9. IMPACTO / MORTE (COM VINHETA "FAZ O L")
+  // 9. VINHETA DO INÍCIO DA CORRIDA ("FAZ O L" BAIXINHO)
+  playStartVinheta() {
+    if (this.isMuted) return;
+    try {
+      this.stopAllVoiceAudios();
+      const audio = new Audio('audios/faz-o-l-vinheta.mp3');
+      audio.volume = 0.25; // Volume bem baixo no início
+      this.activeAudios.push(audio);
+      audio.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  // 10. IMPACTO / MORTE (TOCA "PENSE NO LULA")
   playCrash() {
     if (this.isMuted) return;
     try {
-      const vinheta = new Audio('audios/faz-o-l-vinheta.mp3');
-      vinheta.volume = 0.92;
-      vinheta.play().catch(() => {});
+      this.stopAllVoiceAudios();
+      const deathAudio = new Audio('audios/pense-no-lula.mp3');
+      deathAudio.volume = 0.90;
+      this.activeAudios.push(deathAudio);
+      deathAudio.play().catch(() => {});
     } catch (e) {}
 
     this.ensureContext();
@@ -333,7 +342,20 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 10. SOM AMBIENTE DA FAVELA / CIDADE
+  // 11. ENCERRA TODOS OS ÁUDIOS DE VOZ / VINHETAS ATIVOS (Ao reiniciar, sair ou abrir menus)
+  stopAllVoiceAudios() {
+    if (Array.isArray(this.activeAudios)) {
+      this.activeAudios.forEach(audio => {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (e) {}
+      });
+      this.activeAudios = [];
+    }
+  }
+
+  // 12. SOM AMBIENTE DA FAVELA / CIDADE
   startAmbience() {
     if (this.ambienceNode) return;
     this.ensureContext();

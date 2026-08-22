@@ -524,6 +524,7 @@
     import { initGame } from './js/game/main.js';
     import { auth } from './js/auth.js';
     import { AdsManager } from './js/ads-manager.js';
+    import { gameAudio } from './js/game/audio.js';
 
     // Renderiza badge do perfil no cabeçalho
     auth.renderProfileBadge('nav');
@@ -536,7 +537,7 @@
       navLinksList?.classList.toggle('open');
     });
 
-    // Fecha o menu ao clicar fora ou em algum link
+    // Fecha o menu ao clicar fora ou em algum link e interrompe os áudios
     document.addEventListener('click', (e) => {
       if (!e.target.closest('nav')) {
         navLinksList?.classList.remove('open');
@@ -544,7 +545,15 @@
     });
     navLinksList?.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
+        gameAudio.stopAllVoiceAudios();
         navLinksList?.classList.remove('open');
+      });
+    });
+
+    // Ao clicar em qualquer link (como "Início" na tela de Game Over), silencia os áudios
+    document.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        gameAudio.stopAllVoiceAudios();
       });
     });
 
