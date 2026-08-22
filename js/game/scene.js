@@ -1,4 +1,4 @@
-// js/game/scene.js — Céu Brasileiro Golden Hour, Sol Tropical Dourado, Morros em Parallax e Iluminação Quente
+// js/game/scene.js — Ciclo Dia/Noite Dinâmico (5h Madrugada -> Manhã -> Meio-Dia -> Pôr do Sol -> Noite Estrelada)
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
 export class GameScene {
@@ -8,11 +8,21 @@ export class GameScene {
     this.camera = null;
     this.renderer = null;
     this.sunLight = null;
+    this.hemiLight = null;
+    this.playerSpotLight = null; // Luz de pista para visibilidade à noite
     this.sunGroup = null;
     this.sunRays = null;
+    this.moonMesh = null;
     this.skyMesh = null;
+    this.skyCanvas = null;
+    this.skyCtx = null;
+    this.skyTexture = null;
     this.hillsGroup = null;
     this.kites = [];
+
+    // Ciclo de Tempo (Começa às 5h da manhã / Madrugada = 0.04)
+    this.timeOfDay = 0.04; // 0.0 = 04:00, 0.25 = 09:00, 0.50 = 13:00, 0.75 = 18:00, 0.90 = 22:00
+    this.cycleSpeed = 0.007; // ~140 segundos para um ciclo completo de 24 horas
 
     // Monitor de Performance e Escalação Dinâmica
     this.fpsHistory = [];
@@ -24,32 +34,77 @@ export class GameScene {
   }
 
   /**
-   * Cria o Skybox com Gradiente Golden Hour Brasileiro (Pôr do Sol Tropical do Rio de Janeiro)
+   * Canvas dinâmico para renderizar o gradiente do céu que muda em tempo real
    */
-  createGoldenHourSkyTexture(size = 512) {
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
+  createDynamicSkyTexture() {
+    this.skyCanvas = document.createElement('canvas');
+    this.skyCanvas.width = 256;
+    this.skyCanvas.height = 256;
+    this.skyCtx = this.skyCanvas.getContext('2d');
+    this.skyTexture = new THREE.CanvasTexture(this.skyCanvas);
+    this.skyTexture.wrapS = THREE.RepeatWrapping;
+    this.skyTexture.wrapT = THREE.ClampToEdgeWrapping;
+    this.updateSkyGradient(this.timeOfDay);
+    return this.skyTexture;
+  }
 
+  updateSkyGradient(t) {
+    if (!this.skyCtx) return;
+    const ctx = this.skyCtx;
+    const size = 256;
     const grad = ctx.createLinearGradient(0, 0, 0, size);
-    grad.addColorStop(0.0, '#1d4ed8'); // Azul Intenso no Topo do Céu
-    grad.addColorStop(0.35, '#38bdf8'); // Azul Celeste
-    grad.addColorStop(0.65, '#f59e0b'); // Dourado Âmbar Tropical
-    grad.addColorStop(0.85, '#ea580c'); // Laranja Quente do Pôr do Sol
-    grad.addColorStop(1.0, '#fef08a'); // Horizonte Dourado Brilhante
+
+    if (t < 0.15) {
+      // 1. Madrugada / Alvorecer (5h - 7h)
+      grad.addColorStop(0.0, '#090d16');
+      grad.addColorStop(0.4, '#1e1b4b');
+      grad.addColorStop(0.7, '#4338ca');
+      grad.addColorStop(0.9, '#f43f5e');
+      grad.addColorStop(1.0, '#fed7aa');
+    } else if (t < 0.45) {
+      // 2. Manhã Radiante (8h - 11h)
+      grad.addColorStop(0.0, '#1d4ed8');
+      grad.addColorStop(0.4, '#38bdf8');
+      grad.addColorStop(0.8, '#7dd3fc');
+      grad.addColorStop(1.0, '#bae6fd');
+    } else if (t < 0.65) {
+      // 3. Meio-Dia Tropical (12h - 15h)
+      grad.addColorStop(0.0, '#0284c7');
+      grad.addColorStop(0.4, '#38bdf8');
+      grad.addColorStop(0.8, '#bae6fd');
+      grad.addColorStop(1.0, '#e0f2fe');
+    } else if (t < 0.85) {
+      // 4. Pôr do Sol / Golden Hour (16h - 19h)
+      grad.addColorStop(0.0, '#1e1b4b');
+      grad.addColorStop(0.3, '#7c2d12');
+      grad.addColorStop(0.6, '#ea580c');
+      grad.addColorStop(0.85, '#f59e0b');
+      grad.addColorStop(1.0, '#fef08a');
+    } else {
+      // 5. Noite Estrelada (20h - 4h)
+      grad.addColorStop(0.0, '#020617');
+      grad.addColorStop(0.5, '#0f172a');
+      grad.addColorStop(0.85, '#1e293b');
+      grad.addColorStop(1.0, '#090d16');
+    }
 
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, size, size);
 
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.needsUpdate = true;
-    return texture;
+    // Adiciona estrelas cintilantes à noite ou na madrugada
+    if (t > 0.85 || t < 0.12) {
+      ctx.fillStyle = '#ffffff';
+      const starCount = 35;
+      for (let i = 0; i < starCount; i++) {
+        const sx = ((i * 37) % size);
+        const sy = ((i * 53) % (size * 0.6));
+        ctx.fillRect(sx, sy, 1.5, 1.5);
+      }
+    }
+
+    this.skyTexture.needsUpdate = true;
   }
 
-  // Textura do Sol com Brilho Volumétrico
   createSunTexture(size = 512) {
     const canvas = document.createElement('canvas');
     canvas.width = size;
@@ -110,18 +165,18 @@ export class GameScene {
   init() {
     if (!this.container) return;
 
-    // 1. Cena com Fog Atmosférico Dourado Suave
+    // 1. Cena com Fog Atmosférico Dinâmico
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0xfde68a); // Fundo quente combinando com o horizonte
-    this.scene.fog = new THREE.Fog(0xfcd34d, 70, 260); // Esconde spawn suavemente sem "pipocar"
+    this.scene.background = new THREE.Color(0x1e1b4b); // Começa em tom alvorecer
+    this.scene.fog = new THREE.Fog(0x1e1b4b, 65, 250);
 
-    // 2. Câmera em 3ª Pessoa (Posicionamento Imersivo)
+    // 2. Câmera em 3ª Pessoa
     const aspect = this.container.clientWidth / this.container.clientHeight;
     this.camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 800);
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL de Alta Performance
+    // 3. Renderizador WebGL
     const isMobile = window.innerWidth <= 900;
     this.renderer = new THREE.WebGLRenderer({
       antialias: !isMobile,
@@ -143,10 +198,10 @@ export class GameScene {
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Domo de Céu com Gradiente Tropical Pôr do Sol
+    // 4. Domo de Céu Dinâmico
     const skyGeo = new THREE.CylinderGeometry(340, 340, 200, 32, 1, true);
     const skyMat = new THREE.MeshBasicMaterial({
-      map: this.createGoldenHourSkyTexture(512),
+      map: this.createDynamicSkyTexture(),
       side: THREE.BackSide,
       fog: false
     });
@@ -154,15 +209,15 @@ export class GameScene {
     this.skyMesh.position.set(0, 50, -100);
     this.scene.add(this.skyMesh);
 
-    // 5. Morros Verdes Ondulados em Low-Poly no Horizonte (Cenário do Rio de Janeiro)
+    // 5. Morros do Rio de Janeiro em Low-Poly
     this.createDistantHills();
 
-    // 6. Iluminação Quente & Sombras Douradas
-    const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 1.1);
-    hemiLight.position.set(0, 80, 0);
-    this.scene.add(hemiLight);
+    // 6. Luz Hemisférica e Luz Solar Direcional
+    this.hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 0.85);
+    this.hemiLight.position.set(0, 80, 0);
+    this.scene.add(this.hemiLight);
 
-    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.5);
+    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.1);
     this.sunLight.position.set(35, 75, 40);
     this.sunLight.castShadow = this.renderer.shadowMap.enabled;
     const shadowRes = isMobile ? 512 : 1024;
@@ -177,9 +232,14 @@ export class GameScene {
     this.sunLight.shadow.bias = -0.0005;
     this.scene.add(this.sunLight);
 
-    // 7. Sol Dourado no Horizonte com Halo Volumétrico
+    // 7. Luz de Iluminação Noturna na Pista do Jogador
+    this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.0, 35, 1.5);
+    this.playerSpotLight.position.set(0, 5.2, 2.0);
+    this.scene.add(this.playerSpotLight);
+
+    // 8. Sol Dourado e Lua Prateada
     this.sunGroup = new THREE.Group();
-    this.sunGroup.position.set(15, 45, -280);
+    this.sunGroup.position.set(15, 30, -280);
 
     const sunTexture = this.createSunTexture(512);
     const sunRaysTexture = this.createSunRaysTexture(512);
@@ -221,20 +281,26 @@ export class GameScene {
 
     this.scene.add(this.sunGroup);
 
-    // 8. Pipas Flutuando no Céu Carioca
+    // Lua 3D para a noite
+    const moonGeo = new THREE.SphereGeometry(14, 16, 16);
+    const moonMat = new THREE.MeshBasicMaterial({ color: 0xf1f5f9 });
+    this.moonMesh = new THREE.Mesh(moonGeo, moonMat);
+    this.moonMesh.position.set(-35, 75, -280);
+    this.moonMesh.visible = false;
+    this.scene.add(this.moonMesh);
+
+    // 9. Pipas
     this.createFloatingKites();
 
     window.addEventListener('resize', () => this.onResize());
   }
 
-  // Morros Verdes em Low-Poly no Fundo
   createDistantHills() {
     this.hillsGroup = new THREE.Group();
     this.hillsGroup.position.set(0, 0, -220);
 
     const hillColors = [0x15803d, 0x166534, 0x14532d, 0x047857];
 
-    // Colinas em arco no horizonte
     for (let i = 0; i < 8; i++) {
       const radius = 25 + Math.random() * 20;
       const height = 45 + Math.random() * 35;
@@ -253,7 +319,6 @@ export class GameScene {
     this.scene.add(this.hillsGroup);
   }
 
-  // Pipas Coloridas Flutuando no Céu
   createFloatingKites() {
     const kiteColors = [0xef4444, 0xfacc15, 0x3b82f6, 0x10b981, 0xec4899];
     const kiteGeo = new THREE.PlaneGeometry(1.6, 2.2);
@@ -264,7 +329,7 @@ export class GameScene {
         side: THREE.DoubleSide
       });
       const kite = new THREE.Mesh(kiteGeo, kiteMat);
-      kite.rotation.z = Math.PI / 4; // Formato de losango
+      kite.rotation.z = Math.PI / 4;
       
       const x = (i % 2 === 0 ? -1 : 1) * (14 + Math.random() * 18);
       const y = 14 + Math.random() * 12;
@@ -281,6 +346,89 @@ export class GameScene {
         speed: 1.5 + Math.random() * 1.5
       });
     }
+  }
+
+  /**
+   * Atualiza o ciclo de iluminação e transições suaves de cor do dia/noite
+   */
+  updateDayNightCycle(dt) {
+    this.timeOfDay = (this.timeOfDay + this.cycleSpeed * dt) % 1.0;
+    const t = this.timeOfDay;
+
+    this.updateSkyGradient(t);
+
+    // Posição do Sol e Lua
+    const sunAngle = t * Math.PI * 2;
+    const sunY = Math.sin(sunAngle) * 75 + 10;
+    const sunX = Math.cos(sunAngle) * 50;
+
+    this.sunGroup.position.set(sunX, Math.max(-40, sunY), -280);
+    this.sunLight.position.set(sunX * 0.8, Math.max(10, sunY), 40);
+
+    const isNight = t > 0.82 || t < 0.14;
+    this.moonMesh.visible = isNight;
+    this.sunGroup.visible = !isNight || sunY > -10;
+
+    // Transição de Cores de Iluminação e Fog
+    if (t < 0.15) {
+      // 5h - Alvorecer
+      this.scene.fog.color.setHex(0x312e81);
+      this.hemiLight.color.setHex(0xc7d2fe);
+      this.hemiLight.groundColor.setHex(0x1e1b4b);
+      this.hemiLight.intensity = 0.75;
+      this.sunLight.color.setHex(0xfecdd3);
+      this.sunLight.intensity = 0.95;
+      this.playerSpotLight.intensity = 0.85; // Luz suave na pista
+    } else if (t < 0.45) {
+      // Manhã
+      this.scene.fog.color.setHex(0xbae6fd);
+      this.hemiLight.color.setHex(0xffedd5);
+      this.hemiLight.groundColor.setHex(0x475569);
+      this.hemiLight.intensity = 1.05;
+      this.sunLight.color.setHex(0xfffbeb);
+      this.sunLight.intensity = 1.45;
+      this.playerSpotLight.intensity = 0.0;
+    } else if (t < 0.65) {
+      // Meio-Dia
+      this.scene.fog.color.setHex(0xe0f2fe);
+      this.hemiLight.color.setHex(0xffffff);
+      this.hemiLight.intensity = 1.15;
+      this.sunLight.color.setHex(0xffffff);
+      this.sunLight.intensity = 1.55;
+      this.playerSpotLight.intensity = 0.0;
+    } else if (t < 0.85) {
+      // Pôr do Sol / Golden Hour
+      this.scene.fog.color.setHex(0xfcd34d);
+      this.hemiLight.color.setHex(0xfb923c);
+      this.hemiLight.groundColor.setHex(0x334155);
+      this.hemiLight.intensity = 0.95;
+      this.sunLight.color.setHex(0xf97316);
+      this.sunLight.intensity = 1.30;
+      this.playerSpotLight.intensity = 0.35;
+    } else {
+      // Noite
+      this.scene.fog.color.setHex(0x0f172a);
+      this.hemiLight.color.setHex(0x38bdf8);
+      this.hemiLight.groundColor.setHex(0x020617);
+      this.hemiLight.intensity = 0.55;
+      this.sunLight.color.setHex(0x60a5fa);
+      this.sunLight.intensity = 0.40;
+      this.playerSpotLight.intensity = 1.45; // Iluminação total da pista para o jogador
+    }
+
+    return isNight;
+  }
+
+  /**
+   * Retorna o horário formatado para exibição no HUD
+   */
+  getFormattedTime() {
+    // 0.0 = 04:00, 1.0 = 04:00 do dia seguinte
+    const totalMinutes = Math.floor((this.timeOfDay * 24 * 60 + 4 * 60) % (24 * 60));
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    const icon = (hours >= 5 && hours < 8) ? '🌅' : (hours >= 8 && hours < 17) ? '☀️' : (hours >= 17 && hours < 20) ? '🌇' : '🌙';
+    return `${icon} ${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   }
 
   monitorPerformance() {
@@ -313,21 +461,22 @@ export class GameScene {
       return;
     }
 
-    // Interpolação Linear suave da câmera nas 3 faixas
     this.camera.position.x += (targetX * 0.75 - this.camera.position.x) * (9.5 * dt);
     
-    // Acompanha sutilmente o pulo do personagem
     const targetCamY = 4.4 + Math.max(0, targetY * 0.35);
     this.camera.position.y += (targetCamY - this.camera.position.y) * (8.0 * dt);
 
     this.camera.lookAt(this.camera.position.x * 0.6, 1.6 + Math.max(0, targetY * 0.2), -16);
 
-    // Rotação suave dos raios solares
+    // Luz do jogador acompanha sua posição
+    if (this.playerSpotLight) {
+      this.playerSpotLight.position.x = this.camera.position.x * 0.7;
+    }
+
     if (this.sunRays) {
       this.sunRays.material.rotation += 0.05 * dt;
     }
 
-    // Animação senoidal suave das Pipas no céu
     for (const k of this.kites) {
       k.mesh.position.x = k.baseX + Math.sin(elapsedTime * k.speed + k.phase) * 1.8;
       k.mesh.position.y = k.baseY + Math.cos(elapsedTime * (k.speed * 0.8) + k.phase) * 1.2;

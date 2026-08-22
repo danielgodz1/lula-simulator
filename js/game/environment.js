@@ -1,4 +1,4 @@
-// js/game/environment.js — Cenário Modular da Favela com Movimento Contínuo (Esteira) e Object Pooling
+// js/game/environment.js — Favela com Iluminação Noturna Dinâmica (Janelas Acesas, Postes Iluminados e Esteira de Movimento)
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { textureAtlas } from './textures.js';
@@ -11,7 +11,7 @@ export class Environment {
     this.scene = scene;
     this.segments = [];
 
-    // Materiais Compartilhados Globais (Zero Garbage Collection)
+    // Materiais Compartilhados Globais com Suporte a Emissão Noturna
     this.sharedMaterials = {
       asphalt: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
       gravel: new THREE.MeshLambertMaterial({ color: 0x3f3f46 }),
@@ -26,10 +26,22 @@ export class Environment {
       wire: new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 1.5 }),
       dumpster: new THREE.MeshLambertMaterial({ color: 0x16a34a }),
       rebar: new THREE.MeshLambertMaterial({ color: 0x9a3412 }),
-      antenna: new THREE.MeshLambertMaterial({ color: 0x64748b })
+      antenna: new THREE.MeshLambertMaterial({ color: 0x64748b }),
+      // Janelas Dinâmicas (Acendem em amarelo/âmbar à noite)
+      windowMat: new THREE.MeshStandardMaterial({
+        color: 0x0284c7,
+        emissive: 0xfef08a,
+        emissiveIntensity: 0.85,
+        roughness: 0.2
+      }),
+      // Lâmpadas dos Postes
+      streetLampMat: new THREE.MeshStandardMaterial({
+        color: 0xffedd5,
+        emissive: 0xfef08a,
+        emissiveIntensity: 0.95
+      })
     };
 
-    // Cores vibrantes das casas da comunidade
     this.houseColors = [
       0xb45309, // Tijolo Baiano
       0xea580c, // Laranja Queimado
@@ -61,12 +73,11 @@ export class Environment {
     }
   }
 
-  // Criação do Segmento com Pista de Asfalto, Trilhos e Casas Modulares
   createFavelaSegment(zPos) {
     const segment = new THREE.Group();
     segment.position.z = zPos;
 
-    // 1. Asfalto da Rua
+    // 1. Asfalto
     const groundGeo = new THREE.PlaneGeometry(150, SEGMENT_LENGTH);
     const ground = new THREE.Mesh(groundGeo, this.sharedMaterials.asphalt);
     ground.rotation.x = -Math.PI / 2;
@@ -74,7 +85,7 @@ export class Environment {
     ground.receiveShadow = true;
     segment.add(ground);
 
-    // 2. Leito de Brita
+    // 2. Brita
     const trackWidth = 10.2;
     const gravelGeo = new THREE.PlaneGeometry(trackWidth, SEGMENT_LENGTH);
     const gravel = new THREE.Mesh(gravelGeo, this.sharedMaterials.gravel);
@@ -83,7 +94,7 @@ export class Environment {
     gravel.receiveShadow = true;
     segment.add(gravel);
 
-    // 3. Calçadas de Concreto com Guias
+    // 3. Calçadas
     [-6.4, 6.4].forEach(cx => {
       const curb = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.22, SEGMENT_LENGTH), this.sharedMaterials.curb);
       curb.position.set(cx, 0.11, 0);
@@ -91,7 +102,7 @@ export class Environment {
       segment.add(curb);
     });
 
-    // 4. Faixas Amarelas da Rua
+    // 4. Faixas
     [-9.6, 9.6].forEach(sx => {
       for (let dz = -SEGMENT_LENGTH / 2 + 3; dz < SEGMENT_LENGTH / 2; dz += 8) {
         const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.25, 4.0), this.sharedMaterials.yellowStripe);
@@ -101,7 +112,7 @@ export class Environment {
       }
     });
 
-    // 5. Trilhos com InstancedMesh de Dormentes (Ultra Performance)
+    // 5. Trilhos Instanciados
     this.createInstancedTracks(segment);
 
     // 6. Muretas com Grafites
@@ -120,10 +131,10 @@ export class Environment {
       }
     });
 
-    // 7. Casas Empilhadas da Favela
+    // 7. Casas Empilhadas com Janelas que Iluminam
     this.buildFavelaHouses(segment);
 
-    // 8. Postes e Fiação Elétrica
+    // 8. Postes com Lanternas Iluminadas
     this.buildStreetProps(segment);
 
     return segment;
@@ -162,7 +173,7 @@ export class Environment {
   buildFavelaHouses(segment) {
     [-15, 15].forEach((baseX, sideIdx) => {
       for (let bz = -SEGMENT_LENGTH / 2 + 8; bz < SEGMENT_LENGTH / 2; bz += 16) {
-        const floors = 1 + Math.floor(Math.random() * 3.8); // Variação de 1 a 4 andares
+        const floors = 1 + Math.floor(Math.random() * 3.8);
         let currentY = 0;
 
         for (let f = 0; f < floors; f++) {
@@ -180,7 +191,7 @@ export class Environment {
           house.receiveShadow = true;
           segment.add(house);
 
-          // Porta no térreo
+          // Porta
           if (f === 0) {
             const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshLambertMaterial({ color: 0x451a03 }));
             door.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), 1.1, bz - 1.5);
@@ -188,17 +199,16 @@ export class Environment {
             segment.add(door);
           }
 
-          // Janelas nos andares
+          // Janelas que Acendem à Noite
           const winGeo = new THREE.PlaneGeometry(1.4, 1.2);
-          const winMat = new THREE.MeshLambertMaterial({ color: 0x0284c7 });
           [-2.2, 2.2].forEach(wz => {
-            const win = new THREE.Mesh(winGeo, winMat);
+            const win = new THREE.Mesh(winGeo, this.sharedMaterials.windowMat);
             win.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.8, bz + wz);
             win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
             segment.add(win);
           });
 
-          // Laje de Concreto
+          // Laje
           const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.25, d + 0.6), this.sharedMaterials.concreteWall);
           slab.position.set(baseX + offsetX, currentY + h, bz);
           slab.receiveShadow = true;
@@ -209,7 +219,7 @@ export class Environment {
 
         const topY = currentY;
 
-        // Vergalhões de ferro na laje do topo
+        // Vergalhões
         [-2.5, 2.5].forEach(vx => {
           [-3.5, 3.5].forEach(vz => {
             const rebar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 4), this.sharedMaterials.rebar);
@@ -218,7 +228,7 @@ export class Environment {
           });
         });
 
-        // Caixa d'água Fortlev ou Antena no Topo
+        // Caixa d'água Fortlev ou Antena
         if (Math.random() > 0.3) {
           const tankGeo = new THREE.CylinderGeometry(1.2, 1.1, 1.6, 16);
           const tank = new THREE.Mesh(tankGeo, this.sharedMaterials.waterTank);
@@ -227,7 +237,6 @@ export class Environment {
           tank.receiveShadow = true;
           segment.add(tank);
         } else {
-          // Antena de TV
           const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 4), this.sharedMaterials.antenna);
           antenna.position.set(baseX, topY + 1.6, bz);
           segment.add(antenna);
@@ -251,6 +260,11 @@ export class Environment {
         const cross = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.16, 0.16), this.sharedMaterials.railTie);
         cross.position.set(px + (sideIdx === 0 ? 0.6 : -0.6), 8.8, pz);
         segment.add(cross);
+
+        // Lanterna de Luz no Poste
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), this.sharedMaterials.streetLampMat);
+        lamp.position.set(px + (sideIdx === 0 ? 1.2 : -1.2), 8.6, pz);
+        segment.add(lamp);
 
         polePositions.push({ x: px, y: 8.8, z: pz });
 
@@ -284,27 +298,39 @@ export class Environment {
   }
 
   /**
-   * Esteira Contínua de Movimento e Object Pooling
-   * Desliza todos os segmentos em direção à câmera (+Z)
+   * Atualiza a emissão de luz nas janelas e postes com base no horário
    */
+  updateNightLights(isNight, timeOfDay) {
+    // Janelas e postes acendem na madrugada (t < 0.15) e à noite (t > 0.78)
+    const isDark = timeOfDay < 0.15 || timeOfDay > 0.78;
+    const intensity = isDark ? 0.95 : 0.05;
+
+    this.sharedMaterials.windowMat.emissiveIntensity = intensity;
+    this.sharedMaterials.streetLampMat.emissiveIntensity = intensity;
+
+    if (isDark) {
+      this.sharedMaterials.windowMat.emissive.setHex(0xfef08a);
+      this.sharedMaterials.streetLampMat.emissive.setHex(0xfef08a);
+    } else {
+      this.sharedMaterials.windowMat.emissive.setHex(0x000000);
+      this.sharedMaterials.streetLampMat.emissive.setHex(0x000000);
+    }
+  }
+
   update(speed, dt, onRecycleSegment) {
     for (let i = 0; i < this.segments.length; i++) {
       const seg = this.segments[i];
       seg.position.z += speed * dt;
 
-      // Quando o segmento passa completamente atrás da câmera (> 85 metros)
       if (seg.position.z > SEGMENT_LENGTH) {
-        // Encontra o segmento mais distante à frente
         let minZ = 0;
         for (const s of this.segments) {
           if (s.position.z < minZ) minZ = s.position.z;
         }
 
-        // Reposiciona o segmento reciclado perfeitamente conectado à frente
         const newZ = minZ - SEGMENT_LENGTH + 0.1;
         seg.position.z = newZ;
 
-        // Callback para respawnar entidades no segmento reciclado
         if (typeof onRecycleSegment === 'function') {
           onRecycleSegment(seg, newZ);
         }

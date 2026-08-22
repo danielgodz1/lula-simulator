@@ -28,11 +28,12 @@ export class UIManager {
     }
   }
 
-  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '') {
+  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '') {
     if (this.distDisplay) this.distDisplay.textContent = `${distanceKm} km`;
     if (this.bestDisplay) this.bestDisplay.textContent = `${bestDistanceKm} km`;
     if (this.speedDisplay) {
-      this.speedDisplay.textContent = `${speedRatio.toFixed(1)}x ${powerupStatus}`;
+      const timePrefix = timeOfDayStr ? `${timeOfDayStr} · ` : '';
+      this.speedDisplay.textContent = `${timePrefix}${speedRatio.toFixed(1)}x ${powerupStatus}`;
     }
   }
 

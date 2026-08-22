@@ -1,4 +1,4 @@
-// js/game/obstacles.js — Obstáculos, Trens de Metrô, Cavaletes, Cones, Colecionáveis e AABB Hitboxes
+// js/game/obstacles.js — Obstáculos, Trens com Faróis Iluminados, Efeitos Sonoros e Hitboxes AABB
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { gameAudio } from './audio.js';
@@ -15,12 +15,24 @@ export class ObstacleManager {
     this.textureLoader = new THREE.TextureLoader();
     this.picanhaTexture = this.textureLoader.load('img/picanha.png');
 
-    // Materiais Reutilizáveis Compartilhados (Zero Alocação em Runtime)
+    // Materiais Reutilizáveis
     this.materials = {
       trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.3 }),
       trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.4 }),
       trainWindow: new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9 }),
-      headlight: new THREE.MeshBasicMaterial({ color: 0xfef08a }),
+      headlight: new THREE.MeshStandardMaterial({
+        color: 0xfef08a,
+        emissive: 0xfef08a,
+        emissiveIntensity: 1.2
+      }),
+      headlightBeam: new THREE.MeshBasicMaterial({
+        color: 0xfef08a,
+        transparent: true,
+        opacity: 0.18,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      }),
       barrierWood: new THREE.MeshLambertMaterial({ color: 0x78350f }),
       clotheslineWire: new THREE.LineBasicMaterial({ color: 0x475569 }),
       clothes: [
@@ -31,12 +43,9 @@ export class ObstacleManager {
       ],
       goldCoin: new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 }),
       magnetPowerup: new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.3 }),
-      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 }),
-      coneOrange: new THREE.MeshLambertMaterial({ color: 0xf97316 }),
-      coneWhite: new THREE.MeshLambertMaterial({ color: 0xffffff })
+      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 })
     };
 
-    // Geometrias Reutilizáveis
     this.geometries = {
       coin: new THREE.CylinderGeometry(0.48, 0.48, 0.12, 16),
       powerup: new THREE.BoxGeometry(0.85, 0.85, 0.85),
@@ -46,9 +55,6 @@ export class ObstacleManager {
     };
   }
 
-  /**
-   * Limpa entidades antigas associadas a um segmento antes de respawnar
-   */
   clearSegmentEntities(parent) {
     this.obstacles = this.obstacles.filter(o => {
       if (o.parent === parent) {
@@ -77,7 +83,6 @@ export class ObstacleManager {
     });
   }
 
-  // 1. SPAWN INTELIGENTE DE OBSTÁCULOS E COLECIONÁVEIS
   spawnSegmentEntities(parent, segZ, segmentLength = 85) {
     this.clearSegmentEntities(parent);
 
@@ -89,22 +94,17 @@ export class ObstacleManager {
 
       switch (pattern) {
         case 0:
-          // Trem de Metrô Parado ou em Movimento na Faixa Escolhida
           this.createSubwayTrain(parent, LANES[chosenLane], localZ, Math.random() > 0.5);
-          // Linha de moedas na faixa livre
           const safeLane0 = (chosenLane + 1) % 3;
           this.createCoinLine(parent, LANES[safeLane0], localZ - 10, 5);
           break;
 
         case 1:
-          // Barreira CLT 44H (Pular ou Desviar)
           this.createCLTHurdle(parent, LANES[chosenLane], localZ);
-          // Arco de moedas por cima da CLT
           this.createCoinArc(parent, LANES[chosenLane], localZ);
           break;
 
         case 2:
-          // Placa Bolsa Família ou Auxílio Brasil
           const isBolsa = Math.random() > 0.5;
           this.createSocialBenefitBarrier(parent, LANES[chosenLane], localZ, isBolsa);
           const safeLane2 = (chosenLane + 2) % 3;
@@ -112,16 +112,13 @@ export class ObstacleManager {
           break;
 
         case 3:
-          // Varal de Roupas Suspenso (Exige Slide / Agachamento)
           this.createClotheslineObstacle(parent, LANES[chosenLane], localZ);
-          // Picanha bônus no chão sob o varal
           if (Math.random() > 0.3) {
             this.createPicanhaCollectible(parent, LANES[chosenLane], localZ);
           }
           break;
 
         case 4:
-          // Power-up Especial (Ímã ou Super Pulo) + Linha de Moedas
           const pType = Math.random() > 0.5 ? 'magnet' : 'superjump';
           this.createPowerupItem(parent, LANES[chosenLane], localZ, pType);
           const safeLane4 = (chosenLane + 1) % 3;
@@ -131,7 +128,6 @@ export class ObstacleManager {
     });
   }
 
-  // 2. CRIAÇÃO DE OBSTÁCULOS COM HITBOXES AABB
   createSubwayTrain(parent, laneX, localZ, isMoving = false) {
     const train = new THREE.Group();
     train.position.set(laneX, 1.7, localZ);
@@ -146,13 +142,20 @@ export class ObstacleManager {
     front.castShadow = true;
     train.add(front);
 
-    // Faróis de Luz
+    // Faróis de Luz Iluminados
     [-0.75, 0.75].forEach(hx => {
       const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 12), this.materials.headlight);
       lamp.rotation.x = Math.PI / 2;
       lamp.position.set(hx, -0.4, 9.15);
       train.add(lamp);
     });
+
+    // Facho de Luz dos Faróis Projetado à Frente no Chão
+    const beamGeo = new THREE.ConeGeometry(2.2, 12.0, 8, 1, true);
+    const beam = new THREE.Mesh(beamGeo, this.materials.headlightBeam);
+    beam.rotation.x = -Math.PI / 2;
+    beam.position.set(0, -0.4, 15.0);
+    train.add(beam);
 
     const cabinWin = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.1), this.materials.trainWindow);
     cabinWin.position.set(0, 0.6, 9.12);
@@ -168,6 +171,8 @@ export class ObstacleManager {
       localZ: localZ,
       isMoving: isMoving,
       moveSpeed: isMoving ? 14 : 0,
+      hornPlayed: false,
+      passSoundPlayed: false,
       getAABB() {
         const pz = parent.position.z + train.position.z;
         return {
@@ -305,7 +310,7 @@ export class ObstacleManager {
     });
   }
 
-  // 3. COLECIONÁVEIS
+  // Colecionáveis
   createCoinLine(parent, laneX, startLocalZ, count = 5) {
     for (let i = 0; i < count; i++) {
       const lz = startLocalZ + i * 2.8;
@@ -410,19 +415,30 @@ export class ObstacleManager {
     });
   }
 
-  // 4. ATUALIZAÇÃO CONTÍNUA E DETECÇÃO AABB DE COLISÕES
   update(dt, player, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup) {
     const playerAABB = player.getAABB();
 
-    // A. Animação e Movimentação dos Trens de Metrô
+    // A. Animação, Efeitos Sonoros e Buzina de Trens de Metrô
     for (const train of this.movingTrains) {
       const trainWorldZ = train.parent.position.z + train.mesh.position.z;
       if (trainWorldZ < 90 && trainWorldZ > -90) {
         train.mesh.position.z += train.moveSpeed * dt;
+
+        // Som de aproximação do trem passando ao lado
+        if (Math.abs(trainWorldZ) < 18 && !train.passSoundPlayed) {
+          train.passSoundPlayed = true;
+          gameAudio.playTrainPass(0.14);
+        }
+
+        // Buzina suave se o jogador estiver na mesma faixa na frente do trem
+        if (trainWorldZ < -8 && trainWorldZ > -40 && Math.abs(player.x - train.laneX) < 1.2 && !train.hornPlayed) {
+          train.hornPlayed = true;
+          gameAudio.playTrainHorn();
+        }
       }
     }
 
-    // B. Verificação AABB de Colisão com Obstáculos
+    // B. Verificação AABB de Colisão
     if (!player.isDead) {
       for (const obs of this.obstacles) {
         const obsAABB = obs.getAABB();
@@ -445,10 +461,8 @@ export class ObstacleManager {
 
       const coinWorldZ = coin.parent.position.z + coin.mesh.position.z;
 
-      // Rotação contínua da moeda
       coin.mesh.rotation.z += 3.5 * dt;
 
-      // Efeito do Ímã
       if (player.magnetActive && !player.isDead) {
         const distZ = Math.abs(player.z - coinWorldZ);
         if (distZ < 16) {
@@ -457,7 +471,6 @@ export class ObstacleManager {
         }
       }
 
-      // Detecção de Coleta
       const coinAABB = coin.getAABB();
       const overlapX = playerAABB.maxX > coinAABB.minX && playerAABB.minX < coinAABB.maxX;
       const overlapY = playerAABB.maxY > coinAABB.minY && playerAABB.minY < coinAABB.maxY;

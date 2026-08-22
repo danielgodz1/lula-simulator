@@ -1,4 +1,4 @@
-// js/game/main.js — Loop Principal, Controle de Estados, Esteira Contínua e Aceleração Calibrada
+// js/game/main.js — Loop Principal, Ciclo Dia/Noite Dinâmico, Efeitos Sonoros e Sincronização
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { GameScene } from './scene.js';
 import { gameAudio } from './audio.js';
@@ -22,10 +22,10 @@ export class Game {
     this.state = this.STATE.WAITING;
 
     // Velocidade e Pontuação Calibrada
-    this.baseSpeed = 32; // Início suave e acessível
+    this.baseSpeed = 32;
     this.speed = this.baseSpeed;
-    this.maxSpeed = 68; // Velocidade máxima emocionante e controlável
-    this.distance = 0; // Metros
+    this.maxSpeed = 68;
+    this.distance = 0;
     this.coins = 0;
     this.picanhas = 0;
     this.bestDistance = parseInt(localStorage.getItem('run_best') || '0', 10);
@@ -43,7 +43,6 @@ export class Game {
   init() {
     this.ui.showStartScreen(() => this.start());
 
-    // Spawn inicial de entidades nos blocos da frente
     for (let i = 2; i < this.environment.segments.length; i++) {
       const seg = this.environment.segments[i];
       this.obstacleManager.spawnSegmentEntities(seg, seg.position.z);
@@ -91,11 +90,9 @@ export class Game {
       localStorage.setItem('run_best', this.bestDistance.toString());
     }
 
-    // Salva pontuação na conta e no ranking
     auth.updateUserScore('runner', distanceKm);
     savePlayerScore('runner', distanceKm);
 
-    // Exibe tela de Game Over com frases engraçadas
     setTimeout(() => {
       this.ui.showGameOver(obstacle, distanceKm, this.coins, this.picanhas, () => this.restart());
     }, 600);
@@ -131,7 +128,8 @@ export class Game {
     if (this.magnetActive) powerupText += '🧲 ';
     if (this.superJumpActive) powerupText += '👟 ';
 
-    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText);
+    const timeStr = this.sceneManager.getFormattedTime();
+    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr);
   }
 
   loop() {
@@ -140,14 +138,18 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const elapsedTime = this.clock.getElapsedTime();
 
+    // 1. Atualização do Ciclo Dia/Noite Dinâmico
+    const isNight = this.sceneManager.updateDayNightCycle(dt);
+    this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay);
+
     if (this.state === this.STATE.PLAYING) {
-      // 1. Aceleração Gradual e Fluida com a Distância
+      // 2. Aceleração e Distância
       this.distance += this.speed * dt;
       if (this.speed < this.maxSpeed) {
         this.speed += 0.35 * dt;
       }
 
-      // 2. Timers de Power-up
+      // 3. Timers de Power-up
       if (this.magnetActive) {
         this.magnetTimer -= dt;
         if (this.magnetTimer <= 0) this.magnetActive = false;
@@ -162,15 +164,15 @@ export class Game {
         }
       }
 
-      // 3. Atualização e Animação Procedural do Personagem
+      // 4. Atualização e Animação do Personagem
       this.character.update(dt, this.speed);
 
-      // 4. Esteira Contínua da Favela e Reciclagem de Pista (Object Pooling)
+      // 5. Esteira Contínua da Pista e Reciclagem (Object Pooling)
       this.environment.update(this.speed, dt, (seg, newZ) => {
         this.obstacleManager.spawnSegmentEntities(seg, newZ);
       });
 
-      // 5. Atualização de Obstáculos e Detecção AABB
+      // 6. Atualização de Obstáculos, Trens e Detecção AABB
       this.obstacleManager.update(
         dt,
         this.character,
@@ -185,7 +187,7 @@ export class Game {
       this.character.update(dt, 0);
     }
 
-    // 6. Atualização da Câmera em 3ª Pessoa e Renderização
+    // 7. Atualização da Câmera em 3ª Pessoa e Renderização
     this.sceneManager.updateCamera(
       this.character.x,
       this.character.y,

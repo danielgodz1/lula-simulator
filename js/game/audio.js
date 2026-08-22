@@ -1,5 +1,5 @@
-// js/game/audio.js — Gerenciador Central de Áudio (Web Audio API Pura)
-// Sem arquivos externos pesados, zero latência e suporte a sobreposição suave de sons
+// js/game/audio.js — Gerenciador Central de Áudio (Web Audio API Pura com Sons de Trem e Metrô)
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
 export class GameAudio {
   constructor() {
@@ -9,6 +9,8 @@ export class GameAudio {
     this.ambienceGain = null;
     this.lastJumpTime = 0;
     this.lastSwitchTime = 0;
+    this.lastTrainPassTime = 0;
+    this.lastTrainHornTime = 0;
     this.initialized = false;
   }
 
@@ -72,7 +74,7 @@ export class GameAudio {
   }
 
   // 2. TROCA DE FAIXA (Swoosh Sutil)
-  playLaneSwitch() {
+  playSwipe() {
     if (this.isMuted) return;
     this.ensureContext();
     if (!this.ctx) return;
@@ -100,7 +102,7 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 3. DESLIZAR / SLIDE (Atrito de Sapato no Chão)
+  // 3. DESLIZAR / SLIDE
   playSlide() {
     if (this.isMuted) return;
     this.ensureContext();
@@ -163,8 +165,8 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 5. COLETAR PICANHA / MALETA (+50 BÔNUS)
-  playPicanha() {
+  // 5. COLETAR PICANHA (+5 BÔNUS)
+  playPicanhaCollect() {
     if (this.isMuted) return;
     this.ensureContext();
     if (!this.ctx) return;
@@ -190,40 +192,86 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 6. BUZINA DE TREM DE METRÔ
+  // 6. SOM DO METRÔ PASSANDO AO LADO (Suave e Realista)
+  playTrainPass(volume = 0.12) {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    if (now - this.lastTrainPassTime < 1.8) return;
+    this.lastTrainPassTime = now;
+
+    try {
+      const bufferSize = Math.floor(this.ctx.sampleRate * 1.2);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1);
+      }
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(280, now);
+      filter.frequency.linearRampToValueAtTime(450, now + 0.4);
+      filter.frequency.linearRampToValueAtTime(200, now + 1.2);
+      filter.Q.setValueAtTime(2.0, now);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(volume, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(now);
+      noise.stop(now + 1.25);
+    } catch (e) {}
+  }
+
+  // 7. BUZINA SUAVE DE TREM DE METRÔ (Ao se aproximar na mesma faixa)
   playTrainHorn() {
     if (this.isMuted) return;
     this.ensureContext();
     if (!this.ctx) return;
 
+    const now = this.ctx.currentTime;
+    if (now - this.lastTrainHornTime < 3.5) return;
+    this.lastTrainHornTime = now;
+
     try {
-      const now = this.ctx.currentTime;
-      [311.13, 370.0, 466.16].forEach((freq) => {
+      [277.18, 329.63, 415.30].forEach((freq) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(freq, now);
 
-        gain.gain.setValueAtTime(0.09, now);
-        gain.gain.linearRampToValueAtTime(0.13, now + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.62);
+        // Volume suave e agradável (não estridente)
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
 
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1100, now);
+        filter.frequency.setValueAtTime(800, now);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
 
         osc.start(now);
-        osc.stop(now + 0.65);
+        osc.stop(now + 0.58);
       });
     } catch (e) {}
   }
 
-  // 7. POWER-UP ATIVADO
+  // 8. POWER-UP ATIVADO
   playPowerup() {
     if (this.isMuted) return;
     this.ensureContext();
@@ -249,7 +297,7 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 8. IMPACTO / COLISÃO / GAME OVER
+  // 9. IMPACTO / COLISÃO
   playCrash() {
     if (this.isMuted) return;
     this.ensureContext();
@@ -275,7 +323,7 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 9. SOM AMBIENTE DA FAVELA / CIDADE (Vento e Tráfego Suave)
+  // 10. SOM AMBIENTE DA FAVELA / CIDADE
   startAmbience() {
     if (this.ambienceNode) return;
     this.ensureContext();
