@@ -276,3 +276,61 @@ footer strong {
     padding: 12px 20px;
   }
 }
+
+/* ==========================================================================
+   8. BANNERS DE MONETIZAÇÃO & ANÚNCIOS RESPONSIVOS NÃO INTRUSIVOS
+   ========================================================================== */
+.ad-banner-container-320x50 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 14px auto;
+  width: 100%;
+  max-width: 320px;
+  min-height: 50px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 223, 0, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+}
+
+.ad-banner-container-320x50 iframe {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.ad-sidebar-desktop {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 160px;
+  min-height: 600px;
+  z-index: 15;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 223, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.ad-sidebar-left {
+  left: 20px;
+}
+
+.ad-sidebar-right {
+  right: 20px;
+}
+
+/* Em telas menores que 1250px esconde os skyscrapers laterais para nunca atrapalhar a visão do jogo */
+@media (max-width: 1250px) {
+  .ad-sidebar-desktop {
+    display: none !important;
+  }
+}
+
