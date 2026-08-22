@@ -478,19 +478,6 @@ export class ObstacleManager {
       }
     });
   }
-      value: 5,
-      collected: false,
-      isPicanha: true,
-      getAABB() {
-        const pz = parent.position.z + picanhaGroup.position.z;
-        return {
-          minX: laneX - 0.6, maxX: laneX + 0.6,
-          minY: 0.3, maxY: 1.5,
-          minZ: pz - 0.6, maxZ: pz + 0.6
-        };
-      }
-    });
-  }
 
   // 3. ÍCONES 3D REALISTAS DOS POWER-UPS
   createPowerupItem(parent, laneX, localZ, type = 'magnet') {
