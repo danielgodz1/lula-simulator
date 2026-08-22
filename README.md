@@ -1,6 +1,6 @@
 # 🇧🇷 Lula Simulator — The Ultimate Brazilian Arcade & Satire Experience
 
-> **Um projeto arcade satírico e interativo completo, com múltiplos modos de jogo (2D e 3D), sistema de personagens com habilidades únicas, galeria de conquistas, placar global e arquitetura em nuvem com segurança máxima.**
+> **Um projeto arcade satírico e interativo completo, com múltiplos modos de jogo (2D e 3D), sistema de personagens com habilidades únicas, galeria de conquistas, placar global em tempo real e arquitetura de backend em nuvem com máxima segurança.**
 
 ---
 
@@ -12,9 +12,7 @@
   - Tubulações estilizadas em degradê com bordas de alto contraste.
   - Chão texturizado com camadas de grama e terra pixel-art.
   - Skyline dinâmico com prédios, janelinhas iluminadas e nuvens em paralaxe suave.
-- **Modos de Dificuldade**:
-  - ⚡ **Modo Fácil**: Velocidade balanceada, maior espaçamento entre os canos e curva suave.
-  - 🔥 **Modo Difícil**: Velocidade turbo acelerada e menor tempo de reação.
+  - Dificuldade progressiva suave e balanceada a cada 300 pontos, travada em 60 FPS fixos.
 - **Eventos & Easter Eggs**:
   - **🚨 Modo Prisão (13 Pontos)**: Ao atingir 13 picanhas, faixas de alerta *"171 DETECTADO!"* são acionadas e bonecos 2D presidiários com a inscrição "171" correm na parte inferior do cenário.
   - **🔊 Sistema de Áudio Dinâmico**:
@@ -26,11 +24,16 @@
 ---
 
 ### 2. 🏃 O Empresário vs CLT (Endless Runner 3D)
-- **Engine**: **Three.js (WebGL)** com iluminação dinâmica, sombras, névoa volumétrica e trilha urbana procedural.
-- **Mecânicas**:
-  - Corrida em 3 pistas com controles via teclado (`A`/`D`, Setas, `W`/Espaço para pular, `S` para deslizar) ou touch/swipe no mobile.
-  - Esquive de Carteiras de Trabalho gigantes, impostos, trens em alta velocidade e bloqueios fiscais.
-  - Hitbox balanceada e sistema de física com pulo duplo.
+- **Engine**: **Three.js (WebGL)** com iluminação dinâmica, sombras suaves, névoa volumétrica e ciclo dia/noite em tempo real.
+- **Ambientação Brasileira & Favela Urbana**:
+  - **Morro da Favela em Parallax Contínuo**: Cenário panorâmico com centenas de casinhas empilhadas na encosta, postes com fiação suspensa e caixas d'água cilíndricas.
+  - **Ciclo Dinâmico de 24 Horas**: Começa às 5h da manhã (Alvorecer) e progride suavemente para Manhã Radiante, Meio-Dia Tropical, Pôr do Sol (*Golden Hour*) e Noite Estrelada com janelas e postes que se acendem dinamicamente.
+- **Mecânicas de Jogabilidade & Power-ups 3D**:
+  - **👟 Sapatos Sociais Dourados Alados (Super Pulo)**: Ícone 3D reluzente na pista que equipa nos pés do empresário, batendo asinhas no ar para saltos altos.
+  - **🧲 Ímã 3D em Ferradura (Magnet)**: Modelo 3D em formato U que o personagem segura na mão esquerda para atrair todas as moedas e picanhas.
+  - **📄 Documentos e Obstáculos Brasileiros**: Carteira de Trabalho CLT 44H, Cartão Bolsa Família e Cartão Auxílio Brasil em cards estilizados flutuantes com UV Mapping.
+  - **Deslize Realista de 90º (Slide)**: O personagem deita rente ao chão para passar sob varais de roupa, reduzindo a hitbox pela metade.
+  - **🔊 Áudio Espacial**: Efeito Doppler realista na passagem dos trens de metrô e buzina de alerta na mesma faixa.
 
 ---
 
@@ -48,59 +51,55 @@
 
 ---
 
-## 🏅 Sistema de Conquistas, Badges & Galeria ([conquistas.html](file:///c:/Users/NT118/antigravity/lula-simulator/conquistas.html))
+## 🏅 Sistema de Conquistas & Badges ([conquistas.html](conquistas.html))
 
 - **Galeria Visual Completa**: Acompanhe seu progresso de picanhas e recordes para desbloquear cada figura histórica.
 - **Barra de Progresso Dinâmica**: Percentuais calculados em tempo real com metas específicas por personagem e missão.
-- **Modal de Zoom**: Clique em qualquer conquista para inspecionar o avatar em alta definição e ler a descrição detalhada da habilidade.
+- **Modal de Zoom**: Inspecione o avatar em alta definição e leia a descrição detalhada da habilidade.
 
 ---
 
-## 🏆 Placar Global & Ranking de Líderes ([ranking.html](file:///c:/Users/NT118/antigravity/lula-simulator/ranking.html))
+## 🏆 Placar Global & Ranking de Líderes ([ranking.html](ranking.html))
 
 - **Classificação Dupla**: Abas separadas para o **Flappy Lula** (pontos em picanhas 🥩) e **Empresário 3D** (distância em km 🏃).
-- **Cobertura 100% de Jogadores**: Exibe todos os jogadores com pontuação registrada no banco de dados.
+- **Consolidação Otimizada**: Utiliza documento consolidado Top 50 com 1 única leitura por consulta e cache local TTL (90s).
 - **Busca em Tempo Real**: Filtro instantâneo por nome/apelido de jogador.
-- **Pódios & Medalhas**: Destaque para o 1º (👑), 2º (🥈), 3º (🥉) e posições gerais.
+- **Pódios & Medalhas**: Destaque visual para o 1º (👑), 2º (🥈), 3º (🥉) e demais posições.
 
 ---
 
-## ⭐ Avaliações da Comunidade & Feedbacks ([feedback.html](file:///c:/Users/NT118/antigravity/lula-simulator/feedback.html))
+## ⭐ Avaliações da Comunidade & Feedbacks ([feedback.html](feedback.html))
 
 - Envio de avaliações de 1 a 5 estrelas com comentários públicos sobre a experiência.
-- Sanitização contra injeção de scripts (XSS).
+- Sanitização rigorosa contra injeção de scripts (XSS) e filtros de integridade.
 
 ---
 
 ## 🛡️ Arquitetura de Segurança, Banco de Dados & Backend
 
-### 1. Cloud Firestore com Regras Blindadas ([firestore.rules](file:///c:/Users/NT118/antigravity/lula-simulator/firestore.rules))
-- **Administrador Exclusivo**: Permissões de administração e exclusão restritas unicamente à conta Google oficial do projeto (`insanodanieldoublegaming@gmail.com`).
-- **Imutabilidade de Pontuações**: Regra estrita `request.resource.data.score >= resource.data.score` — nenhum terceiro ou script consegue diminuir, zerar ou ocultar o placar de ninguém.
-- **Subcoleção Privada de Credenciais (`/private/credentials`)**: 
-  - O documento público `lula_users_v2/{userId}` contém apenas dados de perfil.
-  - Senhas são criptografadas com **SHA-256 + Salt aleatório de 16 bytes (32 hex)** gerado por usuário.
-  - A subcoleção privada bloqueia leituras não autorizadas (`allow get: if isAdmin();`), retornando **HTTP 403** para qualquer tentativa de scraping externo.
-- **Controle Estrito de Campos (`keys().hasOnly(...)`)**: Bloqueia a injeção de chaves maliciosas extras em todas as coleções.
+### 1. Autenticação Autoritativa com Firebase Admin SDK (`/api/auth`)
+- **Geração Segura de Hash e Salt no Servidor**: O servidor gera um Salt criptográfico individual de 128-bit (`crypto.randomBytes(16)`) associado a hash **SHA-256**. O cliente nunca decide ou envia hashes diretamente.
+- **Proteção Anti-Sobrescrita no Registro**: Antes de cadastrar, o servidor verifica se o documento de credenciais ou perfil já possui senha, retornando `HTTP 409 Conflict` em tentativas de registro duplicado.
+- **Migração Automática & Limpeza**: Contas legadas são autenticadas e migradas automaticamente para o padrão com Salt Individual, removendo campos confidenciais residuais do documento público via `admin.firestore.FieldValue.delete()`.
 
-### 2. Vercel Serverless Functions (`/api/`)
-- **`/api/auth`**: Autenticação e registro seguros no servidor com migração automática de contas antigas para salt individual.
-- **`/api/score`**: Agregação de placares com IP de datacenter e fallback inteligente.
-- **`/api/feedback` & `/api/contact`**: Validação e sanitização de dados no backend.
+### 2. Cloud Firestore com Regras Restritivas ([firestore.rules](firestore.rules))
+- **Subcoleção Privada Isolada (`/private/credentials`)**: 100% fechada para o cliente (`allow read, write: if isAdmin();`). Leituras e gravações ocorrem exclusivamente através do Admin SDK autenticado.
+- **Imutabilidade de Pontuações**: Regra estrita `request.resource.data.score >= resource.data.score` impedindo que qualquer jogador reduza o recorde de outro.
+- **Validação de Esquema (`keys().hasOnly(...)`)**: Bloqueia a injeção de propriedades arbitrárias em todas as coleções.
 
-### 3. Otimização de Performance & Rede
-- **Redução de 95% do consumo de banco**: O gameplay executa **100% no cliente (ZERO requisições durante o voo)** e realiza uma única sincronização leve no *Game Over*.
-- **Cache Local Resiliente**: O frontend mantém cache local seguro para garantir que placares e feedbacks nunca fiquem em branco, mesmo em eventuais limites de cota do Google.
+### 3. Vercel Serverless Functions (`/api/`)
+- **Gestão Segura de Credenciais**: Chaves de serviço gerenciadas via variáveis de ambiente seguras da Vercel (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`), mantendo o repositório público 100% livre de segredos.
+- **Prevenção de NoSQL Injection**: Higienização e codificação de parâmetros de entrada com `encodeURIComponent()` e regex sanitizadora.
 
 ---
 
 ## 💻 Tecnologias Utilizadas
 
-- **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), CSS3 (Flexbox/Grid, Glassmorphism, Micro-animações).
-- **Gráficos 3D**: [Three.js](https://threejs.org/) (WebGL).
-- **Backend Serverless**: Node.js em Vercel Functions.
-- **Banco de Dados & Autenticação**: Google Cloud Firestore & Web Crypto API (`SubtleCrypto` SHA-256 + `getRandomValues`).
-- **Deploy & Hosting**: [Vercel](https://vercel.com).
+- **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), Vanilla CSS3 (Design System próprio, Glassmorphism, Micro-animações).
+- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL).
+- **Backend Serverless**: Node.js 18+ em Vercel Functions.
+- **Banco de Dados & Autenticação**: Google Cloud Firestore & Firebase Admin SDK.
+- **Deploy & CI/CD**: [Vercel](https://vercel.com) com deploy automático a cada push no GitHub.
 
 ---
 
@@ -108,22 +107,26 @@
 
 1. Clone o repositório:
    ```bash
-   git clone https://github.com/danielzin173/lula-simulator.git
+   git clone https://github.com/danielgodz1/lula-simulator.git
    cd lula-simulator
    ```
 
-2. Inicie qualquer servidor HTTP estático:
+2. Instale as dependências do backend serverless:
    ```bash
-   # Com Python:
-   python -m http.server 8080
+   npm install
+   ```
 
-   # Ou com Node.js (npx):
+3. Inicie o servidor local:
+   ```bash
+   # Com Vercel CLI (executa frontend e serverless functions em /api):
+   npx vercel dev
+
+   # Ou qualquer servidor estático para o frontend:
    npx serve .
    ```
 
-3. Acesse `http://localhost:8080` no seu navegador.
-
 ---
 
-## 🌐 Deploy em Produção
-- **Projeto Oficial no GitHub**: [danielzin173/lula-simulator](https://github.com/danielzin173/lula-simulator)
+## 📜 Licença & Créditos
+
+Projeto desenvolvido por **Daniel dos Santos** no **SENAI** (Curso de Programação com Inteligência Artificial) como uma crítica social satírica, bem-humorada e interativa sobre a realidade brasileira. 🇧🇷
