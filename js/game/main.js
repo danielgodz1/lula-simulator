@@ -1,4 +1,4 @@
-// js/game/main.js — Loop Principal, Ciclo Dia/Noite Dinâmico, Efeitos Sonoros e Sincronização
+// js/game/main.js — Loop Principal, Ciclo Dia/Noite 24h Suave, Áudio Dinâmico de Velocidade e Sincronização
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { GameScene } from './scene.js';
 import { gameAudio } from './audio.js';
@@ -138,8 +138,8 @@ export class Game {
     const dt = Math.min(this.clock.getDelta(), 0.05);
     const elapsedTime = this.clock.getElapsedTime();
 
-    // 1. Atualização do Ciclo Dia/Noite Dinâmico
-    const isNight = this.sceneManager.updateDayNightCycle(dt);
+    // 1. Atualização do Ciclo Dia/Noite com base no tempo decorrido total
+    const isNight = this.sceneManager.updateDayNightCycle(elapsedTime);
     this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay);
 
     if (this.state === this.STATE.PLAYING) {
@@ -164,18 +164,19 @@ export class Game {
         }
       }
 
-      // 4. Atualização e Animação do Personagem
+      // 4. Atualização do Personagem (com AABB Y dinâmica no pulo e slide 90º)
       this.character.update(dt, this.speed);
 
-      // 5. Esteira Contínua da Pista e Reciclagem (Object Pooling)
+      // 5. Esteira Contínua da Favela e Reciclagem (Object Pooling)
       this.environment.update(this.speed, dt, (seg, newZ) => {
         this.obstacleManager.spawnSegmentEntities(seg, newZ);
       });
 
-      // 6. Atualização de Obstáculos, Trens e Detecção AABB
+      // 6. Atualização de Obstáculos, Efeitos Sonoros de Trem e Detecção AABB
       this.obstacleManager.update(
         dt,
         this.character,
+        elapsedTime,
         (obs) => this.onCrash(obs),
         (val) => this.onCollectCoin(val),
         (val) => this.onCollectPicanha(val),

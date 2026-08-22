@@ -1,4 +1,4 @@
-// js/game/obstacles.js — Obstáculos, Trens com Faróis Iluminados, Efeitos Sonoros e Hitboxes AABB
+// js/game/obstacles.js — Moedas Douradas Luminosas, Documentos Brasileiros Realistas em Card Flutuante e Áudio Espacial
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { gameAudio } from './audio.js';
@@ -15,7 +15,7 @@ export class ObstacleManager {
     this.textureLoader = new THREE.TextureLoader();
     this.picanhaTexture = this.textureLoader.load('img/picanha.png');
 
-    // Materiais Reutilizáveis
+    // Materiais com Emissão e Brilho Dourado (Zero Moedas Pretas)
     this.materials = {
       trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.3 }),
       trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.4 }),
@@ -33,7 +33,6 @@ export class ObstacleManager {
         depthWrite: false,
         side: THREE.DoubleSide
       }),
-      barrierWood: new THREE.MeshLambertMaterial({ color: 0x78350f }),
       clotheslineWire: new THREE.LineBasicMaterial({ color: 0x475569 }),
       clothes: [
         new THREE.MeshLambertMaterial({ color: 0xef4444 }),
@@ -41,17 +40,45 @@ export class ObstacleManager {
         new THREE.MeshLambertMaterial({ color: 0x22c55e }),
         new THREE.MeshLambertMaterial({ color: 0xfacc15 })
       ],
-      goldCoin: new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 }),
+      // Moeda de Ouro com Alto Brilho e Textura R$
+      goldCoin: new THREE.MeshStandardMaterial({
+        map: textureAtlas.goldCoinTexture,
+        color: 0xffd700,
+        metalness: 0.4,
+        roughness: 0.25,
+        emissive: 0xb45309,
+        emissiveIntensity: 0.35,
+        side: THREE.DoubleSide
+      }),
       magnetPowerup: new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.3 }),
-      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 })
+      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 }),
+      // Materiais dos Cards Realistas com Dupla Face
+      cltCardMat: new THREE.MeshStandardMaterial({
+        map: textureAtlas.cltTexture,
+        roughness: 0.3,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      }),
+      bolsaCardMat: new THREE.MeshStandardMaterial({
+        map: textureAtlas.bolsaFamiliaTexture,
+        roughness: 0.3,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      }),
+      auxilioCardMat: new THREE.MeshStandardMaterial({
+        map: textureAtlas.auxilioTexture,
+        roughness: 0.3,
+        metalness: 0.15,
+        side: THREE.DoubleSide
+      })
     };
 
     this.geometries = {
-      coin: new THREE.CylinderGeometry(0.48, 0.48, 0.12, 16),
+      coin: new THREE.CylinderGeometry(0.48, 0.48, 0.08, 20),
       powerup: new THREE.BoxGeometry(0.85, 0.85, 0.85),
       train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
-      cltHurdle: new THREE.BoxGeometry(2.4, 1.45, 0.4),
-      tallBarrier: new THREE.BoxGeometry(2.4, 2.6, 0.4)
+      documentCard: new THREE.PlaneGeometry(2.3, 1.45),
+      socialCard: new THREE.PlaneGeometry(2.3, 1.45)
     };
   }
 
@@ -100,13 +127,15 @@ export class ObstacleManager {
           break;
 
         case 1:
-          this.createCLTHurdle(parent, LANES[chosenLane], localZ);
+          // Card Flutuante da Carteira CLT 44H
+          this.createCLTFloatingCard(parent, LANES[chosenLane], localZ);
           this.createCoinArc(parent, LANES[chosenLane], localZ);
           break;
 
         case 2:
+          // Card Flutuante Bolsa Família ou Auxílio Brasil
           const isBolsa = Math.random() > 0.5;
-          this.createSocialBenefitBarrier(parent, LANES[chosenLane], localZ, isBolsa);
+          this.createSocialBenefitCard(parent, LANES[chosenLane], localZ, isBolsa);
           const safeLane2 = (chosenLane + 2) % 3;
           this.createCoinLine(parent, LANES[safeLane2], localZ - 8, 4);
           break;
@@ -142,7 +171,6 @@ export class ObstacleManager {
     front.castShadow = true;
     train.add(front);
 
-    // Faróis de Luz Iluminados
     [-0.75, 0.75].forEach(hx => {
       const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 12), this.materials.headlight);
       lamp.rotation.x = Math.PI / 2;
@@ -150,7 +178,6 @@ export class ObstacleManager {
       train.add(lamp);
     });
 
-    // Facho de Luz dos Faróis Projetado à Frente no Chão
     const beamGeo = new THREE.ConeGeometry(2.2, 12.0, 8, 1, true);
     const beam = new THREE.Mesh(beamGeo, this.materials.headlightBeam);
     beam.rotation.x = -Math.PI / 2;
@@ -190,37 +217,37 @@ export class ObstacleManager {
     if (isMoving) this.movingTrains.push(obstacleObj);
   }
 
-  createCLTHurdle(parent, laneX, localZ) {
-    const hurdle = new THREE.Group();
-    hurdle.position.set(laneX, 0.75, localZ);
+  // 1. CARTEIRA DE TRABALHO CLT (Card Plano Realista com Suporte e Rotação)
+  createCLTFloatingCard(parent, laneX, localZ) {
+    const cardGroup = new THREE.Group();
+    cardGroup.position.set(laneX, 1.05, localZ);
 
-    [-1.0, 1.0].forEach(px => {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.5, 0.16), this.materials.barrierWood);
-      post.castShadow = true;
-      hurdle.add(post);
-    });
+    const card = new THREE.Mesh(this.geometries.documentCard, this.materials.cltCardMat);
+    card.castShadow = true;
+    cardGroup.add(card);
 
-    const boardMat = new THREE.MeshLambertMaterial({ map: textureAtlas.cltTexture });
-    const board = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.25, 0.12), boardMat);
-    board.position.y = 0.25;
-    board.castShadow = true;
-    hurdle.add(board);
+    // Suporte sutil de chão
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
+    stand.position.y = -1.0;
+    cardGroup.add(stand);
 
-    parent.add(hurdle);
+    parent.add(cardGroup);
 
     this.obstacles.push({
       type: 'clt',
-      mesh: hurdle,
+      mesh: cardGroup,
       parent: parent,
       laneX: laneX,
       localZ: localZ,
+      baseY: 1.05,
+      isFloatingCard: true,
       getAABB() {
-        const pz = parent.position.z + hurdle.position.z;
+        const pz = parent.position.z + cardGroup.position.z;
         return {
           minX: laneX - (2.2 * 0.85) / 2,
           maxX: laneX + (2.2 * 0.85) / 2,
           minY: 0,
-          maxY: 1.45,
+          maxY: 1.55,
           minZ: pz - 0.45,
           maxZ: pz + 0.45
         };
@@ -228,39 +255,37 @@ export class ObstacleManager {
     });
   }
 
-  createSocialBenefitBarrier(parent, laneX, localZ, isBolsa = true) {
-    const barrier = new THREE.Group();
-    barrier.position.set(laneX, 1.2, localZ);
+  // 2. CARTÃO BOLSA FAMÍLIA OU AUXÍLIO BRASIL (Card Plano Realista)
+  createSocialBenefitCard(parent, laneX, localZ, isBolsa = true) {
+    const cardGroup = new THREE.Group();
+    cardGroup.position.set(laneX, 1.15, localZ);
 
-    const texture = isBolsa ? textureAtlas.bolsaFamiliaTexture : textureAtlas.auxilioTexture;
-    const boardMat = new THREE.MeshLambertMaterial({ map: texture });
+    const mat = isBolsa ? this.materials.bolsaCardMat : this.materials.auxilioCardMat;
+    const card = new THREE.Mesh(this.geometries.socialCard, mat);
+    card.castShadow = true;
+    cardGroup.add(card);
 
-    const board = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.2, 0.15), boardMat);
-    board.castShadow = true;
-    barrier.add(board);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
+    stand.position.y = -1.1;
+    cardGroup.add(stand);
 
-    [-0.9, 0.9].forEach(sx => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 8), this.materials.barrierWood);
-      leg.position.set(sx, -0.1, 0);
-      leg.castShadow = true;
-      barrier.add(leg);
-    });
-
-    parent.add(barrier);
+    parent.add(cardGroup);
 
     this.obstacles.push({
       type: isBolsa ? 'bolsafamilia' : 'auxilio',
-      mesh: barrier,
+      mesh: cardGroup,
       parent: parent,
       laneX: laneX,
       localZ: localZ,
+      baseY: 1.15,
+      isFloatingCard: true,
       getAABB() {
-        const pz = parent.position.z + barrier.position.z;
+        const pz = parent.position.z + cardGroup.position.z;
         return {
           minX: laneX - (2.2 * 0.85) / 2,
           maxX: laneX + (2.2 * 0.85) / 2,
           minY: 0,
-          maxY: 2.4,
+          maxY: 1.65,
           minZ: pz - 0.45,
           maxZ: pz + 0.45
         };
@@ -301,7 +326,7 @@ export class ObstacleManager {
         return {
           minX: laneX - (2.2 * 0.85) / 2,
           maxX: laneX + (2.2 * 0.85) / 2,
-          minY: 1.15,
+          minY: 1.05,
           maxY: 2.35,
           minZ: pz - 0.4,
           maxZ: pz + 0.4
@@ -310,7 +335,6 @@ export class ObstacleManager {
     });
   }
 
-  // Colecionáveis
   createCoinLine(parent, laneX, startLocalZ, count = 5) {
     for (let i = 0; i < count; i++) {
       const lz = startLocalZ + i * 2.8;
@@ -415,22 +439,30 @@ export class ObstacleManager {
     });
   }
 
-  update(dt, player, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup) {
+  update(dt, player, elapsedTime, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup) {
     const playerAABB = player.getAABB();
 
-    // A. Animação, Efeitos Sonoros e Buzina de Trens de Metrô
+    // A. Animação de Flutuação e Rotação dos Cards Realistas
+    for (const obs of this.obstacles) {
+      if (obs.isFloatingCard) {
+        obs.mesh.rotation.y = Math.sin(elapsedTime * 2.2 + obs.laneX) * 0.22;
+        obs.mesh.position.y = obs.baseY + Math.sin(elapsedTime * 3.0 + obs.laneX) * 0.06;
+      }
+    }
+
+    // B. Animação, Efeitos Sonoros e Buzina de Metrô
     for (const train of this.movingTrains) {
       const trainWorldZ = train.parent.position.z + train.mesh.position.z;
       if (trainWorldZ < 90 && trainWorldZ > -90) {
         train.mesh.position.z += train.moveSpeed * dt;
 
-        // Som de aproximação do trem passando ao lado
+        // Som de passagem com fade in/out
         if (Math.abs(trainWorldZ) < 18 && !train.passSoundPlayed) {
           train.passSoundPlayed = true;
           gameAudio.playTrainPass(0.14);
         }
 
-        // Buzina suave se o jogador estiver na mesma faixa na frente do trem
+        // Buzina de alerta se o jogador estiver na mesma faixa
         if (trainWorldZ < -8 && trainWorldZ > -40 && Math.abs(player.x - train.laneX) < 1.2 && !train.hornPlayed) {
           train.hornPlayed = true;
           gameAudio.playTrainHorn();
@@ -438,7 +470,7 @@ export class ObstacleManager {
       }
     }
 
-    // B. Verificação AABB de Colisão
+    // C. Verificação AABB Precisa de Colisão
     if (!player.isDead) {
       for (const obs of this.obstacles) {
         const obsAABB = obs.getAABB();
@@ -454,7 +486,7 @@ export class ObstacleManager {
       }
     }
 
-    // C. Coleta de Moedas e Picanhas
+    // D. Coleta de Moedas e Picanhas
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i];
       if (coin.collected) continue;
@@ -491,7 +523,7 @@ export class ObstacleManager {
       }
     }
 
-    // D. Coleta de Power-ups
+    // E. Coleta de Power-ups
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const pup = this.powerups[i];
       if (pup.collected) continue;

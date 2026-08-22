@@ -1,5 +1,6 @@
-// js/game/scene.js — Ciclo Dia/Noite Dinâmico (5h Madrugada -> Manhã -> Meio-Dia -> Pôr do Sol -> Noite Estrelada)
+// js/game/scene.js — Céu Contínuo Sem Artefatos, Panorama Parallax Densa da Favela e Ciclo Dia/Noite Otimizado
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+import { textureAtlas } from './textures.js';
 
 export class GameScene {
   constructor(containerId = 'canvasContainer') {
@@ -9,22 +10,21 @@ export class GameScene {
     this.renderer = null;
     this.sunLight = null;
     this.hemiLight = null;
-    this.playerSpotLight = null; // Luz de pista para visibilidade à noite
+    this.playerSpotLight = null;
     this.sunGroup = null;
     this.sunRays = null;
     this.moonMesh = null;
-    this.skyMesh = null;
+    this.skyDome = null;
     this.skyCanvas = null;
     this.skyCtx = null;
     this.skyTexture = null;
-    this.hillsGroup = null;
+    this.parallaxFavela = null;
     this.kites = [];
 
-    // Ciclo de Tempo (Começa às 5h da manhã / Madrugada = 0.04)
-    this.timeOfDay = 0.04; // 0.0 = 04:00, 0.25 = 09:00, 0.50 = 13:00, 0.75 = 18:00, 0.90 = 22:00
-    this.cycleSpeed = 0.007; // ~140 segundos para um ciclo completo de 24 horas
+    this.timeOfDay = 0.04; // Começa às 5h da manhã (Alvorecer)
+    this.cycleDuration = 150; // 150 segundos para um ciclo completo de 24h
 
-    // Monitor de Performance e Escalação Dinâmica
+    // Monitor de Performance
     this.fpsHistory = [];
     this.lastFrameTime = performance.now();
     this.currentPixelRatio = 1.0;
@@ -34,15 +34,15 @@ export class GameScene {
   }
 
   /**
-   * Canvas dinâmico para renderizar o gradiente do céu que muda em tempo real
+   * Textura do Céu com Gradiente Suave Contínuo Sem Seams
    */
   createDynamicSkyTexture() {
     this.skyCanvas = document.createElement('canvas');
-    this.skyCanvas.width = 256;
-    this.skyCanvas.height = 256;
+    this.skyCanvas.width = 512;
+    this.skyCanvas.height = 512;
     this.skyCtx = this.skyCanvas.getContext('2d');
     this.skyTexture = new THREE.CanvasTexture(this.skyCanvas);
-    this.skyTexture.wrapS = THREE.RepeatWrapping;
+    this.skyTexture.wrapS = THREE.ClampToEdgeWrapping;
     this.skyTexture.wrapT = THREE.ClampToEdgeWrapping;
     this.updateSkyGradient(this.timeOfDay);
     return this.skyTexture;
@@ -51,54 +51,53 @@ export class GameScene {
   updateSkyGradient(t) {
     if (!this.skyCtx) return;
     const ctx = this.skyCtx;
-    const size = 256;
+    const size = 512;
     const grad = ctx.createLinearGradient(0, 0, 0, size);
 
     if (t < 0.15) {
       // 1. Madrugada / Alvorecer (5h - 7h)
       grad.addColorStop(0.0, '#090d16');
-      grad.addColorStop(0.4, '#1e1b4b');
-      grad.addColorStop(0.7, '#4338ca');
-      grad.addColorStop(0.9, '#f43f5e');
+      grad.addColorStop(0.35, '#1e1b4b');
+      grad.addColorStop(0.65, '#4338ca');
+      grad.addColorStop(0.85, '#f43f5e');
       grad.addColorStop(1.0, '#fed7aa');
     } else if (t < 0.45) {
       // 2. Manhã Radiante (8h - 11h)
       grad.addColorStop(0.0, '#1d4ed8');
-      grad.addColorStop(0.4, '#38bdf8');
-      grad.addColorStop(0.8, '#7dd3fc');
+      grad.addColorStop(0.35, '#38bdf8');
+      grad.addColorStop(0.75, '#7dd3fc');
       grad.addColorStop(1.0, '#bae6fd');
     } else if (t < 0.65) {
       // 3. Meio-Dia Tropical (12h - 15h)
       grad.addColorStop(0.0, '#0284c7');
-      grad.addColorStop(0.4, '#38bdf8');
-      grad.addColorStop(0.8, '#bae6fd');
+      grad.addColorStop(0.40, '#38bdf8');
+      grad.addColorStop(0.80, '#bae6fd');
       grad.addColorStop(1.0, '#e0f2fe');
     } else if (t < 0.85) {
       // 4. Pôr do Sol / Golden Hour (16h - 19h)
       grad.addColorStop(0.0, '#1e1b4b');
-      grad.addColorStop(0.3, '#7c2d12');
-      grad.addColorStop(0.6, '#ea580c');
-      grad.addColorStop(0.85, '#f59e0b');
+      grad.addColorStop(0.30, '#7c2d12');
+      grad.addColorStop(0.55, '#ea580c');
+      grad.addColorStop(0.80, '#f59e0b');
       grad.addColorStop(1.0, '#fef08a');
     } else {
       // 5. Noite Estrelada (20h - 4h)
       grad.addColorStop(0.0, '#020617');
-      grad.addColorStop(0.5, '#0f172a');
-      grad.addColorStop(0.85, '#1e293b');
+      grad.addColorStop(0.45, '#0f172a');
+      grad.addColorStop(0.80, '#1e293b');
       grad.addColorStop(1.0, '#090d16');
     }
 
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, size, size);
 
-    // Adiciona estrelas cintilantes à noite ou na madrugada
+    // Estrelas cintilantes à noite e na madrugada
     if (t > 0.85 || t < 0.12) {
       ctx.fillStyle = '#ffffff';
-      const starCount = 35;
-      for (let i = 0; i < starCount; i++) {
-        const sx = ((i * 37) % size);
-        const sy = ((i * 53) % (size * 0.6));
-        ctx.fillRect(sx, sy, 1.5, 1.5);
+      for (let i = 0; i < 45; i++) {
+        const sx = (i * 47) % size;
+        const sy = (i * 71) % (size * 0.6);
+        ctx.fillRect(sx, sy, 1.8, 1.8);
       }
     }
 
@@ -165,10 +164,10 @@ export class GameScene {
   init() {
     if (!this.container) return;
 
-    // 1. Cena com Fog Atmosférico Dinâmico
+    // 1. Cena com Fog Atmosférico Suave
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1e1b4b); // Começa em tom alvorecer
-    this.scene.fog = new THREE.Fog(0x1e1b4b, 65, 250);
+    this.scene.background = new THREE.Color(0x1e1b4b);
+    this.scene.fog = new THREE.Fog(0x1e1b4b, 70, 260);
 
     // 2. Câmera em 3ª Pessoa
     const aspect = this.container.clientWidth / this.container.clientHeight;
@@ -198,21 +197,22 @@ export class GameScene {
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
-    // 4. Domo de Céu Dinâmico
-    const skyGeo = new THREE.CylinderGeometry(340, 340, 200, 32, 1, true);
+    // 4. Domo de Céu Contínuo Sem Círculos ou Seams (Hemisfério Completo)
+    const skyGeo = new THREE.SphereGeometry(420, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const skyMat = new THREE.MeshBasicMaterial({
       map: this.createDynamicSkyTexture(),
       side: THREE.BackSide,
-      fog: false
+      fog: false,
+      depthWrite: false
     });
-    this.skyMesh = new THREE.Mesh(skyGeo, skyMat);
-    this.skyMesh.position.set(0, 50, -100);
-    this.scene.add(this.skyMesh);
+    this.skyDome = new THREE.Mesh(skyGeo, skyMat);
+    this.skyDome.position.set(0, -10, -50);
+    this.scene.add(this.skyDome);
 
-    // 5. Morros do Rio de Janeiro em Low-Poly
-    this.createDistantHills();
+    // 5. Morro de Favela Densa em Parallax (Substitui as montanhas geométricas triangulares)
+    this.createFavelaParallaxBackdrop();
 
-    // 6. Luz Hemisférica e Luz Solar Direcional
+    // 6. Luzes
     this.hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 0.85);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
@@ -232,12 +232,12 @@ export class GameScene {
     this.sunLight.shadow.bias = -0.0005;
     this.scene.add(this.sunLight);
 
-    // 7. Luz de Iluminação Noturna na Pista do Jogador
+    // Luz Noturna na Pista
     this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.0, 35, 1.5);
     this.playerSpotLight.position.set(0, 5.2, 2.0);
     this.scene.add(this.playerSpotLight);
 
-    // 8. Sol Dourado e Lua Prateada
+    // 7. Sol e Lua
     this.sunGroup = new THREE.Group();
     this.sunGroup.position.set(15, 30, -280);
 
@@ -281,7 +281,7 @@ export class GameScene {
 
     this.scene.add(this.sunGroup);
 
-    // Lua 3D para a noite
+    // Lua 3D
     const moonGeo = new THREE.SphereGeometry(14, 16, 16);
     const moonMat = new THREE.MeshBasicMaterial({ color: 0xf1f5f9 });
     this.moonMesh = new THREE.Mesh(moonGeo, moonMat);
@@ -289,34 +289,27 @@ export class GameScene {
     this.moonMesh.visible = false;
     this.scene.add(this.moonMesh);
 
-    // 9. Pipas
+    // 8. Pipas
     this.createFloatingKites();
 
     window.addEventListener('resize', () => this.onResize());
   }
 
-  createDistantHills() {
-    this.hillsGroup = new THREE.Group();
-    this.hillsGroup.position.set(0, 0, -220);
-
-    const hillColors = [0x15803d, 0x166534, 0x14532d, 0x047857];
-
-    for (let i = 0; i < 8; i++) {
-      const radius = 25 + Math.random() * 20;
-      const height = 45 + Math.random() * 35;
-      const hillGeo = new THREE.ConeGeometry(radius, height, 7);
-      const hillMat = new THREE.MeshLambertMaterial({
-        color: hillColors[i % hillColors.length],
-        flatShading: true
-      });
-      const hill = new THREE.Mesh(hillGeo, hillMat);
-      const x = -130 + i * 38 + (Math.random() * 15 - 7.5);
-      const z = -20 + (Math.random() * 30 - 15);
-      hill.position.set(x, height / 2 - 8, z);
-      this.hillsGroup.add(hill);
-    }
-
-    this.scene.add(this.hillsGroup);
+  /**
+   * Painel Parallax Curvo com a Silhueta Densa da Favela Carioca
+   */
+  createFavelaParallaxBackdrop() {
+    const bgGeo = new THREE.CylinderGeometry(280, 280, 140, 32, 1, true, -Math.PI / 2, Math.PI);
+    const bgMat = new THREE.MeshBasicMaterial({
+      map: textureAtlas.morroParallaxTexture,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.96
+    });
+    this.parallaxFavela = new THREE.Mesh(bgGeo, bgMat);
+    this.parallaxFavela.position.set(0, 48, -110);
+    this.parallaxFavela.rotation.y = Math.PI;
+    this.scene.add(this.parallaxFavela);
   }
 
   createFloatingKites() {
@@ -349,15 +342,14 @@ export class GameScene {
   }
 
   /**
-   * Atualiza o ciclo de iluminação e transições suaves de cor do dia/noite
+   * Ciclo Dia/Noite 24 Horas Calculado Suavemente via Tempo Decorrido
    */
-  updateDayNightCycle(dt) {
-    this.timeOfDay = (this.timeOfDay + this.cycleSpeed * dt) % 1.0;
+  updateDayNightCycle(elapsedTime) {
+    this.timeOfDay = ((elapsedTime / this.cycleDuration) + 0.04) % 1.0;
     const t = this.timeOfDay;
 
     this.updateSkyGradient(t);
 
-    // Posição do Sol e Lua
     const sunAngle = t * Math.PI * 2;
     const sunY = Math.sin(sunAngle) * 75 + 10;
     const sunX = Math.cos(sunAngle) * 50;
@@ -369,7 +361,6 @@ export class GameScene {
     this.moonMesh.visible = isNight;
     this.sunGroup.visible = !isNight || sunY > -10;
 
-    // Transição de Cores de Iluminação e Fog
     if (t < 0.15) {
       // 5h - Alvorecer
       this.scene.fog.color.setHex(0x312e81);
@@ -378,7 +369,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.75;
       this.sunLight.color.setHex(0xfecdd3);
       this.sunLight.intensity = 0.95;
-      this.playerSpotLight.intensity = 0.85; // Luz suave na pista
+      this.playerSpotLight.intensity = 0.85;
     } else if (t < 0.45) {
       // Manhã
       this.scene.fog.color.setHex(0xbae6fd);
@@ -397,7 +388,7 @@ export class GameScene {
       this.sunLight.intensity = 1.55;
       this.playerSpotLight.intensity = 0.0;
     } else if (t < 0.85) {
-      // Pôr do Sol / Golden Hour
+      // Pôr do Sol
       this.scene.fog.color.setHex(0xfcd34d);
       this.hemiLight.color.setHex(0xfb923c);
       this.hemiLight.groundColor.setHex(0x334155);
@@ -413,17 +404,13 @@ export class GameScene {
       this.hemiLight.intensity = 0.55;
       this.sunLight.color.setHex(0x60a5fa);
       this.sunLight.intensity = 0.40;
-      this.playerSpotLight.intensity = 1.45; // Iluminação total da pista para o jogador
+      this.playerSpotLight.intensity = 1.45;
     }
 
     return isNight;
   }
 
-  /**
-   * Retorna o horário formatado para exibição no HUD
-   */
   getFormattedTime() {
-    // 0.0 = 04:00, 1.0 = 04:00 do dia seguinte
     const totalMinutes = Math.floor((this.timeOfDay * 24 * 60 + 4 * 60) % (24 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
@@ -468,7 +455,6 @@ export class GameScene {
 
     this.camera.lookAt(this.camera.position.x * 0.6, 1.6 + Math.max(0, targetY * 0.2), -16);
 
-    // Luz do jogador acompanha sua posição
     if (this.playerSpotLight) {
       this.playerSpotLight.position.x = this.camera.position.x * 0.7;
     }
