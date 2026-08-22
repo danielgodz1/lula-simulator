@@ -56,9 +56,9 @@ export const CHARACTERS = [
     skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
     modifier: (state) => {
-      state.HITBOX_R = 0.028;
-      state.GAP_RATIO = 0.40;
-      state.SPEED_MULT = 1.35;
+      state.HITBOX_R = 0.024;
+      state.GAP_RATIO = 0.42;
+      state.SPEED_MULT = 1.15;
       state.EXTRA_SCORE_PER_PIPE = 2;
       state.spawnExtraLikes = false;
       state.hasShield = false;

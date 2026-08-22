@@ -1084,10 +1084,10 @@
 
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
-    let BASE_PIPE_SPEED = 2.4;
+    let BASE_PIPE_SPEED = 2.2;
     let PW_RATIO   = 0.145;
     let GH_RATIO   = 0.16;
-    let SPAWN_FREQ = 115;
+    let SPAWN_FREQ = 120;
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
@@ -1098,7 +1098,6 @@
     let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];
     let isPrisonMode = false;
     let hasPlayedBesta = false;
-    let hasAlerted400 = false;
 
     // Power-up Nikolas (Lula a cada 1 minuto com 20s de lentidão)
     let nikolasLulaSpawnTimer = 0;
@@ -1264,23 +1263,18 @@
       });
     }
 
-    // DIFICULDADE PROGRESSIVA CALIBRADA (A PARTIR DE 400 PONTOS)
+    // DIFICULDADE PROGRESSIVA SUAVE (A CADA 300 PONTOS AUMENTA A VELOCIDADE DAS TELAS: 300pts=1.2x, 600pts=1.4x...)
     function getProgressiveModifiers() {
-      if (score < 400) {
-        return { speedMult: 1.0, gapFactor: 1.0 };
+      if (score < 300) {
+        return { speedMult: 1.0 };
       }
-      const excess = score - 400;
-      // Aumenta a velocidade suavemente (máx +45% nos 850+ pontos)
-      const speedMult = 1.0 + Math.min(0.45, excess * 0.001);
-      // Reduz o vão dos canos suavemente (mín 80% do vão original para caber com segurança)
-      const gapFactor = Math.max(0.80, 1.0 - (excess * 0.00045));
-      return { speedMult, gapFactor };
+      const steps = Math.floor(score / 300);
+      const speedMult = 1.0 + (steps * 0.2);
+      return { speedMult };
     }
 
     function spawnPipe() {
-      const { gapFactor } = getProgressiveModifiers();
-      const currentGapRatio = (gameState.GAP_RATIO || 0.42) * gapFactor;
-      const GH = H * GH_RATIO, GAP = H * currentGapRatio;
+      const GH = H * GH_RATIO, GAP = H * gameState.GAP_RATIO;
       const topH = GH + 25 + Math.random() * (H - GH - GAP - 60);
       pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
 
@@ -1303,8 +1297,7 @@
         nikolasLulaSpawnTimer += dt;
         if (nikolasLulaSpawnTimer >= 60.0 && floatingLulaIcons.length === 0) {
           nikolasLulaSpawnTimer = 0;
-          const { gapFactor } = getProgressiveModifiers();
-          const GAP = H * ((gameState.GAP_RATIO || 0.42) * gapFactor);
+          const GAP = H * (gameState.GAP_RATIO || 0.42);
           const GH = H * GH_RATIO;
           floatingLulaIcons.push({
             x: W + 60,
@@ -1318,7 +1311,7 @@
         // Efeito de lentidão de 20 segundos
         if (nikolasSlowTimer > 0) {
           nikolasSlowTimer -= dt;
-          nikolasSpeedMult = 0.75; // Desacelera significativamente o Nikolas por 20s
+          nikolasSpeedMult = 0.75; // Desacelera o Nikolas por 20s
         } else {
           nikolasSpeedMult = 1.0;
         }
@@ -1328,12 +1321,12 @@
         }
       }
 
-      // Dificuldade progressiva calibrada (a partir de 400 pontos)
+      // Dificuldade progressiva suave da velocidade das telas (a partir de 300 pontos)
       const { speedMult: progSpeedMult } = getProgressiveModifiers();
       let currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * nikolasSpeedMult * progSpeedMult;
 
       const effectiveSpeed = (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT) * progSpeedMult;
-      if (frameCount % Math.max(55, Math.round(SPAWN_FREQ / effectiveSpeed)) === 0) {
+      if (frameCount % Math.round(SPAWN_FREQ / effectiveSpeed) === 0) {
         spawnPipe();
       }
 
@@ -1361,11 +1354,10 @@
             showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA, UMA BESTA ENJAULADA!', false);
           }
 
-          // AVISO DE DIFICULDADE PROGRESSIVA NOS 400 PONTOS
-          if (score >= 400 && !hasAlerted400) {
-            hasAlerted400 = true;
-            try { sounds.playBestaEnjaulada(); } catch(e){}
-            showBannerAlert('🔥 400 PONTOS: VELOCIDADE & PRECISÃO AUMENTANDO GRADATIVAMENTE!', true);
+          // AVISO A CADA 300 PONTOS
+          if (score >= 300 && Math.floor(score / 300) > Math.floor((score - pointsEarned) / 300)) {
+            const mult = (1.0 + Math.floor(score / 300) * 0.2).toFixed(1);
+            showBannerAlert(`⚡ ${score} PONTOS: VELOCIDADE DAS TELAS AUMENTADA PARA ${mult}x!`, false);
           }
 
           if (gameState.isTurboAllowed) {
@@ -1848,13 +1840,14 @@
           ctx.lineWidth = 2;
           ctx.strokeText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
           ctx.fillText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
-        } else if (score >= 400) {
+        } else if (score >= 300) {
+          const currentMult = (1.0 + Math.floor(score / 300) * 0.2).toFixed(1);
           ctx.font = '8px "Press Start 2P", cursive';
-          ctx.fillStyle = '#ef4444';
+          ctx.fillStyle = '#ffdf00';
           ctx.strokeStyle = '#000';
           ctx.lineWidth = 2;
-          ctx.strokeText(`🔥 VELOCIDADE DINÂMICA`, W / 2, 28);
-          ctx.fillText(`🔥 VELOCIDADE DINÂMICA`, W / 2, 28);
+          ctx.strokeText(`⚡ VELOCIDADE: ${currentMult}x`, W / 2, 28);
+          ctx.fillText(`⚡ VELOCIDADE: ${currentMult}x`, W / 2, 28);
         }
 
         ctx.textAlign = 'left';
@@ -2059,7 +2052,6 @@
         state = STATE.PLAYING;
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         hasPlayedBesta = false;
-        hasAlerted400 = false;
         nikolasLulaSpawnTimer = 0;
         nikolasSlowTimer = 0;
         nikolasTripleTimer = 0;
@@ -2086,7 +2078,6 @@
       state = STATE.PLAYING;
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       hasPlayedBesta = false;
-      hasAlerted400 = false;
       nikolasLulaSpawnTimer = 0;
       nikolasSlowTimer = 0;
       nikolasTripleTimer = 0;
