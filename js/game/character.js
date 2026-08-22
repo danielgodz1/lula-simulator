@@ -1,7 +1,8 @@
-// js/game/character.js — Modelo 3D com Suporte Multi-Personagem (Empresário, Lula, Bolsonaro), Materiais PBR e Agilidade Escalável
+// js/game/character.js — Modelo 3D com Suporte a Modelos GLB/GLTF de Alta Fidelidade e Animação Física
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
 import { RunnerInventory } from './characters.js';
+import { modelLoader } from './model-loader.js';
 
 export const LANES = [-2.8, 0, 2.8];
 
@@ -11,6 +12,8 @@ export class Character {
     this.mesh = new THREE.Group();
 
     this.characterId = RunnerInventory.getSelectedCharacter().id;
+    this.isGLB = false;
+    this.bodyPivot = null;
 
     this.currentLane = 1;
     this.targetX = 0;
@@ -40,7 +43,7 @@ export class Character {
     this.superJump = false;
     this.magnetActive = false;
 
-    // Partes do Corpo
+    // Partes do Corpo (Procedural / GLB)
     this.torso = null;
     this.head = null;
     this.leftLeg = null;
@@ -65,7 +68,7 @@ export class Character {
   }
 
   setCharacter(charId) {
-    if (this.characterId === charId && this.torso) return;
+    if (this.characterId === charId && (this.bodyPivot || this.torso)) return;
     this.characterId = charId;
     this.build();
   }
@@ -75,6 +78,9 @@ export class Character {
       const obj = this.mesh.children[0];
       this.mesh.remove(obj);
     }
+    this.torso = null;
+    this.bodyPivot = null;
+    this.isGLB = false;
   }
 
   build() {
@@ -82,7 +88,93 @@ export class Character {
 
     const charId = this.characterId || 'empresario';
 
-    // Paletas PBR por Personagem
+    // 1. TENTA CARREGAR O MODELO 3D GLB REAL
+    const glbModel = modelLoader.getModel(charId);
+
+    if (glbModel) {
+      this.isGLB = true;
+      this.bodyPivot = new THREE.Group();
+
+      // Calcula Bounding Box Exata e Escala para Altura Padrão de 2.10m
+      const box = new THREE.Box3().setFromObject(glbModel);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      const targetHeight = 2.10;
+      const scale = targetHeight / Math.max(0.001, size.y);
+      glbModel.scale.set(scale, scale, scale);
+
+      // Centraliza horizontalmente e apoia a base dos pés exatamente em Y = 0
+      glbModel.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+      this.bodyPivot.add(glbModel);
+      this.mesh.add(this.bodyPivot);
+
+      // Itens de Power-up em 3D
+      this.buildPowerupAccessories();
+
+      // Sombra Suave no Chão
+      const shadowGeo = new THREE.PlaneGeometry(1.4, 2.2);
+      const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
+      this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
+      this.shadow.rotation.x = -Math.PI / 2;
+      this.shadow.position.y = 0.03;
+      this.mesh.add(this.shadow);
+
+      if (!this.scene.children.includes(this.mesh)) {
+        this.scene.add(this.mesh);
+      }
+      return;
+    }
+
+    // 2. FALLBACK PROCEDURAL (caso o GLB ainda esteja em streaming)
+    this.buildProceduralModel(charId);
+  }
+
+  buildPowerupAccessories() {
+    const goldMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      metalness: 0.9,
+      roughness: 0.15,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.35
+    });
+
+    // Sapato Dourado Alado Esquerdo
+    this.lShoeGolden = new THREE.Group();
+    this.lShoeGolden.position.set(-0.24, 0.12, 0.08);
+    const lGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    lGoldBoot.castShadow = true;
+    this.lWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.lWing.rotation.set(0, 0, Math.PI / 2);
+    this.lWing.position.set(-0.22, 0.08, -0.05);
+    this.lShoeGolden.add(lGoldBoot, this.lWing);
+    this.lShoeGolden.visible = false;
+
+    // Sapato Dourado Alado Direito
+    this.rShoeGolden = new THREE.Group();
+    this.rShoeGolden.position.set(0.24, 0.12, 0.08);
+    const rGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    rGoldBoot.castShadow = true;
+    this.rWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.rWing.rotation.set(0, 0, -Math.PI / 2);
+    this.rWing.position.set(0.22, 0.08, -0.05);
+    this.rShoeGolden.add(rGoldBoot, this.rWing);
+    this.rShoeGolden.visible = false;
+
+    this.mesh.add(this.lShoeGolden, this.rShoeGolden);
+
+    // Ímã 3D na mão esquerda
+    this.handMagnet = this.createHandMagnet3D();
+    this.handMagnet.position.set(-0.48, 1.05, 0.22);
+    this.handMagnet.rotation.set(Math.PI / 6, 0, 0);
+    this.handMagnet.scale.set(0.75, 0.75, 0.75);
+    this.handMagnet.visible = false;
+    this.mesh.add(this.handMagnet);
+  }
+
+  buildProceduralModel(charId) {
     let suitColor = 0x1e293b;
     let shirtColor = 0xf8fafc;
     let tieColor = 0xdc2626;
@@ -611,73 +703,101 @@ export class Character {
   animate(dt, speed) {
     this.animTime += dt * (speed / 16);
 
-    if (this.isSliding) {
-      this.mesh.rotation.x = -Math.PI / 2.2;
-      this.mesh.position.y = this.y + 0.32;
+    // 1. ANIMAÇÃO PARA MODELOS 3D GLB
+    if (this.isGLB && this.bodyPivot) {
+      if (this.isSliding) {
+        this.mesh.rotation.x = -Math.PI / 2.2;
+        this.mesh.position.y = this.y + 0.32;
+        this.bodyPivot.rotation.set(0, 0, 0);
+        this.bodyPivot.position.set(0, 0, 0);
+        this.shadow.scale.set(1.5, 0.8, 1);
+      } else if (this.isJumping || this.y > this.groundY + 0.1) {
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+        this.bodyPivot.rotation.x = -0.15;
+        this.bodyPivot.rotation.y = 0;
+        this.bodyPivot.rotation.z = 0;
+        this.bodyPivot.position.set(0, 0, 0);
 
-      this.torso.rotation.x = 0;
-      this.leftLeg.rotation.x = 0.1;
-      this.rightLeg.rotation.x = 0.1;
-      this.leftArmGroup.rotation.x = -0.5;
-      this.rightArmGroup.rotation.x = -0.5;
+        if (this.superJump && this.lWing && this.rWing) {
+          const wingFlap = Math.sin(this.animTime * 14) * 0.35;
+          this.lWing.rotation.x = wingFlap;
+          this.rWing.rotation.x = -wingFlap;
+        }
 
-      this.shadow.scale.set(1.5, 0.8, 1);
-    } else if (this.isJumping || this.y > this.groundY + 0.1) {
-      this.mesh.rotation.x = 0;
-      this.mesh.position.y = this.y;
-
-      this.torso.rotation.x = 0;
-      this.leftLeg.rotation.x = 0.1;
-      this.rightLeg.rotation.x = 0.1;
-      this.leftArmGroup.rotation.x = -0.5;
-      this.rightArmGroup.rotation.x = -0.5;
-
-      this.shadow.scale.set(1.5, 0.8, 1);
-    } else if (this.isJumping) {
-      this.mesh.rotation.x = 0;
-      this.mesh.position.y = this.y;
-
-      this.torso.rotation.x = -0.15;
-      this.torso.position.y = 1.38;
-      this.head.position.set(0, 2.12, 0);
-      this.leftLeg.rotation.x = 0.55;
-      this.rightLeg.rotation.x = -0.35;
-      this.leftArmGroup.rotation.x = -1.2;
-      this.rightArmGroup.rotation.x = -0.6;
-
-      // Asas dos sapatos batem no ar ao pular
-      if (this.superJump && this.lWing && this.rWing) {
-        const wingFlap = Math.sin(this.animTime * 14) * 0.35;
-        this.lWing.rotation.x = wingFlap;
-        this.rWing.rotation.x = -wingFlap;
-      }
-
-      this.shadow.scale.set(0.65, 0.65, 1);
-      this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
-    } else {
-      this.mesh.rotation.x = 0;
-      this.mesh.position.y = this.y;
-
-      this.torso.rotation.x = 0.12;
-      this.torso.position.y = 1.38 + Math.sin(this.animTime * 2) * 0.04;
-      this.head.position.set(0, 2.12, 0);
-
-      const legSwing = Math.sin(this.animTime) * 0.75;
-      this.leftLeg.rotation.x = legSwing;
-      this.rightLeg.rotation.x = -legSwing;
-
-      // Se estiver segurando o ímã, o braço esquerdo fica levemente projetado à frente atraindo moedas
-      if (this.magnetActive) {
-        this.leftArmGroup.rotation.x = 0.4 + Math.sin(this.animTime * 1.5) * 0.15;
+        this.shadow.scale.set(0.65, 0.65, 1);
+        this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
       } else {
-        this.leftArmGroup.rotation.x = -legSwing * 0.85;
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+        this.bodyPivot.rotation.x = 0.08;
+        this.bodyPivot.rotation.y = Math.sin(this.animTime) * 0.06;
+        this.bodyPivot.rotation.z = Math.sin(this.animTime * 1.5) * 0.03;
+        this.bodyPivot.position.y = Math.sin(this.animTime * 2) * 0.05;
+
+        this.shadow.scale.set(1.0, 1.0, 1);
+        this.shadow.material.opacity = 0.45;
       }
+      return;
+    }
 
-      this.rightArmGroup.rotation.x = legSwing * 0.85;
-      this.briefcase.rotation.x = Math.sin(this.animTime * 1.2) * 0.35;
+    // 2. ANIMAÇÃO PARA FALLBACK PROCEDURAL
+    if (this.torso && this.leftLeg && this.rightLeg && this.leftArmGroup && this.rightArmGroup) {
+      if (this.isSliding) {
+        this.mesh.rotation.x = -Math.PI / 2.2;
+        this.mesh.position.y = this.y + 0.32;
 
-      this.shadow.scale.set(1.0, 1.0, 1);
-      this.shadow.material.opacity = 0.45;
+        this.torso.rotation.x = 0;
+        this.leftLeg.rotation.x = 0.1;
+        this.rightLeg.rotation.x = 0.1;
+        this.leftArmGroup.rotation.x = -0.5;
+        this.rightArmGroup.rotation.x = -0.5;
+
+        this.shadow.scale.set(1.5, 0.8, 1);
+      } else if (this.isJumping || this.y > this.groundY + 0.1) {
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+
+        this.torso.rotation.x = -0.15;
+        this.torso.position.y = 1.38;
+        if (this.head) this.head.position.set(0, 2.12, 0);
+        this.leftLeg.rotation.x = 0.55;
+        this.rightLeg.rotation.x = -0.35;
+        this.leftArmGroup.rotation.x = -1.2;
+        this.rightArmGroup.rotation.x = -0.6;
+
+        if (this.superJump && this.lWing && this.rWing) {
+          const wingFlap = Math.sin(this.animTime * 14) * 0.35;
+          this.lWing.rotation.x = wingFlap;
+          this.rWing.rotation.x = -wingFlap;
+        }
+
+        this.shadow.scale.set(0.65, 0.65, 1);
+        this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
+      } else {
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+
+        this.torso.rotation.x = 0.12;
+        this.torso.position.y = 1.38 + Math.sin(this.animTime * 2) * 0.04;
+        if (this.head) this.head.position.set(0, 2.12, 0);
+
+        const legSwing = Math.sin(this.animTime) * 0.75;
+        this.leftLeg.rotation.x = legSwing;
+        this.rightLeg.rotation.x = -legSwing;
+
+        if (this.magnetActive) {
+          this.leftArmGroup.rotation.x = 0.4 + Math.sin(this.animTime * 1.5) * 0.15;
+        } else {
+          this.leftArmGroup.rotation.x = -legSwing * 0.85;
+        }
+
+        this.rightArmGroup.rotation.x = legSwing * 0.85;
+        if (this.briefcase) this.briefcase.rotation.x = Math.sin(this.animTime * 1.2) * 0.35;
+
+        this.shadow.scale.set(1.0, 1.0, 1);
+        this.shadow.material.opacity = 0.45;
+      }
     }
   }
 

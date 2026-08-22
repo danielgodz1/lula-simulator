@@ -9,6 +9,7 @@ import { UIManager } from './ui.js';
 import { savePlayerScore } from '../firebase-config.js';
 import { auth } from '../auth.js';
 import { RunnerInventory } from './characters.js';
+import { modelLoader } from './model-loader.js';
 
 export class Game {
   constructor() {
@@ -21,6 +22,13 @@ export class Game {
     // Conecta a troca de personagem em tempo real na cena
     this.ui.onCharacterChanged = (charId) => {
       this.character.setCharacter(charId);
+    };
+
+    // Conecta início de jogo via botão direto no modal de seleção de personagem
+    this.ui.onStartGameRequest = () => {
+      if (this.state !== this.STATE.PLAYING) {
+        this.start();
+      }
     };
 
     // Estados do Jogo
@@ -214,5 +222,12 @@ export class Game {
 }
 
 export function initGame() {
+  // Pré-carrega todos os modelos GLB em segundo plano
+  modelLoader.preloadAll().then(() => {
+    if (window.currentGameInstance && window.currentGameInstance.character) {
+      const sel = RunnerInventory.getSelectedCharacter();
+      window.currentGameInstance.character.setCharacter(sel.id);
+    }
+  });
   window.currentGameInstance = new Game();
 }

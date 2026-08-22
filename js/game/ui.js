@@ -1,6 +1,8 @@
-// js/game/ui.js — Gerenciador de HUD, Modal de Seleção de Personagens 3D, Áudio e Game Over
+// js/game/ui.js — Gerenciador de HUD, Viewport 3D Interativo de Personagens, Áudio e Game Over
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { gameAudio } from './audio.js';
 import { RUNNER_CHARACTERS, RunnerInventory } from './characters.js';
+import { modelLoader } from './model-loader.js';
 
 export class UIManager {
   constructor() {
@@ -22,8 +24,23 @@ export class UIManager {
     this.btnCloseCharSelect = document.getElementById('btnCloseCharSelect');
     this.characterCardsContainer = document.getElementById('characterCardsContainer');
     this.charModalCoinBalance = document.getElementById('charModalCoinBalance');
+    this.previewCanvas = document.getElementById('charPreview3DCanvas');
+    this.previewCharName = document.getElementById('previewCharName');
+    this.previewCharDesc = document.getElementById('previewCharDesc');
+    this.btnPlayWithSelectedChar = document.getElementById('btnPlayWithSelectedChar');
+
+    // Viewport 3D do Preview
+    this.previewRenderer = null;
+    this.previewScene = null;
+    this.previewCamera = null;
+    this.previewModelGroup = null;
+    this.previewCharId = RunnerInventory.getSelectedCharacter().id;
+    this.previewAnimId = null;
+    this.isDraggingPreview = false;
+    this.prevMouseX = 0;
 
     this.onCharacterChanged = null;
+    this.onStartGameRequest = null;
 
     this.setupSoundButton();
     this.setupCharacterSelect();
@@ -61,16 +78,238 @@ export class UIManager {
         this.closeCharacterModal();
       });
     }
+
+    // Botão Direto: Jogar com o Personagem Selecionado no 3D Preview
+    if (this.btnPlayWithSelectedChar) {
+      this.btnPlayWithSelectedChar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetId = this.previewCharId || 'empresario';
+        const charData = RUNNER_CHARACTERS.find(c => c.id === targetId);
+
+        if (!RunnerInventory.isUnlocked(targetId)) {
+          const res = RunnerInventory.unlockCharacter(targetId);
+          if (res.success) {
+            RunnerInventory.setSelectedCharacter(targetId);
+            if (typeof this.onCharacterChanged === 'function') {
+              this.onCharacterChanged(targetId);
+            }
+            gameAudio.playPicanhaCollect();
+            this.closeCharacterModal();
+            this.hideStartScreen();
+            if (typeof this.onStartGameRequest === 'function') {
+              this.onStartGameRequest();
+            }
+          } else {
+            alert(`⚠️ ${res.message}`);
+          }
+        } else {
+          RunnerInventory.setSelectedCharacter(targetId);
+          if (typeof this.onCharacterChanged === 'function') {
+            this.onCharacterChanged(targetId);
+          }
+          gameAudio.playPowerup();
+          this.closeCharacterModal();
+          this.hideStartScreen();
+          if (typeof this.onStartGameRequest === 'function') {
+            this.onStartGameRequest();
+          }
+        }
+      });
+    }
+  }
+
+  init3DPreview() {
+    if (!this.previewCanvas) return;
+    if (this.previewRenderer) {
+      this.resize3DPreview();
+      return;
+    }
+
+    const width = this.previewCanvas.clientWidth || 400;
+    const height = this.previewCanvas.clientHeight || 230;
+
+    this.previewRenderer = new THREE.WebGLRenderer({
+      canvas: this.previewCanvas,
+      alpha: true,
+      antialias: true
+    });
+    this.previewRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.previewRenderer.setSize(width, height, false);
+    this.previewRenderer.shadowMap.enabled = true;
+    this.previewRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    this.previewScene = new THREE.Scene();
+
+    this.previewCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 50);
+    this.previewCamera.position.set(0, 1.05, 3.2);
+    this.previewCamera.lookAt(0, 0.95, 0);
+
+    // Iluminação de Estúdio 3D
+    const amb = new THREE.AmbientLight(0xffffff, 1.2);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.8);
+    dir.position.set(2, 4, 3);
+    dir.castShadow = true;
+
+    const rim = new THREE.DirectionalLight(0x38bdf8, 1.2);
+    rim.position.set(-2, 2, -2);
+
+    const fill = new THREE.PointLight(0xfacc15, 1.0, 8);
+    fill.position.set(0, -0.5, 2);
+
+    this.previewScene.add(amb, dir, rim, fill);
+
+    this.previewModelGroup = new THREE.Group();
+    this.previewScene.add(this.previewModelGroup);
+
+    // Controles de Arraste / Rotação 360 no Preview
+    const onPointerDown = (clientX) => {
+      this.isDraggingPreview = true;
+      this.prevMouseX = clientX;
+    };
+
+    const onPointerMove = (clientX) => {
+      if (this.isDraggingPreview && this.previewModelGroup) {
+        const delta = clientX - this.prevMouseX;
+        this.previewModelGroup.rotation.y += delta * 0.015;
+        this.prevMouseX = clientX;
+      }
+    };
+
+    const onPointerUp = () => {
+      this.isDraggingPreview = false;
+    };
+
+    this.previewCanvas.addEventListener('mousedown', (e) => onPointerDown(e.clientX));
+    window.addEventListener('mousemove', (e) => onPointerMove(e.clientX));
+    window.addEventListener('mouseup', onPointerUp);
+
+    this.previewCanvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) onPointerDown(e.touches[0].clientX);
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) onPointerMove(e.touches[0].clientX);
+    }, { passive: true });
+    window.addEventListener('touchend', onPointerUp);
+  }
+
+  resize3DPreview() {
+    if (!this.previewRenderer || !this.previewCanvas) return;
+    const width = this.previewCanvas.clientWidth || 400;
+    const height = this.previewCanvas.clientHeight || 230;
+    this.previewRenderer.setSize(width, height, false);
+    if (this.previewCamera) {
+      this.previewCamera.aspect = width / height;
+      this.previewCamera.updateProjectionMatrix();
+    }
+  }
+
+  update3DPreview(charId) {
+    this.previewCharId = charId;
+    if (!this.previewScene || !this.previewModelGroup) return;
+
+    // Limpa o grupo anterior
+    while (this.previewModelGroup.children.length > 0) {
+      this.previewModelGroup.remove(this.previewModelGroup.children[0]);
+    }
+
+    const charData = RUNNER_CHARACTERS.find(c => c.id === charId) || RUNNER_CHARACTERS[0];
+
+    // Carrega o Modelo 3D GLB correspondente
+    const glbModel = modelLoader.getModel(charId);
+
+    if (glbModel) {
+      const box = new THREE.Box3().setFromObject(glbModel);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      const targetHeight = 1.95;
+      const scale = targetHeight / Math.max(0.001, size.y);
+      glbModel.scale.set(scale, scale, scale);
+      glbModel.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+      this.previewModelGroup.add(glbModel);
+    }
+
+    // Pedestal de Luz Circular Sob os Pés
+    const ringGeo = new THREE.TorusGeometry(0.80, 0.025, 8, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ color: charData.themeColor || 0xfacc15, wireframe: false });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.02;
+    this.previewModelGroup.add(ring);
+
+    // Atualiza Informações de Texto
+    if (this.previewCharName) {
+      this.previewCharName.textContent = charData.name;
+      this.previewCharName.style.color = charData.themeColor || '#facc15';
+    }
+    if (this.previewCharDesc) {
+      this.previewCharDesc.textContent = charData.desc;
+    }
+
+    // Atualiza Botão de Ação CTA
+    if (this.btnPlayWithSelectedChar) {
+      const isUnlocked = RunnerInventory.isUnlocked(charId);
+      const isEquipped = RunnerInventory.getSelectedCharacter().id === charId;
+
+      if (isEquipped) {
+        this.btnPlayWithSelectedChar.textContent = `🚀 JOGAR COM ${charData.name.toUpperCase()} (EQUIPADO)`;
+        this.btnPlayWithSelectedChar.style.background = '#16a34a';
+        this.btnPlayWithSelectedChar.style.borderColor = '#22c55e';
+      } else if (isUnlocked) {
+        this.btnPlayWithSelectedChar.textContent = `🚀 JOGAR COM ${charData.name.toUpperCase()}`;
+        this.btnPlayWithSelectedChar.style.background = '#0284c7';
+        this.btnPlayWithSelectedChar.style.borderColor = '#38bdf8';
+      } else {
+        this.btnPlayWithSelectedChar.textContent = `🔒 DESBLOQUEAR ${charData.name.toUpperCase()} (${charData.cost} MOEDAS)`;
+        this.btnPlayWithSelectedChar.style.background = '#ca8a04';
+        this.btnPlayWithSelectedChar.style.borderColor = '#eab308';
+      }
+    }
+  }
+
+  start3DPreviewLoop() {
+    this.stop3DPreviewLoop();
+
+    const animatePreview = () => {
+      this.previewAnimId = requestAnimationFrame(animatePreview);
+
+      if (this.previewModelGroup && !this.isDraggingPreview) {
+        this.previewModelGroup.rotation.y += 0.014;
+      }
+
+      if (this.previewRenderer && this.previewScene && this.previewCamera) {
+        this.previewRenderer.render(this.previewScene, this.previewCamera);
+      }
+    };
+
+    animatePreview();
+  }
+
+  stop3DPreviewLoop() {
+    if (this.previewAnimId) {
+      cancelAnimationFrame(this.previewAnimId);
+      this.previewAnimId = null;
+    }
   }
 
   openCharacterModal() {
     if (!this.charSelectModal) return;
+    this.previewCharId = RunnerInventory.getSelectedCharacter().id;
     this.renderCharacterCards();
     this.charSelectModal.style.display = 'flex';
     this.charSelectModal.style.zIndex = '1300';
+
+    setTimeout(() => {
+      this.init3DPreview();
+      this.update3DPreview(this.previewCharId);
+      this.start3DPreviewLoop();
+    }, 50);
   }
 
   closeCharacterModal() {
+    this.stop3DPreviewLoop();
     if (!this.charSelectModal) return;
     this.charSelectModal.style.display = 'none';
   }
@@ -88,50 +327,59 @@ export class UIManager {
     RUNNER_CHARACTERS.forEach(char => {
       const isUnlocked = RunnerInventory.isUnlocked(char.id);
       const isEquipped = selectedChar.id === char.id;
+      const isCurrentlyPreviewed = this.previewCharId === char.id;
 
       const card = document.createElement('div');
       card.className = 'character-card-runner';
       card.style.cssText = `
-        background: rgba(15, 23, 42, 0.95);
-        border: 2px solid ${isEquipped ? 'var(--amarelo-brasil)' : isUnlocked ? '#38bdf8' : '#475569'};
-        border-radius: 16px;
-        padding: 14px;
+        background: ${isCurrentlyPreviewed ? 'rgba(30, 41, 59, 0.95)' : 'rgba(15, 23, 42, 0.95)'};
+        border: 2px solid ${isCurrentlyPreviewed ? 'var(--amarelo-brasil)' : isEquipped ? '#22c55e' : isUnlocked ? '#38bdf8' : '#475569'};
+        border-radius: 14px;
+        padding: 10px;
         display: flex;
         flex-direction: column;
         align-items: center;
         text-align: center;
         position: relative;
-        box-shadow: ${isEquipped ? '0 0 20px rgba(255, 223, 0, 0.3)' : 'none'};
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease;
+        box-shadow: ${isCurrentlyPreviewed ? '0 0 20px rgba(255, 223, 0, 0.35)' : 'none'};
       `;
 
       card.innerHTML = `
-        <div style="width:70px; height:70px; border-radius:50%; background:rgba(0,0,0,0.4); border:2px solid ${char.themeColor || '#eab308'}; display:flex; align-items:center; justify-content:center; margin-bottom:8px; overflow:hidden;">
+        <div style="width:58px; height:58px; border-radius:50%; background:rgba(0,0,0,0.4); border:2px solid ${char.themeColor || '#eab308'}; display:flex; align-items:center; justify-content:center; margin-bottom:6px; overflow:hidden;">
           <img src="${char.sprite || 'img/favela.png'}" alt="${char.name}" style="width:100%; height:100%; object-fit:cover;">
         </div>
-        <div style="font-family:'Bangers',cursive; font-size:19px; color:${char.themeColor || '#fef08a'}; margin-bottom:2px;">
+        <div style="font-family:'Bangers',cursive; font-size:17px; color:${char.themeColor || '#fef08a'}; margin-bottom:2px;">
           ${char.name}
         </div>
-        <div style="font-size:10px; color:#94a3b8; margin-bottom:8px; min-height:30px; line-height:1.3;">
+        <div style="font-size:10px; color:#94a3b8; margin-bottom:6px; min-height:24px; line-height:1.2;">
           ${char.desc}
         </div>
         <div style="margin-top:auto; width:100%;">
           ${isEquipped ? `
-            <button class="btn-primary" style="width:100%; padding:7px 0; font-size:14px; background:#16a34a; border-color:#22c55e; cursor:default;">
+            <button class="btn-primary" style="width:100%; padding:6px 0; font-size:12px; background:#16a34a; border-color:#22c55e; cursor:default;">
               ✓ EQUIPADO
             </button>
           ` : isUnlocked ? `
-            <button class="btn-primary btn-equip-char" data-id="${char.id}" style="width:100%; padding:7px 0; font-size:14px; background:#0284c7; border-color:#38bdf8; cursor:pointer;">
-              EQUIPAR
+            <button class="btn-primary btn-equip-char" data-id="${char.id}" style="width:100%; padding:6px 0; font-size:12px; background:#0284c7; border-color:#38bdf8; cursor:pointer;">
+              VER 3D / EQUIPAR
             </button>
           ` : `
-            <button class="btn-primary btn-unlock-char" data-id="${char.id}" style="width:100%; padding:7px 0; font-size:13px; background:#ca8a04; border-color:#eab308; cursor:pointer;">
-              🔒 DESBLOQUEAR (${char.cost} 💰)
+            <button class="btn-primary btn-unlock-char" data-id="${char.id}" style="width:100%; padding:6px 0; font-size:11px; background:#ca8a04; border-color:#eab308; cursor:pointer;">
+              🔒 ${char.cost} 💰
             </button>
           `}
         </div>
       `;
 
-      // Eventos de clique
+      // Clicar no card seleciona no preview 3D
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.update3DPreview(char.id);
+        this.renderCharacterCards();
+      });
+
       const equipBtn = card.querySelector('.btn-equip-char');
       if (equipBtn) {
         equipBtn.addEventListener('click', (e) => {
@@ -140,6 +388,7 @@ export class UIManager {
           if (typeof this.onCharacterChanged === 'function') {
             this.onCharacterChanged(char.id);
           }
+          this.update3DPreview(char.id);
           gameAudio.playPowerup();
           this.renderCharacterCards();
         });
@@ -155,6 +404,7 @@ export class UIManager {
             if (typeof this.onCharacterChanged === 'function') {
               this.onCharacterChanged(char.id);
             }
+            this.update3DPreview(char.id);
             gameAudio.playPicanhaCollect();
             alert(`🎉 Parabéns! ${res.message}`);
           } else {
@@ -179,6 +429,7 @@ export class UIManager {
   }
 
   showStartScreen(onStart) {
+    this.onStartGameRequest = onStart;
     if (this.startOverlay) {
       this.startOverlay.style.display = 'flex';
       const startBtn = document.getElementById('btnStartGame');
@@ -223,6 +474,11 @@ export class UIManager {
         "Tentou surfar no teto do trem da Central e o guarda te pegou!",
         "O ramal Japeri passou por cima dos seus lucros empresariais!",
         "Ficou preso na catraca do metrô sem saldo no Riocard!"
+      ],
+      truck: [
+        "Levou uma fechada do caminhão de carga pesada na subida do morro!",
+        "O caminhão de frete da favela passou por cima da sua maleta de dinheiro!",
+        "Tentou ultrapassar o caminhão na curva fechada e perdeu o controle!"
       ],
       varal: [
         "Ficou preso no gato de luz da comunidade da favela!",

@@ -1,8 +1,9 @@
-// js/game/obstacles.js — Moedas Douradas, Cards Realistas, Ícones 3D de Sapatos Dourados & Ímã em Ferradura
+// js/game/obstacles.js — Moedas Douradas, Cards Realistas, Trens, Caminhões 3D e Ícones de Power-ups
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { gameAudio } from './audio.js';
 import { textureAtlas } from './textures.js';
+import { modelLoader } from './model-loader.js';
 
 export class ObstacleManager {
   constructor(scene) {
@@ -164,7 +165,14 @@ export class ObstacleManager {
 
       switch (pattern) {
         case 0:
-          this.createSubwayTrain(parent, LANES[chosenLane], localZ, Math.random() > 0.5);
+          // 50% Trens e 50% Caminhões
+          const isTruck = Math.random() > 0.5;
+          const isMoving = Math.random() > 0.5;
+          if (isTruck) {
+            this.createTruckObstacle(parent, LANES[chosenLane], localZ, isMoving);
+          } else {
+            this.createSubwayTrain(parent, LANES[chosenLane], localZ, isMoving);
+          }
           const safeLane0 = (chosenLane + 1) % 3;
           this.createCoinLine(parent, LANES[safeLane0], localZ - 10, 5);
           break;
@@ -196,6 +204,85 @@ export class ObstacleManager {
           break;
       }
     });
+  }
+
+  // 1. NOVO OBSTÁCULO: CAMINHÃO 3D GLB (caminhao.glb)
+  createTruckObstacle(parent, laneX, localZ, isMoving = false) {
+    const truck = new THREE.Group();
+    truck.position.set(laneX, 1.6, localZ);
+
+    const truckModel = modelLoader.getModel('caminhao');
+
+    if (truckModel) {
+      const box = new THREE.Box3().setFromObject(truckModel);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+
+      // Calibra a escala do caminhão 3D para caber perfeitamente na pista (largura 2.3m, altura 3.2m, comprimento 11m)
+      const scaleX = 2.30 / Math.max(0.001, size.x);
+      const scaleY = 3.20 / Math.max(0.001, size.y);
+      const scaleZ = 11.0 / Math.max(0.001, size.z);
+      truckModel.scale.set(scaleX, scaleY, scaleZ);
+      truckModel.position.set(-center.x * scaleX, -center.y * scaleY, -center.z * scaleZ);
+
+      truck.add(truckModel);
+    } else {
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.3 });
+      const cabinMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.6, roughness: 0.3 });
+      const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.6, 8.5), bodyMat);
+      cargo.position.set(0, 0.3, -1.2);
+      cargo.castShadow = true;
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.0, 3.2), cabinMat);
+      cabin.position.set(0, 0, 4.6);
+      cabin.castShadow = true;
+      truck.add(cargo, cabin);
+    }
+
+    // Faróis do Caminhão
+    [-0.75, 0.75].forEach(hx => {
+      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.1, 12), this.materials.headlight);
+      lamp.rotation.x = Math.PI / 2;
+      lamp.position.set(hx, -0.4, 5.8);
+      truck.add(lamp);
+    });
+
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(2.0, 10.0, 8, 1, true), this.materials.headlightBeam);
+    beam.rotation.x = -Math.PI / 2;
+    beam.position.set(0, -0.4, 11.0);
+    truck.add(beam);
+
+    parent.add(truck);
+
+    const obstacleObj = {
+      name: 'Caminhão da Favela',
+      type: 'truck',
+      mesh: truck,
+      parent: parent,
+      laneX: laneX,
+      localZ: localZ,
+      isMoving: isMoving,
+      moveSpeed: isMoving ? 13 : 0,
+      hornPlayed: false,
+      passSoundPlayed: false,
+      getAABB() {
+        const pz = parent.position.z + truck.position.z;
+        return {
+          minX: laneX - 1.15,
+          maxX: laneX + 1.15,
+          minY: 0,
+          maxY: 3.2,
+          minZ: pz - 5.5,
+          maxZ: pz + 5.5
+        };
+      }
+    };
+
+    this.obstacles.push(obstacleObj);
+    if (isMoving) {
+      this.movingTrains.push(obstacleObj);
+    }
   }
 
   createSubwayTrain(parent, laneX, localZ, isMoving = false) {
@@ -232,6 +319,7 @@ export class ObstacleManager {
     parent.add(train);
 
     const obstacleObj = {
+      name: 'Trem do Metrô',
       type: 'train',
       mesh: train,
       parent: parent,
@@ -248,14 +336,16 @@ export class ObstacleManager {
           maxX: laneX + (2.3 * 0.85) / 2,
           minY: 0,
           maxY: 3.4,
-          minZ: pz - (17.5 * 0.85) / 2,
-          maxZ: pz + (17.5 * 0.85) / 2
+          minZ: pz - 9.0,
+          maxZ: pz + 9.0
         };
       }
     };
 
     this.obstacles.push(obstacleObj);
-    if (isMoving) this.movingTrains.push(obstacleObj);
+    if (isMoving) {
+      this.movingTrains.push(obstacleObj);
+    }
   }
 
   createCLTFloatingCard(parent, laneX, localZ) {
@@ -589,18 +679,18 @@ export class ObstacleManager {
       }
     }
 
-    // C. Verificação de Pouso/Andar em Cima dos Vagões de Trem (Mecânica Subway Surfers)
+    // C. Verificação de Pouso/Andar em Cima dos Vagões de Trem ou Caminhões (Mecânica Subway Surfers)
     let onTrainTop = false;
     let trainRoofY = 0;
 
     for (const obs of this.obstacles) {
-      if (obs.type === 'train') {
+      if (obs.type === 'train' || obs.type === 'truck') {
         const obsAABB = obs.getAABB();
         const overTrainX = (player.x + 0.40) > obsAABB.minX && (player.x - 0.40) < obsAABB.maxX;
         const overTrainZ = (player.z + 0.40) > obsAABB.minZ && (player.z - 0.40) < obsAABB.maxZ;
 
         if (overTrainX && overTrainZ) {
-          // O jogador está sobre a projeção do trem
+          // O jogador está sobre a projeção do veículo pesado
           if (player.y >= obsAABB.maxY - 0.45) {
             onTrainTop = true;
             trainRoofY = Math.max(trainRoofY, obsAABB.maxY);
@@ -620,7 +710,7 @@ export class ObstacleManager {
       player.groundY = 0;
     }
 
-    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do trem)
+    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do veículo)
     if (!player.isDead) {
       for (const obs of this.obstacles) {
         const obsAABB = obs.getAABB();
@@ -628,8 +718,8 @@ export class ObstacleManager {
         const collisionX = playerAABB.maxX > obsAABB.minX && playerAABB.minX < obsAABB.maxX;
         const collisionZ = playerAABB.maxZ > obsAABB.minZ && playerAABB.minZ < obsAABB.maxZ;
 
-        if (obs.type === 'train') {
-          // Se o jogador estiver acima do teto do trem, está correndo por cima!
+        if (obs.type === 'train' || obs.type === 'truck') {
+          // Se o jogador estiver acima do teto do trem ou caminhão, está correndo por cima!
           if (player.y >= obsAABB.maxY - 0.35) {
             continue;
           }

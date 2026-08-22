@@ -395,17 +395,40 @@
     </div>
 
     <!-- MODAL DE SELEÇÃO DE PERSONAGENS 3D -->
-    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:1100;">
-      <div class="modal-card" style="max-width: 680px; border-color: var(--amarelo-brasil); box-shadow: 0 0 60px rgba(255, 223, 0, 0.4);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-          <div class="modal-title" style="color:var(--amarelo-brasil); margin-bottom:0; font-size:32px;">🎭 PERSONAGENS 3D</div>
+    <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:1300;">
+      <div class="modal-card" style="max-width: 680px; border-color: var(--amarelo-brasil); box-shadow: 0 0 60px rgba(255, 223, 0, 0.4); padding: 20px 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <div class="modal-title" style="color:var(--amarelo-brasil); margin-bottom:0; font-size:30px;">🎭 PERSONAGENS 3D</div>
           <button id="btnCloseCharSelect" style="background:none; border:none; color:#f87171; font-size:26px; cursor:pointer; font-weight:bold; padding:4px 8px;">✖</button>
         </div>
-        <div style="background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:13px; color:var(--text-muted);">Saldo Acumulado de Moedas:</span>
+
+        <div style="background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:var(--text-muted);">Saldo de Moedas Acumuladas:</span>
           <span id="charModalCoinBalance" style="font-family:'Bangers',cursive; font-size:22px; color:#ffd700;">💰 0 MOEDAS</span>
         </div>
-        <div id="characterCardsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;">
+
+        <!-- VIEWPORT DE PREVIEW 3D DO PERSONAGEM -->
+        <div style="position:relative; width:100%; height:230px; border-radius:16px; overflow:hidden; border:2px solid rgba(255,255,255,0.1); background:radial-gradient(circle at 50% 30%, #1e293b 0%, #090d16 100%); margin-bottom:12px; box-shadow:inset 0 0 30px rgba(0,0,0,0.8);">
+          <canvas id="charPreview3DCanvas" style="width:100%; height:100%; display:block;"></canvas>
+          
+          <div style="position:absolute; bottom:8px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none;">
+            <div style="background:rgba(0,0,0,0.7); padding:4px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.15);">
+              <div id="previewCharName" style="font-family:'Bangers',cursive; font-size:20px; color:#facc15; letter-spacing:1px; line-height:1.1;">EMPRESÁRIO</div>
+              <div id="previewCharDesc" style="font-size:11px; color:#94a3b8;">Personagem Inicial Padrão</div>
+            </div>
+            <div style="background:rgba(0,0,0,0.7); padding:4px 8px; border-radius:6px; font-size:11px; color:#cbd5e1;">
+              🔄 Arraste para girar
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTÃO DIRETO: JOGAR COM ESTE PERSONAGEM -->
+        <button id="btnPlayWithSelectedChar" class="btn-primary" style="width:100%; font-size:18px; padding:12px 16px; margin-bottom:14px; letter-spacing:1px;">
+          🚀 JOGAR COM O EMPRESÁRIO
+        </button>
+
+        <!-- GRID DE CARDS DOS PERSONAGENS -->
+        <div id="characterCardsContainer" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px;">
           <!-- Cards gerados dinamicamente via UI Manager -->
         </div>
       </div>

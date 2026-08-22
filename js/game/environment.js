@@ -1,7 +1,8 @@
-// js/game/environment.js — Favela com Iluminação Noturna Dinâmica (Janelas Acesas, Postes Iluminados e Esteira de Movimento)
+// js/game/environment.js — Favela com Modelos 3D GLB (Casinhas Realistas), Iluminação Noturna Dinâmica e Esteira de Movimento
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { textureAtlas } from './textures.js';
+import { modelLoader } from './model-loader.js';
 
 export const SEGMENT_LENGTH = 85;
 export const TOTAL_SEGMENTS = 6;
@@ -131,7 +132,7 @@ export class Environment {
       }
     });
 
-    // 7. Casas Empilhadas com Janelas que Iluminam
+    // 7. Casas da Favela 3D GLB + Casas Empilhadas
     this.buildFavelaHouses(segment);
 
     // 8. Postes com Lanternas Iluminadas
@@ -148,98 +149,96 @@ export class Environment {
     const instancedTies = new THREE.InstancedMesh(tieGeometry, this.sharedMaterials.railTie, totalTies);
     instancedTies.receiveShadow = true;
 
-    const matrix = new THREE.Matrix4();
-    let instanceIndex = 0;
+    const dummy = new THREE.Object3D();
+    let idx = 0;
 
     LANES.forEach(laneX => {
-      for (let i = 0; i < tiesPerLane; i++) {
-        const dz = -SEGMENT_LENGTH / 2 + 1.25 + i * 2.5;
-        matrix.setPosition(laneX, 0.06, dz);
-        instancedTies.setMatrixAt(instanceIndex++, matrix);
+      for (let z = -SEGMENT_LENGTH / 2 + 1.25; z < SEGMENT_LENGTH / 2; z += 2.5) {
+        dummy.position.set(laneX, 0.06, z);
+        dummy.updateMatrix();
+        instancedTies.setMatrixAt(idx++, dummy.matrix);
       }
+    });
+    segment.add(instancedTies);
 
-      [-0.85, 0.85].forEach(rx => {
-        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.16, SEGMENT_LENGTH), this.sharedMaterials.steelRail);
-        rail.position.set(laneX + rx, 0.15, 0);
+    LANES.forEach(laneX => {
+      [-0.75, 0.75].forEach(railOffset => {
+        const railGeo = new THREE.BoxGeometry(0.12, 0.18, SEGMENT_LENGTH);
+        const rail = new THREE.Mesh(railGeo, this.sharedMaterials.steelRail);
+        rail.position.set(laneX + railOffset, 0.15, 0);
         rail.receiveShadow = true;
         segment.add(rail);
       });
     });
-
-    instancedTies.instanceMatrix.needsUpdate = true;
-    segment.add(instancedTies);
   }
 
   buildFavelaHouses(segment) {
-    [-15, 15].forEach((baseX, sideIdx) => {
-      for (let bz = -SEGMENT_LENGTH / 2 + 8; bz < SEGMENT_LENGTH / 2; bz += 16) {
-        const floors = 1 + Math.floor(Math.random() * 3.8);
-        let currentY = 0;
+    [-11.5, 11.5].forEach((baseX, sideIdx) => {
+      for (let bz = -SEGMENT_LENGTH / 2 + 12; bz < SEGMENT_LENGTH / 2; bz += 22) {
+        // Tenta usar o modelo 3D GLB da casinha da favela
+        const houseGLB = modelLoader.getModel('casinha');
+        if (houseGLB) {
+          const houseGroup = new THREE.Group();
+          const box = new THREE.Box3().setFromObject(houseGLB);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          const center = new THREE.Vector3();
+          box.getCenter(center);
 
-        for (let f = 0; f < floors; f++) {
-          const w = 7.2 + (Math.random() * 2 - 1);
-          const h = 3.5;
-          const d = 11 + (Math.random() * 2 - 1);
-          const offsetX = (Math.random() * 1.5 - 0.75);
+          // Escala proporcional realista para casinha da favela
+          const scale = 5.5 / Math.max(0.001, size.y);
+          houseGLB.scale.set(scale, scale, scale);
+          houseGLB.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
 
-          const matIndex = Math.floor(Math.random() * this.houseMaterials.length);
-          const houseMat = this.houseMaterials[matIndex];
-
-          const house = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), houseMat);
-          house.position.set(baseX + offsetX, currentY + h / 2, bz);
-          house.castShadow = true;
-          house.receiveShadow = true;
-          segment.add(house);
-
-          // Porta
-          if (f === 0) {
-            const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshLambertMaterial({ color: 0x451a03 }));
-            door.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), 1.1, bz - 1.5);
-            door.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-            segment.add(door);
-          }
-
-          // Janelas que Acendem à Noite
-          const winGeo = new THREE.PlaneGeometry(1.4, 1.2);
-          [-2.2, 2.2].forEach(wz => {
-            const win = new THREE.Mesh(winGeo, this.sharedMaterials.windowMat);
-            win.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.8, bz + wz);
-            win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-            segment.add(win);
-          });
-
-          // Laje
-          const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.25, d + 0.6), this.sharedMaterials.concreteWall);
-          slab.position.set(baseX + offsetX, currentY + h, bz);
-          slab.receiveShadow = true;
-          segment.add(slab);
-
-          currentY += h + 0.25;
-        }
-
-        const topY = currentY;
-
-        // Vergalhões
-        [-2.5, 2.5].forEach(vx => {
-          [-3.5, 3.5].forEach(vz => {
-            const rebar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 4), this.sharedMaterials.rebar);
-            rebar.position.set(baseX + vx, topY + 0.6, bz + vz);
-            segment.add(rebar);
-          });
-        });
-
-        // Caixa d'água Fortlev ou Antena
-        if (Math.random() > 0.3) {
-          const tankGeo = new THREE.CylinderGeometry(1.2, 1.1, 1.6, 16);
-          const tank = new THREE.Mesh(tankGeo, this.sharedMaterials.waterTank);
-          tank.position.set(baseX + (Math.random() * 2 - 1), topY + 0.8, bz + (Math.random() * 2 - 1));
-          tank.castShadow = true;
-          tank.receiveShadow = true;
-          segment.add(tank);
+          houseGroup.add(houseGLB);
+          houseGroup.position.set(baseX + (sideIdx === 0 ? -1.5 : 1.5), 0, bz);
+          houseGroup.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+          segment.add(houseGroup);
         } else {
-          const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 3.2, 4), this.sharedMaterials.antenna);
-          antenna.position.set(baseX, topY + 1.6, bz);
-          segment.add(antenna);
+          // Fallback procedural de casas empilhadas
+          const floors = Math.floor(Math.random() * 3) + 2;
+          let currentY = 0;
+
+          for (let f = 0; f < floors; f++) {
+            const w = 7.2 + (Math.random() * 2 - 1);
+            const h = 3.5;
+            const d = 11 + (Math.random() * 2 - 1);
+            const offsetX = (Math.random() * 1.5 - 0.75);
+
+            const matIndex = Math.floor(Math.random() * this.houseMaterials.length);
+            const houseMat = this.houseMaterials[matIndex];
+
+            const house = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), houseMat);
+            house.position.set(baseX + offsetX, currentY + h / 2, bz);
+            house.castShadow = true;
+            house.receiveShadow = true;
+            segment.add(house);
+
+            // Porta
+            if (f === 0) {
+              const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshLambertMaterial({ color: 0x451a03 }));
+              door.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), 1.1, bz - 1.5);
+              door.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+              segment.add(door);
+            }
+
+            // Janelas que Acendem à Noite
+            const winGeo = new THREE.PlaneGeometry(1.4, 1.2);
+            [-2.2, 2.2].forEach(wz => {
+              const win = new THREE.Mesh(winGeo, this.sharedMaterials.windowMat);
+              win.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.8, bz + wz);
+              win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+              segment.add(win);
+            });
+
+            // Laje
+            const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.25, d + 0.6), this.sharedMaterials.concreteWall);
+            slab.position.set(baseX + offsetX, currentY + h, bz);
+            slab.receiveShadow = true;
+            segment.add(slab);
+
+            currentY += h + 0.25;
+          }
         }
       }
     });
