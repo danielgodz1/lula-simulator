@@ -41,7 +41,7 @@
 | 🕊️ **Lula da Silva** | *O Presidente* | **Inicial (Padrão)** | Voo suave e tolerante a colisões leves. Acúmulo padrão de picanhas. |
 | 👠 **Janja da Silva** | *A Primeira-Dama* | **30 Picanhas** 🥩 | Hitbox reduzida e voo ágil com aura violeta/rosa. |
 | 🏛️ **Alexandre de Moraes** | *O Ministro* | **50 Picanhas** 🥩 | Voo imponente com aura azul e tolerância judicial a impactos. |
-| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **60 Picanhas** 🥩 | **Habilidade Viral**: Ao passar de 200 pontos, gera ícones flutuantes que desaceleram o tempo e triplicam os pontos. |
+| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **60 Picanhas** 🥩 | **Habilidade Viral**: Velocidade acelerada com 2x picanhas. A cada 1 minuto de partida, o Lula aparece flutuando concedendo **20 segundos de lentidão** e pontos triplicados (3x)! |
 | 🏍️ **Jair Bolsonaro** | *O Ex-Presidente* | **100 Picanhas** 🥩 | **Modo Motociata**: Aura verde-amarela acelerada e impulsão aerodinâmica. |
 | 🥔 **Dilma Rousseff** | *A Estocadora de Vento* | **100 Picanhas** 🥩 | **Saudação à Mandioca**: Solta chuva contínua de mandiocas e aipins dourados (`🥔`, `🍠`, `🌾`) pelos canos. Acumula picanhas normalmente no placar! |
 | 💵 **Pablo Marçal** | *O Homem do Código* | **Liberar Dilma + Fazer 200 pts com ela** 🏆 | **Mindset Quântico 3X**: Velocidade 1.35x maior, **triplica todos os pontos obtidos (3X score)** e joga chuva de notas de dinheiro e dólares (`💵`, `💸`, `💰`, `🤑`) pelo ar. |
@@ -127,4 +127,3 @@
 
 ## 🌐 Deploy em Produção
 - **Projeto Oficial no GitHub**: [danielzin173/lula-simulator](https://github.com/danielzin173/lula-simulator)
-- **Deploy na Vercel**: [https://lula-simulator-d5l8yjsk9-programacao1.vercel.app](https://lula-simulator-d5l8yjsk9-programacao1.vercel.app)

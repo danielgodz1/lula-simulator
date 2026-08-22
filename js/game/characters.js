@@ -53,7 +53,7 @@ export const CHARACTERS = [
     sprite: 'img/nikolas.png',
     requiredPicanhas: 60,
     skillName: '⚡ Ritmo Acelerado (2x Picanhas)',
-    skillDesc: 'Velocidade 1.35x maior, porém cada cano ultrapassado vale 2 picanhas!',
+    skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
     modifier: (state) => {
       state.HITBOX_R = 0.028;

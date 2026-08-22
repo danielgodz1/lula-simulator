@@ -765,9 +765,6 @@
         <label>Recorde</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
-      <button id="btnDifficultyHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#00e676; color:#00e676; font-size:11px; font-weight:700;" title="Alternar Dificuldade">
-        ⚡ Fácil
-      </button>
       <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#eab308; color:#eab308; font-size:11px; font-weight:700;" title="Personagens Políticos">
         🎭 Políticos
       </button>
@@ -788,18 +785,12 @@
         <h1 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:2px;">
           🐦 FLAPPY LULA OFICIAL
         </h1>
-        <p style="color:var(--text-main); font-size:11.5px; margin-bottom:8px; line-height:1.3;">
+        <p style="color:var(--text-main); font-size:11.5px; margin-bottom:12px; line-height:1.3;">
           Voe entre os canos, junte picanhas para destravar o <strong>Selo de 50 Picanhas</strong> e o lendário <strong>Trio de 500 Picanhas</strong>!
         </p>
 
-        <!-- SELETOR DE DIFICULDADE (FÁCIL / DIFÍCIL) -->
-        <div style="display:flex; gap:6px; margin-bottom:8px;">
-          <button id="btnEasyModeStart" class="btn-primary" style="flex:1; padding:5px 4px; font-size:11px; background:var(--verde-neon); color:#000;">⚡ Modo Fácil</button>
-          <button id="btnHardModeStart" class="btn-secondary" style="flex:1; padding:5px 4px; font-size:11px;">🔥 Modo Difícil ⚡</button>
-        </div>
-
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
-        <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:6px 10px; margin-bottom:10px; display:flex; align-items:center; gap:8px; text-align:left;">
+        <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
           <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
             <img id="equippedCharImg" src="img/lula.png" style="width:100%; height:100%; object-fit:cover;">
           </div>
@@ -856,11 +847,6 @@
             <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem">
             <span id="goEquippedCharName">Lula da Silva</span>
             <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Trocar</span>
-          </div>
-
-          <div class="go-diff-toggles">
-            <button id="btnGoEasyDiff" class="go-diff-btn active-easy">⚡ Fácil</button>
-            <button id="btnGoHardDiff" class="go-diff-btn inactive">🔥 Difícil</button>
           </div>
         </div>
         
@@ -961,8 +947,6 @@
     const btnGoChangeChar = document.getElementById('btnGoChangeChar');
     const goEquippedCharImg = document.getElementById('goEquippedCharImg');
     const goEquippedCharName = document.getElementById('goEquippedCharName');
-    const btnGoEasyDiff = document.getElementById('btnGoEasyDiff');
-    const btnGoHardDiff = document.getElementById('btnGoHardDiff');
 
     let activeCharacter = CharacterInventory.getSelectedCharacter();
     let pendingCharSelect = activeCharacter;
@@ -1058,10 +1042,10 @@
 
     let GRAVITY    = 0.35;
     let JUMP_POWER = -7.8;
-    let BASE_PIPE_SPEED = 2.2;
+    let BASE_PIPE_SPEED = 2.4;
     let PW_RATIO   = 0.145;
     let GH_RATIO   = 0.16;
-    let SPAWN_FREQ = 120;
+    let SPAWN_FREQ = 115;
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
@@ -1072,8 +1056,10 @@
     let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];
     let isPrisonMode = false;
     let hasPlayedBesta = false;
+    let hasAlerted400 = false;
 
-    // Power-up Nikolas
+    // Power-up Nikolas (Lula a cada 1 minuto com 20s de lentidão)
+    let nikolasLulaSpawnTimer = 0;
     let nikolasSlowTimer = 0;
     let nikolasTripleTimer = 0;
 
@@ -1209,68 +1195,7 @@
       restartGame();
     });
 
-    let currentDifficulty = 'easy';
-    const btnDiffHUD = document.getElementById('btnDifficultyHUD');
-    const btnEasyStart = document.getElementById('btnEasyModeStart');
-    const btnHardStart = document.getElementById('btnHardModeStart');
-
-    function setDifficulty(diff) {
-      currentDifficulty = diff;
-      if (diff === 'easy') {
-        BASE_PIPE_SPEED = 2.2;
-        SPAWN_FREQ = 120;
-        if (btnDiffHUD) {
-          btnDiffHUD.style.borderColor = '#00e676';
-          btnDiffHUD.style.color = '#00e676';
-          btnDiffHUD.textContent = '⚡ Fácil';
-        }
-        if (btnEasyStart) {
-          btnEasyStart.className = 'btn-primary';
-          btnEasyStart.style.background = 'var(--verde-neon)';
-          btnEasyStart.style.color = '#000';
-        }
-        if (btnHardStart) {
-          btnHardStart.className = 'btn-secondary';
-          btnHardStart.style.background = '';
-          btnHardStart.style.color = '';
-        }
-        if (btnGoEasyDiff) btnGoEasyDiff.className = 'go-diff-btn active-easy';
-        if (btnGoHardDiff) btnGoHardDiff.className = 'go-diff-btn inactive';
-      } else {
-        BASE_PIPE_SPEED = 3.8;
-        SPAWN_FREQ = 80;
-        if (btnDiffHUD) {
-          btnDiffHUD.style.borderColor = '#ef4444';
-          btnDiffHUD.style.color = '#ef4444';
-          btnDiffHUD.textContent = '🔥 Difícil';
-        }
-        if (btnHardStart) {
-          btnHardStart.className = 'btn-primary';
-          btnHardStart.style.background = 'var(--vermelho-alert)';
-          btnHardStart.style.color = '#fff';
-        }
-        if (btnEasyStart) {
-          btnEasyStart.className = 'btn-secondary';
-          btnEasyStart.style.background = '';
-          btnEasyStart.style.color = '';
-        }
-        if (btnGoEasyDiff) btnGoEasyDiff.className = 'go-diff-btn inactive';
-        if (btnGoHardDiff) btnGoHardDiff.className = 'go-diff-btn active-hard';
-      }
-    }
-
-    btnDiffHUD?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      setDifficulty(currentDifficulty === 'easy' ? 'hard' : 'easy');
-    });
-    btnEasyStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('easy'); });
-    btnHardStart?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('hard'); });
-
-    btnGoEasyDiff?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('easy'); });
-    btnGoHardDiff?.addEventListener('click', (e) => { e.stopPropagation(); setDifficulty('hard'); });
-
     applyActiveCharacterModifiers();
-    setDifficulty('easy');
 
     if (btnSound) {
       btnSound.addEventListener('click', (e) => {
@@ -1297,8 +1222,23 @@
       });
     }
 
+    // DIFICULDADE PROGRESSIVA CALIBRADA (A PARTIR DE 400 PONTOS)
+    function getProgressiveModifiers() {
+      if (score < 400) {
+        return { speedMult: 1.0, gapFactor: 1.0 };
+      }
+      const excess = score - 400;
+      // Aumenta a velocidade suavemente (máx +45% nos 850+ pontos)
+      const speedMult = 1.0 + Math.min(0.45, excess * 0.001);
+      // Reduz o vão dos canos suavemente (mín 80% do vão original para caber com segurança)
+      const gapFactor = Math.max(0.80, 1.0 - (excess * 0.00045));
+      return { speedMult, gapFactor };
+    }
+
     function spawnPipe() {
-      const GH = H * GH_RATIO, GAP = H * gameState.GAP_RATIO;
+      const { gapFactor } = getProgressiveModifiers();
+      const currentGapRatio = (gameState.GAP_RATIO || 0.42) * gapFactor;
+      const GH = H * GH_RATIO, GAP = H * currentGapRatio;
       const topH = GH + 25 + Math.random() * (H - GH - GAP - 60);
       pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
 
@@ -1309,39 +1249,49 @@
           collected: false
         });
       }
-
-      // Nikolas Floating Lula Icon Spawn (Ao passar dos 200 pontos para desacelerar e triplicar)
-      if (activeCharacter.id === 'nikolas' && score >= 200 && Math.random() < 0.35 && floatingLulaIcons.length === 0) {
-        floatingLulaIcons.push({
-          x: W + 120,
-          y: topH + GAP / 2,
-          collected: false,
-          bob: 0
-        });
-      }
     }
 
     function updatePipes(dt) {
       if (state !== STATE.PLAYING) return;
       
-      // Multiplicador Nikolas (200 pts -> 1.5x, 500 pts -> 2.0x)
+      // Multiplicador e Mecânica Especial Nikolas Ferreira
       let nikolasSpeedMult = 1.0;
       if (activeCharacter.id === 'nikolas') {
-        if (score >= 500) nikolasSpeedMult = 2.0;
-        else if (score >= 200) nikolasSpeedMult = 1.5;
+        // Lula aparece a cada 1 minuto (60 segundos) jogando com Nikolas
+        nikolasLulaSpawnTimer += dt;
+        if (nikolasLulaSpawnTimer >= 60.0 && floatingLulaIcons.length === 0) {
+          nikolasLulaSpawnTimer = 0;
+          const { gapFactor } = getProgressiveModifiers();
+          const GAP = H * ((gameState.GAP_RATIO || 0.42) * gapFactor);
+          const GH = H * GH_RATIO;
+          floatingLulaIcons.push({
+            x: W + 60,
+            y: Math.max(GH + 35, Math.min(H - GH - 35, GH + GAP / 2 + (Math.random() * 50 - 25))),
+            collected: false,
+            bob: 0
+          });
+          showBannerAlert('🕊️ LULA APARECEU! PEGUE-O PARA ATIVAR 20s DE LENTIDÃO!', false);
+        }
 
+        // Efeito de lentidão de 20 segundos
         if (nikolasSlowTimer > 0) {
           nikolasSlowTimer -= dt;
-          nikolasSpeedMult = 1.0; // Desacelera para normal
+          nikolasSpeedMult = 0.75; // Desacelera significativamente o Nikolas por 20s
+        } else {
+          nikolasSpeedMult = 1.0;
         }
+
         if (nikolasTripleTimer > 0) {
           nikolasTripleTimer -= dt;
         }
       }
 
-      let currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * nikolasSpeedMult;
+      // Dificuldade progressiva calibrada (a partir de 400 pontos)
+      const { speedMult: progSpeedMult } = getProgressiveModifiers();
+      let currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * nikolasSpeedMult * progSpeedMult;
 
-      if (frameCount % Math.round(SPAWN_FREQ / (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT)) === 0) {
+      const effectiveSpeed = (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT) * progSpeedMult;
+      if (frameCount % Math.max(55, Math.round(SPAWN_FREQ / effectiveSpeed)) === 0) {
         spawnPipe();
       }
 
@@ -1353,7 +1303,7 @@
           
           let pointsEarned = gameState.EXTRA_SCORE_PER_PIPE;
           if (nikolasTripleTimer > 0) {
-            pointsEarned *= 3; // Picanha Tripla do Nikolas!
+            pointsEarned *= 3; // Picanha Tripla do Nikolas durante a lentidão!
           }
 
           score += pointsEarned;
@@ -1367,6 +1317,13 @@
             hasPlayedBesta = true;
             try { sounds.playBestaEnjaulada(); } catch(e){}
             showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA, UMA BESTA ENJAULADA!', false);
+          }
+
+          // AVISO DE DIFICULDADE PROGRESSIVA NOS 400 PONTOS
+          if (score >= 400 && !hasAlerted400) {
+            hasAlerted400 = true;
+            try { sounds.playBestaEnjaulada(); } catch(e){}
+            showBannerAlert('🔥 400 PONTOS: VELOCIDADE & PRECISÃO AUMENTANDO GRADATIVAMENTE!', true);
           }
 
           if (gameState.isTurboAllowed) {
@@ -1396,15 +1353,15 @@
       }
       pipes = pipes.filter(p => p.x + PW > -10);
 
-      // Ícones do Lula Voando para o Nikolas pegar
+      // Ícones do Lula Voando para o Nikolas pegar (Duração de 20s)
       for (const fl of floatingLulaIcons) {
         fl.x -= currentSpeed * 0.9;
         fl.bob = Math.sin(frameCount * 0.1) * 6;
-        if (!fl.collected && Math.hypot(lula.x - fl.x, lula.y - (fl.y + fl.bob)) < 32) {
+        if (!fl.collected && Math.hypot(lula.x - fl.x, lula.y - (fl.y + fl.bob)) < 36) {
           fl.collected = true;
-          nikolasSlowTimer = 8.0; // Desacelera 8s
-          nikolasTripleTimer = 8.0; // Triplica pontos por 8s
-          showBannerAlert('⚡ DESACELERAÇÃO ATIVA & PONTOS TRIPLOS 3X! 🥩🥩🥩', false);
+          nikolasSlowTimer = 20.0; // 20 segundos de lentidão!
+          nikolasTripleTimer = 20.0; // 20 segundos de pontos triplos!
+          showBannerAlert('🕊️ LULA ATIVADO: 20 SEGUNDOS DE LENTIDÃO & 3X PONTOS! 🥩🥩🥩', false);
           try { sounds.playPowerup(); } catch(e){}
         }
       }
@@ -1841,6 +1798,23 @@
         ctx.textAlign = 'center';
         ctx.strokeText(score.toString(), W / 2, 64);
         ctx.fillText(score.toString(), W / 2, 64);
+
+        if (nikolasSlowTimer > 0) {
+          ctx.font = '9px "Press Start 2P", cursive';
+          ctx.fillStyle = '#38bdf8';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 2;
+          ctx.strokeText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
+          ctx.fillText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
+        } else if (score >= 400) {
+          ctx.font = '8px "Press Start 2P", cursive';
+          ctx.fillStyle = '#ef4444';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 2;
+          ctx.strokeText(`🔥 VELOCIDADE DINÂMICA`, W / 2, 28);
+          ctx.fillText(`🔥 VELOCIDADE DINÂMICA`, W / 2, 28);
+        }
+
         ctx.textAlign = 'left';
       }
 
@@ -1979,7 +1953,6 @@
       document.getElementById('goHighScoreVal').textContent = bestScore.toString();
 
       updateEquippedHUD();
-      setDifficulty(currentDifficulty);
 
       const medalEl = document.getElementById('goMedalCircle');
       if (score >= 50) {
@@ -2044,7 +2017,10 @@
         state = STATE.PLAYING;
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         hasPlayedBesta = false;
-        nikolasSlowTimer = 0; nikolasTripleTimer = 0;
+        hasAlerted400 = false;
+        nikolasLulaSpawnTimer = 0;
+        nikolasSlowTimer = 0;
+        nikolasTripleTimer = 0;
         applyActiveCharacterModifiers();
         if (scoreHUD) scoreHUD.textContent = `0 🥩`;
         isPrisonMode = false;
@@ -2068,7 +2044,10 @@
       state = STATE.PLAYING;
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       hasPlayedBesta = false;
-      nikolasSlowTimer = 0; nikolasTripleTimer = 0;
+      hasAlerted400 = false;
+      nikolasLulaSpawnTimer = 0;
+      nikolasSlowTimer = 0;
+      nikolasTripleTimer = 0;
       applyActiveCharacterModifiers();
       if (scoreHUD) scoreHUD.textContent = `0 🥩`;
       isPrisonMode = false;
