@@ -125,8 +125,8 @@ export class UIManager {
       return;
     }
 
-    const width = this.previewCanvas.clientWidth || 400;
-    const height = this.previewCanvas.clientHeight || 230;
+    const width = this.previewCanvas.clientWidth || 420;
+    const height = this.previewCanvas.clientHeight || 310;
 
     this.previewRenderer = new THREE.WebGLRenderer({
       canvas: this.previewCanvas,
@@ -140,20 +140,20 @@ export class UIManager {
 
     this.previewScene = new THREE.Scene();
 
-    this.previewCamera = new THREE.PerspectiveCamera(42, width / height, 0.1, 50);
-    this.previewCamera.position.set(0, 1.05, 3.2);
+    this.previewCamera = new THREE.PerspectiveCamera(38, width / height, 0.1, 50);
+    this.previewCamera.position.set(0, 1.05, 2.75);
     this.previewCamera.lookAt(0, 0.95, 0);
 
     // Iluminação de Estúdio 3D
-    const amb = new THREE.AmbientLight(0xffffff, 1.2);
-    const dir = new THREE.DirectionalLight(0xffffff, 1.8);
+    const amb = new THREE.AmbientLight(0xffffff, 1.3);
+    const dir = new THREE.DirectionalLight(0xffffff, 1.9);
     dir.position.set(2, 4, 3);
     dir.castShadow = true;
 
-    const rim = new THREE.DirectionalLight(0x38bdf8, 1.2);
+    const rim = new THREE.DirectionalLight(0x38bdf8, 1.3);
     rim.position.set(-2, 2, -2);
 
-    const fill = new THREE.PointLight(0xfacc15, 1.0, 8);
+    const fill = new THREE.PointLight(0xfacc15, 1.1, 8);
     fill.position.set(0, -0.5, 2);
 
     this.previewScene.add(amb, dir, rim, fill);
@@ -194,8 +194,8 @@ export class UIManager {
 
   resize3DPreview() {
     if (!this.previewRenderer || !this.previewCanvas) return;
-    const width = this.previewCanvas.clientWidth || 400;
-    const height = this.previewCanvas.clientHeight || 230;
+    const width = this.previewCanvas.clientWidth || 420;
+    const height = this.previewCanvas.clientHeight || 310;
     this.previewRenderer.setSize(width, height, false);
     if (this.previewCamera) {
       this.previewCamera.aspect = width / height;
@@ -224,15 +224,17 @@ export class UIManager {
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      const targetHeight = 1.95;
+      const targetHeight = 2.10;
       const scale = targetHeight / Math.max(0.001, size.y);
       glbModel.scale.set(scale, scale, scale);
       glbModel.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+      // No preview o personagem fica de frente para o jogador ver o rosto e detalhes
+      glbModel.rotation.y = 0;
       this.previewModelGroup.add(glbModel);
     }
 
     // Pedestal de Luz Circular Sob os Pés
-    const ringGeo = new THREE.TorusGeometry(0.80, 0.025, 8, 32);
+    const ringGeo = new THREE.TorusGeometry(0.85, 0.028, 8, 32);
     const ringMat = new THREE.MeshBasicMaterial({ color: charData.themeColor || 0xfacc15, wireframe: false });
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.rotation.x = Math.PI / 2;

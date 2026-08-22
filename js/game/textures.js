@@ -10,6 +10,7 @@ class TextureAtlasManager {
     this.auxilioTexture = null;
     this.morroParallaxTexture = null;
     this.goldCoinTexture = null;
+    this.softShadowTexture = null;
     this.init();
   }
 
@@ -18,6 +19,27 @@ class TextureAtlasManager {
     this.createSpecialTextures();
     this.createMorroParallaxTexture();
     this.createGoldCoinTexture();
+    this.createSoftShadowTexture();
+  }
+
+  createSoftShadowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    const grad = ctx.createRadialGradient(128, 128, 12, 128, 128, 120);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.90)');
+    grad.addColorStop(0.25, 'rgba(0, 0, 0, 0.72)');
+    grad.addColorStop(0.55, 'rgba(0, 0, 0, 0.35)');
+    grad.addColorStop(0.85, 'rgba(0, 0, 0, 0.08)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+
+    this.softShadowTexture = new THREE.CanvasTexture(canvas);
+    this.softShadowTexture.needsUpdate = true;
   }
 
   /**

@@ -3,6 +3,7 @@ import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/thr
 import { gameAudio } from './audio.js';
 import { RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
+import { textureAtlas } from './textures.js';
 
 export const LANES = [-2.8, 0, 2.8];
 
@@ -36,8 +37,11 @@ export class Character {
     this.slideTimer = 0;
     this.slideDuration = 0.58;
 
+    // Morte Física 3D
     this.isDead = false;
     this.deathAnimTime = 0;
+    this.deathVy = 0;
+    this.deathY = 0;
 
     // Power-ups
     this.superJump = false;
@@ -108,15 +112,24 @@ export class Character {
 
       // Centraliza horizontalmente e apoia a base dos pés exatamente em Y = 0
       glbModel.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+
+      // GIRA O MODELO EM 180º PARA FICAR DE COSTAS PARA A CÂMERA (CORRENDO PARA A FRENTE / HORIZONTE)
+      glbModel.rotation.y = Math.PI;
+
       this.bodyPivot.add(glbModel);
       this.mesh.add(this.bodyPivot);
 
       // Itens de Power-up em 3D
       this.buildPowerupAccessories();
 
-      // Sombra Suave no Chão
-      const shadowGeo = new THREE.PlaneGeometry(1.4, 2.2);
-      const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.45, depthWrite: false });
+      // Sombra Suave Realista com Gradiente Radial Difuso
+      const shadowGeo = new THREE.PlaneGeometry(1.6, 2.0);
+      const shadowMat = new THREE.MeshBasicMaterial({
+        map: textureAtlas.softShadowTexture,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false
+      });
       this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
       this.shadow.rotation.x = -Math.PI / 2;
       this.shadow.position.y = 0.03;
@@ -640,19 +653,33 @@ export class Character {
   update(dt, speed) {
     if (this.isDead) {
       this.deathAnimTime += dt;
-      this.mesh.rotation.x = Math.min(Math.PI / 2, this.deathAnimTime * 4);
-      this.mesh.position.y = Math.max(0.2, this.y - this.deathAnimTime * 2);
+      this.deathVy -= 26.0 * dt;
+      this.deathY = Math.max(0.12, this.deathY + this.deathVy * dt);
+
+      // Rotação física dramática de tombo e capotamento em 3D
+      this.mesh.rotation.x += 7.0 * dt;
+      this.mesh.rotation.y += 4.5 * dt;
+      this.mesh.rotation.z += 5.5 * dt;
+      this.mesh.position.y = this.deathY;
+      this.mesh.position.z += 3.5 * dt;
+
+      if (this.shadow) {
+        this.shadow.scale.set(0.5, 0.5, 1);
+        this.shadow.material.opacity = Math.max(0, 0.60 - this.deathAnimTime * 0.5);
+      }
       return;
     }
 
-    // 1. Interpolação Linear nas 3 Faixas (escala agilidade com a velocidade de 1x a 10x)
+    // 1. Interpolação Linear nas 3 Faixas com Rolagem e Direcionamento Realista
     const speedFactor = Math.max(1.0, speed / this.baseSpeed);
     const lerpRate = 18.0 + (speedFactor - 1.0) * 3.8;
     this.x += (this.targetX - this.x) * Math.min(1.0, lerpRate * dt);
     this.mesh.position.x = this.x;
 
     const laneDiff = (this.targetX - this.x);
-    this.mesh.rotation.z = -laneDiff * 0.08;
+    // Inclinação ágil do corpo nas curvas (banking roll) e direcionamento da cabeça/ombros
+    this.mesh.rotation.z = -laneDiff * 0.16;
+    this.mesh.rotation.y = -laneDiff * 0.20;
 
     // 2. Atualização Visual dos Power-ups Equipados
     const isSuper = this.superJump;
@@ -665,7 +692,7 @@ export class Character {
       this.handMagnet.visible = this.magnetActive;
     }
 
-    // 3. Física do Pulo e Gravidade (Suporta andar e cair de cima de trens)
+    // 3. Física do Pulo, Gravidade e Sombra Adaptativa
     if (this.isJumping || this.y > this.groundY) {
       this.y += this.jumpVelocity * dt;
       const currentGrav = this.jumpVelocity < 0 ? this.gravity * this.fallMultiplier : this.gravity;
@@ -685,9 +712,18 @@ export class Character {
       this.y = this.groundY;
     }
 
+    // Escala dinâmica e desvanecimento realista da sombra conforme a altura do pulo
+    if (this.shadow) {
+      const jumpHeight = Math.max(0, this.y - this.groundY);
+      const heightRatio = Math.min(1.0, jumpHeight / 4.5);
+      const shadowScale = Math.max(0.40, 1.0 - heightRatio * 0.50);
+      this.shadow.scale.set(shadowScale, shadowScale * 1.1, 1);
+      this.shadow.material.opacity = Math.max(0.08, 0.75 * (1.0 - heightRatio * 0.75));
+    }
+
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
 
-    // 4. Slide 90 Graus
+    // 4. Slide
     if (this.isSliding) {
       this.slideTimer -= dt;
       if (this.slideTimer <= 0) {
@@ -703,40 +739,58 @@ export class Character {
   animate(dt, speed) {
     this.animTime += dt * (speed / 16);
 
-    // 1. ANIMAÇÃO PARA MODELOS 3D GLB
+    // 1. ANIMAÇÃO ULTRA FLUIDA PARA MODELOS 3D GLB
     if (this.isGLB && this.bodyPivot) {
       if (this.isSliding) {
-        this.mesh.rotation.x = -Math.PI / 2.2;
-        this.mesh.position.y = this.y + 0.32;
+        // Deslize com perfil baixo e postura ágil
+        this.mesh.rotation.x = -Math.PI / 2.15;
+        this.mesh.position.y = this.y + 0.28;
         this.bodyPivot.rotation.set(0, 0, 0);
-        this.bodyPivot.position.set(0, 0, 0);
-        this.shadow.scale.set(1.5, 0.8, 1);
+        this.bodyPivot.scale.set(1.0, 1.0, 1.0);
+        if (this.shadow) this.shadow.scale.set(1.6, 0.9, 1);
       } else if (this.isJumping || this.y > this.groundY + 0.1) {
+        // Dinâmica de Voo e Queda Livre
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
-        this.bodyPivot.rotation.x = -0.15;
+
+        const isAscending = this.jumpVelocity > 0;
+        if (isAscending) {
+          this.bodyPivot.rotation.x = -0.20; // Eleva o peito e estica
+          this.bodyPivot.scale.set(0.96, 1.06, 0.96);
+        } else {
+          this.bodyPivot.rotation.x = 0.14; // Antecipa o impacto no solo
+          this.bodyPivot.scale.set(1.03, 0.97, 1.03);
+        }
         this.bodyPivot.rotation.y = 0;
         this.bodyPivot.rotation.z = 0;
         this.bodyPivot.position.set(0, 0, 0);
 
         if (this.superJump && this.lWing && this.rWing) {
-          const wingFlap = Math.sin(this.animTime * 14) * 0.35;
+          const wingFlap = Math.sin(this.animTime * 16) * 0.40;
           this.lWing.rotation.x = wingFlap;
           this.rWing.rotation.x = -wingFlap;
         }
-
-        this.shadow.scale.set(0.65, 0.65, 1);
-        this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
       } else {
+        // Corrida Atlética Dinâmica com Passadas, Bobbing e Respiração Muscular
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
-        this.bodyPivot.rotation.x = 0.08;
-        this.bodyPivot.rotation.y = Math.sin(this.animTime) * 0.06;
-        this.bodyPivot.rotation.z = Math.sin(this.animTime * 1.5) * 0.03;
-        this.bodyPivot.position.y = Math.sin(this.animTime * 2) * 0.05;
 
-        this.shadow.scale.set(1.0, 1.0, 1);
-        this.shadow.material.opacity = 0.45;
+        const runBounce = Math.sin(this.animTime * 2.0);
+        const runTwist = Math.sin(this.animTime);
+
+        // Inclinação atlética de sprint para frente
+        this.bodyPivot.rotation.x = 0.15;
+        // Torção rítmica da cintura/ombros
+        this.bodyPivot.rotation.y = runTwist * 0.11;
+        // Rolagem suave lateral das passadas
+        this.bodyPivot.rotation.z = runTwist * 0.04;
+        // Salto vertical dinâmico (bobbing)
+        this.bodyPivot.position.y = Math.max(0, runBounce * 0.08);
+
+        // Compressão e estiramento rítmico (squash & stretch)
+        const stretch = 1.0 + runBounce * 0.035;
+        const squash = 1.0 - runBounce * 0.025;
+        this.bodyPivot.scale.set(squash, stretch, squash);
       }
       return;
     }
@@ -753,7 +807,7 @@ export class Character {
         this.leftArmGroup.rotation.x = -0.5;
         this.rightArmGroup.rotation.x = -0.5;
 
-        this.shadow.scale.set(1.5, 0.8, 1);
+        if (this.shadow) this.shadow.scale.set(1.5, 0.8, 1);
       } else if (this.isJumping || this.y > this.groundY + 0.1) {
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
@@ -771,9 +825,6 @@ export class Character {
           this.lWing.rotation.x = wingFlap;
           this.rWing.rotation.x = -wingFlap;
         }
-
-        this.shadow.scale.set(0.65, 0.65, 1);
-        this.shadow.material.opacity = Math.max(0.15, 0.45 - this.y * 0.08);
       } else {
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
@@ -794,9 +845,6 @@ export class Character {
 
         this.rightArmGroup.rotation.x = legSwing * 0.85;
         if (this.briefcase) this.briefcase.rotation.x = Math.sin(this.animTime * 1.2) * 0.35;
-
-        this.shadow.scale.set(1.0, 1.0, 1);
-        this.shadow.material.opacity = 0.45;
       }
     }
   }
@@ -804,6 +852,8 @@ export class Character {
   die() {
     this.isDead = true;
     this.deathAnimTime = 0;
+    this.deathVy = 9.0;
+    this.deathY = this.y;
   }
 
   reset() {
@@ -818,14 +868,27 @@ export class Character {
     this.slideTimer = 0;
     this.isDead = false;
     this.deathAnimTime = 0;
+    this.deathVy = 0;
+    this.deathY = 0;
     this.superJump = false;
     this.magnetActive = false;
+
+    if (this.bodyPivot) {
+      this.bodyPivot.position.set(0, 0, 0);
+      this.bodyPivot.rotation.set(0, 0, 0);
+      this.bodyPivot.scale.set(1, 1, 1);
+    }
 
     if (this.lShoeGolden) this.lShoeGolden.visible = false;
     if (this.rShoeGolden) this.rShoeGolden.visible = false;
     if (this.lShoeNormal) this.lShoeNormal.visible = true;
     if (this.rShoeNormal) this.rShoeNormal.visible = true;
     if (this.handMagnet) this.handMagnet.visible = false;
+
+    if (this.shadow) {
+      this.shadow.scale.set(1.0, 1.0, 1);
+      this.shadow.material.opacity = 0.75;
+    }
 
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(0, 0, 0);
