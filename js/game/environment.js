@@ -173,75 +173,166 @@ export class Environment {
   }
 
   buildFavelaHouses(segment) {
+    // 1. PRIMEIRA CAMADA (Margem da Pista: Casinhas 3D GLB + Casas Coloridas com Laje)
     [-11.5, 11.5].forEach((baseX, sideIdx) => {
-      for (let bz = -SEGMENT_LENGTH / 2 + 12; bz < SEGMENT_LENGTH / 2; bz += 22) {
-        // Tenta usar o modelo 3D GLB da casinha da favela
-        const houseGLB = modelLoader.getModel('casinha');
-        if (houseGLB) {
-          const houseGroup = new THREE.Group();
-          const box = new THREE.Box3().setFromObject(houseGLB);
+      for (let bz = -SEGMENT_LENGTH / 2 + 10; bz < SEGMENT_LENGTH / 2; bz += 21) {
+        const useGLB = (Math.random() > 0.45) && modelLoader.hasModel('casinha');
+
+        if (useGLB) {
+          const houseGLB = modelLoader.getModel('casinha');
+          if (houseGLB) {
+            const houseGroup = new THREE.Group();
+            const box = new THREE.Box3().setFromObject(houseGLB);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+
+            const scale = 5.2 / Math.max(0.001, size.y);
+            houseGLB.scale.set(scale, scale, scale);
+            houseGLB.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+
+            houseGroup.add(houseGLB);
+            houseGroup.position.set(baseX + (sideIdx === 0 ? -1.5 : 1.5), 0, bz);
+            houseGroup.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+            segment.add(houseGroup);
+          }
+        } else {
+          this.createStackedProceduralHouse(segment, baseX + (sideIdx === 0 ? -1.5 : 1.5), bz, sideIdx, 2, 3);
+        }
+      }
+    });
+
+    // 2. CAMINHÕES ESTACIONADOS NOS BECOS ENTRE AS CASAS (COM FARÓIS ILUMINADOS)
+    [-9.2, 9.2].forEach((tx, sideIdx) => {
+      for (let bz = -SEGMENT_LENGTH / 2 + 22; bz < SEGMENT_LENGTH / 2; bz += 42) {
+        const truckGroup = new THREE.Group();
+        const truckModel = modelLoader.getModel('caminhao');
+
+        if (truckModel) {
+          const truckPivot = new THREE.Group();
+          truckModel.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+          truckPivot.add(truckModel);
+
+          const box = new THREE.Box3().setFromObject(truckPivot);
           const size = new THREE.Vector3();
           box.getSize(size);
           const center = new THREE.Vector3();
           box.getCenter(center);
 
-          // Escala proporcional realista para casinha da favela
-          const scale = 5.5 / Math.max(0.001, size.y);
-          houseGLB.scale.set(scale, scale, scale);
-          houseGLB.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+          const scaleX = 2.1 / Math.max(0.001, size.x);
+          const scaleY = 2.8 / Math.max(0.001, size.y);
+          const scaleZ = 8.5 / Math.max(0.001, size.z);
+          truckPivot.scale.set(scaleX, scaleY, scaleZ);
+          truckPivot.position.set(-center.x * scaleX, -box.min.y * scaleY, -center.z * scaleZ);
 
-          houseGroup.add(houseGLB);
-          houseGroup.position.set(baseX + (sideIdx === 0 ? -1.5 : 1.5), 0, bz);
-          houseGroup.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-          segment.add(houseGroup);
-        } else {
-          // Fallback procedural de casas empilhadas
-          const floors = Math.floor(Math.random() * 3) + 2;
-          let currentY = 0;
-
-          for (let f = 0; f < floors; f++) {
-            const w = 7.2 + (Math.random() * 2 - 1);
-            const h = 3.5;
-            const d = 11 + (Math.random() * 2 - 1);
-            const offsetX = (Math.random() * 1.5 - 0.75);
-
-            const matIndex = Math.floor(Math.random() * this.houseMaterials.length);
-            const houseMat = this.houseMaterials[matIndex];
-
-            const house = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), houseMat);
-            house.position.set(baseX + offsetX, currentY + h / 2, bz);
-            house.castShadow = true;
-            house.receiveShadow = true;
-            segment.add(house);
-
-            // Porta
-            if (f === 0) {
-              const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), new THREE.MeshLambertMaterial({ color: 0x451a03 }));
-              door.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), 1.1, bz - 1.5);
-              door.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-              segment.add(door);
-            }
-
-            // Janelas que Acendem à Noite
-            const winGeo = new THREE.PlaneGeometry(1.4, 1.2);
-            [-2.2, 2.2].forEach(wz => {
-              const win = new THREE.Mesh(winGeo, this.sharedMaterials.windowMat);
-              win.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.8, bz + wz);
-              win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-              segment.add(win);
-            });
-
-            // Laje
-            const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 0.25, d + 0.6), this.sharedMaterials.concreteWall);
-            slab.position.set(baseX + offsetX, currentY + h, bz);
-            slab.receiveShadow = true;
-            segment.add(slab);
-
-            currentY += h + 0.25;
-          }
+          truckGroup.add(truckPivot);
         }
+
+        // Faróis Acessos no Caminhão Estacionado
+        const hasLitHeadlights = Math.random() > 0.35;
+        if (hasLitHeadlights) {
+          [-0.65, 0.65].forEach(hx => {
+            const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 12), this.sharedMaterials.streetLampMat);
+            lamp.rotation.x = Math.PI / 2;
+            lamp.position.set(hx, 0.9, sideIdx === 0 ? 4.2 : -4.2);
+            truckGroup.add(lamp);
+          });
+
+          const beam = new THREE.Mesh(new THREE.ConeGeometry(1.8, 9.0, 8, 1, true), this.sharedMaterials.headlightBeam);
+          beam.rotation.x = sideIdx === 0 ? -Math.PI / 2 : Math.PI / 2;
+          beam.position.set(0, 0.9, sideIdx === 0 ? 8.5 : -8.5);
+          truckGroup.add(beam);
+        }
+
+        truckGroup.position.set(tx, 0, bz);
+        truckGroup.rotation.y = (Math.random() * 0.2 - 0.1);
+        segment.add(truckGroup);
       }
     });
+
+    // 3. SEGUNDA E TERCEIRA CAMADAS (Fundo e Encosta do Morro da Favela Densa)
+    [-19, -28, -38, 19, 28, 38].forEach(baseX => {
+      const isLeft = baseX < 0;
+      const distLayer = Math.abs(baseX);
+      const elevationBase = (distLayer - 12) * 0.45; // Sobe o relevo em declive
+
+      for (let bz = -SEGMENT_LENGTH / 2 + 6; bz < SEGMENT_LENGTH / 2; bz += 14) {
+        const floors = Math.floor(Math.random() * 3) + 2;
+        this.createStackedProceduralHouse(segment, baseX + (Math.random() * 2 - 1), bz, isLeft ? 0 : 1, floors, floors + 1, elevationBase);
+      }
+    });
+  }
+
+  createStackedProceduralHouse(segment, baseX, bz, sideIdx, minFloors = 2, maxFloors = 3, elevationBase = 0) {
+    const floors = Math.floor(Math.random() * (maxFloors - minFloors + 1)) + minFloors;
+    let currentY = elevationBase;
+
+    for (let f = 0; f < floors; f++) {
+      const w = 7.0 + (Math.random() * 2.0 - 1.0);
+      const h = 3.4;
+      const d = 10.0 + (Math.random() * 2.0 - 1.0);
+      const offsetX = (Math.random() * 1.2 - 0.6);
+
+      const matIndex = Math.floor(Math.random() * this.houseMaterials.length);
+      const houseMat = this.houseMaterials[matIndex];
+
+      const house = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), houseMat);
+      house.position.set(baseX + offsetX, currentY + h / 2, bz);
+      house.castShadow = true;
+      house.receiveShadow = true;
+      segment.add(house);
+
+      // Porta no térreo
+      if (f === 0) {
+        const door = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.1), new THREE.MeshLambertMaterial({ color: 0x451a03 }));
+        door.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.05, bz - 1.2);
+        door.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+        segment.add(door);
+      }
+
+      // Janelas Iluminadas Noturnas
+      const winGeo = new THREE.PlaneGeometry(1.3, 1.1);
+      [-2.2, 2.2].forEach(wz => {
+        const win = new THREE.Mesh(winGeo, this.sharedMaterials.windowMat);
+        win.position.set(baseX + offsetX + (sideIdx === 0 ? w / 2 + 0.02 : -w / 2 - 0.02), currentY + 1.7, bz + wz);
+        win.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
+        segment.add(win);
+      });
+
+      // Laje de Concreto
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, 0.22, d + 0.5), this.sharedMaterials.concreteWall);
+      slab.position.set(baseX + offsetX, currentY + h, bz);
+      slab.receiveShadow = true;
+      segment.add(slab);
+
+      currentY += h + 0.22;
+    }
+
+    const topY = currentY;
+
+    // Vergalhões de Obra na Laje
+    [-2.2, 2.2].forEach(vx => {
+      [-3.0, 3.0].forEach(vz => {
+        const rebar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.1, 4), this.sharedMaterials.rebar);
+        rebar.position.set(baseX + vx, topY + 0.55, bz + vz);
+        segment.add(rebar);
+      });
+    });
+
+    // Caixa d'água Azul Fortlev ou Antena de TV
+    if (Math.random() > 0.25) {
+      const tankGeo = new THREE.CylinderGeometry(1.15, 1.05, 1.5, 16);
+      const tank = new THREE.Mesh(tankGeo, this.sharedMaterials.waterTank);
+      tank.position.set(baseX + (Math.random() * 1.8 - 0.9), topY + 0.75, bz + (Math.random() * 1.8 - 0.9));
+      tank.castShadow = true;
+      tank.receiveShadow = true;
+      segment.add(tank);
+    } else {
+      const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 3.0, 4), this.sharedMaterials.antenna);
+      antenna.position.set(baseX, topY + 1.5, bz);
+      segment.add(antenna);
+    }
   }
 
   buildStreetProps(segment) {

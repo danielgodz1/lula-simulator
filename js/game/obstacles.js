@@ -209,48 +209,54 @@ export class ObstacleManager {
   // 1. NOVO OBSTÁCULO: CAMINHÃO 3D GLB (caminhao.glb)
   createTruckObstacle(parent, laneX, localZ, isMoving = false) {
     const truck = new THREE.Group();
-    truck.position.set(laneX, 1.6, localZ);
+    truck.position.set(laneX, 0, localZ);
 
     const truckModel = modelLoader.getModel('caminhao');
 
     if (truckModel) {
-      const box = new THREE.Box3().setFromObject(truckModel);
+      const truckPivot = new THREE.Group();
+      // O modelo caminhao.glb tem comprimento no eixo X com cabine em +X.
+      // Rotacionamos em Math.PI / 2 para que a cabine fique voltada para +Z (em direção ao jogador).
+      truckModel.rotation.y = Math.PI / 2;
+      truckPivot.add(truckModel);
+
+      const box = new THREE.Box3().setFromObject(truckPivot);
       const size = new THREE.Vector3();
       box.getSize(size);
       const center = new THREE.Vector3();
       box.getCenter(center);
 
-      // Calibra a escala do caminhão 3D para caber perfeitamente na pista (largura 2.3m, altura 3.2m, comprimento 11m)
-      const scaleX = 2.30 / Math.max(0.001, size.x);
+      // Calibra a escala real do caminhão na pista (largura 2.35m, altura 3.20m, comprimento 10.5m)
+      const scaleX = 2.35 / Math.max(0.001, size.x);
       const scaleY = 3.20 / Math.max(0.001, size.y);
-      const scaleZ = 11.0 / Math.max(0.001, size.z);
-      truckModel.scale.set(scaleX, scaleY, scaleZ);
-      truckModel.position.set(-center.x * scaleX, -center.y * scaleY, -center.z * scaleZ);
+      const scaleZ = 10.5 / Math.max(0.001, size.z);
+      truckPivot.scale.set(scaleX, scaleY, scaleZ);
+      truckPivot.position.set(-center.x * scaleX, -box.min.y * scaleY, -center.z * scaleZ);
 
-      truck.add(truckModel);
+      truck.add(truckPivot);
     } else {
       const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.3 });
       const cabinMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.6, roughness: 0.3 });
-      const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.6, 8.5), bodyMat);
-      cargo.position.set(0, 0.3, -1.2);
+      const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.6, 7.5), bodyMat);
+      cargo.position.set(0, 1.6, -1.5);
       cargo.castShadow = true;
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.0, 3.2), cabinMat);
-      cabin.position.set(0, 0, 4.6);
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.8, 3.2), cabinMat);
+      cabin.position.set(0, 1.7, 3.8);
       cabin.castShadow = true;
       truck.add(cargo, cabin);
     }
 
-    // Faróis do Caminhão
+    // Faróis Frontais Acessos na Cabine do Caminhão (Z = +5.25)
     [-0.75, 0.75].forEach(hx => {
-      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.1, 12), this.materials.headlight);
+      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 12), this.materials.headlight);
       lamp.rotation.x = Math.PI / 2;
-      lamp.position.set(hx, -0.4, 5.8);
+      lamp.position.set(hx, 1.0, 5.25);
       truck.add(lamp);
     });
 
     const beam = new THREE.Mesh(new THREE.ConeGeometry(2.0, 10.0, 8, 1, true), this.materials.headlightBeam);
     beam.rotation.x = -Math.PI / 2;
-    beam.position.set(0, -0.4, 11.0);
+    beam.position.set(0, 1.0, 10.25);
     truck.add(beam);
 
     parent.add(truck);
@@ -273,8 +279,8 @@ export class ObstacleManager {
           maxX: laneX + 1.15,
           minY: 0,
           maxY: 3.2,
-          minZ: pz - 5.5,
-          maxZ: pz + 5.5
+          minZ: pz - 5.25,
+          maxZ: pz + 5.25
         };
       }
     };
