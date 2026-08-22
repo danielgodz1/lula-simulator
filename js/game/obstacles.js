@@ -417,10 +417,12 @@ export class ObstacleManager {
       isPicanha: false,
       getAABB() {
         const pz = parent.position.z + coinGroup.position.z;
+        const px = coinGroup.position.x;
+        const py = coinGroup.position.y;
         return {
-          minX: laneX - 0.5, maxX: laneX + 0.5,
-          minY: y - 0.5, maxY: y + 0.5,
-          minZ: pz - 0.5, maxZ: pz + 0.5
+          minX: px - 0.8, maxX: px + 0.8,
+          minY: py - 0.8, maxY: py + 0.8,
+          minZ: pz - 0.8, maxZ: pz + 0.8
         };
       }
     });
@@ -470,10 +472,12 @@ export class ObstacleManager {
       isPicanha: true,
       getAABB() {
         const pz = parent.position.z + picanhaGroup.position.z;
+        const px = picanhaGroup.position.x;
+        const py = picanhaGroup.position.y;
         return {
-          minX: laneX - 0.6, maxX: laneX + 0.6,
-          minY: 0.3, maxY: 1.5,
-          minZ: pz - 0.6, maxZ: pz + 0.6
+          minX: px - 0.9, maxX: px + 0.9,
+          minY: py - 0.5, maxY: py + 0.9,
+          minZ: pz - 0.9, maxZ: pz + 0.9
         };
       }
     });
@@ -585,23 +589,66 @@ export class ObstacleManager {
       }
     }
 
-    // C. Verificação AABB Precisa de Colisão
+    // C. Verificação de Pouso/Andar em Cima dos Vagões de Trem (Mecânica Subway Surfers)
+    let onTrainTop = false;
+    let trainRoofY = 0;
+
+    for (const obs of this.obstacles) {
+      if (obs.type === 'train') {
+        const obsAABB = obs.getAABB();
+        const overTrainX = (player.x + 0.40) > obsAABB.minX && (player.x - 0.40) < obsAABB.maxX;
+        const overTrainZ = (player.z + 0.40) > obsAABB.minZ && (player.z - 0.40) < obsAABB.maxZ;
+
+        if (overTrainX && overTrainZ) {
+          // O jogador está sobre a projeção do trem
+          if (player.y >= obsAABB.maxY - 0.45) {
+            onTrainTop = true;
+            trainRoofY = Math.max(trainRoofY, obsAABB.maxY);
+          }
+        }
+      }
+    }
+
+    if (onTrainTop) {
+      player.groundY = trainRoofY;
+      if (player.y <= trainRoofY) {
+        player.y = trainRoofY;
+        player.isJumping = false;
+        player.jumpVelocity = 0;
+      }
+    } else {
+      player.groundY = 0;
+    }
+
+    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do trem)
     if (!player.isDead) {
       for (const obs of this.obstacles) {
         const obsAABB = obs.getAABB();
 
         const collisionX = playerAABB.maxX > obsAABB.minX && playerAABB.minX < obsAABB.maxX;
-        const collisionY = playerAABB.maxY > obsAABB.minY && playerAABB.minY < obsAABB.maxY;
         const collisionZ = playerAABB.maxZ > obsAABB.minZ && playerAABB.minZ < obsAABB.maxZ;
 
-        if (collisionX && collisionY && collisionZ) {
-          onCrash(obs);
-          break;
+        if (obs.type === 'train') {
+          // Se o jogador estiver acima do teto do trem, está correndo por cima!
+          if (player.y >= obsAABB.maxY - 0.35) {
+            continue;
+          }
+          const collisionY = playerAABB.maxY > obsAABB.minY && playerAABB.minY < obsAABB.maxY;
+          if (collisionX && collisionY && collisionZ) {
+            onCrash(obs);
+            break;
+          }
+        } else {
+          const collisionY = playerAABB.maxY > obsAABB.minY && playerAABB.minY < obsAABB.maxY;
+          if (collisionX && collisionY && collisionZ) {
+            onCrash(obs);
+            break;
+          }
         }
       }
     }
 
-    // D. Coleta de Moedas e Picanhas com Rotação Y Contínua e Partículas
+    // E. Coleta de Moedas e Picanhas com Atração Ímã Agressiva 3D e Partículas
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i];
       if (coin.collected) continue;
@@ -609,24 +656,34 @@ export class ObstacleManager {
       const coinWorldZ = coin.parent.position.z + coin.mesh.position.z;
 
       coin.mesh.rotation.y += 3.6 * dt;
-      if (coin.baseY !== undefined) {
+      if (coin.baseY !== undefined && !player.magnetActive) {
         coin.mesh.position.y = coin.baseY + Math.sin(elapsedTime * 4.2 + coin.laneX) * 0.08;
       }
 
+      // ATRAÇÃO MAGNÉTICA EM 3D (X, Y, Z) COM PULL FORTE
       if (player.magnetActive && !player.isDead) {
         const distZ = Math.abs(player.z - coinWorldZ);
-        if (distZ < 16) {
-          coin.mesh.position.x += (player.x - (coin.mesh.position.x)) * (10.0 * dt);
-          coin.mesh.position.y += (player.y + 1.0 - coin.mesh.position.y) * (10.0 * dt);
+        if (distZ < 32) {
+          const attractRate = 22.0 * dt;
+          coin.mesh.position.x += (player.x - coin.mesh.position.x) * Math.min(1.0, attractRate);
+          coin.mesh.position.y += ((player.y + 0.9) - coin.mesh.position.y) * Math.min(1.0, attractRate);
+          coin.mesh.position.z += ((player.z - coin.parent.position.z) - coin.mesh.position.z) * Math.min(1.0, 16.0 * dt);
         }
       }
+
+      const curCoinWorldZ = coin.parent.position.z + coin.mesh.position.z;
+      const distToPlayer = Math.hypot(
+        player.x - coin.mesh.position.x,
+        (player.y + 0.9) - coin.mesh.position.y,
+        player.z - curCoinWorldZ
+      );
 
       const coinAABB = coin.getAABB();
       const overlapX = playerAABB.maxX > coinAABB.minX && playerAABB.minX < coinAABB.maxX;
       const overlapY = playerAABB.maxY > coinAABB.minY && playerAABB.minY < coinAABB.maxY;
       const overlapZ = playerAABB.maxZ > coinAABB.minZ && playerAABB.minZ < coinAABB.maxZ;
 
-      if (overlapX && overlapY && overlapZ) {
+      if ((overlapX && overlapY && overlapZ) || distToPlayer < 1.7) {
         coin.collected = true;
         this.spawnCoinParticles(coin.mesh.position.x, coin.mesh.position.y, coin.mesh.position.z, coin.parent);
         coin.parent.remove(coin.mesh);

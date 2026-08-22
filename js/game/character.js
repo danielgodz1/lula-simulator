@@ -506,7 +506,7 @@ export class Character {
 
   jump() {
     if (this.isDead) return;
-    if (!this.isJumping) {
+    if (!this.isJumping && Math.abs(this.y - this.groundY) < 0.15) {
       this.isJumping = true;
       this.jumpVelocity = this.superJump ? this.jumpForce * 1.35 : this.jumpForce;
       this.isSliding = false;
@@ -573,8 +573,8 @@ export class Character {
       this.handMagnet.visible = this.magnetActive;
     }
 
-    // 3. Física do Pulo
-    if (this.isJumping) {
+    // 3. Física do Pulo e Gravidade (Suporta andar e cair de cima de trens)
+    if (this.isJumping || this.y > this.groundY) {
       this.y += this.jumpVelocity * dt;
       const currentGrav = this.jumpVelocity < 0 ? this.gravity * this.fallMultiplier : this.gravity;
       this.jumpVelocity += currentGrav * dt;
@@ -589,6 +589,8 @@ export class Character {
           this.jump();
         }
       }
+    } else if (this.y < this.groundY) {
+      this.y = this.groundY;
     }
 
     if (this.jumpBufferTimer > 0) this.jumpBufferTimer -= dt;
@@ -611,7 +613,18 @@ export class Character {
 
     if (this.isSliding) {
       this.mesh.rotation.x = -Math.PI / 2.2;
-      this.mesh.position.y = 0.32;
+      this.mesh.position.y = this.y + 0.32;
+
+      this.torso.rotation.x = 0;
+      this.leftLeg.rotation.x = 0.1;
+      this.rightLeg.rotation.x = 0.1;
+      this.leftArmGroup.rotation.x = -0.5;
+      this.rightArmGroup.rotation.x = -0.5;
+
+      this.shadow.scale.set(1.5, 0.8, 1);
+    } else if (this.isJumping || this.y > this.groundY + 0.1) {
+      this.mesh.rotation.x = 0;
+      this.mesh.position.y = this.y;
 
       this.torso.rotation.x = 0;
       this.leftLeg.rotation.x = 0.1;

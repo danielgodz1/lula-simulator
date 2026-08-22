@@ -67,6 +67,7 @@ export class UIManager {
     if (!this.charSelectModal) return;
     this.renderCharacterCards();
     this.charSelectModal.style.display = 'flex';
+    this.charSelectModal.style.zIndex = '1300';
   }
 
   closeCharacterModal() {

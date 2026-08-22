@@ -212,13 +212,24 @@
       background: rgba(8, 9, 20, 0.80);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      z-index: 1000 !important;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 12px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+    }
+
+    #startOverlay {
+      z-index: 1000 !important;
+    }
+
+    #gameOverModal {
+      z-index: 1100 !important;
+    }
+
+    #charSelectModal {
+      z-index: 1300 !important;
     }
 
     .start-card {
