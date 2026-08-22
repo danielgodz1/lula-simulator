@@ -38,17 +38,17 @@ html, body {
   touch-action: pan-y;
 }
 
-/* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA COM HAMBURGER MENU */
+/* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA */
 nav {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 100;
-  background: rgba(8, 9, 20, 0.95);
+  background: rgba(8, 9, 20, 0.96);
   backdrop-filter: blur(14px);
   border-bottom: 2px solid var(--amarelo-brasil);
-  padding: 0 24px;
+  padding: 0 20px;
   height: 64px;
   display: flex;
   align-items: center;
@@ -67,22 +67,25 @@ nav {
   -webkit-text-fill-color: transparent;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-links {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   list-style: none;
   align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-links a {
   color: var(--text-muted);
   text-decoration: none;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13.5px;
   transition: all 0.2s ease;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 10px;
   display: inline-flex;
   align-items: center;
@@ -99,24 +102,55 @@ nav {
 .nav-right-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 /* Botão Hamburger Menu Mobile */
 .nav-toggle-btn {
   display: none;
   background: rgba(255, 223, 0, 0.15);
-  border: 1px solid var(--amarelo-brasil);
+  border: 1.5px solid var(--amarelo-brasil);
   color: var(--amarelo-brasil);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 6px 12px;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 800;
   cursor: pointer;
   align-items: center;
   gap: 6px;
-  font-family: 'Bangers', cursive;
-  letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+@media (max-width: 950px) {
+  .nav-toggle-btn {
+    display: inline-flex;
+  }
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    background: rgba(8, 9, 20, 0.98);
+    backdrop-filter: blur(16px);
+    border-bottom: 2px solid var(--amarelo-brasil);
+    flex-direction: column;
+    padding: 16px 20px;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .nav-links a {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 10px 16px;
+    font-size: 15px;
+  }
 }
 
 /* 4. BOTÕES REUTILIZÁVEIS */
@@ -138,191 +172,115 @@ nav {
   box-shadow: 0 6px 24px rgba(0, 156, 59, 0.4);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  -webkit-user-select: none;
 }
 
 .btn-primary:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 32px rgba(0, 156, 59, 0.7);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 230, 118, 0.6);
 }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   background: rgba(255, 223, 0, 0.12);
   color: var(--amarelo-brasil);
-  border: 2px solid var(--amarelo-brasil);
   font-family: 'Bangers', cursive;
-  font-size: 20px;
-  letter-spacing: 1px;
-  padding: 12px 28px;
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  padding: 14px 32px;
   border-radius: 12px;
   text-decoration: none;
+  border: 2px solid var(--amarelo-brasil);
   cursor: pointer;
-  transition: all 0.25s ease;
+  box-shadow: 0 6px 24px rgba(255, 223, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
-  -webkit-user-select: none;
 }
 
 .btn-secondary:hover {
-  background: var(--amarelo-brasil);
-  color: #000000;
+  background: rgba(255, 223, 0, 0.25);
   transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 223, 0, 0.45);
 }
 
-/* 5. CARDS E RECIPIENTES */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: 18px;
-  padding: 24px;
-  backdrop-filter: blur(8px);
-  transition: border-color 0.2s ease, transform 0.2s ease;
+/* 5. ANIMAÇÕES GLOBAIS */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
-.card:hover {
-  border-color: var(--amarelo-brasil);
-}
-
-/* 6. RODAPÉ */
-footer {
-  background: rgba(0, 0, 0, 0.7);
-  border-top: 2px solid var(--verde-brasil);
-  padding: 24px 20px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 13px;
-  margin-top: 40px;
-  line-height: 1.7;
-}
-
-footer strong {
-  color: var(--amarelo-brasil);
-}
-
-/* 7. RESPONSIVIDADE & MOBILE DRAWER MENU */
-@media (max-width: 900px) {
-  nav {
-    padding: 0 16px;
-    height: 60px;
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 223, 0, 0.3);
   }
-
-  .nav-brand {
-    font-size: 20px;
-  }
-
-  .nav-toggle-btn {
-    display: inline-flex;
-  }
-
-  /* Drawer menu suspenso elegante */
-  .nav-links {
-    display: none;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    background: rgba(10, 12, 22, 0.98);
-    backdrop-filter: blur(20px);
-    border-bottom: 2px solid var(--amarelo-brasil);
-    flex-direction: column;
-    padding: 16px;
-    gap: 8px;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.8);
-    animation: slideDownNav 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .nav-links.open {
-    display: flex;
-  }
-
-  .nav-links a {
-    width: 100%;
-    font-size: 16px;
-    padding: 12px 18px;
-    justify-content: flex-start;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-  }
-
-  .nav-links a.active {
-    background: rgba(255, 223, 0, 0.2);
-    border-color: var(--amarelo-brasil);
-  }
-
-  @keyframes slideDownNav {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .page {
-    padding-top: 85px !important;
-  }
-
-  .card {
-    padding: 20px 16px;
-    border-radius: 14px;
-  }
-
-  .page-header h1 {
-    font-size: 38px !important;
-  }
-
-  .btn-primary, .btn-secondary {
-    font-size: 18px;
-    padding: 12px 20px;
+  50% {
+    box-shadow: 0 0 30px rgba(255, 223, 0, 0.6), 0 0 50px rgba(0, 230, 118, 0.3);
   }
 }
 
-/* ==========================================================================
-   8. BANNERS DE MONETIZAÇÃO & ANÚNCIOS RESPONSIVOS NÃO INTRUSIVOS
-   ========================================================================== */
-.ad-banner-container-320x50 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 14px auto;
-  width: 320px;
-  max-width: 100%;
-  min-height: 50px;
-  height: 50px;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 223, 0, 0.15);
-  border-radius: 10px;
-  overflow: hidden;
-  position: relative;
-  z-index: 10;
-  contain: strict; /* Zero Cumulative Layout Shift (CLS) */
+@keyframes popIn {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.ad-banner-container-320x50 iframe {
-  display: block;
-  margin: 0 auto;
-  width: 320px;
-  height: 50px;
-  border: none;
+@keyframes shineGold {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.ad-sidebar-desktop {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
+/* 6. CONTAINERS DE ANÚNCIOS INTELIGENTES (ADSTERRA ZERO CLS) */
+.ad-banner-container-160x600 {
   width: 160px;
   height: 600px;
+  min-width: 160px;
   min-height: 600px;
-  z-index: 15;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 223, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  contain: strict;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  user-select: auto !important;
+}
+
+.ad-banner-container-320x50 {
+  width: 320px;
+  height: 50px;
+  min-width: 320px;
+  min-height: 50px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 223, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px auto;
+  contain: strict;
+  user-select: auto !important;
+}
+
+/* Skyscraper Fixo Desktop Lateral */
+.ad-sidebar-desktop {
+  display: none;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 90;
+  width: 160px;
+  height: 600px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 223, 0, 0.2);
   border-radius: 12px;
   overflow: hidden;
   pointer-events: auto;
-  contain: strict; /* Zero CLS */
+  contain: strict;
 }
 
 .ad-sidebar-left {
@@ -333,7 +291,7 @@ footer strong {
   right: 16px;
 }
 
-/* Banner Fixo Rodapé Mobile (Apenas em telas < 900px e fora da tela cheia) */
+/* Banner Fixo Rodapé Mobile */
 .ad-mobile-fixed-footer {
   display: none;
   position: fixed;
@@ -358,14 +316,13 @@ footer strong {
   }
 }
 
-/* Em telas menores que 1250px esconde os skyscrapers laterais para nunca atrapalhar a visão do jogo */
 @media (max-width: 1250px) {
   .ad-sidebar-desktop {
     display: none !important;
   }
 }
 
-/* BOTÃO REWARDED / SMARTLINK ELEGANTE & NÃO INTRUSIVO */
+/* BOTÃO REWARDED / SMARTLINK */
 .btn-rewarded-smartlink {
   display: inline-flex;
   align-items: center;
@@ -389,14 +346,6 @@ footer strong {
 }
 
 .btn-rewarded-smartlink:hover {
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.6);
+  transform: scale(1.04);
+  box-shadow: 0 6px 20px rgba(255, 223, 0, 0.6);
 }
-
-@keyframes shineGold {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-

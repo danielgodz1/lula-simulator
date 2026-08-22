@@ -602,22 +602,40 @@ class AuthManager {
   }
 
   // -------------------------------------------------------------
-  // RENDERIZAÇÃO DO BADGE NO HEADER / NAVBAR
+  // RENDERIZAÇÃO DO BADGE NO HEADER / NAVBAR (SEM APAGAR OS LINKS DO MENU)
   // -------------------------------------------------------------
   renderProfileBadge(containerSelector = '#profileBadgeContainer') {
-    let badge = document.querySelector(containerSelector);
-    if (!badge) {
-      badge = document.getElementById('authBadge');
+    let target = null;
+    if (typeof containerSelector === 'string') {
+      target = document.querySelector(containerSelector);
+    } else if (containerSelector instanceof HTMLElement) {
+      target = containerSelector;
     }
-    if (!badge) return;
+
+    if (!target) {
+      target = document.getElementById('profileBadgeContainer') || document.getElementById('authBadge');
+    }
+
+    // Se o elemento selecionado for a tag <nav>, NÃO substitui o <nav>!
+    // Procura ou insere um contêiner filho <div id="profileBadgeContainer" class="nav-right-group">
+    if (target && target.tagName === 'NAV') {
+      let badgeHolder = target.querySelector('#profileBadgeContainer');
+      if (!badgeHolder) {
+        badgeHolder = document.createElement('div');
+        badgeHolder.id = 'profileBadgeContainer';
+        badgeHolder.className = 'nav-right-group';
+        target.appendChild(badgeHolder);
+      }
+      target = badgeHolder;
+    }
 
     // Configura o menu mobile hambúrguer se existir
-    const toggleBtn = document.getElementById('navToggle');
-    const navLinks = document.getElementById('navLinks');
+    const toggleBtn = document.getElementById('navToggle') || document.getElementById('btnNavToggle');
+    const navLinks = document.getElementById('navLinks') || document.getElementById('navLinksList');
     if (toggleBtn && navLinks && !toggleBtn.dataset.bound) {
       toggleBtn.dataset.bound = 'true';
       toggleBtn.innerHTML = '☰ Menu';
-      toggleBtn.style.display = 'block';
+      toggleBtn.style.display = 'inline-flex';
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         navLinks.classList.toggle('open');
@@ -631,16 +649,20 @@ class AuthManager {
       });
     }
 
+    if (!target) return;
+
     const user = this.getCurrentUser();
     const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
 
     if (user) {
       const safeUsername = escapeHTML(user.username);
-      badge.innerHTML = `
-        <span title="Total acumulado: ${totalPicanhas} picanhas">👤 ${safeUsername} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b></span>
+      target.innerHTML = `
+        <span title="Total acumulado: ${totalPicanhas} picanhas" style="font-size:12px; font-weight:700; color:#fff; display:inline-flex; align-items:center; white-space:nowrap;">
+          👤 ${safeUsername} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b>
+        </span>
         <button id="btnLogoutProfile" style="
-          background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-          color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer;
+          background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+          color: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight:700;
         ">Trocar</button>
       `;
       document.getElementById('btnLogoutProfile').onclick = () => {
@@ -648,10 +670,11 @@ class AuthManager {
         window.location.reload();
       };
     } else {
-      badge.innerHTML = `
+      target.innerHTML = `
         <button id="btnLoginProfile" style="
-          background: rgba(255,223,0,0.2); border: 1px solid var(--amarelo-brasil);
-          color: var(--amarelo-brasil); border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; font-weight: 700;
+          background: rgba(255,223,0,0.18); border: 1.5px solid var(--amarelo-brasil);
+          color: var(--amarelo-brasil); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 800;
+          box-shadow: 0 0 12px rgba(255,223,0,0.2); transition: all 0.2s; white-space:nowrap;
         ">🔑 Entrar / Mudar Nome</button>
       `;
       document.getElementById('btnLoginProfile').onclick = () => {
