@@ -1,4 +1,4 @@
-// js/game/main.js — Loop Principal, Controle de Estados e Aceleração Calibrada (Subway Surfers Brasil)
+// js/game/main.js — Loop Principal, Controle de Estados, Aceleração Calibrada e Sincronização
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { GameScene } from './scene.js';
 import { gameAudio } from './audio.js';
@@ -43,7 +43,7 @@ export class Game {
   init() {
     this.ui.showStartScreen(() => this.start());
 
-    // Spawn de entidades nos blocos iniciais
+    // Spawn de entidades nos blocos iniciais à frente
     for (let i = 2; i < this.environment.segments.length; i++) {
       const seg = this.environment.segments[i];
       this.obstacleManager.spawnSegmentEntities(seg, seg.position.z);
@@ -137,7 +137,7 @@ export class Game {
   loop() {
     requestAnimationFrame(() => this.loop());
 
-    const dt = Math.min(this.clock.getDelta(), 0.1);
+    const dt = Math.min(this.clock.getDelta(), 0.05);
 
     if (this.state === this.STATE.PLAYING) {
       // 1. Aceleração Gradual e Fluida com a Distância
@@ -161,42 +161,40 @@ export class Game {
         }
       }
 
-      // 3. Movimento do Cenário e Reciclagem de Blocos da Favela
-      const moveZ = this.speed * dt;
-      this.environment.update(moveZ, (newSeg, newZ) => {
-        this.obstacleManager.spawnSegmentEntities(newSeg, newZ);
+      // 3. Atualização do Personagem
+      this.character.update(dt, this.speed);
+
+      // 4. Reciclagem Contínua dos Segmentos de Pista (Object Pooling)
+      this.environment.update(this.character.z, (seg, newZ) => {
+        this.obstacleManager.spawnSegmentEntities(seg, newZ);
       });
 
-      // 4. Atualização dos Obstáculos e Detecção de Colisão Justa
+      // 5. Atualização de Obstáculos e Detecção AABB
       this.obstacleManager.update(
-        moveZ,
         dt,
         this.character,
+        (obs) => this.onCrash(obs),
         (val) => this.onCollectCoin(val),
         (val) => this.onCollectPicanha(val),
-        (type) => this.onCollectPowerup(type),
-        (obs) => this.onCrash(obs),
-        this.speed
+        (type) => this.onCollectPowerup(type)
       );
 
       this.updateHUD();
+    } else if (this.state === this.STATE.GAMEOVER) {
+      this.character.update(dt, 0);
     }
 
-    // 5. Atualização do Personagem (Mesmo após bater para animação de tombo)
-    this.character.update(dt, this.speed);
-
-    // 6. Atualização Suave da Câmera (Com Lag e FOV dinâmico)
-    this.sceneManager.updateCamera(this.character.x, this.speed, this.baseSpeed, dt);
-
-    // 7. Renderização 3D a 60 FPS
+    // 6. Atualização da Câmera em 3ª Pessoa e Renderização
+    this.sceneManager.updateCamera(
+      this.character.x,
+      this.character.y,
+      this.state === this.STATE.GAMEOVER,
+      dt
+    );
     this.sceneManager.render();
   }
 }
 
-// Inicialização Global
-let gameInstance = null;
 export function initGame() {
-  if (!gameInstance) {
-    gameInstance = new Game();
-  }
+  window.currentGameInstance = new Game();
 }
