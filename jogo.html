@@ -749,32 +749,13 @@
   <!-- ÁREA DO JOGO FLAPPY LULA -->
   <div class="game-wrapper">
     <!-- SKYSCRAPER LATERAL ESQUERDO (DESKTOP >= 1250px) -->
-    <div class="ad-sidebar-desktop ad-sidebar-left">
-      <script>
-        atOptions = {
-          'key' : 'dda14d693428bdb35d633d7f7c78c2cd',
-          'format' : 'iframe',
-          'height' : 600,
-          'width' : 160,
-          'params' : {}
-        };
-      </script>
-      <script src="https://www.highrevenueformat.com/dda14d693428bdb35d633d7f7c78c2cd/invoke.js"></script>
-    </div>
+    <div id="adSidebarLeft" class="ad-sidebar-desktop ad-sidebar-left"></div>
 
     <!-- SKYSCRAPER LATERAL DIREITO (DESKTOP >= 1250px) -->
-    <div class="ad-sidebar-desktop ad-sidebar-right">
-      <script>
-        atOptions = {
-          'key' : 'dda14d693428bdb35d633d7f7c78c2cd',
-          'format' : 'iframe',
-          'height' : 600,
-          'width' : 160,
-          'params' : {}
-        };
-      </script>
-      <script src="https://www.highrevenueformat.com/dda14d693428bdb35d633d7f7c78c2cd/invoke.js"></script>
-    </div>
+    <div id="adSidebarRight" class="ad-sidebar-desktop ad-sidebar-right"></div>
+
+    <!-- BANNER FIXO MOBILE RODAPÉ FORA DO JOGO -->
+    <div id="adMobileFixedFooter" class="ad-mobile-fixed-footer"></div>
 
     <div id="canvasContainer">
       <canvas id="gameCanvas"></canvas>
@@ -858,9 +839,14 @@
           </div>
         </div>
 
-        <div class="modal-footer-sticky">
-          <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:13px; padding:8px;">Voltar</button>
-          <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:14px; padding:8px;">✨ EQUIPAR E JOGAR</button>
+        <div class="modal-footer-sticky" style="flex-direction:column; gap:6px;">
+          <div style="display:flex; gap:6px; width:100%;">
+            <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:13px; padding:8px;">Voltar</button>
+            <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:14px; padding:8px;">✨ EQUIPAR E JOGAR</button>
+          </div>
+          <button id="btnRewardCharModal" class="btn-rewarded-smartlink" style="width:100%; font-size:12px; padding:6px;">
+            🎁 Ganhar +10 Picanhas Grátis (Patrocinador)
+          </button>
         </div>
       </div>
     </div>
@@ -939,19 +925,15 @@
           </a>
         </div>
 
-        <!-- BANNER DE MONETIZAÇÃO GAME OVER 320x50 -->
-        <div class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 0;">
-          <script>
-            atOptions = {
-              'key' : '590c47d997603e6ea80ae7b922875e55',
-              'format' : 'iframe',
-              'height' : 50,
-              'width' : 320,
-              'params' : {}
-            };
-          </script>
-          <script src="https://www.highrevenueformat.com/590c47d997603e6ea80ae7b922875e55/invoke.js"></script>
+        <!-- BOTÃO SMARTLINK RECOMPENSA PICANHAS BÔNUS -->
+        <div style="display:flex; justify-content:center; margin-top:8px;">
+          <button id="btnRewardPicanhasGO" class="btn-rewarded-smartlink">
+            🎁 GANHAR +10 PICANHAS BÔNUS
+          </button>
         </div>
+
+        <!-- BANNER DE MONETIZAÇÃO GAME OVER 320x50 -->
+        <div id="adBannerGameOver" class="ad-banner-container-320x50" style="margin-top: 8px; margin-bottom: 0;"></div>
       </div>
     </div>
   </div>
@@ -962,6 +944,7 @@
     import { auth } from './js/auth.js';
     import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
     import { escapeHTML } from './js/security.js';
+    import { AdsManager } from './js/ads-manager.js';
 
     auth.renderProfileBadge('nav');
     if (!auth.getCurrentUser()) {
@@ -994,7 +977,7 @@
     let pendingCharSelect = activeCharacter;
 
     const gameState = {
-      HITBOX_R: 0.024,
+      HITBOX_R: 0.020,
       GAP_RATIO: 0.42,
       SPEED_MULT: 1.0,
       EXTRA_SCORE_PER_PIPE: 1,
@@ -1026,7 +1009,7 @@
     }
 
     let dpr = 1;
-    let LR_RATIO = 0.044;
+    let LR_RATIO = 0.040;
 
     function isFullscreenActive() {
       return !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -1040,8 +1023,9 @@
 
       let W, H;
       if (isFs) {
-        W = window.innerWidth;
+        // Preserva a proporção arcade de retrato para NUNCA distorcer em tela cheia de PCs ultra-wide
         H = window.innerHeight;
+        W = Math.min(window.innerWidth - 20, Math.round(H * 0.68));
       } else if (isMobile) {
         W = Math.min(window.innerWidth - 10, 480);
         H = Math.max(360, Math.min(window.innerHeight - 56, 680));
@@ -1055,8 +1039,8 @@
       dpr = Math.max(window.devicePixelRatio || 1, 2.0);
       dpr = Math.min(dpr, 3.0);
       
-      // Proporção ideal de diâmetro e nitidez do personagem
-      LR_RATIO = isMobile ? 0.046 : 0.052;
+      // Proporção ideal e reduzida do personagem conforme solicitado (não fica gigante)
+      LR_RATIO = isMobile ? 0.036 : 0.040;
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
@@ -1098,6 +1082,8 @@
     let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];
     let isPrisonMode = false;
     let hasPlayedBesta = false;
+    let sessionPlayTime = 0;
+    let hasAlerted30s = false;
 
     // Power-up Nikolas (Lula a cada 1 minuto com 20s de lentidão)
     let nikolasLulaSpawnTimer = 0;
@@ -1263,13 +1249,25 @@
       });
     }
 
-    // DIFICULDADE PROGRESSIVA SUAVE (A CADA 300 PONTOS AUMENTA A VELOCIDADE DAS TELAS: 300pts=1.2x, 600pts=1.4x...)
+    // DIFICULDADE PROGRESSIVA SUAVE POR TEMPO (AOS 30s E A CADA 1 MIN) + POR PONTOS (A PARTIR DE 300 PTS)
     function getProgressiveModifiers() {
-      if (score < 300) {
-        return { speedMult: 1.0 };
+      let speedMult = 1.0;
+
+      // 1. Progressão por Tempo de Partida
+      if (sessionPlayTime >= 30) {
+        speedMult += 0.05; // Aos 30s aumenta +5%
+        if (sessionPlayTime >= 60) {
+          const extraMins = Math.floor(sessionPlayTime / 60);
+          speedMult += Math.min(0.20, extraMins * 0.05); // +5% a cada 1 minuto adicional
+        }
       }
-      const steps = Math.floor(score / 300);
-      const speedMult = 1.0 + (steps * 0.2);
+
+      // 2. Progressão por Pontuação (a partir de 300 pontos)
+      if (score >= 300) {
+        const steps = Math.floor(score / 300);
+        speedMult += steps * 0.15; // +0.15x a cada 300 pontos
+      }
+
       return { speedMult };
     }
 
@@ -1838,14 +1836,16 @@
           ctx.lineWidth = 2;
           ctx.strokeText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
           ctx.fillText(`🕊️ LENTIDÃO: ${Math.ceil(nikolasSlowTimer)}s`, W / 2, 88);
-        } else if (score >= 300) {
-          const currentMult = (1.0 + Math.floor(score / 300) * 0.2).toFixed(1);
-          ctx.font = '8px "Press Start 2P", cursive';
-          ctx.fillStyle = '#ffdf00';
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 2;
-          ctx.strokeText(`⚡ VELOCIDADE: ${currentMult}x`, W / 2, 28);
-          ctx.fillText(`⚡ VELOCIDADE: ${currentMult}x`, W / 2, 28);
+        } else if (sessionPlayTime >= 30 || score >= 300) {
+          const { speedMult } = getProgressiveModifiers();
+          if (speedMult > 1.0) {
+            ctx.font = '8px "Press Start 2P", cursive';
+            ctx.fillStyle = '#ffdf00';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeText(`⚡ VELOCIDADE: ${speedMult.toFixed(2)}x`, W / 2, 28);
+            ctx.fillText(`⚡ VELOCIDADE: ${speedMult.toFixed(2)}x`, W / 2, 28);
+          }
         }
 
         ctx.textAlign = 'left';
@@ -1892,6 +1892,14 @@
     let accumulatedTime = 0;
 
     function step(dt) {
+      if (state === STATE.PLAYING) {
+        sessionPlayTime += dt;
+        if (sessionPlayTime >= 30 && !hasAlerted30s) {
+          hasAlerted30s = true;
+          showBannerAlert('⚡ 30s DE JOGO: RITMO AUMENTANDO LEVEMENTE!', false);
+        }
+      }
+
       frameCount++;
       lula.update();
 
@@ -2065,6 +2073,8 @@
         state = STATE.PLAYING;
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         hasPlayedBesta = false;
+        sessionPlayTime = 0;
+        hasAlerted30s = false;
         nikolasLulaSpawnTimer = 0;
         nikolasSlowTimer = 0;
         nikolasTripleTimer = 0;
@@ -2091,6 +2101,8 @@
       state = STATE.PLAYING;
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       hasPlayedBesta = false;
+      sessionPlayTime = 0;
+      hasAlerted30s = false;
       nikolasLulaSpawnTimer = 0;
       nikolasSlowTimer = 0;
       nikolasTripleTimer = 0;
@@ -2107,6 +2119,25 @@
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
     document.getElementById('btnRestartGame')?.addEventListener('click', restartGame);
     
+    // Botão de Recompensa (Rewarded / Smartlink)
+    document.getElementById('btnRewardPicanhasGO')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AdsManager.openRewardedLink((bonus) => {
+        showBannerAlert(`🎁 RECOMPENSA COLETADA: +${bonus} PICANHAS!`, false);
+        try { sounds.playPowerup(); } catch(e){}
+        if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
+      });
+    });
+
+    document.getElementById('btnRewardCharModal')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AdsManager.openRewardedLink((bonus) => {
+        showBannerAlert(`🎁 RECOMPENSA COLETADA: +${bonus} PICANHAS!`, false);
+        try { sounds.playPowerup(); } catch(e){}
+        renderCharacterGrid();
+      });
+    });
+
     // Interrompe áudios ao navegar para Badges ou Início
     document.querySelectorAll('.btn-pixel-badges, .btn-pixel-home, nav a').forEach(el => {
       el.addEventListener('click', () => {
@@ -2126,7 +2157,7 @@
     window.addEventListener('keydown', e => {
       // Permite digitação livre em todos os campos de texto e modais
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
-      if (e.code === 'Space' || e.code === 'ArrowUp') {
+      if (e.code === 'Space' || e.key === ' ' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.code === 'KeyW' || e.key === 'w') {
         e.preventDefault();
         if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
           restartGame();
@@ -2137,8 +2168,9 @@
     });
 
     const onUserTouch = (e) => {
-      if (e.target.closest('button, a, input, textarea, #playerProfileBadge, .game-over-container, .modal-card, .start-card, .nav-right-group')) return;
-      e.preventDefault();
+      if (e.target && (e.target.closest('#hudOverlay') || e.target.closest('.modal-overlay') || e.target.closest('.start-overlay') || e.target.closest('nav') || e.target.closest('.btn-rewarded-smartlink'))) {
+        return;
+      }
       if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
         restartGame();
       } else {
@@ -2153,6 +2185,9 @@
         onUserTouch(e);
       }
     });
+
+    // Inicializa anúncios de forma assíncrona pós-carregamento do jogo
+    AdsManager.init();
 
     requestAnimationFrame(loop);
   </script>

@@ -166,19 +166,8 @@
       </button>
     </div>
 
-    <!-- BANNER DE MONETIZAÇÃO FEEDBACK 320x50 -->
-    <div class="ad-banner-container-320x50" style="margin: 20px auto 30px;">
-      <script>
-        atOptions = {
-          'key' : '590c47d997603e6ea80ae7b922875e55',
-          'format' : 'iframe',
-          'height' : 50,
-          'width' : 320,
-          'params' : {}
-        };
-      </script>
-      <script src="https://www.highrevenueformat.com/590c47d997603e6ea80ae7b922875e55/invoke.js"></script>
-    </div>
+    <!-- BANNER DE MONETIZAÇÃO FEEDBACK 320x50 (AUTO-REFRESH) -->
+    <div id="adBannerFeedback" class="ad-banner-container-320x50" style="margin: 20px auto 30px;"></div>
 
     <!-- LISTA DE FEEDBACKS -->
     <div>
@@ -292,6 +281,8 @@
       e.stopPropagation();
       navLinksList?.classList.toggle('open');
     });
+
+    import('./js/ads-manager.js').then(m => m.AdsManager.init());
   </script>
 
 </body>

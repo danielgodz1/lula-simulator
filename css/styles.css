@@ -285,21 +285,25 @@ footer strong {
   justify-content: center;
   align-items: center;
   margin: 14px auto;
-  width: 100%;
-  max-width: 320px;
+  width: 320px;
+  max-width: 100%;
   min-height: 50px;
+  height: 50px;
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 223, 0, 0.15);
   border-radius: 10px;
   overflow: hidden;
   position: relative;
   z-index: 10;
+  contain: strict; /* Zero Cumulative Layout Shift (CLS) */
 }
 
 .ad-banner-container-320x50 iframe {
   display: block;
   margin: 0 auto;
-  max-width: 100%;
+  width: 320px;
+  height: 50px;
+  border: none;
 }
 
 .ad-sidebar-desktop {
@@ -307,6 +311,7 @@ footer strong {
   top: 50%;
   transform: translateY(-50%);
   width: 160px;
+  height: 600px;
   min-height: 600px;
   z-index: 15;
   display: flex;
@@ -317,14 +322,40 @@ footer strong {
   border-radius: 12px;
   overflow: hidden;
   pointer-events: auto;
+  contain: strict; /* Zero CLS */
 }
 
 .ad-sidebar-left {
-  left: 20px;
+  left: 16px;
 }
 
 .ad-sidebar-right {
-  right: 20px;
+  right: 16px;
+}
+
+/* Banner Fixo Rodapé Mobile (Apenas em telas < 900px e fora da tela cheia) */
+.ad-mobile-fixed-footer {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  height: 50px;
+  z-index: 90;
+  background: rgba(8, 9, 20, 0.95);
+  border-top: 1px solid var(--amarelo-brasil);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+}
+
+@media (max-width: 900px) {
+  .ad-mobile-fixed-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 /* Em telas menores que 1250px esconde os skyscrapers laterais para nunca atrapalhar a visão do jogo */
@@ -333,4 +364,39 @@ footer strong {
     display: none !important;
   }
 }
+
+/* BOTÃO REWARDED / SMARTLINK ELEGANTE & NÃO INTRUSIVO */
+.btn-rewarded-smartlink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 50%, #eab308 100%);
+  background-size: 200% auto;
+  color: #000000;
+  font-family: 'Bangers', cursive;
+  font-size: 15px;
+  letter-spacing: 1px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #ffdf00;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.35);
+  transition: all 0.25s ease;
+  animation: shineGold 3s infinite linear;
+  user-select: none;
+  text-decoration: none;
+}
+
+.btn-rewarded-smartlink:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.6);
+}
+
+@keyframes shineGold {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 
