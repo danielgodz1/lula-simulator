@@ -2011,7 +2011,7 @@
       if (!listEl) return;
 
       try {
-        const scores = await getTopScores('lula_scores_v2', 8);
+        const scores = await getTopScores('flappy', 8);
         if (scores && scores.length > 0) {
           listEl.innerHTML = '';
           scores.forEach((item, i) => {
