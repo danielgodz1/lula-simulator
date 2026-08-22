@@ -1803,8 +1803,6 @@
         ctx.fillText('💖', lk.x - 12, lk.y + 8);
       }
 
-      if (state === STATE.PLAYING) groundScroll = (groundScroll + BASE_PIPE_SPEED) % 64;
-
       // CHÃO COM GRAMA E TERRA EM PIXEL ART
       drawGround(GH);
 
@@ -1888,16 +1886,18 @@
       ctx.restore();
     }
 
-    let lastTime = performance.now();
-    function loop(currentTime) {
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.05);
-      lastTime = currentTime;
+    const TARGET_FPS = 60;
+    const FRAME_DURATION = 1000 / TARGET_FPS; // ~16.6667 ms
+    let lastFrameTime = performance.now();
+    let accumulatedTime = 0;
 
+    function step(dt) {
       frameCount++;
       lula.update();
 
-      // Rastro especial de voo: Chuva contínua de dinheiro para Marçal e mandiocas para Dilma
       if (state === STATE.PLAYING) {
+        groundScroll = (groundScroll + BASE_PIPE_SPEED) % 64;
+
         if (activeCharacter.id === 'marcal' && frameCount % 12 === 0) {
           picanhas.push({
             x: lula.x - 14,
@@ -1964,6 +1964,19 @@
         setTimeout(() => {
           showGameOverScreen();
         }, 300);
+      }
+    }
+
+    function loop(currentTime) {
+      if (!currentTime) currentTime = performance.now();
+      const elapsed = Math.min(currentTime - lastFrameTime, 100);
+      lastFrameTime = currentTime;
+      accumulatedTime += elapsed;
+
+      // Executa lógica travada exatamente a 60 FPS em qualquer monitor (60Hz, 120Hz, 144Hz, 200Hz, 240Hz, etc.)
+      while (accumulatedTime >= FRAME_DURATION) {
+        step(FRAME_DURATION / 1000);
+        accumulatedTime -= FRAME_DURATION;
       }
 
       draw();
