@@ -221,13 +221,8 @@ export class Game {
   }
 }
 
-export function initGame() {
-  // Pré-carrega todos os modelos GLB em segundo plano
-  modelLoader.preloadAll().then(() => {
-    if (window.currentGameInstance && window.currentGameInstance.character) {
-      const sel = RunnerInventory.getSelectedCharacter();
-      window.currentGameInstance.character.setCharacter(sel.id);
-    }
-  });
+export async function initGame() {
+  // Pré-carrega todos os modelos GLB antes de instanciar a cena
+  await modelLoader.preloadAll();
   window.currentGameInstance = new Game();
 }

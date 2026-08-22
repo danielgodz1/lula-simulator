@@ -173,93 +173,22 @@ export class Environment {
   }
 
   buildFavelaHouses(segment) {
-    // 1. PRIMEIRA CAMADA (Margem da Pista: Casinhas 3D GLB + Casas Coloridas com Laje)
+    // 1. PRIMEIRA CAMADA (Margem da Pista: Casas Quadradas Coloridas com Portas, Janelas e Lajes)
     [-11.5, 11.5].forEach((baseX, sideIdx) => {
-      for (let bz = -SEGMENT_LENGTH / 2 + 10; bz < SEGMENT_LENGTH / 2; bz += 21) {
-        const useGLB = (Math.random() > 0.45) && modelLoader.hasModel('casinha');
-
-        if (useGLB) {
-          const houseGLB = modelLoader.getModel('casinha');
-          if (houseGLB) {
-            const houseGroup = new THREE.Group();
-            const box = new THREE.Box3().setFromObject(houseGLB);
-            const size = new THREE.Vector3();
-            box.getSize(size);
-            const center = new THREE.Vector3();
-            box.getCenter(center);
-
-            const scale = 5.2 / Math.max(0.001, size.y);
-            houseGLB.scale.set(scale, scale, scale);
-            houseGLB.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
-
-            houseGroup.add(houseGLB);
-            houseGroup.position.set(baseX + (sideIdx === 0 ? -1.5 : 1.5), 0, bz);
-            houseGroup.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-            segment.add(houseGroup);
-          }
-        } else {
-          this.createStackedProceduralHouse(segment, baseX + (sideIdx === 0 ? -1.5 : 1.5), bz, sideIdx, 2, 3);
-        }
+      for (let bz = -SEGMENT_LENGTH / 2 + 10; bz < SEGMENT_LENGTH / 2; bz += 19) {
+        this.createStackedProceduralHouse(segment, baseX + (sideIdx === 0 ? -1.5 : 1.5), bz, sideIdx, 2, 3, 0);
       }
     });
 
-    // 2. CAMINHÕES ESTACIONADOS NOS BECOS ENTRE AS CASAS (COM FARÓIS ILUMINADOS)
-    [-9.2, 9.2].forEach((tx, sideIdx) => {
-      for (let bz = -SEGMENT_LENGTH / 2 + 22; bz < SEGMENT_LENGTH / 2; bz += 42) {
-        const truckGroup = new THREE.Group();
-        const truckModel = modelLoader.getModel('caminhao');
-
-        if (truckModel) {
-          const truckPivot = new THREE.Group();
-          truckModel.rotation.y = sideIdx === 0 ? Math.PI / 2 : -Math.PI / 2;
-          truckPivot.add(truckModel);
-
-          const box = new THREE.Box3().setFromObject(truckPivot);
-          const size = new THREE.Vector3();
-          box.getSize(size);
-          const center = new THREE.Vector3();
-          box.getCenter(center);
-
-          const scaleX = 2.1 / Math.max(0.001, size.x);
-          const scaleY = 2.8 / Math.max(0.001, size.y);
-          const scaleZ = 8.5 / Math.max(0.001, size.z);
-          truckPivot.scale.set(scaleX, scaleY, scaleZ);
-          truckPivot.position.set(-center.x * scaleX, -box.min.y * scaleY, -center.z * scaleZ);
-
-          truckGroup.add(truckPivot);
-        }
-
-        // Faróis Acessos no Caminhão Estacionado
-        const hasLitHeadlights = Math.random() > 0.35;
-        if (hasLitHeadlights) {
-          [-0.65, 0.65].forEach(hx => {
-            const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.08, 12), this.sharedMaterials.streetLampMat);
-            lamp.rotation.x = Math.PI / 2;
-            lamp.position.set(hx, 0.9, sideIdx === 0 ? 4.2 : -4.2);
-            truckGroup.add(lamp);
-          });
-
-          const beam = new THREE.Mesh(new THREE.ConeGeometry(1.8, 9.0, 8, 1, true), this.sharedMaterials.headlightBeam);
-          beam.rotation.x = sideIdx === 0 ? -Math.PI / 2 : Math.PI / 2;
-          beam.position.set(0, 0.9, sideIdx === 0 ? 8.5 : -8.5);
-          truckGroup.add(beam);
-        }
-
-        truckGroup.position.set(tx, 0, bz);
-        truckGroup.rotation.y = (Math.random() * 0.2 - 0.1);
-        segment.add(truckGroup);
-      }
-    });
-
-    // 3. SEGUNDA E TERCEIRA CAMADAS (Fundo e Encosta do Morro da Favela Densa)
-    [-19, -28, -38, 19, 28, 38].forEach(baseX => {
+    // 2. SEGUNDA, TERCEIRA E QUARTA CAMADAS (Fundo e Encosta do Morro da Favela Densa com Caixas d'Água)
+    [-19, -29, -40, 19, 29, 40].forEach(baseX => {
       const isLeft = baseX < 0;
       const distLayer = Math.abs(baseX);
-      const elevationBase = (distLayer - 12) * 0.45; // Sobe o relevo em declive
+      const elevationBase = (distLayer - 12) * 0.48; // Sobe o relevo em declive no morro
 
       for (let bz = -SEGMENT_LENGTH / 2 + 6; bz < SEGMENT_LENGTH / 2; bz += 14) {
         const floors = Math.floor(Math.random() * 3) + 2;
-        this.createStackedProceduralHouse(segment, baseX + (Math.random() * 2 - 1), bz, isLeft ? 0 : 1, floors, floors + 1, elevationBase);
+        this.createStackedProceduralHouse(segment, baseX + (Math.random() * 2 - 1), bz, isLeft ? 0 : 1, floors, floors + 2, elevationBase);
       }
     });
   }

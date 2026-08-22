@@ -12,8 +12,7 @@ class ModelLoaderManager {
       empresario: 'js/game/models/empresario.glb',
       lula: 'js/game/models/lula.glb',
       bolsonaro: 'js/game/models/bolsonaro.glb',
-      caminhao: 'js/game/models/caminhao.glb',
-      casinha: 'js/game/models/casinha_favela.glb'
+      caminhao: 'js/game/models/caminhao.glb'
     };
   }
 
