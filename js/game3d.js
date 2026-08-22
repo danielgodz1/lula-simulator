@@ -5,6 +5,7 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { sounds } from './audio.js';
 import { savePlayerScore } from './firebase-config.js';
+import { auth } from './auth.js';
 
 let scene, camera, renderer;
 let character, characterGroup;
@@ -1045,6 +1046,7 @@ function triggerGameOver(obstacle) {
     localStorage.setItem('run_best', bestDistance.toString());
   }
 
+  try { auth.updateUserScore('runner', finalDistanceKm); } catch(e){}
   savePlayerScore('runner', finalDistanceKm);
 
   const modal = document.getElementById('gameOverModal');

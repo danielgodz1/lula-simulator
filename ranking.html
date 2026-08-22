@@ -301,13 +301,13 @@
       loadRankingData();
     }
 
-    async function loadRankingData() {
+    async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');
       const totalBadge = document.getElementById('totalPlayersBadge');
       container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando todos os jogadores... 🇧🇷</div>';
 
-      // Busca os melhores jogadores pelo documento consolidado (com cache TTL)
-      allCurrentScores = await getTopScores(currentTab, 50);
+      // Busca todos os jogadores pelo documento consolidado (com cache TTL)
+      allCurrentScores = await getTopScores(currentTab, 300, force);
 
       // Fallback da conta atual caso banco esteja vazio
       if (allCurrentScores.length === 0) {

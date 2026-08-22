@@ -45,7 +45,7 @@ export default async function handler(req, res) {
         updatedAt: { timestampValue: new Date().toISOString() },
         scores: {
           arrayValue: {
-            values: scoresList.slice(0, 50).map(s => ({
+            values: scoresList.slice(0, 300).map(s => ({
               mapValue: {
                 fields: {
                   player: { stringValue: sanitize(s.player, 25) },
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
 
   // 1. GET: Consulta de 1 ÚNICA LEITURA no documento consolidado
   if (req.method === 'GET') {
-    const { game = 'flappy', limit = 50 } = req.query;
+    const { game = 'flappy', limit = 300 } = req.query;
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const leaderboardDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${cleanGame}`;
 
@@ -72,14 +72,14 @@ export default async function handler(req, res) {
       if (lbRes.ok) {
         const doc = await lbRes.json();
         const scores = parseLeaderboardDoc(doc);
-        const maxLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 50));
+        const maxLimit = Math.min(300, Math.max(1, parseInt(limit, 10) || 300));
         return res.status(200).json({ success: true, count: scores.length, scores: scores.slice(0, maxLimit) });
       }
 
       // Se o documento ainda não existir (primeira execução), faz fallback/migração inicial
       if (lbRes.status === 404) {
         const fallbackCollection = cleanGame === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-        const seedUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${fallbackCollection}?pageSize=50`;
+        const seedUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${fallbackCollection}?pageSize=300`;
         const seedRes = await fetch(seedUrl);
         let initialScores = [];
 
@@ -90,14 +90,15 @@ export default async function handler(req, res) {
             sData.documents.forEach(d => {
               const p = sanitize(d.fields?.player?.stringValue || d.name.split('/').pop(), 25);
               const s = parseInt(d.fields?.score?.integerValue || '0', 10);
+              const u = d.fields?.updatedAt?.timestampValue || new Date().toISOString();
               if (s > 0 && s <= 50000) {
                 const k = p.toLowerCase();
                 if (!userMap.has(k) || s > userMap.get(k).score) {
-                  userMap.set(k, { player: p, score: s, updatedAt: new Date().toISOString() });
+                  userMap.set(k, { player: p, score: s, updatedAt: u });
                 }
               }
             });
-            initialScores = Array.from(userMap.values()).sort((a, b) => b.score - a.score).slice(0, 50);
+            initialScores = Array.from(userMap.values()).sort((a, b) => b.score - a.score).slice(0, 300);
           }
         }
 
@@ -110,7 +111,7 @@ export default async function handler(req, res) {
           }).catch(() => {});
         }
 
-        const maxLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 50));
+        const maxLimit = Math.min(300, Math.max(1, parseInt(limit, 10) || 300));
         return res.status(200).json({ success: true, count: initialScores.length, scores: initialScores.slice(0, maxLimit) });
       }
 
@@ -169,7 +170,7 @@ export default async function handler(req, res) {
         });
       }
 
-      // 2. Atualiza Documento Consolidado (Top 50) se for elegível
+      // 2. Atualiza Documento Consolidado (Top 300) se for elegível
       const leaderboardDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${cleanGame}`;
       const lbRes = await fetch(leaderboardDocUrl);
       let currentScores = [];
@@ -191,8 +192,8 @@ export default async function handler(req, res) {
           shouldUpdateLeaderboard = true;
         }
       } else {
-        const lowestScore = currentScores.length >= 50 ? currentScores[currentScores.length - 1].score : 0;
-        if (currentScores.length < 50 || numScore > lowestScore) {
+        const lowestScore = currentScores.length >= 300 ? currentScores[currentScores.length - 1].score : 0;
+        if (currentScores.length < 300 || numScore > lowestScore) {
           currentScores.push({
             player: cleanPlayer,
             score: numScore,
@@ -204,11 +205,11 @@ export default async function handler(req, res) {
 
       if (shouldUpdateLeaderboard) {
         currentScores.sort((a, b) => b.score - a.score);
-        const top50 = currentScores.slice(0, 50);
+        const top300 = currentScores.slice(0, 300);
         await fetch(leaderboardDocUrl, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formatLeaderboardPayload(cleanGame, top50))
+          body: JSON.stringify(formatLeaderboardPayload(cleanGame, top300))
         });
       }
 

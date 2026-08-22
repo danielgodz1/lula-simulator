@@ -14,7 +14,7 @@ const inMemoryLeaderboardCache = {
   runner: { data: null, timestamp: 0 }
 };
 
-// 2. SALVAR RECORDE MÁXIMO DO JOGADOR COM PRÉ-VERIFICAÇÃO DE HIGHSCORE (0 ESCRITAS SE NÃO BATER RECORDE)
+// 2. SALVAR RECORDE MÁXIMO DO JOGADOR COM SINCRONIZAÇÃO RESILIENTE
 export async function savePlayerScore(gameType, score) {
   let playerName = 'Jogador';
   try {
@@ -41,50 +41,150 @@ export async function savePlayerScore(gameType, score) {
   const isRunner = gameType === 'runner' || (typeof gameType === 'string' && gameType.includes('runner'));
   const gameKey = isRunner ? 'runner' : 'flappy';
   const localKey = isRunner ? 'run_best' : 'lula_best';
+  const syncedKey = isRunner ? 'run_synced_best' : 'lula_synced_best';
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
+  const lastSynced = parseInt(localStorage.getItem(syncedKey) || '0', 10);
 
-  // OTIMIZAÇÃO CRÍTICA DE GRAVAÇÕES:
-  // Se o score atual não superou o HighScore pessoal salvo, NÃO dispara requisição de gravação no Firestore!
-  if (numScore <= currentBest) {
+  // Se o score for menor que o recorde pessoal E já foi sincronizado, não precisa gravar
+  if (numScore < currentBest && lastSynced >= currentBest) {
     return { saved: false, reason: 'score_not_improved' };
   }
 
-  // Atualiza o recorde localmente
-  localStorage.setItem(localKey, numScore.toString());
+  // Se esta mesma pontuação já foi sincronizada anteriormente com sucesso
+  if (numScore <= lastSynced && lastSynced > 0) {
+    return { saved: false, reason: 'score_already_synced' };
+  }
 
-  // Atualização otimista no cache em memória do cliente
+  // Atualiza o recorde localmente
+  if (numScore > currentBest) {
+    localStorage.setItem(localKey, numScore.toString());
+  }
+
+  // Atualização otimista imediata no cache em memória e localStorage
+  const cacheKey = `lula_cache_scores_v2_${gameKey}`;
+  const timestampKey = `lula_cache_scores_ts_${gameKey}`;
   try {
-    if (inMemoryLeaderboardCache[gameKey] && Array.isArray(inMemoryLeaderboardCache[gameKey].data)) {
-      const list = [...inMemoryLeaderboardCache[gameKey].data];
-      const pKey = playerName.toLowerCase();
-      const exIdx = list.findIndex(item => (item.player || '').toLowerCase() === pKey);
-      if (exIdx !== -1) {
-        if (numScore > list[exIdx].score) {
-          list[exIdx] = { ...list[exIdx], score: numScore, updatedAt: new Date().toISOString() };
-        }
-      } else if (list.length < 50 || numScore > (list[list.length - 1]?.score || 0)) {
-        list.push({ player: playerName, score: numScore, updatedAt: new Date().toISOString() });
-      }
-      list.sort((a, b) => b.score - a.score);
-      inMemoryLeaderboardCache[gameKey].data = list.slice(0, 50);
+    let list = inMemoryLeaderboardCache[gameKey]?.data;
+    if (!Array.isArray(list)) {
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) list = JSON.parse(stored);
     }
+    if (!Array.isArray(list)) list = [];
+
+    const pKey = playerName.toLowerCase();
+    const exIdx = list.findIndex(item => (item.player || '').toLowerCase() === pKey);
+    if (exIdx !== -1) {
+      if (numScore > list[exIdx].score) {
+        list[exIdx] = { player: playerName, score: numScore, updatedAt: new Date().toISOString() };
+      }
+    } else {
+      list.push({ player: playerName, score: numScore, updatedAt: new Date().toISOString() });
+    }
+    list.sort((a, b) => b.score - a.score);
+    const updatedList = list.slice(0, 300);
+
+    inMemoryLeaderboardCache[gameKey] = { data: updatedList, timestamp: Date.now() };
+    localStorage.setItem(cacheKey, JSON.stringify(updatedList));
+    localStorage.setItem(timestampKey, Date.now().toString());
   } catch (e) {}
 
-  // Envia apenas quando realmente houver novo recorde pessoal
+  // 1. Tenta salvar via API Serverless
+  let savedOk = false;
   try {
     const res = await fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ player: playerName, score: numScore, game: gameKey })
     });
-    return { saved: true, ok: res.ok };
-  } catch (e) {
-    return { saved: true, offline: true };
+    if (res.ok) {
+      savedOk = true;
+      localStorage.setItem(syncedKey, numScore.toString());
+      return { saved: true, ok: true };
+    }
+  } catch (e) {}
+
+  // 2. Fallback direto ao Firestore (para localhost / fallback resiliente)
+  if (!savedOk) {
+    try {
+      const collName = isRunner ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+      const docId = encodeURIComponent(playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+
+      // Grava doc individual
+      const userDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collName}/${docId}`;
+      await fetch(userDocUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            player: { stringValue: playerName },
+            score: { integerValue: numScore.toString() },
+            updatedAt: { timestampValue: new Date().toISOString() }
+          }
+        })
+      });
+
+      // Atualiza documento consolidado
+      const lbDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_leaderboards_v2/${gameKey}`;
+      const lbRes = await fetch(lbDocUrl);
+      let scoresArr = [];
+      if (lbRes.ok) {
+        const lbDoc = await lbRes.json();
+        const rawVals = lbDoc.fields?.scores?.arrayValue?.values || [];
+        scoresArr = rawVals.map(v => ({
+          player: (v.mapValue?.fields?.player?.stringValue || 'Anônimo').replace(/<[^>]*>?/gm, '').trim(),
+          score: parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10),
+          updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
+        })).filter(s => !isNaN(s.score) && s.score > 0);
+      }
+
+      const pKey = playerName.toLowerCase();
+      const exIdx = scoresArr.findIndex(s => (s.player || '').toLowerCase() === pKey);
+      if (exIdx !== -1) {
+        if (numScore > scoresArr[exIdx].score) {
+          scoresArr[exIdx] = { player: playerName, score: numScore, updatedAt: new Date().toISOString() };
+        }
+      } else {
+        scoresArr.push({ player: playerName, score: numScore, updatedAt: new Date().toISOString() });
+      }
+      scoresArr.sort((a, b) => b.score - a.score);
+      const top300 = scoresArr.slice(0, 300);
+
+      await fetch(lbDocUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            game: { stringValue: gameKey },
+            updatedAt: { timestampValue: new Date().toISOString() },
+            scores: {
+              arrayValue: {
+                values: top300.map(s => ({
+                  mapValue: {
+                    fields: {
+                      player: { stringValue: s.player },
+                      score: { integerValue: s.score.toString() },
+                      updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
+                    }
+                  }
+                }))
+              }
+            }
+          }
+        })
+      });
+
+      localStorage.setItem(syncedKey, numScore.toString());
+      return { saved: true, directFirestore: true };
+    } catch (err) {
+      console.warn('Erro no salvamento de recorde direto:', err);
+    }
   }
+
+  return { saved: true, cached: true };
 }
 
 // 3. OBTER PLACAR COM DOCUMENTO ÚNICO E CACHE LOCAL TTL (1 LEITURA POR CONSULTA EXPIRADA)
-export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 50, forceRefresh = false) {
+export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300, forceRefresh = false) {
   const isRunner = typeof gameTypeOrCollection === 'string' && gameTypeOrCollection.includes('runner');
   const game = isRunner ? 'runner' : 'flappy';
   const now = Date.now();
@@ -121,7 +221,7 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 50, 
 
   // 3. Consulta à API Serverless Otimizada (Que lê 1 único documento consolidado)
   try {
-    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 50)}`);
+    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
       if (data.success && Array.isArray(data.scores) && data.scores.length > 0) {
