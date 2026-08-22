@@ -546,23 +546,81 @@ export class ObstacleManager {
 
   createPicanhaCollectible(parent, laneX, localZ) {
     const picanhaGroup = new THREE.Group();
-    picanhaGroup.position.set(laneX, 0.9, localZ);
+    picanhaGroup.position.set(laneX, 1.05, localZ);
 
-    const meat = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.35), this.materials.meatMat);
-    const fatCap = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.18, 0.38), this.materials.fatMat);
-    fatCap.position.y = 0.28;
+    // 1. Corpo da Carne da Picanha 3D Realista (Formato clássico chanfrado)
+    const meatShape = new THREE.Shape();
+    meatShape.moveTo(-0.55, -0.28);
+    meatShape.quadraticCurveTo(-0.65, 0.12, -0.45, 0.38);
+    meatShape.quadraticCurveTo(0.0, 0.50, 0.55, 0.36);
+    meatShape.quadraticCurveTo(0.68, 0.10, 0.50, -0.28);
+    meatShape.quadraticCurveTo(0.0, -0.40, -0.55, -0.28);
 
-    picanhaGroup.add(meat, fatCap);
-    picanhaGroup.castShadow = true;
-    picanhaGroup.receiveShadow = true;
+    const meatGeo = new THREE.ExtrudeGeometry(meatShape, {
+      steps: 1,
+      depth: 0.36,
+      bevelEnabled: true,
+      bevelThickness: 0.08,
+      bevelSize: 0.08,
+      bevelSegments: 3
+    });
+    meatGeo.center();
+
+    const picanhaMeatMat = new THREE.MeshStandardMaterial({
+      color: 0x991b1b,
+      roughness: 0.32,
+      metalness: 0.12,
+      emissive: 0x450a0a,
+      emissiveIntensity: 0.25
+    });
+    const meatMesh = new THREE.Mesh(meatGeo, picanhaMeatMat);
+    meatMesh.castShadow = true;
+    picanhaGroup.add(meatMesh);
+
+    // 2. Capa de Gordura Dourada/Branca Tradicional no Topo
+    const fatShape = new THREE.Shape();
+    fatShape.moveTo(-0.48, 0.30);
+    fatShape.quadraticCurveTo(0.0, 0.56, 0.56, 0.30);
+    fatShape.quadraticCurveTo(0.52, 0.44, 0.0, 0.62);
+    fatShape.quadraticCurveTo(-0.44, 0.44, -0.48, 0.30);
+
+    const fatGeo = new THREE.ExtrudeGeometry(fatShape, {
+      steps: 1,
+      depth: 0.40,
+      bevelEnabled: true,
+      bevelThickness: 0.05,
+      bevelSize: 0.05,
+      bevelSegments: 2
+    });
+    fatGeo.center();
+
+    const picanhaFatMat = new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      roughness: 0.38,
+      metalness: 0.08,
+      emissive: 0xca8a04,
+      emissiveIntensity: 0.30
+    });
+    const fatMesh = new THREE.Mesh(fatGeo, picanhaFatMat);
+    fatMesh.position.set(0, 0.22, 0);
+    picanhaGroup.add(fatMesh);
+
+    // 3. Anel de Brilho Dourado do Churrasco
+    const ringGeo = new THREE.TorusGeometry(0.70, 0.02, 6, 24);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.60 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2.2;
+    picanhaGroup.add(ring);
+
+    picanhaGroup.rotation.set(0.25, 0, 0.15);
     parent.add(picanhaGroup);
 
     this.coins.push({
       mesh: picanhaGroup,
       parent: parent,
       laneX: laneX,
-      baseY: 0.9,
-      y: 0.9,
+      baseY: 1.05,
+      y: 1.05,
       value: 5,
       collected: false,
       isPicanha: true,
@@ -572,7 +630,7 @@ export class ObstacleManager {
         const py = picanhaGroup.position.y;
         return {
           minX: px - 0.9, maxX: px + 0.9,
-          minY: py - 0.5, maxY: py + 0.9,
+          minY: py - 0.6, maxY: py + 0.8,
           minZ: pz - 0.9, maxZ: pz + 0.9
         };
       }

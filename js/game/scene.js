@@ -176,21 +176,28 @@ export class GameScene {
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL com Configuração PBR Realista
+    // 3. Renderizador WebGL com Resolução Adaptativa Inteligente
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
-    const isWeakDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || isMobile;
+    const cores = navigator.hardwareConcurrency || 4;
+    const memory = navigator.deviceMemory || 4;
+    // Flagships como S23 Ultra possuem 8 cores e alta capacidade de GPU
+    const isHighEndDevice = (!isMobile) || (cores >= 8 || memory >= 6);
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile, // Desativa MSAA em mobile para economizar 40% de fill-rate
+      antialias: isHighEndDevice,
       alpha: false,
       powerPreference: 'high-performance',
-      precision: isMobile ? 'mediump' : 'highp'
+      precision: isHighEndDevice ? 'highp' : 'mediump'
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    // DPR Calibrado para Mobile (evita renderizar em 4K nativo em telas QuadHD como S23 Ultra)
-    this.currentPixelRatio = isMobile ? Math.min(window.devicePixelRatio || 1, 1.15) : Math.min(window.devicePixelRatio || 1, 1.5);
+    // Resolução Adaptativa: Inicia com alta fidelidade em celulares potentes e escala dinamicamente
+    this.maxPixelRatio = isMobile ? (isHighEndDevice ? Math.min(window.devicePixelRatio || 1, 2.0) : 1.35) : Math.min(window.devicePixelRatio || 1, 2.0);
+    this.minPixelRatio = 1.0;
+    this.currentPixelRatio = isMobile ? (isHighEndDevice ? Math.min(window.devicePixelRatio || 1, 1.75) : 1.10) : Math.min(window.devicePixelRatio || 1, 1.75);
     this.renderer.setPixelRatio(this.currentPixelRatio);
+
+    this.perfCheckTimer = 0;
 
     // Mapeamento de Tons ACES Filmic e Espaço de Cores sRGB
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -200,9 +207,9 @@ export class GameScene {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
-    // Sombras Otimizadas para Mobile (BasicShadowMap leve no mobile, PCFSoft no PC)
+    // Sombras Otimizadas
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = isHighEndDevice ? THREE.PCFSoftShadowMap : THREE.BasicShadowMap;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
@@ -465,14 +472,21 @@ export class GameScene {
     this.fpsHistory.push(fps);
     if (this.fpsHistory.length > 60) this.fpsHistory.shift();
 
-    if (!this.autoScaleAdjusted && this.fpsHistory.length >= 60) {
+    this.perfCheckTimer++;
+    // A cada ~120 frames (2 segundos), avalia a taxa de quadros e escala a resolução
+    if (this.perfCheckTimer > 120 && this.fpsHistory.length >= 45) {
+      this.perfCheckTimer = 0;
       const avgFps = this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length;
-      if (avgFps < 45 && this.currentPixelRatio > 1.0) {
-        this.currentPixelRatio = 1.0;
-        this.renderer.setPixelRatio(1.0);
-        this.renderer.shadowMap.enabled = false;
-        this.sunLight.castShadow = false;
-        this.autoScaleAdjusted = true;
+
+      // Se o celular estiver rodando muito liso (>= 58 FPS), aumenta a nitidez e resolução
+      if (avgFps >= 57.5 && this.currentPixelRatio < this.maxPixelRatio) {
+        this.currentPixelRatio = Math.min(this.maxPixelRatio, Number((this.currentPixelRatio + 0.15).toFixed(2)));
+        this.renderer.setPixelRatio(this.currentPixelRatio);
+      }
+      // Se houver queda de frames (< 48 FPS), reduz a resolução dinamicamente para manter 60 FPS
+      else if (avgFps < 48.0 && this.currentPixelRatio > this.minPixelRatio) {
+        this.currentPixelRatio = Math.max(this.minPixelRatio, Number((this.currentPixelRatio - 0.20).toFixed(2)));
+        this.renderer.setPixelRatio(this.currentPixelRatio);
       }
     }
   }

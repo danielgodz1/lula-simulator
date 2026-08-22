@@ -165,12 +165,17 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 5. COLETAR PICANHA (+5 BÔNUS)
+  // 5. COLETAR PICANHA (+5 BÔNUS COM ÁUDIO "PENSE NO LULA")
   playPicanhaCollect() {
     if (this.isMuted) return;
+    try {
+      const audio = new Audio('audios/pense-no-lula.mp3');
+      audio.volume = 0.90;
+      audio.play().catch(() => {});
+    } catch (e) {}
+
     this.ensureContext();
     if (!this.ctx) return;
-
     try {
       const now = this.ctx.currentTime;
       [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
@@ -252,7 +257,6 @@ export class GameAudio {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(freq, now);
 
-        // Volume suave e agradável (não estridente)
         gain.gain.setValueAtTime(0.001, now);
         gain.gain.linearRampToValueAtTime(0.08, now + 0.08);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
@@ -297,9 +301,15 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 9. IMPACTO / COLISÃO
+  // 9. IMPACTO / MORTE (COM VINHETA "FAZ O L")
   playCrash() {
     if (this.isMuted) return;
+    try {
+      const vinheta = new Audio('audios/faz-o-l-vinheta.mp3');
+      vinheta.volume = 0.92;
+      vinheta.play().catch(() => {});
+    } catch (e) {}
+
     this.ensureContext();
     if (!this.ctx) return;
 
