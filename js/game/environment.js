@@ -374,6 +374,16 @@ export class Environment {
     }
   }
 
+  updateNightLights(isNight, timeOfDay) {
+    const intensity = isNight ? 0.95 : 0.0;
+    if (this.sharedMaterials.windowMat) {
+      this.sharedMaterials.windowMat.emissiveIntensity = intensity;
+    }
+    if (this.sharedMaterials.streetLampMat) {
+      this.sharedMaterials.streetLampMat.emissiveIntensity = intensity;
+    }
+  }
+
   reset() {
     this.buildInitialTrack();
   }

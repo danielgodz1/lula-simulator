@@ -42,25 +42,67 @@
     }
 
     nav {
-      height: 52px;
-      padding: 0 16px;
+      height: 54px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .nav-brand {
-      font-size: 20px;
+      font-size: 19px;
     }
 
     .nav-toggle-btn {
       display: none;
       background: rgba(255, 223, 0, 0.15);
-      border: 1px solid var(--amarelo-brasil);
+      border: 1.5px solid var(--amarelo-brasil);
       color: var(--amarelo-brasil);
       border-radius: 8px;
-      padding: 5px 10px;
+      padding: 6px 12px;
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
       font-family: 'Bangers', cursive;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 950px) {
+      .nav-toggle-btn {
+        display: inline-flex !important;
+      }
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 54px;
+        left: 0;
+        width: 100%;
+        background: rgba(10, 14, 26, 0.98);
+        backdrop-filter: blur(16px);
+        border-bottom: 2px solid var(--amarelo-brasil);
+        flex-direction: column;
+        padding: 14px 16px;
+        gap: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+        z-index: 1000;
+      }
+      .nav-links.open {
+        display: flex !important;
+      }
+      .nav-links a {
+        width: 100%;
+        padding: 10px 14px;
+        font-size: 14px;
+        border-radius: 8px;
+      }
+      .nav-brand {
+        font-size: 17px;
+      }
+      .nav-right-group {
+        gap: 6px;
+      }
     }
 
     .game-wrapper {
@@ -487,11 +529,23 @@
     auth.renderProfileBadge('nav');
 
     // Menu Mobile Toggle
-    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navToggle = document.getElementById('navToggle');
     const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
+    navToggle?.addEventListener('click', (e) => {
       e.stopPropagation();
       navLinksList?.classList.toggle('open');
+    });
+
+    // Fecha o menu ao clicar fora ou em algum link
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav')) {
+        navLinksList?.classList.remove('open');
+      }
+    });
+    navLinksList?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinksList?.classList.remove('open');
+      });
     });
 
     if (!auth.getCurrentUser()) {
