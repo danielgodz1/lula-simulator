@@ -1,4 +1,4 @@
-// js/game/obstacles.js — Obstáculos, Trens de Metrô, Colecionáveis, AABB Hitboxes e Object Pooling
+// js/game/obstacles.js — Obstáculos, Trens de Metrô, Cavaletes, Cones, Colecionáveis e AABB Hitboxes
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { LANES } from './character.js';
 import { gameAudio } from './audio.js';
@@ -20,7 +20,6 @@ export class ObstacleManager {
       trainBody: new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.6, roughness: 0.3 }),
       trainFront: new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.5, roughness: 0.4 }),
       trainWindow: new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1, metalness: 0.9 }),
-      trainRoof: new THREE.MeshLambertMaterial({ color: 0x334155 }),
       headlight: new THREE.MeshBasicMaterial({ color: 0xfef08a }),
       barrierWood: new THREE.MeshLambertMaterial({ color: 0x78350f }),
       clotheslineWire: new THREE.LineBasicMaterial({ color: 0x475569 }),
@@ -32,7 +31,9 @@ export class ObstacleManager {
       ],
       goldCoin: new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.95, roughness: 0.15 }),
       magnetPowerup: new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.7, roughness: 0.3 }),
-      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 })
+      superJumpPowerup: new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.7, roughness: 0.3 }),
+      coneOrange: new THREE.MeshLambertMaterial({ color: 0xf97316 }),
+      coneWhite: new THREE.MeshLambertMaterial({ color: 0xffffff })
     };
 
     // Geometrias Reutilizáveis
@@ -43,78 +44,103 @@ export class ObstacleManager {
       cltHurdle: new THREE.BoxGeometry(2.4, 1.45, 0.4),
       tallBarrier: new THREE.BoxGeometry(2.4, 2.6, 0.4)
     };
-
-    // Pools de Objetos
-    this.obstaclePool = [];
-    this.coinPool = [];
-    this.powerupPool = [];
-
-    this.lastSpawnedPattern = -1;
   }
 
-  // 1. SPAWN INTELIGENTE DE OBSTÁCULOS E COLECIONÁVEIS EM CADA SEGMENTO
+  /**
+   * Limpa entidades antigas associadas a um segmento antes de respawnar
+   */
+  clearSegmentEntities(parent) {
+    this.obstacles = this.obstacles.filter(o => {
+      if (o.parent === parent) {
+        parent.remove(o.mesh);
+        return false;
+      }
+      return true;
+    });
+
+    this.movingTrains = this.movingTrains.filter(t => t.parent !== parent);
+
+    this.coins = this.coins.filter(c => {
+      if (c.parent === parent) {
+        parent.remove(c.mesh);
+        return false;
+      }
+      return true;
+    });
+
+    this.powerups = this.powerups.filter(p => {
+      if (p.parent === parent) {
+        parent.remove(p.mesh);
+        return false;
+      }
+      return true;
+    });
+  }
+
+  // 1. SPAWN INTELIGENTE DE OBSTÁCULOS E COLECIONÁVEIS
   spawnSegmentEntities(parent, segZ, segmentLength = 85) {
+    this.clearSegmentEntities(parent);
+
     const spawnPoints = [-segmentLength / 2 + 20, -segmentLength / 2 + 60];
 
     spawnPoints.forEach((localZ) => {
-      const worldZ = segZ + localZ;
-
-      // Padrões de spawn que NUNCA bloqueiam as 3 faixas simultaneamente
       const pattern = Math.floor(Math.random() * 5);
       const chosenLane = Math.floor(Math.random() * 3);
 
       switch (pattern) {
         case 0:
           // Trem de Metrô Parado ou em Movimento na Faixa Escolhida
-          this.createSubwayTrain(parent, LANES[chosenLane], localZ, worldZ, Math.random() > 0.5);
-          // Moedas na faixa livre adjacente
+          this.createSubwayTrain(parent, LANES[chosenLane], localZ, Math.random() > 0.5);
+          // Linha de moedas na faixa livre
           const safeLane0 = (chosenLane + 1) % 3;
-          this.createCoinLine(parent, LANES[safeLane0], localZ - 10, worldZ - 10, 5);
+          this.createCoinLine(parent, LANES[safeLane0], localZ - 10, 5);
           break;
 
         case 1:
           // Barreira CLT 44H (Pular ou Desviar)
-          this.createCLTHurdle(parent, LANES[chosenLane], localZ, worldZ);
+          this.createCLTHurdle(parent, LANES[chosenLane], localZ);
           // Arco de moedas por cima da CLT
-          this.createCoinArc(parent, LANES[chosenLane], localZ, worldZ);
+          this.createCoinArc(parent, LANES[chosenLane], localZ);
           break;
 
         case 2:
           // Placa Bolsa Família ou Auxílio Brasil
           const isBolsa = Math.random() > 0.5;
-          this.createSocialBenefitBarrier(parent, LANES[chosenLane], localZ, worldZ, isBolsa);
+          this.createSocialBenefitBarrier(parent, LANES[chosenLane], localZ, isBolsa);
+          const safeLane2 = (chosenLane + 2) % 3;
+          this.createCoinLine(parent, LANES[safeLane2], localZ - 8, 4);
           break;
 
         case 3:
-          // Varal de Roupas Suspenso (Exige Slide / Agachamento ou Mudar de Faixa)
-          this.createClotheslineObstacle(parent, LANES[chosenLane], localZ, worldZ);
+          // Varal de Roupas Suspenso (Exige Slide / Agachamento)
+          this.createClotheslineObstacle(parent, LANES[chosenLane], localZ);
           // Picanha bônus no chão sob o varal
           if (Math.random() > 0.3) {
-            this.createPicanhaCollectible(parent, LANES[chosenLane], localZ, worldZ);
+            this.createPicanhaCollectible(parent, LANES[chosenLane], localZ);
           }
           break;
 
         case 4:
           // Power-up Especial (Ímã ou Super Pulo) + Linha de Moedas
           const pType = Math.random() > 0.5 ? 'magnet' : 'superjump';
-          this.createPowerupItem(parent, LANES[chosenLane], localZ, worldZ, pType);
+          this.createPowerupItem(parent, LANES[chosenLane], localZ, pType);
+          const safeLane4 = (chosenLane + 1) % 3;
+          this.createCoinLine(parent, LANES[safeLane4], localZ - 10, 5);
           break;
       }
     });
   }
 
   // 2. CRIAÇÃO DE OBSTÁCULOS COM HITBOXES AABB
-  createSubwayTrain(parent, laneX, localZ, worldZ, isMoving = false) {
+  createSubwayTrain(parent, laneX, localZ, isMoving = false) {
     const train = new THREE.Group();
     train.position.set(laneX, 1.7, localZ);
 
-    // Corpo Principal do Metrô
     const body = new THREE.Mesh(this.geometries.train, this.materials.trainBody);
     body.castShadow = true;
     body.receiveShadow = true;
     train.add(body);
 
-    // Frente Vermelha
     const front = new THREE.Mesh(new THREE.BoxGeometry(2.42, 3.42, 1.2), this.materials.trainFront);
     front.position.set(0, 0, 8.5);
     front.castShadow = true;
@@ -128,7 +154,6 @@ export class ObstacleManager {
       train.add(lamp);
     });
 
-    // Janela Dianteira da Cabine
     const cabinWin = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.1), this.materials.trainWindow);
     cabinWin.position.set(0, 0.6, 9.12);
     train.add(cabinWin);
@@ -141,10 +166,6 @@ export class ObstacleManager {
       parent: parent,
       laneX: laneX,
       localZ: localZ,
-      worldZ: worldZ,
-      width: 2.3 * 0.85, // Tolerância de 15%
-      height: 3.4,
-      depth: 17.5 * 0.85,
       isMoving: isMoving,
       moveSpeed: isMoving ? 14 : 0,
       getAABB() {
@@ -164,18 +185,16 @@ export class ObstacleManager {
     if (isMoving) this.movingTrains.push(obstacleObj);
   }
 
-  createCLTHurdle(parent, laneX, localZ, worldZ) {
+  createCLTHurdle(parent, laneX, localZ) {
     const hurdle = new THREE.Group();
     hurdle.position.set(laneX, 0.75, localZ);
 
-    // Cavalete de Madeira
     [-1.0, 1.0].forEach(px => {
       const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.5, 0.16), this.materials.barrierWood);
       post.castShadow = true;
       hurdle.add(post);
     });
 
-    // Placa da Carteira de Trabalho (CLT 44h)
     const boardMat = new THREE.MeshLambertMaterial({ map: textureAtlas.cltTexture });
     const board = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.25, 0.12), boardMat);
     board.position.y = 0.25;
@@ -190,7 +209,6 @@ export class ObstacleManager {
       parent: parent,
       laneX: laneX,
       localZ: localZ,
-      worldZ: worldZ,
       getAABB() {
         const pz = parent.position.z + hurdle.position.z;
         return {
@@ -205,7 +223,7 @@ export class ObstacleManager {
     });
   }
 
-  createSocialBenefitBarrier(parent, laneX, localZ, worldZ, isBolsa = true) {
+  createSocialBenefitBarrier(parent, laneX, localZ, isBolsa = true) {
     const barrier = new THREE.Group();
     barrier.position.set(laneX, 1.2, localZ);
 
@@ -216,7 +234,6 @@ export class ObstacleManager {
     board.castShadow = true;
     barrier.add(board);
 
-    // Suportes de Aço
     [-0.9, 0.9].forEach(sx => {
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 8), this.materials.barrierWood);
       leg.position.set(sx, -0.1, 0);
@@ -232,7 +249,6 @@ export class ObstacleManager {
       parent: parent,
       laneX: laneX,
       localZ: localZ,
-      worldZ: worldZ,
       getAABB() {
         const pz = parent.position.z + barrier.position.z;
         return {
@@ -247,11 +263,10 @@ export class ObstacleManager {
     });
   }
 
-  createClotheslineObstacle(parent, laneX, localZ, worldZ) {
+  createClotheslineObstacle(parent, laneX, localZ) {
     const clothesline = new THREE.Group();
     clothesline.position.set(laneX, 1.85, localZ);
 
-    // Corda do varal
     const lineGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-1.3, 0, 0),
       new THREE.Vector3(1.3, 0, 0)
@@ -259,7 +274,6 @@ export class ObstacleManager {
     const line = new THREE.Line(lineGeo, this.materials.clotheslineWire);
     clothesline.add(line);
 
-    // Roupas penduradas no varal
     [-0.7, 0, 0.7].forEach((rx, idx) => {
       const clothMat = this.materials.clothes[idx % this.materials.clothes.length];
       const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.75), clothMat);
@@ -276,14 +290,13 @@ export class ObstacleManager {
       parent: parent,
       laneX: laneX,
       localZ: localZ,
-      worldZ: worldZ,
       isOverhead: true,
       getAABB() {
         const pz = parent.position.z + clothesline.position.z;
         return {
           minX: laneX - (2.2 * 0.85) / 2,
           maxX: laneX + (2.2 * 0.85) / 2,
-          minY: 1.15, // Permite passar por baixo fazendo slide (Y < 1.15)
+          minY: 1.15,
           maxY: 2.35,
           minZ: pz - 0.4,
           maxZ: pz + 0.4
@@ -292,27 +305,25 @@ export class ObstacleManager {
     });
   }
 
-  // 3. COLECIONÁVEIS (MOEDAS, PICANHAS E POWER-UPS)
-  createCoinLine(parent, laneX, startLocalZ, startWorldZ, count = 5) {
+  // 3. COLECIONÁVEIS
+  createCoinLine(parent, laneX, startLocalZ, count = 5) {
     for (let i = 0; i < count; i++) {
       const lz = startLocalZ + i * 2.8;
-      const wz = startWorldZ + i * 2.8;
-      this.createSingleCoin(parent, laneX, 0.9, lz, wz);
+      this.createSingleCoin(parent, laneX, 0.9, lz);
     }
   }
 
-  createCoinArc(parent, laneX, localZ, worldZ) {
+  createCoinArc(parent, laneX, localZ) {
     const count = 5;
     for (let i = 0; i < count; i++) {
       const t = i / (count - 1);
       const lz = localZ - 4 + i * 2.0;
-      const wz = worldZ - 4 + i * 2.0;
-      const y = 0.9 + Math.sin(t * Math.PI) * 2.4; // Arco suave por cima da barreira
-      this.createSingleCoin(parent, laneX, y, lz, wz);
+      const y = 0.9 + Math.sin(t * Math.PI) * 2.4;
+      this.createSingleCoin(parent, laneX, y, lz);
     }
   }
 
-  createSingleCoin(parent, laneX, y, localZ, worldZ) {
+  createSingleCoin(parent, laneX, y, localZ) {
     const coin = new THREE.Mesh(this.geometries.coin, this.materials.goldCoin);
     coin.rotation.x = Math.PI / 2;
     coin.position.set(laneX, y, localZ);
@@ -338,7 +349,7 @@ export class ObstacleManager {
     });
   }
 
-  createPicanhaCollectible(parent, laneX, localZ, worldZ) {
+  createPicanhaCollectible(parent, laneX, localZ) {
     const picanhaGroup = new THREE.Group();
     picanhaGroup.position.set(laneX, 0.9, localZ);
 
@@ -358,7 +369,7 @@ export class ObstacleManager {
       parent: parent,
       laneX: laneX,
       y: 0.9,
-      value: 5, // 5 picanhas bônus
+      value: 5,
       collected: false,
       isPicanha: true,
       getAABB() {
@@ -372,7 +383,7 @@ export class ObstacleManager {
     });
   }
 
-  createPowerupItem(parent, laneX, localZ, worldZ, type = 'magnet') {
+  createPowerupItem(parent, laneX, localZ, type = 'magnet') {
     const pMesh = new THREE.Mesh(
       this.geometries.powerup,
       type === 'magnet' ? this.materials.magnetPowerup : this.materials.superJumpPowerup
@@ -399,13 +410,14 @@ export class ObstacleManager {
     });
   }
 
-  // 4. ATUALIZAÇÃO CONTÍNUA DE FÍSICA, ANIMAÇÃO E DETECÇÃO AABB DE COLISÕES
+  // 4. ATUALIZAÇÃO CONTÍNUA E DETECÇÃO AABB DE COLISÕES
   update(dt, player, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup) {
     const playerAABB = player.getAABB();
 
     // A. Animação e Movimentação dos Trens de Metrô
     for (const train of this.movingTrains) {
-      if (player.z - (train.parent.position.z + train.mesh.position.z) < 90) {
+      const trainWorldZ = train.parent.position.z + train.mesh.position.z;
+      if (trainWorldZ < 90 && trainWorldZ > -90) {
         train.mesh.position.z += train.moveSpeed * dt;
       }
     }
@@ -426,7 +438,7 @@ export class ObstacleManager {
       }
     }
 
-    // C. Coleta de Moedas e Picanhas (com Atração Magnética se Ímã estiver ativo)
+    // C. Coleta de Moedas e Picanhas
     for (let i = this.coins.length - 1; i >= 0; i--) {
       const coin = this.coins[i];
       if (coin.collected) continue;
@@ -436,7 +448,7 @@ export class ObstacleManager {
       // Rotação contínua da moeda
       coin.mesh.rotation.z += 3.5 * dt;
 
-      // Efeito do Ímã (Atrai moedas a até 16 metros)
+      // Efeito do Ímã
       if (player.magnetActive && !player.isDead) {
         const distZ = Math.abs(player.z - coinWorldZ);
         if (distZ < 16) {
@@ -486,12 +498,6 @@ export class ObstacleManager {
         if (typeof onCollectPowerup === 'function') onCollectPowerup(pup.type);
       }
     }
-
-    // E. Limpeza de Entidades que Ficaram Atrás da Câmera
-    this.obstacles = this.obstacles.filter(o => o.parent.position.z + o.mesh.position.z < player.z + 20);
-    this.movingTrains = this.movingTrains.filter(t => t.parent.position.z + t.mesh.position.z < player.z + 20);
-    this.coins = this.coins.filter(c => c.parent.position.z + c.mesh.position.z < player.z + 20);
-    this.powerups = this.powerups.filter(p => p.parent.position.z + p.mesh.position.z < player.z + 20);
   }
 
   reset() {

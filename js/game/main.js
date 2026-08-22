@@ -1,4 +1,4 @@
-// js/game/main.js — Loop Principal, Controle de Estados, Aceleração Calibrada e Sincronização
+// js/game/main.js — Loop Principal, Controle de Estados, Esteira Contínua e Aceleração Calibrada
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { GameScene } from './scene.js';
 import { gameAudio } from './audio.js';
@@ -43,7 +43,7 @@ export class Game {
   init() {
     this.ui.showStartScreen(() => this.start());
 
-    // Spawn de entidades nos blocos iniciais à frente
+    // Spawn inicial de entidades nos blocos da frente
     for (let i = 2; i < this.environment.segments.length; i++) {
       const seg = this.environment.segments[i];
       this.obstacleManager.spawnSegmentEntities(seg, seg.position.z);
@@ -138,6 +138,7 @@ export class Game {
     requestAnimationFrame(() => this.loop());
 
     const dt = Math.min(this.clock.getDelta(), 0.05);
+    const elapsedTime = this.clock.getElapsedTime();
 
     if (this.state === this.STATE.PLAYING) {
       // 1. Aceleração Gradual e Fluida com a Distância
@@ -161,11 +162,11 @@ export class Game {
         }
       }
 
-      // 3. Atualização do Personagem
+      // 3. Atualização e Animação Procedural do Personagem
       this.character.update(dt, this.speed);
 
-      // 4. Reciclagem Contínua dos Segmentos de Pista (Object Pooling)
-      this.environment.update(this.character.z, (seg, newZ) => {
+      // 4. Esteira Contínua da Favela e Reciclagem de Pista (Object Pooling)
+      this.environment.update(this.speed, dt, (seg, newZ) => {
         this.obstacleManager.spawnSegmentEntities(seg, newZ);
       });
 
@@ -189,7 +190,8 @@ export class Game {
       this.character.x,
       this.character.y,
       this.state === this.STATE.GAMEOVER,
-      dt
+      dt,
+      elapsedTime
     );
     this.sceneManager.render();
   }
