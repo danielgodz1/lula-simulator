@@ -1,6 +1,6 @@
 // js/auth.js — Sistema de Contas, Nomes de Jogador Personalizados e Persistência Cloud de Recordes e Picanhas
 import { firebaseConfig } from './firebase-config.js';
-import { escapeHTML, hashPassword, generateSalt } from './security.js';
+import { escapeHTML } from './security.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -117,7 +117,7 @@ class AuthManager {
       const res = await fetch(checkUrl);
       if (res.ok) {
         const doc = await res.json();
-        const hasPassword = doc.fields?.hasPassword?.booleanValue || !!doc.fields?.password?.stringValue;
+        const hasPassword = doc.fields?.hasPassword?.booleanValue;
         if (hasPassword) {
           return {
             success: false,
@@ -126,7 +126,6 @@ class AuthManager {
         }
         remoteUser = {
           username: doc.fields?.username?.stringValue || cleanName,
-          password: '',
           hasPassword: false,
           flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
           runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
@@ -143,7 +142,6 @@ class AuthManager {
     // Cria/Atualiza perfil de jogador
     let userObj = remoteUser || localDB[normalizedName] || {
       username: cleanName,
-      password: '',
       hasPassword: false,
       flappyScore: localFlappy,
       runnerScore: localRunner,
@@ -157,94 +155,17 @@ class AuthManager {
 
     localDB[normalizedName] = userObj;
     this.saveLocalUsersDB(localDB);
-    this.setCurrentUser(userObj);
 
-    // Cria / sincroniza no Firestore
-    try {
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const payload = {
-        fields: {
-          username: { stringValue: cleanName },
-          hasPassword: { booleanValue: false },
-          flappyScore: { integerValue: userObj.flappyScore.toString() },
-          runnerScore: { integerValue: userObj.runnerScore.toString() },
-          totalPicanhas: { integerValue: userObj.totalPicanhas.toString() },
-          createdAt: { timestampValue: userObj.createdAt }
-        }
-      };
-      fetch(docUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-    } catch(e){}
-
-    return { success: true, user: userObj };
-  }
-
-  // 2. CRIAR CONTA PROTEGIDA COM PALAVRA-CHAVE E SALT INDIVIDUAL
-  async register(username, password) {
-    const cleanName = (username || '').trim();
-    const cleanPass = (password || '').trim();
-
-    if (!cleanName || cleanName.length < 2) {
-      return { success: false, error: 'O nome de usuário deve ter pelo menos 2 caracteres!' };
-    }
-    if (!cleanPass || cleanPass.length < 3) {
-      return { success: false, error: 'A palavra-chave (senha) deve ter pelo menos 3 caracteres!' };
-    }
-
-    const localDB = this.getLocalUsersDB();
-    const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-
-    if (localDB[normalizedName] && localDB[normalizedName].hasPassword) {
-      return { success: false, error: `O nome "${cleanName}" já está cadastrado com senha! Faça login com sua palavra-chave.` };
-    }
-
-    try {
-      const checkUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const res = await fetch(checkUrl);
-      if (res.ok) {
-        const doc = await res.json();
-        const hasPassword = doc.fields?.hasPassword?.booleanValue;
-        if (hasPassword) {
-          return { success: false, error: `O nome "${cleanName}" já possui senha no banco! Escolha outro nome ou faça login.` };
-        }
-      }
-    } catch (e) {}
-
-    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
-    const prevFlappy = localDB[normalizedName]?.flappyScore || parseInt(localStorage.getItem('lula_best') || '0', 10);
-    const prevRunner = localDB[normalizedName]?.runnerScore || parseInt(localStorage.getItem('run_best') || '0', 10);
-
-    // 1. Gera salt único aleatório por usuário (16 bytes = 32 hex chars)
-    const salt = generateSalt(16);
-    const passHash = await hashPassword(cleanPass, salt);
-
-    const userObj = {
-      username: cleanName,
-      passwordHash: passHash,
-      passwordSalt: salt,
-      hasPassword: true,
-      flappyScore: prevFlappy,
-      runnerScore: prevRunner,
-      totalPicanhas: localPicanhas,
-      createdAt: new Date().toISOString()
-    };
-
-    localDB[normalizedName] = userObj;
-    this.saveLocalUsersDB(localDB);
-
-    // 2. Grava perfil público no Firestore (SEM hash nem salt)
+    // Grava perfil público no Firestore se não for conta com senha
     try {
       const publicDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
       const publicPayload = {
         fields: {
           username: { stringValue: cleanName },
-          hasPassword: { booleanValue: true },
-          flappyScore: { integerValue: prevFlappy.toString() },
-          runnerScore: { integerValue: prevRunner.toString() },
-          totalPicanhas: { integerValue: localPicanhas.toString() },
+          hasPassword: { booleanValue: false },
+          flappyScore: { integerValue: (userObj.flappyScore || 0).toString() },
+          runnerScore: { integerValue: (userObj.runnerScore || 0).toString() },
+          totalPicanhas: { integerValue: (userObj.totalPicanhas || 0).toString() },
           createdAt: { timestampValue: userObj.createdAt }
         }
       };
@@ -255,46 +176,74 @@ class AuthManager {
       }).catch(() => {});
     } catch (e) {}
 
-    // 3. Grava credenciais na subcoleção privada lula_users_v2/{userId}/private/credentials
-    try {
-      const privDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
-      const privPayload = {
-        fields: {
-          passwordHash: { stringValue: passHash },
-          passwordSalt: { stringValue: salt },
-          hasPassword: { booleanValue: true },
-          createdAt: { timestampValue: userObj.createdAt }
-        }
-      };
-      fetch(privDocUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(privPayload)
-      }).catch(() => {});
-    } catch (e) {}
+    this.setCurrentUser(userObj);
+    return { success: true, user: userObj };
+  }
 
-    // 4. Sincroniza via API Serverless
+  // 2. REGISTRAR CONTA COM PALAVRA-CHAVE (AUTENTICADO EXCLUSIVAMENTE VIA SERVERLESS COM FIREBASE ADMIN SDK)
+  async register(username, password) {
+    const cleanName = (username || '').trim();
+    const cleanPass = (password || '').trim();
+    const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+    if (!cleanName || cleanName.length < 2) {
+      return { success: false, error: 'O nome precisa ter pelo menos 2 letras!' };
+    }
+    if (!cleanPass || cleanPass.length < 3) {
+      return { success: false, error: 'A palavra-chave precisa ter pelo menos 3 caracteres!' };
+    }
+
+    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const prevFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const prevRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+
     try {
-      fetch('/api/auth', {
+      const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'register',
           username: cleanName,
-          passwordHash: passHash,
-          passwordSalt: salt,
+          password: cleanPass,
           flappyScore: prevFlappy,
           runnerScore: prevRunner,
           totalPicanhas: localPicanhas
         })
-      }).catch(() => {});
-    } catch(e) {}
+      });
 
-    this.setCurrentUser(userObj);
-    return { success: true, user: userObj };
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          error: data.error || (response.status === 409 ? 'Este nome já está cadastrado com senha!' : 'Erro ao registrar conta no servidor.')
+        };
+      }
+
+      const userObj = {
+        username: data.user?.username || cleanName,
+        hasPassword: true,
+        flappyScore: data.user?.flappyScore ?? prevFlappy,
+        runnerScore: data.user?.runnerScore ?? prevRunner,
+        totalPicanhas: data.user?.totalPicanhas ?? localPicanhas,
+        createdAt: new Date().toISOString()
+      };
+
+      const localDB = this.getLocalUsersDB();
+      localDB[normalizedName] = userObj;
+      this.saveLocalUsersDB(localDB);
+
+      this.setCurrentUser(userObj);
+      return { success: true, user: userObj };
+    } catch (err) {
+      return {
+        success: false,
+        error: 'Erro de conexão com o servidor de autenticação. Verifique sua internet.'
+      };
+    }
   }
 
-  // 3. LOGIN COM NOME E PALAVRA-CHAVE (COM SUPORTE A SALT E MIGRAÇÃO AUTOMÁTICA)
+  // 3. LOGIN COM NOME E PALAVRA-CHAVE (AUTENTICADO EXCLUSIVAMENTE VIA SERVERLESS COM FIREBASE ADMIN SDK)
   async login(username, password) {
     const cleanName = (username || '').trim();
     const cleanPass = (password || '').trim();
@@ -304,97 +253,45 @@ class AuthManager {
       return { success: false, error: 'Preencha o nome e a palavra-chave!' };
     }
 
-    const localDB = this.getLocalUsersDB();
-
-    // 1. Tenta autenticação direta via API Serverless Segura
     try {
       const apiRes = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', username: cleanName, password: cleanPass })
+        body: JSON.stringify({
+          action: 'login',
+          username: cleanName,
+          password: cleanPass
+        })
       });
-      if (apiRes.ok) {
-        const data = await apiRes.json();
-        if (data.success && data.user) {
-          const userObj = {
-            ...(localDB[normalizedName] || {}),
-            ...data.user
-          };
-          localDB[normalizedName] = userObj;
-          this.saveLocalUsersDB(localDB);
-          this.setCurrentUser(userObj);
-          return { success: true, user: userObj };
-        }
-      } else if (apiRes.status === 401) {
-        return { success: false, error: 'Palavra-chave incorreta! Tente novamente.' };
+
+      const data = await apiRes.json().catch(() => ({}));
+
+      if (!apiRes.ok || !data.success) {
+        return {
+          success: false,
+          error: data.error || (apiRes.status === 401 ? 'Palavra-chave incorreta! Tente novamente.' : 'Erro ao autenticar no servidor.')
+        };
       }
-    } catch (e) {}
 
-    // 2. Fallback de verificação local / legada
-    let userObj = localDB[normalizedName];
+      const localDB = this.getLocalUsersDB();
+      const userObj = {
+        ...(localDB[normalizedName] || {}),
+        ...data.user,
+        username: data.user.username || cleanName,
+        hasPassword: true
+      };
 
-    // Busca dados públicos se não estiver no local
-    if (!userObj) {
-      try {
-        const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-        const res = await fetch(docUrl);
-        if (res.ok) {
-          const doc = await res.json();
-          userObj = {
-            username: doc.fields?.username?.stringValue || cleanName,
-            hasPassword: doc.fields?.hasPassword?.booleanValue ?? true,
-            flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
-            runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
-            totalPicanhas: parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10),
-            createdAt: doc.fields?.createdAt?.timestampValue || new Date().toISOString()
-          };
-        }
-      } catch (e) {}
-    }
-
-    if (!userObj || !userObj.hasPassword) {
-      return { success: false, error: `Usuário "${cleanName}" não possui senha cadastrada! Você pode jogar diretamente ou criar uma senha na aba "Criar Conta".` };
-    }
-
-    const salt = userObj.passwordSalt || '';
-    const passHash = await hashPassword(cleanPass, salt);
-    const legacyFixedHash = await hashPassword(cleanPass, 'lula_simulator_sec_salt_2026_');
-
-    const matchesSaltedHash = userObj.passwordHash && userObj.passwordHash === passHash;
-    const matchesLegacyHash = userObj.passwordHash && (userObj.passwordHash === legacyFixedHash || userObj.passwordHash === cleanPass);
-    const matchesPlain = userObj.password && (userObj.password === cleanPass || userObj.password === legacyFixedHash);
-
-    if (!matchesSaltedHash && !matchesLegacyHash && !matchesPlain) {
-      return { success: false, error: 'Palavra-chave incorreta! Tente novamente.' };
-    }
-
-    // Se a conta era legada, faz a migração automática gerando salt individual
-    if (!userObj.passwordSalt || matchesLegacyHash || matchesPlain) {
-      const newSalt = generateSalt(16);
-      const newHash = await hashPassword(cleanPass, newSalt);
-      userObj.passwordSalt = newSalt;
-      userObj.passwordHash = newHash;
-      delete userObj.password;
       localDB[normalizedName] = userObj;
       this.saveLocalUsersDB(localDB);
+      this.setCurrentUser(userObj);
 
-      const privUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
-      fetch(privUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            passwordHash: { stringValue: newHash },
-            passwordSalt: { stringValue: newSalt },
-            hasPassword: { booleanValue: true },
-            updatedAt: { timestampValue: new Date().toISOString() }
-          }
-        })
-      }).catch(() => {});
+      return { success: true, user: userObj };
+    } catch (err) {
+      return {
+        success: false,
+        error: 'Erro de conexão com o servidor de autenticação. Verifique sua internet.'
+      };
     }
-
-    this.setCurrentUser(userObj);
-    return { success: true, user: userObj };
   }
 
   setCurrentUser(user) {
@@ -459,173 +356,275 @@ class AuthManager {
     }
   }
 
-  mountAuthModal(onAuthComplete) {
-    if (document.getElementById('authModalOverlay')) return;
+  addPicanhas(count) {
+    const cur = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const updated = cur + count;
+    localStorage.setItem(TOTAL_PICANHAS_KEY, updated.toString());
 
-    const modalHtml = `
-      <div id="authModalOverlay" style="
-        position: fixed; inset: 0; background: rgba(8, 9, 20, 0.90);
-        backdrop-filter: blur(14px); z-index: 1000; display: flex;
-        align-items: center; justify-content: center; padding: 18px;
+    if (this.currentUser) {
+      this.currentUser.totalPicanhas = updated;
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
+
+      const localDB = this.getLocalUsersDB();
+      const norm = this.currentUser.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      if (localDB[norm]) {
+        localDB[norm].totalPicanhas = updated;
+        this.saveLocalUsersDB(localDB);
+      }
+
+      try {
+        const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas`;
+        const payload = {
+          fields: {
+            totalPicanhas: { integerValue: updated.toString() }
+          }
+        };
+        fetch(docUrl, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch (e) {}
+    }
+  }
+
+  // -------------------------------------------------------------
+  // UI DO MODAL DE AUTENTICAÇÃO E PERFIL DO USUÁRIO
+  // -------------------------------------------------------------
+  mountAuthModal(onSuccessCallback) {
+    let existingModal = document.getElementById('authModalOverlay');
+    if (existingModal) existingModal.remove();
+
+    const user = this.getCurrentUser();
+    const currentName = user ? user.username : (localStorage.getItem('lula_player') || '');
+
+    const overlay = document.createElement('div');
+    overlay.id = 'authModalOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 10000;
+      padding: 16px; font-family: 'Outfit', sans-serif;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background: #0f172a; border: 2px solid var(--amarelo-brasil, #ffd700);
+        border-radius: 16px; width: 100%; max-width: 420px; padding: 24px;
+        color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255,215,0,0.2);
+        position: relative; animation: popIn 0.25s ease-out;
       ">
-        <div style="
-          background: rgba(22, 27, 38, 0.98); border: 2px solid var(--amarelo-brasil, #ffdf00);
-          border-radius: 24px; padding: 30px 26px; max-width: 480px; width: 100%;
-          text-align: center; box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
-        ">
-          <h2 style="font-family:'Bangers',cursive; font-size:36px; color:var(--amarelo-brasil, #ffdf00); margin-bottom:6px;">
-            🇧🇷 IDENTIFICAÇÃO DO JOGADOR
-          </h2>
-          <p style="color:var(--text-muted, #94a3b8); font-size:13px; margin-bottom:18px;">
-            Suas picanhas e recordes ficam salvos na nuvem para jogar no celular ou PC!
-          </p>
+        <button id="closeAuthModal" style="
+          position: absolute; top: 14px; right: 14px; background: none; border: none;
+          color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: bold;
+        ">✕</button>
 
-          <!-- ABAS DE SELEÇÃO -->
-          <div style="display:flex; gap:6px; margin-bottom:18px;">
-            <button id="authTabQuick" class="btn-primary" style="flex:1; padding:8px 4px; font-size:14px;">🎮 Jogar Rápido</button>
-            <button id="authTabRegister" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">🔑 Criar Conta</button>
-            <button id="authTabLogin" class="btn-secondary" style="flex:1; padding:8px 4px; font-size:14px;">👤 Entrar</button>
-          </div>
+        <h2 style="font-size: 20px; font-weight: 800; margin: 0 0 6px 0; color: #fff; text-align: center;">
+          🇧🇷 Perfil do Jogador
+        </h2>
+        <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0 0 18px 0;">
+          Escolha seu nome público ou proteja sua conta com senha!
+        </p>
 
-          <div id="authAlert" style="display:none; padding:10px 14px; border-radius:10px; font-size:13px; margin-bottom:16px; font-weight:600; text-align:left;"></div>
-
-          <div style="text-align:left; margin-bottom:14px;">
-            <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted, #94a3b8); margin-bottom:4px; text-transform:uppercase;">
-              Nome do Jogador / Apelido
-            </label>
-            <input type="text" id="authUsername" placeholder="Ex: Daniel_BR, Patriota_Top" maxlength="20" style="
-              width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-              border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 15px; font-family: inherit; outline: none;
-            ">
-          </div>
-
-          <div id="passwordFieldGroup" style="text-align:left; margin-bottom:20px; display:none;">
-            <label style="display:block; font-size:12px; font-weight:700; color:var(--text-muted, #94a3b8); margin-bottom:4px; text-transform:uppercase;">
-              Palavra-chave (Senha)
-            </label>
-            <input type="password" id="authPassword" placeholder="Sua senha secreta" maxlength="24" style="
-              width: 100%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-              border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 15px; font-family: inherit; outline: none;
-            ">
-          </div>
-
-          <button id="authBtnSubmit" class="btn-primary" style="width:100%; font-size:20px; padding:13px; margin-bottom:6px;">
-            🎮 JOGAR COM ESTE NOME
-          </button>
+        <!-- TABS -->
+        <div style="display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <button id="tabChosenName" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Jogar sem Senha</button>
+          <button id="tabRegister" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔒 Criar Conta</button>
+          <button id="tabLogin" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔑 Entrar</button>
         </div>
+
+        <!-- FORM: JOGAR SEM SENHA -->
+        <div id="formChosenName" class="auth-form-panel">
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Seu Nome no Placar:</label>
+            <input type="text" id="inputChosenName" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Ex: Lula_Gamer_BR" style="
+              width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+              background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
+            ">
+          </div>
+          <button id="btnSubmitChosenName" style="
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: linear-gradient(135deg, var(--verde-bandeira, #009c3b), var(--verde-neon, #00ff88));
+            color: #000; font-weight: 800; font-size: 14px; cursor: pointer; transition: transform 0.15s;
+          ">SALVAR E JOGAR 🚀</button>
+        </div>
+
+        <!-- FORM: CRIAR CONTA COM SENHA -->
+        <div id="formRegister" class="auth-form-panel" style="display: none;">
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Nome de Jogador:</label>
+            <input type="text" id="inputRegUser" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Ex: Empresario_Ouro" style="
+              width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+              background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
+            ">
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Palavra-Chave / Senha:</label>
+            <input type="password" id="inputRegPass" maxlength="40" placeholder="Digite uma senha simples" style="
+              width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+              background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
+            ">
+          </div>
+          <button id="btnSubmitRegister" style="
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: linear-gradient(135deg, var(--amarelo-brasil, #ffd700), #f59e0b);
+            color: #000; font-weight: 800; font-size: 14px; cursor: pointer;
+          ">CRIAR CONTA PROTEGIDA 🔒</button>
+        </div>
+
+        <!-- FORM: ENTRAR -->
+        <div id="formLogin" class="auth-form-panel" style="display: none;">
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Nome de Jogador:</label>
+            <input type="text" id="inputLoginUser" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Seu nome cadastrado" style="
+              width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+              background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
+            ">
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Palavra-Chave / Senha:</label>
+            <input type="password" id="inputLoginPass" maxlength="40" placeholder="Sua senha" style="
+              width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+              background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
+            ">
+          </div>
+          <button id="btnSubmitLogin" style="
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            background: linear-gradient(135deg, #38bdf8, #2563eb);
+            color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
+          ">ENTRAR NA CONTA 🔑</button>
+        </div>
+
+        <!-- MENSAGEM DE STATUS/ERRO -->
+        <div id="authStatusMsg" style="
+          margin-top: 14px; font-size: 12px; text-align: center; min-height: 18px;
+          display: none; padding: 8px; border-radius: 6px;
+        "></div>
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.appendChild(overlay);
 
-    let activeTab = 'quick';
-    const overlay = document.getElementById('authModalOverlay');
-    const tabQuick = document.getElementById('authTabQuick');
-    const tabRegister = document.getElementById('authTabRegister');
-    const tabLogin = document.getElementById('authTabLogin');
-    const passwordGroup = document.getElementById('passwordFieldGroup');
-    const btnSubmit = document.getElementById('authBtnSubmit');
-    const alertBox = document.getElementById('authAlert');
-    const usernameInput = document.getElementById('authUsername');
+    const showMsg = (txt, isErr = true) => {
+      const msg = document.getElementById('authStatusMsg');
+      msg.style.display = 'block';
+      msg.style.background = isErr ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)';
+      msg.style.color = isErr ? '#fca5a5' : '#86efac';
+      msg.style.border = `1px solid ${isErr ? '#ef4444' : '#22c55e'}`;
+      msg.innerText = txt;
+    };
 
-    const setTab = (tab) => {
-      activeTab = tab;
-      alertBox.style.display = 'none';
+    // Tabs Switch
+    const tabChosen = document.getElementById('tabChosenName');
+    const tabReg = document.getElementById('tabRegister');
+    const tabLog = document.getElementById('tabLogin');
 
-      [tabQuick, tabRegister, tabLogin].forEach(t => t.className = 'btn-secondary');
+    const formChosen = document.getElementById('formChosenName');
+    const formReg = document.getElementById('formRegister');
+    const formLog = document.getElementById('formLogin');
 
-      if (tab === 'quick') {
-        tabQuick.className = 'btn-primary';
-        passwordGroup.style.display = 'none';
-        btnSubmit.textContent = '🎮 JOGAR COM ESTE NOME';
-      } else if (tab === 'register') {
-        tabRegister.className = 'btn-primary';
-        passwordGroup.style.display = 'block';
-        btnSubmit.textContent = '✨ CRIAR CONTA COM SENHA';
-      } else if (tab === 'login') {
-        tabLogin.className = 'btn-primary';
-        passwordGroup.style.display = 'block';
-        btnSubmit.textContent = '🚀 ENTRAR NA CONTA';
+    const selectTab = (activeTab, activeForm) => {
+      [tabChosen, tabReg, tabLog].forEach(t => {
+        t.style.background = 'transparent';
+        t.style.color = '#94a3b8';
+      });
+      [formChosen, formReg, formLog].forEach(f => f.style.display = 'none');
+
+      activeTab.style.background = 'var(--azul-bandeira, #1e3a8a)';
+      activeTab.style.color = '#fff';
+      activeForm.style.display = 'block';
+      document.getElementById('authStatusMsg').style.display = 'none';
+    };
+
+    tabChosen.onclick = () => selectTab(tabChosen, formChosen);
+    tabReg.onclick = () => selectTab(tabReg, formReg);
+    tabLog.onclick = () => selectTab(tabLog, formLog);
+
+    document.getElementById('closeAuthModal').onclick = () => overlay.remove();
+
+    // Ações de Submit
+    document.getElementById('btnSubmitChosenName').onclick = async () => {
+      const name = document.getElementById('inputChosenName').value;
+      const res = await this.playWithChosenName(name);
+      if (res.success) {
+        showMsg('Nome atualizado com sucesso! Carregando...', false);
+        setTimeout(() => {
+          overlay.remove();
+          if (onSuccessCallback) onSuccessCallback(res.user);
+        }, 600);
+      } else {
+        showMsg(res.error);
       }
     };
 
-    tabQuick.onclick = () => setTab('quick');
-    tabRegister.onclick = () => setTab('register');
-    tabLogin.onclick = () => setTab('login');
+    document.getElementById('btnSubmitRegister').onclick = async () => {
+      const name = document.getElementById('inputRegUser').value;
+      const pass = document.getElementById('inputRegPass').value;
+      const btn = document.getElementById('btnSubmitRegister');
+      btn.innerText = 'CRIANDO CONTA... ⏳';
+      btn.disabled = true;
 
-    const showAlert = (msg, isError = true) => {
-      alertBox.textContent = msg;
-      alertBox.style.display = 'block';
-      alertBox.style.background = isError ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
-      alertBox.style.color = isError ? '#f87171' : '#34d399';
-      alertBox.style.border = isError ? '1px solid #ef4444' : '1px solid #10b981';
-    };
-
-    btnSubmit.onclick = async () => {
-      const u = usernameInput.value;
-      const p = document.getElementById('authPassword').value;
-      btnSubmit.disabled = true;
-
-      let res;
-      if (activeTab === 'quick') {
-        res = await this.playWithChosenName(u);
-      } else if (activeTab === 'register') {
-        res = await this.register(u, p);
-      } else if (activeTab === 'login') {
-        res = await this.login(u, p);
-      }
-
-      btnSubmit.disabled = false;
+      const res = await this.register(name, pass);
+      btn.innerText = 'CRIAR CONTA PROTEGIDA 🔒';
+      btn.disabled = false;
 
       if (res.success) {
-        overlay.remove();
-        if (onAuthComplete) onAuthComplete(res.user);
+        showMsg('Conta criada e protegida com sucesso! Carregando...', false);
+        setTimeout(() => {
+          overlay.remove();
+          if (onSuccessCallback) onSuccessCallback(res.user);
+        }, 700);
       } else {
-        showAlert(res.error);
+        showMsg(res.error);
+      }
+    };
+
+    document.getElementById('btnSubmitLogin').onclick = async () => {
+      const name = document.getElementById('inputLoginUser').value;
+      const pass = document.getElementById('inputLoginPass').value;
+      const btn = document.getElementById('btnSubmitLogin');
+      btn.innerText = 'AUTENTICANDO... ⏳';
+      btn.disabled = true;
+
+      const res = await this.login(name, pass);
+      btn.innerText = 'ENTRAR NA CONTA 🔑';
+      btn.disabled = false;
+
+      if (res.success) {
+        showMsg(`Bem-vindo de volta, ${res.user.username}!`, false);
+        setTimeout(() => {
+          overlay.remove();
+          if (onSuccessCallback) onSuccessCallback(res.user);
+        }, 700);
+      } else {
+        showMsg(res.error);
       }
     };
   }
 
-  renderProfileBadge(containerSelector = 'nav') {
-    const nav = document.querySelector(containerSelector);
-    if (!nav) return;
-
-    let rightGroup = document.getElementById('navRightGroup');
-    if (!rightGroup) {
-      rightGroup = document.createElement('div');
-      rightGroup.id = 'navRightGroup';
-      rightGroup.className = 'nav-right-group';
-      nav.appendChild(rightGroup);
-    }
-
-    let badge = document.getElementById('playerProfileBadge');
+  // -------------------------------------------------------------
+  // RENDERIZAÇÃO DO BADGE NO HEADER / NAVBAR
+  // -------------------------------------------------------------
+  renderProfileBadge(containerSelector = '#profileBadgeContainer') {
+    let badge = document.querySelector(containerSelector);
     if (!badge) {
-      badge = document.createElement('div');
-      badge.id = 'playerProfileBadge';
-      badge.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--amarelo-brasil);';
-      rightGroup.appendChild(badge);
+      badge = document.getElementById('authBadge');
     }
+    if (!badge) return;
 
-    // Botão Hamburger Mobile — usa o existente ou cria se não houver
-    let toggleBtn = document.getElementById('navToggleBtn') || document.getElementById('btnNavToggle');
-    if (!toggleBtn) {
-      toggleBtn = document.createElement('button');
-      toggleBtn.id = 'navToggleBtn';
-      toggleBtn.className = 'nav-toggle-btn';
+    // Configura o menu mobile hambúrguer se existir
+    const toggleBtn = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    if (toggleBtn && navLinks && !toggleBtn.dataset.bound) {
+      toggleBtn.dataset.bound = 'true';
       toggleBtn.innerHTML = '☰ Menu';
-      rightGroup.appendChild(toggleBtn);
-    }
-
-    const navLinks = nav.querySelector('.nav-links');
-    if (navLinks && toggleBtn) {
+      toggleBtn.style.display = 'block';
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         navLinks.classList.toggle('open');
         toggleBtn.innerHTML = navLinks.classList.contains('open') ? '✕ Fechar' : '☰ Menu';
       };
-
       document.addEventListener('click', (e) => {
-        if (!nav.contains(e.target)) {
+        if (!navLinks.contains(e.target) && e.target !== toggleBtn) {
           navLinks.classList.remove('open');
           toggleBtn.innerHTML = '☰ Menu';
         }

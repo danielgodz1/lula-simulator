@@ -57,16 +57,7 @@ service cloud.firestore {
       && (!('unlockedCharacters' in d) || d.unlockedCharacters is list);
     }
 
-    // 6. Validação de Credenciais Privadas (Subcoleção lula_users_v2/{userId}/private/credentials)
-    function isValidCredentialsData() {
-      let d = request.resource.data;
-      return d.keys().hasOnly(['passwordHash', 'passwordSalt', 'hasPassword', 'updatedAt', 'createdAt'])
-          && (!('passwordHash' in d) || (d.passwordHash is string && d.passwordHash.size() <= 128 && !d.passwordHash.matches('.*<[^>]+>.*')))
-          && (!('passwordSalt' in d) || (d.passwordSalt is string && d.passwordSalt.size() <= 64 && !d.passwordSalt.matches('.*<[^>]+>.*')))
-          && (!('hasPassword' in d) || d.hasPassword is bool);
-    }
-
-    // 7. Validação de Feedbacks
+    // 6. Validação de Feedbacks
     function isValidFeedbackData() {
       let d = request.resource.data;
       return d.keys().hasOnly(['name', 'stars', 'comment', 'createdAt'])
@@ -77,7 +68,7 @@ service cloud.firestore {
           && isSafeText(d.comment, 500);
     }
 
-    // 8. Validação de Contatos com Verificação de Formato de E-mail
+    // 7. Validação de Contatos com Verificação de Formato de E-mail
     function isValidContactData() {
       let d = request.resource.data;
       return d.keys().hasOnly(['name', 'email', 'message', 'createdAt'])
@@ -125,12 +116,9 @@ service cloud.firestore {
       );
       allow delete: if isAdmin();
 
-      // 4. Subcoleção Privada de Credenciais (100% Protegida: GET e LIST restritos a Admin)
+      // 4. Subcoleção Privada de Credenciais (100% Bloqueada para clientes: Apenas Admin SDK / Admin)
       match /private/{docId} {
-        allow get: if isAdmin();
-        allow list: if isAdmin();
-        allow create, update: if isAdmin() || isValidCredentialsData();
-        allow delete: if isAdmin();
+        allow read, write: if isAdmin();
       }
     }
 

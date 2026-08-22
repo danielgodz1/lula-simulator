@@ -1,5 +1,6 @@
-// api/auth.js — Vercel Serverless Function para Autenticação Segura (sem expor hashes/salts ao cliente)
+// api/auth.js — Autenticação de Alta Segurança com Firebase Admin SDK Real
 import crypto from 'crypto';
+import admin, { db } from './_firebaseAdmin.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -14,8 +15,6 @@ export default async function handler(req, res) {
     res.status(200).end();
     return;
   }
-
-  const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
   const sanitizeName = (str) => {
     if (!str || typeof str !== 'string') return '';
@@ -32,7 +31,7 @@ export default async function handler(req, res) {
   };
 
   if (req.method === 'POST') {
-    const { action, username, password, passwordHash, passwordSalt } = req.body || {};
+    const { action, username, password } = req.body || {};
     const cleanName = sanitizeName(username);
     const cleanPass = (password || '').trim();
     const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
@@ -41,127 +40,129 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Nome de usuário inválido.' });
     }
 
-    // 1. REGISTRO SEGURO COM SALT ÚNICO
+    const userRef = db.collection('lula_users_v2').doc(normalizedName);
+    const credRef = userRef.collection('private').doc('credentials');
+
+    // =========================================================================
+    // 1. REGISTRO SEGURO (COM VERIFICAÇÃO ANTI-SOBRESCRITA E SALT NO SERVIDOR)
+    // =========================================================================
     if (action === 'register') {
-      if (!cleanPass && !passwordHash) {
+      if (!cleanPass) {
         return res.status(400).json({ success: false, error: 'Senha é obrigatória.' });
       }
 
-      const salt = passwordSalt || generateRandomSalt();
-      const finalHash = passwordHash || hashWithSalt(cleanPass, salt);
-
       try {
-        // Grava o documento de credenciais na subcoleção privada
-        const credUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
-        const credPayload = {
-          fields: {
-            passwordHash: { stringValue: finalHash },
-            passwordSalt: { stringValue: salt },
-            hasPassword: { booleanValue: true },
-            createdAt: { timestampValue: new Date().toISOString() }
-          }
-        };
+        // Verifica se a conta já existe e já possui senha cadastrada
+        const [userSnap, credSnap] = await Promise.all([
+          userRef.get(),
+          credRef.get()
+        ]);
 
-        await fetch(credUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credPayload)
+        if (credSnap.exists || (userSnap.exists && userSnap.data()?.hasPassword === true)) {
+          return res.status(409).json({
+            success: false,
+            error: 'Este nome já está cadastrado com senha. Escolha outro nome ou faça login.'
+          });
+        }
+
+        // Gera salt criptográfico e hash estritamente no servidor (nunca confia no cliente)
+        const salt = generateRandomSalt();
+        const finalHash = hashWithSalt(cleanPass, salt);
+
+        const batch = db.batch();
+
+        // 1. Grava credenciais na subcoleção privada (acessível exclusivamente pelo Admin SDK)
+        batch.set(credRef, {
+          passwordHash: finalHash,
+          passwordSalt: salt,
+          hasPassword: true,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // Grava o documento público sem hash/salt
-        const userUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-        const userPayload = {
-          fields: {
-            username: { stringValue: cleanName },
-            hasPassword: { booleanValue: true },
-            totalPicanhas: { integerValue: (req.body.totalPicanhas || 0).toString() },
-            flappyScore: { integerValue: (req.body.flappyScore || 0).toString() },
-            runnerScore: { integerValue: (req.body.runnerScore || 0).toString() },
-            createdAt: { timestampValue: new Date().toISOString() }
-          }
-        };
+        // 2. Grava ou mescla perfil público (sem vazar hashes nem salts)
+        const existingData = userSnap.exists ? userSnap.data() : {};
+        const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
+        const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
+        const safeRunner = Math.max(existingData.runnerScore || 0, parseInt(req.body.runnerScore || 0, 10));
 
-        await fetch(userUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userPayload)
-        });
+        batch.set(userRef, {
+          username: cleanName,
+          hasPassword: true,
+          totalPicanhas: safeTotalPicanhas,
+          flappyScore: safeFlappy,
+          runnerScore: safeRunner,
+          createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        await batch.commit();
 
         return res.status(200).json({
           success: true,
           user: {
             username: cleanName,
             hasPassword: true,
-            totalPicanhas: req.body.totalPicanhas || 0,
-            flappyScore: req.body.flappyScore || 0,
-            runnerScore: req.body.runnerScore || 0
+            totalPicanhas: safeTotalPicanhas,
+            flappyScore: safeFlappy,
+            runnerScore: safeRunner
           }
         });
       } catch (err) {
-        return res.status(500).json({ success: false, error: 'Erro ao registrar credenciais.' });
+        console.error('❌ Erro no registro de usuário no Firestore via Admin SDK:', err);
+        return res.status(500).json({ success: false, error: 'Erro ao registrar credenciais no servidor.' });
       }
     }
 
-    // 2. LOGIN SEGURO COM MIGRAÇÃO AUTOMÁTICA DE SALT
+    // =========================================================================
+    // 2. LOGIN SEGURO (COM BUSCA VIA ADMIN SDK E MIGRAÇÃO AUTOMÁTICA DE SALT)
+    // =========================================================================
     if (action === 'login') {
       if (!cleanPass) {
         return res.status(400).json({ success: false, error: 'Palavra-chave é obrigatória.' });
       }
 
       try {
-        // Busca o documento público
-        const userUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-        const userRes = await fetch(userUrl);
-        let userData = null;
-        if (userRes.ok) {
-          const uDoc = await userRes.json();
-          userData = {
-            username: uDoc.fields?.username?.stringValue || cleanName,
-            hasPassword: uDoc.fields?.hasPassword?.booleanValue ?? true,
-            totalPicanhas: parseInt(uDoc.fields?.totalPicanhas?.integerValue || '0', 10),
-            flappyScore: parseInt(uDoc.fields?.flappyScore?.integerValue || '0', 10),
-            runnerScore: parseInt(uDoc.fields?.runnerScore?.integerValue || '0', 10),
-            createdAt: uDoc.fields?.createdAt?.timestampValue || new Date().toISOString()
-          };
-        }
+        // Busca perfil público e subcoleção privada via Admin SDK (ignora regras restritivas do cliente)
+        const [userSnap, credSnap] = await Promise.all([
+          userRef.get(),
+          credRef.get()
+        ]);
 
-        // Busca a subcoleção privada
-        const credUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
-        const credRes = await fetch(credUrl);
-        let credData = null;
-
-        if (credRes.ok) {
-          const cDoc = await credRes.json();
-          credData = {
-            passwordHash: cDoc.fields?.passwordHash?.stringValue || '',
-            passwordSalt: cDoc.fields?.passwordSalt?.stringValue || '',
-            passwordLegacy: cDoc.fields?.password?.stringValue || ''
-          };
-        }
-
-        if (!credData && !userData) {
+        if (!userSnap.exists && !credSnap.exists) {
           return res.status(404).json({ success: false, error: 'Usuário não encontrado.' });
+        }
+
+        const userData = userSnap.exists ? userSnap.data() : null;
+        const credData = credSnap.exists ? credSnap.data() : null;
+
+        // Se o usuário existir mas não possuir credenciais cadastradas
+        if (!credData && userData && userData.hasPassword === false) {
+          return res.status(400).json({
+            success: false,
+            error: `O jogador "${cleanName}" ainda não possui senha cadastrada. Você pode criar uma senha na aba "Criar Conta".`
+          });
         }
 
         let isMatch = false;
         let needsMigration = false;
 
-        if (credData && credData.passwordSalt) {
-          // Conta moderna com salt individual
+        if (credData && credData.passwordSalt && credData.passwordHash) {
+          // 1. Conta Moderna: Hash SHA-256 com Salt Individual
           const calculatedHash = hashWithSalt(cleanPass, credData.passwordSalt);
           if (calculatedHash === credData.passwordHash) {
             isMatch = true;
           }
         } else if (credData && credData.passwordHash) {
-          // Conta legada (salt fixo)
+          // 2. Conta Legada: Salt Fixo
           const legacyHash = hashWithSalt(cleanPass, 'lula_simulator_sec_salt_2026_');
           if (legacyHash === credData.passwordHash || cleanPass === credData.passwordHash) {
             isMatch = true;
             needsMigration = true;
           }
-        } else if (credData && credData.passwordLegacy) {
-          // Conta legada com texto puro
-          if (cleanPass === credData.passwordLegacy) {
+        } else if (credData && credData.password) {
+          // 3. Conta Legada: Texto Puro
+          if (cleanPass === credData.password) {
             isMatch = true;
             needsMigration = true;
           }
@@ -171,38 +172,39 @@ export default async function handler(req, res) {
           return res.status(401).json({ success: false, error: 'Palavra-chave incorreta!' });
         }
 
-        // Se a conta era legada, faz a migração automática gerando salt individual
+        // Migração automática de contas antigas para Salt Criptográfico Individual
         if (needsMigration) {
-          const newSalt = generateRandomSalt();
-          const newHash = hashWithSalt(cleanPass, newSalt);
-
-          const updateCredUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}/private/credentials`;
-          const updatePayload = {
-            fields: {
-              passwordHash: { stringValue: newHash },
-              passwordSalt: { stringValue: newSalt },
-              hasPassword: { booleanValue: true },
-              updatedAt: { timestampValue: new Date().toISOString() }
-            }
-          };
-
-          fetch(updateCredUrl, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatePayload)
-          }).catch(() => {});
+          try {
+            const newSalt = generateRandomSalt();
+            const newHash = hashWithSalt(cleanPass, newSalt);
+            await credRef.set({
+              passwordHash: newHash,
+              passwordSalt: newSalt,
+              hasPassword: true,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+            console.log(`🔒 Conta "${cleanName}" migrada automaticamente para Salt Criptográfico Individual.`);
+          } catch (migErr) {
+            console.error('⚠️ Falha não-bloqueante na migração de salt:', migErr);
+          }
         }
 
-        // Retorna apenas dados públicos seguros (sem vazar hash nem salt)
         return res.status(200).json({
           success: true,
-          user: userData || { username: cleanName, hasPassword: true, totalPicanhas: 0, flappyScore: 0, runnerScore: 0 }
+          user: {
+            username: userData?.username || cleanName,
+            hasPassword: true,
+            totalPicanhas: userData?.totalPicanhas || 0,
+            flappyScore: userData?.flappyScore || 0,
+            runnerScore: userData?.runnerScore || 0
+          }
         });
       } catch (err) {
+        console.error('❌ Erro no login de usuário no Firestore via Admin SDK:', err);
         return res.status(500).json({ success: false, error: 'Erro durante autenticação no servidor.' });
       }
     }
   }
 
-  return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ success: false, error: 'Método não permitido.' });
 }

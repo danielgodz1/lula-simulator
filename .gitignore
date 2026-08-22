@@ -1,7 +1,13 @@
-﻿.DS_Store
+.DS_Store
 Thumbs.db
 node_modules/
 .vercel
 *.log
-.vercel
 .env*
+*.local
+*serviceAccount*.json
+*firebase-adminsdk*.json
+service-account.json
+credentials.json
+*.pem
+*.key

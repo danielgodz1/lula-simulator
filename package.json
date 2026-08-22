@@ -1,0 +1,16 @@
+{
+  "name": "lula-simulator",
+  "version": "2.0.0",
+  "description": "Lula Simulator — Endless Runner & Flappy Lula 3D com Firebase Backend",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required for static HTML/JS'"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
