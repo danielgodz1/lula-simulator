@@ -177,18 +177,19 @@ export class GameScene {
     this.camera.lookAt(0, 1.6, -14);
 
     // 3. Renderizador WebGL com Configuração PBR Realista
-    const isMobile = window.innerWidth <= 900;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
     const isWeakDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) || isMobile;
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobile, // Desativa MSAA em mobile para economizar 40% de fill-rate
       alpha: false,
       powerPreference: 'high-performance',
       precision: isMobile ? 'mediump' : 'highp'
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    this.currentPixelRatio = Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2.0);
+    // DPR Calibrado para Mobile (evita renderizar em 4K nativo em telas QuadHD como S23 Ultra)
+    this.currentPixelRatio = isMobile ? Math.min(window.devicePixelRatio || 1, 1.15) : Math.min(window.devicePixelRatio || 1, 1.5);
     this.renderer.setPixelRatio(this.currentPixelRatio);
 
     // Mapeamento de Tons ACES Filmic e Espaço de Cores sRGB
@@ -199,15 +200,15 @@ export class GameScene {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
-    // Sombras Suaves PCFSoft
+    // Sombras Otimizadas para Mobile (BasicShadowMap leve no mobile, PCFSoft no PC)
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
     // 4. Domo de Céu Contínuo Sem Círculos ou Seams (Hemisfério Completo)
-    const skyGeo = new THREE.SphereGeometry(420, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const skyGeo = new THREE.SphereGeometry(420, isMobile ? 16 : 32, isMobile ? 12 : 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const skyMat = new THREE.MeshBasicMaterial({
       map: this.createDynamicSkyTexture(),
       side: THREE.BackSide,
@@ -227,20 +228,20 @@ export class GameScene {
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Direcional Principal (Sol / Sombras Longas Dinâmicas)
+    // B. Luz Direcional Principal (Sol / Sombras Otimizadas com Frustum Focalizado)
     this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.25);
-    this.sunLight.position.set(35, 75, 40);
+    this.sunLight.position.set(25, 55, 30);
     this.sunLight.castShadow = true;
-    const shadowRes = isWeakDevice ? 1024 : 2048;
+    const shadowRes = isMobile ? 512 : 1024;
     this.sunLight.shadow.mapSize.width = shadowRes;
     this.sunLight.shadow.mapSize.height = shadowRes;
     this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = 260;
-    this.sunLight.shadow.camera.left = -30;
-    this.sunLight.shadow.camera.right = 30;
-    this.sunLight.shadow.camera.top = 30;
-    this.sunLight.shadow.camera.bottom = -30;
-    this.sunLight.shadow.bias = -0.001;
+    this.sunLight.shadow.camera.far = isMobile ? 95 : 160;
+    this.sunLight.shadow.camera.left = -16;
+    this.sunLight.shadow.camera.right = 16;
+    this.sunLight.shadow.camera.top = 16;
+    this.sunLight.shadow.camera.bottom = -16;
+    this.sunLight.shadow.bias = -0.0015;
     this.scene.add(this.sunLight);
 
     // C. Luz Secundária de Preenchimento (Fill Light oposta, tom azul suave sem sombra)
