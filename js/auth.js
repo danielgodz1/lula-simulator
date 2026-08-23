@@ -58,7 +58,7 @@ class AuthManager {
   // -------------------------------------------------------------
   // COMPRESSÃO ULTRA-LEVE DE IMAGEM NO CLIENTE VIA CANVAS (MAX 100x100px ~3KB-6KB)
   // -------------------------------------------------------------
-  static compressImageToAvatar(fileOrDataUrl) {
+  static compressImageToAvatar(fileOrDataUrl, cropBounds = null) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -69,12 +69,15 @@ class AuthManager {
           canvas.height = size;
           const ctx = canvas.getContext('2d');
 
-          // Recorte 1:1 centralizado
-          const minDim = Math.min(img.width, img.height);
-          const sx = (img.width - minDim) / 2;
-          const sy = (img.height - minDim) / 2;
-
-          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+          if (cropBounds && cropBounds.w > 0 && cropBounds.h > 0) {
+            ctx.drawImage(img, cropBounds.x, cropBounds.y, cropBounds.w, cropBounds.h, 0, 0, size, size);
+          } else {
+            // Recorte 1:1 centralizado padrão
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+          }
 
           let base64 = canvas.toDataURL('image/webp', 0.8);
           if (!base64.startsWith('data:image/webp')) {
@@ -89,15 +92,234 @@ class AuthManager {
 
       if (typeof fileOrDataUrl === 'string') {
         img.src = fileOrDataUrl;
-      } else if (fileOrDataUrl instanceof Blob || fileOrDataUrl instanceof File) {
+      } else if ((typeof File !== 'undefined' && fileOrDataUrl instanceof File) || (typeof Blob !== 'undefined' && fileOrDataUrl instanceof Blob)) {
         const reader = new FileReader();
         reader.onload = (e) => { img.src = e.target.result; };
         reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
         reader.readAsDataURL(fileOrDataUrl);
       } else {
-        reject(new Error('Formato inválido'));
+        reject(new Error('Formato de imagem inválido'));
       }
     });
+  }
+
+  // -------------------------------------------------------------
+  // MODAL INTERATIVO DE ENQUADRAMENTO / RECORTE / ZOOM DA FOTO DE PERFIL
+  // -------------------------------------------------------------
+  static mountAvatarCropModal(fileOrDataUrl, onCropDoneCallback) {
+    let existing = document.getElementById('cropModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'cropModalOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.92); backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: center; z-index: 10050;
+      padding: 16px; font-family: 'Inter', sans-serif;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background: #0f172a; border: 2px solid var(--amarelo-brasil, #ffd700);
+        border-radius: 20px; width: 100%; max-width: 380px; padding: 20px;
+        color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(255,215,0,0.3);
+        display: flex; flex-direction: column; align-items: center; gap: 14px;
+        animation: popIn 0.25s ease-out;
+      ">
+        <div style="font-family: 'Bangers', cursive; font-size: 22px; color: var(--amarelo-brasil, #ffd700); letter-spacing: 1px; text-align: center;">
+          ✂️ AJUSTAR & ENQUADRAR FOTO
+        </div>
+        <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.3;">
+          Arraste a imagem para posicionar e use o slider para dar zoom no rosto!
+        </p>
+
+        <!-- VIEWPORT DE RECORTE COM CANVAS -->
+        <div style="position: relative; width: 260px; height: 260px; border-radius: 16px; overflow: hidden; background: #000; box-shadow: 0 4px 20px rgba(0,0,0,0.8); cursor: grab; touch-action: none;">
+          <canvas id="cropCanvas" width="260" height="260" style="width: 100%; height: 100%; display: block;"></canvas>
+        </div>
+
+        <!-- CONTROLE DE ZOOM -->
+        <div style="width: 100%; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #cbd5e1;">
+          <span>🔍 Zoom:</span>
+          <input type="range" id="cropZoomSlider" min="1" max="3.5" step="0.05" value="1" style="flex: 1; accent-color: var(--verde-neon, #00e676); cursor: pointer;">
+          <button id="btnResetCropPos" title="Centralizar" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer;">🎯</button>
+        </div>
+
+        <!-- BOTÕES DE AÇÃO -->
+        <div style="display: flex; gap: 10px; width: 100%;">
+          <button id="btnCancelCrop" style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: #94a3b8; font-weight: 700; font-size: 13px; cursor: pointer;">
+            Cancelar
+          </button>
+          <button id="btnConfirmCrop" class="btn-primary" style="flex: 1.4; padding: 10px; font-size: 14px; letter-spacing: 0.5px;">
+            SALVAR FOTO ✂️
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const canvas = overlay.querySelector('#cropCanvas');
+    const ctx = canvas.getContext('2d');
+    const zoomSlider = overlay.querySelector('#cropZoomSlider');
+    const btnConfirm = overlay.querySelector('#btnConfirmCrop');
+    const btnCancel = overlay.querySelector('#btnCancelCrop');
+    const btnReset = overlay.querySelector('#btnResetCropPos');
+
+    const img = new Image();
+    let scale = 1.0;
+    let baseScale = 1.0;
+    let offsetX = 0;
+    let offsetY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    const CROP_RADIUS = 105;
+    const CX = canvas.width / 2;
+    const CY = canvas.height / 2;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!img.complete || img.naturalWidth === 0) return;
+
+      const currentScale = baseScale * scale;
+      const drawW = img.naturalWidth * currentScale;
+      const drawH = img.naturalHeight * currentScale;
+
+      const drawX = CX + offsetX - drawW / 2;
+      const drawY = CY + offsetY - drawH / 2;
+
+      ctx.save();
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+      // Máscara escura com corte circular
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      ctx.beginPath();
+      ctx.rect(0, 0, canvas.width, canvas.height);
+      ctx.arc(CX, CY, CROP_RADIUS, 0, Math.PI * 2, true);
+      ctx.fill();
+
+      // Borda circular dourada
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(CX, CY, CROP_RADIUS, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.restore();
+    };
+
+    const initImage = () => {
+      const minDim = Math.min(img.naturalWidth, img.naturalHeight);
+      baseScale = (CROP_RADIUS * 2) / minDim;
+      scale = 1.0;
+      offsetX = 0;
+      offsetY = 0;
+      if (zoomSlider) zoomSlider.value = 1;
+      draw();
+    };
+
+    img.onload = () => {
+      initImage();
+    };
+
+    if (typeof fileOrDataUrl === 'string') {
+      img.src = fileOrDataUrl;
+    } else if ((typeof File !== 'undefined' && fileOrDataUrl instanceof File) || (typeof Blob !== 'undefined' && fileOrDataUrl instanceof Blob)) {
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.readAsDataURL(fileOrDataUrl);
+    }
+
+    // Drag & Pan handlers
+    const onPointerDown = (e) => {
+      isDragging = true;
+      startX = e.clientX || e.touches?.[0]?.clientX || 0;
+      startY = e.clientY || e.touches?.[0]?.clientY || 0;
+      canvas.parentElement.style.cursor = 'grabbing';
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
+      const clientY = e.clientY || e.touches?.[0]?.clientY || 0;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      startX = clientX;
+      startY = clientY;
+
+      offsetX += dx;
+      offsetY += dy;
+      draw();
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+      canvas.parentElement.style.cursor = 'grab';
+    };
+
+    canvas.parentElement.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    // Zoom Slider
+    zoomSlider.addEventListener('input', (e) => {
+      scale = parseFloat(e.target.value);
+      draw();
+    });
+
+    // Reset
+    btnReset.onclick = () => {
+      offsetX = 0;
+      offsetY = 0;
+      scale = 1.0;
+      zoomSlider.value = 1;
+      draw();
+    };
+
+    btnCancel.onclick = () => overlay.remove();
+
+    // Confirmar e Gerar Base64 Otimizada de 100x100
+    btnConfirm.onclick = () => {
+      btnConfirm.innerText = 'PROCESSANDO... ⏳';
+      btnConfirm.disabled = true;
+
+      try {
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = 100;
+        outCanvas.height = 100;
+        const outCtx = outCanvas.getContext('2d');
+
+        const currentScale = baseScale * scale;
+        const drawW = img.naturalWidth * currentScale;
+        const drawH = img.naturalHeight * currentScale;
+
+        const drawX = CX + offsetX - drawW / 2;
+        const drawY = CY + offsetY - drawH / 2;
+
+        // Mapeia a área circular (CX - CROP_RADIUS ... CX + CROP_RADIUS) para a saída 100x100
+        const cropBoxSize = CROP_RADIUS * 2;
+        const srcX = (CX - CROP_RADIUS - drawX) / currentScale;
+        const srcY = (CY - CROP_RADIUS - drawY) / currentScale;
+        const srcSize = cropBoxSize / currentScale;
+
+        outCtx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, 100, 100);
+
+        let finalBase64 = outCanvas.toDataURL('image/webp', 0.82);
+        if (!finalBase64.startsWith('data:image/webp')) {
+          finalBase64 = outCanvas.toDataURL('image/jpeg', 0.82);
+        }
+
+        overlay.remove();
+        if (onCropDoneCallback) onCropDoneCallback(finalBase64);
+      } catch (err) {
+        console.error('Erro no crop:', err);
+        btnConfirm.innerText = 'SALVAR FOTO ✂️';
+        btnConfirm.disabled = false;
+      }
+    };
   }
 
   // -------------------------------------------------------------
@@ -107,7 +329,10 @@ class AuthManager {
     if (!this.currentUser) return { success: false, error: 'Faça login para salvar a foto!' };
 
     let finalAvatar = avatarData;
-    if (avatarData && (avatarData.startsWith('data:image/') || avatarData instanceof File || avatarData instanceof Blob)) {
+    const isString = typeof avatarData === 'string';
+    const isFileOrBlob = (typeof File !== 'undefined' && avatarData instanceof File) || (typeof Blob !== 'undefined' && avatarData instanceof Blob);
+
+    if (isFileOrBlob || (isString && avatarData.startsWith('data:image/'))) {
       try {
         finalAvatar = await AuthManager.compressImageToAvatar(avatarData);
       } catch (e) {
@@ -853,11 +1078,15 @@ class AuthManager {
     };
 
     if (avatarInput) {
-      avatarInput.onchange = async (e) => {
+      avatarInput.onchange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-          await handleAvatarUpdate(file);
+          AuthManager.mountAvatarCropModal(file, async (croppedBase64) => {
+            await handleAvatarUpdate(croppedBase64);
+          });
         }
+        // Reseta o input para permitir selecionar a mesma imagem se quiser
+        avatarInput.value = '';
       };
     }
 

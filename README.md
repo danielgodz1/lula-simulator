@@ -93,23 +93,31 @@
 
 ---
 
-## 🌟 Últimas Atualizações & Melhorias Recentes
+## 🌟 Últimas Atualizações & Novas Funcionalidades
 
+- **✂️ Perfil do Jogador com Foto Customizada & Recorte Interativo**:
+  - Faça upload de qualquer foto direto da câmera ou galeria do celular e PC.
+  - **Ferramenta de Enquadramento & Zoom no Navegador**: Arraste a foto para ajustar a posição e use o slider de zoom (`🔍 Zoom 1x a 3.5x`) com prévia da máscara circular.
+  - **Compressão Ultra-Leve no Cliente (Canvas WebP/JPEG)**: Redimensiona para $100 \times 100\text{ px}$ com compressão automática ($\approx 3\text{KB}$ a $6\text{KB}$), garantindo zero sobrecarga no banco de dados e no tráfego de rede.
+  - **Avatares Pré-definidos**: Escolha instantânea entre personagens do jogo (Lula, Marçal, Dilma, Empresário, Bolsonaro, Moraes, Nikolas, Janja).
+- **🏆 Fotos de Perfil no Ranking Nacional ([ranking.html](ranking.html))**:
+  - Exibição de miniaturas de avatar personalizadas ao lado de cada jogador no placar de líderes.
+  - Fallback automático para o Avatar Retrô Padrão em SVG (sem requisições extras).
+  - Arquitetura de leitura única no Firestore (`lula_leaderboards_v2`), preservando a alta performance e baixo custo de operações.
+- **☁️ Sincronização Multi-Dispositivo na Nuvem (`/api/sync`)**:
+  - Sincronização bidirecional e atômica de progresso entre celular e computador (`dilmaScore`, `flappyScore`, `runnerScore`, `totalPicanhas`, `runnerCoins`, `unlockedCharacters` e `avatar`).
+  - **Desbloqueio definitivo do Pablo Marçal**: Garante que o progresso obtido no celular (ex: 200 pontos com a Dilma) seja propagado instantaneamente para o PC e vice-versa.
+  - Botão manual *"🔄 Sincronizar com a Nuvem"* no modal de perfil e no painel de conquistas com relatório detalhado de status.
 - **🚀 Carregamento Instantâneo & Fallback 3D Procedural (Empresário 3D)**:
   - Inicialização com zero delay em dispositivos móveis e computadores.
-  - Renderização procedural imediata de personagens 3D (ternos, faixas presidenciais, gravatas, maletas e sombras) enquanto os modelos `.glb` de alta fidelidade são baixados em segundo plano, com *hot-swap* automático.
+  - Renderização procedural imediata de personagens 3D enquanto os modelos `.glb` são baixados em segundo plano com *hot-swap* automático.
 - **🔊 Seletor de Áudio em 3 Modos**:
-  - `🔊 Áudio Completo`: Efeitos arcade + falas e vinhetas de memes (*"Brasil, Brasil!"*, *"Besta Enjaulada"*, *"Faz o L"*).
-  - `🎮 Apenas Sons do Jogo`: Efeitos essenciais de gameplay (pulos, picanhas, moedas e colisão sintética) sem falas/memes sonoros.
-  - `🔇 Modo Mudo`: Silenciamento total.
-  - Preferência salva automaticamente no navegador e sincronizada entre os modos 2D e 3D.
-- **☁️ Sincronização Cross-Device em Tempo Real**:
-  - Sincronização bidirecional de recordes da Dilma (`dilmaScore`), moedas do runner (`runnerCoins`) e picanhas acumuladas via Firebase Firestore.
-  - Desbloqueio do **Pablo Marçal** sincronizado instantaneamente entre celular e PC.
-  - Painel de **Conquistas & Badges (8 de 8)** com cálculo dinâmico e botão de sincronização manual com feedback visual.
+  - `🔊 Áudio Completo`: Efeitos arcade + falas e memes sonoros.
+  - `🎮 Apenas Sons do Jogo`: Efeitos essenciais de gameplay sem memes falados.
+  - `🔇 Modo Mudo`: Silenciamento total com persistência local.
 - **📱 Navbar Responsiva & Menu Mobile Aprimorado**:
   - Botão *"☰ Menu"* exibido exclusivamente em telas mobile (`<= 950px`) e oculto no Desktop.
-  - Cartão de perfil integrado no menu lateral mobile com opções de **Trocar de Conta** e **Sair (Logout)**.
+  - Cartão de perfil integrado no menu lateral mobile com foto do jogador, contagem de recursos e acesso rápido à edição.
 
 ---
 
