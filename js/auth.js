@@ -23,16 +23,35 @@ export const PRESET_AVATARS = [
 class AuthManager {
   constructor() {
     this.currentUser = this.loadCurrentUser();
-    // Inicia sincronização em background se houver usuário conectado
+    // Inicia sincronização em background se houver usuário conectado ou nome salvo
     if (this.currentUser) {
-      this.syncFromCloud();
+      this.syncFromCloud().then(() => {
+        this.renderProfileBadge();
+      }).catch(() => {});
     }
   }
 
   loadCurrentUser() {
     try {
       const data = localStorage.getItem(CURRENT_USER_KEY);
-      return data ? JSON.parse(data) : null;
+      if (data) {
+        const parsed = JSON.parse(data);
+        if (parsed && parsed.username) return parsed;
+      }
+      const legacyPlayer = localStorage.getItem('lula_player');
+      if (legacyPlayer && legacyPlayer.trim().length >= 2) {
+        return {
+          username: legacyPlayer.trim(),
+          hasPassword: false,
+          avatar: '',
+          flappyScore: parseInt(localStorage.getItem('lula_best') || '0', 10),
+          runnerScore: parseInt(localStorage.getItem('run_best') || '0', 10),
+          totalPicanhas: parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10),
+          dilmaScore: parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10),
+          runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10)
+        };
+      }
+      return null;
     } catch (e) {
       return null;
     }

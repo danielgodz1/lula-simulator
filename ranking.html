@@ -300,13 +300,28 @@
         alert('Por favor digite um apelido válido!');
         return;
       }
-      localStorage.setItem('lula_player', name);
-      if (auth.getCurrentUser()) {
-        auth.getCurrentUser().username = name;
+      const btn = document.getElementById('btnSaveName');
+      btn.textContent = 'Salvando... ⏳';
+      btn.disabled = true;
+
+      try {
+        const res = await auth.playWithChosenName(name);
+        btn.textContent = 'Salvar';
+        btn.disabled = false;
+
+        if (!res.success) {
+          alert(res.error || 'Erro ao carregar apelido.');
+          return;
+        }
+
+        auth.renderProfileBadge('nav');
+        alert(`Apelido "${res.user?.username || name}" carregado e sincronizado com a nuvem! 🚀`);
+        loadRankingData(true);
+      } catch (err) {
+        btn.textContent = 'Salvar';
+        btn.disabled = false;
+        alert('Erro ao sincronizar nome.');
       }
-      auth.renderProfileBadge('nav');
-      alert(`Apelido salvo como "${name}"!`);
-      loadRankingData();
     };
 
     document.getElementById('tabFlappy').onclick = () => switchTab('flappy');
@@ -328,14 +343,12 @@
       // Busca todos os jogadores pelo documento consolidado (com cache TTL)
       allCurrentScores = await getTopScores(currentTab, 300, force);
 
-      // Fallback da conta atual caso banco esteja vazio
-      if (allCurrentScores.length === 0) {
-        const u = auth.getCurrentUser();
-        if (u) {
-          const val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
-          if (val > 0) {
-            allCurrentScores = [{ player: u.username, score: val, avatar: u.avatar || '' }];
-          }
+      // Fallback da conta atual caso banco esteja vazio ou jogador ainda não esteja no ranking
+      const u = auth.getCurrentUser();
+      if (allCurrentScores.length === 0 && u) {
+        const val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
+        if (val > 0) {
+          allCurrentScores = [{ player: u.username, score: val, avatar: u.avatar || '' }];
         }
       }
 
@@ -347,6 +360,7 @@
       const container = document.getElementById('rankingList');
       const searchTerm = (document.getElementById('searchRankingInput').value || '').trim().toLowerCase();
       const unit = currentTab === 'runner' ? 'km' : '🥩';
+      const curUser = auth.getCurrentUser();
 
       let filtered = allCurrentScores;
       if (searchTerm) {
@@ -375,11 +389,15 @@
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `${rankIdx + 1}º`;
         const safePlayer = escapeHTML(item.player || 'Anônimo');
         const safeScore = parseInt(item.score || 0, 10);
-        const avatarUrl = item.avatar && item.avatar.length > 5 ? item.avatar : DEFAULT_AVATAR_SVG;
+
+        // Se for o jogador atual e tiver avatar no perfil, garante a exibição
+        const isCurPlayer = curUser && curUser.username && (item.player || '').toLowerCase() === curUser.username.toLowerCase();
+        const effectiveAvatar = (isCurPlayer && curUser.avatar) ? curUser.avatar : item.avatar;
+        const avatarUrl = effectiveAvatar && effectiveAvatar.length > 5 ? effectiveAvatar : DEFAULT_AVATAR_SVG;
 
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
-          <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy"></div>
+          <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
           <div style="font-weight:700; font-size:15px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</div>
           <div class="score-val">${safeScore} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;

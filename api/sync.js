@@ -111,6 +111,47 @@ export default async function handler(req, res) {
 
       await userRef.set(updatedPayload, { merge: true });
 
+      // Propaga o avatar atualizado para os placares e rankings consolidados
+      if (finalAvatar) {
+        const updateLeaderboardAvatar = async (gameType) => {
+          try {
+            const lbRef = db.collection('lula_leaderboards_v2').doc(gameType);
+            const snap = await lbRef.get();
+            if (!snap.exists) return;
+            const data = snap.data();
+            const scores = Array.isArray(data.scores) ? data.scores : [];
+            let changed = false;
+            const updated = scores.map(item => {
+              if (item && item.player && item.player.toLowerCase() === cleanName.toLowerCase()) {
+                changed = true;
+                return { ...item, avatar: finalAvatar };
+              }
+              return item;
+            });
+            if (changed) {
+              await lbRef.set({ scores: updated, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            }
+          } catch (e) {
+            console.warn(`Aviso: falha ao atualizar avatar no ranking ${gameType}:`, e);
+          }
+        };
+
+        const updateScoreDocs = async () => {
+          try {
+            const fScoreRef = db.collection('lula_scores_v2').doc(normalizedName);
+            const rScoreRef = db.collection('lula_runner_scores_v2').doc(normalizedName);
+            await Promise.allSettled([
+              fScoreRef.set({ avatar: finalAvatar, player: cleanName }, { merge: true }),
+              rScoreRef.set({ avatar: finalAvatar, player: cleanName }, { merge: true }),
+              updateLeaderboardAvatar('flappy'),
+              updateLeaderboardAvatar('runner')
+            ]);
+          } catch(e) {}
+        };
+
+        await updateScoreDocs();
+      }
+
       return res.status(200).json({
         success: true,
         user: {

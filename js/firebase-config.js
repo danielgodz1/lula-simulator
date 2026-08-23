@@ -47,10 +47,7 @@ export async function savePlayerScore(gameType, score) {
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
   const lastSynced = parseInt(localStorage.getItem(syncedKey) || '0', 10);
 
-  // Se o score for menor que o recorde pessoal E já foi sincronizado e o avatar não mudou
-  if (numScore < currentBest && lastSynced >= currentBest) {
-    return { saved: false, reason: 'score_not_improved' };
-  }
+  const finalScoreToSend = Math.max(numScore, currentBest);
 
   // Atualiza o recorde localmente
   if (numScore > currentBest) {
@@ -91,11 +88,11 @@ export async function savePlayerScore(gameType, score) {
     const res = await fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player: playerName, score: numScore, game: gameKey, avatar: playerAvatar })
+      body: JSON.stringify({ player: playerName, score: finalScoreToSend, game: gameKey, avatar: playerAvatar })
     });
     if (res.ok) {
       savedOk = true;
-      localStorage.setItem(syncedKey, numScore.toString());
+      localStorage.setItem(syncedKey, finalScoreToSend.toString());
       return { saved: true, ok: true };
     }
   } catch (e) {}
@@ -110,7 +107,7 @@ export async function savePlayerScore(gameType, score) {
       const userDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collName}/${docId}`;
       const userFields = {
         player: { stringValue: playerName },
-        score: { integerValue: numScore.toString() },
+        score: { integerValue: finalScoreToSend.toString() },
         updatedAt: { timestampValue: new Date().toISOString() }
       };
       if (playerAvatar) {
