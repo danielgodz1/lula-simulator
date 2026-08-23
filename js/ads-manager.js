@@ -145,55 +145,15 @@ class AdsManagerService {
     iframe.scrolling = 'no';
     iframe.title = `Ad ${slot.formatType}`;
     iframe.setAttribute('loading', 'lazy');
-    // ISOLAMENTO RIGOROSO: SEM 'allow-same-origin' para impedir qualquer acesso ao DOM/LocalStorage do site
-    iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
 
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-          }
-        </style>
-      </head>
-      <body>
-        <script type="text/javascript">
-          atOptions = {
-            'key' : '${config.key}',
-            'format' : 'iframe',
-            'height' : ${config.height},
-            'width' : ${config.width},
-            'params' : {}
-          };
-        <\/script>
-        <script type="text/javascript" src="${config.scriptUrl}"><\/script>
-      </body>
-      </html>
-    `;
+    // ISOLAMENTO REAL COM SRC DEDICADO:
+    // O documento estático /ad-frame.html roda em seu próprio escopo sem expor variáveis do jogo
+    iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-same-origin');
+
+    // Carrega o documento dedicado via src (com timestamp para cache-busting suave no auto-refresh)
+    iframe.src = `/ad-frame.html?format=${slot.formatType}&v=${Date.now()}`;
 
     slot.element.appendChild(iframe);
-
-    // Injeta conteúdo no iframe
-    try {
-      iframe.srcdoc = htmlContent;
-    } catch (e) {
-      const doc = iframe.contentWindow || iframe.contentDocument;
-      if (doc.document) doc = doc.document;
-      doc.open();
-      doc.write(htmlContent);
-      doc.close();
-    }
-
     slot.lastRender = Date.now();
   }
 
