@@ -11,7 +11,38 @@
 import { CharacterInventory } from './game/characters.js';
 
 export const AD_CONFIG = {
-  REFRESH_INTERVAL_SEC: 50, // Entre 45 e 60 segundos (recomendação Adsterra)
+  REFRESH_INTERVAL_SEC: 50, // Entre 45 e 60 segundos (recomendação de redes de anúncios)
+  
+  // Rede Ativa: 'adsterra' | 'monetag' | 'propellerads'
+  ACTIVE_NETWORK: 'adsterra',
+
+  // Configuração por Rede de Anúncios (fácil alternância caso precise trocar de parceiro)
+  NETWORKS: {
+    adsterra: {
+      nativeBanner: {
+        containerId: 'container-455bffdd2f0b77226264233d844b73cd',
+        scriptUrl: 'https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js'
+      },
+      smartlink: 'https://www.profitableratecpmnetwork.com/ubkm86hdi8?key=0a585a8c0148e62aa70cb535ad809ece'
+    },
+    monetag: {
+      // Modelo alternativo para troca rápida caso desejar
+      nativeBanner: {
+        containerId: 'container-monetag-native',
+        scriptUrl: 'https://alwingulla.com/88/tag.min.js'
+      },
+      smartlink: 'https://alwingulla.com/link?id=monetag_fallback'
+    },
+    propellerads: {
+      // Modelo alternativo para troca rápida
+      nativeBanner: {
+        containerId: 'container-propeller-native',
+        scriptUrl: 'https://propellerads.com/sdk.js'
+      },
+      smartlink: 'https://propellerads.com/link?id=propeller_fallback'
+    }
+  },
+
   SKYSCRAPER_160x600: {
     key: 'dda14d693428bdb35d633d7f7c78c2cd',
     width: 160,
@@ -36,10 +67,12 @@ class AdsManagerService {
     this.registeredSlots = new Map();
     this.refreshTimer = null;
     this.secondsActive = 0;
-    this.isTabActive = !document.hidden;
+    this.isTabActive = typeof document !== 'undefined' ? !document.hidden : true;
     this.isInitialized = false;
 
-    this.bindVisibilityEvents();
+    if (typeof document !== 'undefined') {
+      this.bindVisibilityEvents();
+    }
   }
 
   /**
@@ -232,7 +265,7 @@ class AdsManagerService {
   }
 
   /**
-   * Carrega o Native Banner da Adsterra de forma assíncrona e não-bloqueante
+   * Carrega o Native Banner em um iframe sandboxed isolado para segurança total
    * @param {string} [targetContainerId]
    */
   loadNativeBanner(targetContainerId) {
@@ -241,14 +274,53 @@ class AdsManagerService {
     if (!container || container.dataset.adLoaded) return;
     container.dataset.adLoaded = 'true';
 
+    const activeConfig = AD_CONFIG.NETWORKS[AD_CONFIG.ACTIVE_NETWORK]?.nativeBanner || AD_CONFIG.NATIVE_BANNER;
+    if (!activeConfig || !activeConfig.scriptUrl) return;
+
     try {
-      const script = document.createElement('script');
-      script.async = true;
-      script.setAttribute('data-cfasync', 'false');
-      script.src = AD_CONFIG.NATIVE_BANNER.scriptUrl;
-      container.appendChild(script);
+      container.innerHTML = '';
+
+      const iframe = document.createElement('iframe');
+      iframe.style.width = '100%';
+      iframe.style.maxWidth = '900px';
+      iframe.style.minHeight = '180px';
+      iframe.style.border = 'none';
+      iframe.style.overflow = 'hidden';
+      iframe.style.display = 'block';
+      iframe.style.margin = '0 auto';
+      iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin');
+      iframe.title = 'Publicidade Patrocinada';
+      iframe.setAttribute('loading', 'lazy');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html, body {
+              width: 100%;
+              height: 100%;
+              background: transparent;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="${activeConfig.containerId}"></div>
+          <script async="async" data-cfasync="false" src="${activeConfig.scriptUrl}"><\/script>
+        </body>
+        </html>
+      `;
+
+      container.appendChild(iframe);
+      iframe.srcdoc = htmlContent;
     } catch (e) {
-      console.warn('Falha ao carregar Native Banner:', e);
+      console.warn('Falha ao carregar Native Banner isolado:', e);
     }
   }
 

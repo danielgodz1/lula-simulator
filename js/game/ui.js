@@ -3,6 +3,7 @@ import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/thr
 import { gameAudio } from './audio.js';
 import { RUNNER_CHARACTERS, RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
+import { AdsManager } from '../ads-manager.js';
 
 export class UIManager {
   constructor() {
@@ -638,6 +639,7 @@ export class UIManager {
     }
 
     this.gameOverModal.style.display = 'flex';
+    AdsManager.loadNativeBanner('adBannerGameOverNativeRunner');
 
     if (this.btnRestart) {
       this.btnRestart.onclick = (e) => {
