@@ -264,6 +264,7 @@
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="visitantes.html">🌍 Visitantes</a></li>
       <li><a href="feedback.html">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
@@ -293,6 +294,9 @@
           <a href="correr.html" class="btn-secondary">
             🏃 JOGAR EMPRESÁRIO 3D
           </a>
+          <a href="visitantes.html" class="btn-secondary" style="border-color: #00e676; color: #00e676;">
+            🌍 VER VISITANTES
+          </a>
           <a href="conquistas.html" class="btn-secondary" style="border-color: #38bdf8; color: #38bdf8;">
             🏅 VER CONQUISTAS
           </a>
@@ -315,12 +319,20 @@
   <!-- FEATURES -->
   <section class="features">
     <h2>MODOS DE JOGO & RECURSOS 🎮</h2>
-    <div class="features-grid">
+    <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
       <div class="card" style="text-align: center;">
         <div style="font-size: 48px; margin-bottom: 12px;">🐦</div>
         <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Flappy Lula 2D</h3>
         <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
           Ajude o Lula a voar entre os canos e soltar picanhas. A cada 13 pontos, entre e saia do cenário dinâmico de cadeia com os 171!
+        </p>
+      </div>
+
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🏃</div>
+        <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Empresário 3D Real</h3>
+        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
+          Motor Three.js com iluminação tropical radiante! Fuja do Bolsa Família, Auxílio e Carteira Assinada nos morros do Rio.
         </p>
       </div>
 
@@ -332,11 +344,11 @@
         </p>
       </div>
 
-      <div class="card" style="text-align: center;">
-        <div style="font-size: 48px; margin-bottom: 12px;">🏃</div>
-        <h3 style="font-size: 22px; color: var(--amarelo-brasil); margin-bottom: 10px;">Empresário 3D Real</h3>
+      <div class="card" style="text-align: center; border-color: rgba(0, 230, 118, 0.4);">
+        <div style="font-size: 48px; margin-bottom: 12px;">🌍</div>
+        <h3 style="font-size: 22px; color: var(--verde-neon); margin-bottom: 10px;">Visitantes do Mundo</h3>
         <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
-          Motor Three.js com iluminação tropical radiante! Fuja do Bolsa Família, Auxílio e Carteira Assinada nos morros do Rio.
+          Acompanhe em tempo real as nações que acessam o site, o ranking patriótico e as bandeiras de cada jogador!
         </p>
       </div>
     </div>
@@ -373,6 +385,7 @@
     <p>🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026</p>
   </footer>
 
+  <script src="js/tracker.js"></script>
   <script type="module">
     import { auth } from './js/auth.js';
     import { AdsManager } from './js/ads-manager.js';

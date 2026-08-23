@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitantes do Mundo 🌍 — Lula Simulator</title>
+  <meta name="description" content="Acompanhe em tempo real a quantidade de jogadores e os países que acessam o Lula Simulator pelo mundo!">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="shortcut icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- Estilos Globais -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 90px 20px 60px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .page-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 230, 118, 0.12);
+      border: 1.5px solid var(--verde-neon);
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--verde-neon);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.2);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--verde-neon);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--verde-neon);
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.6; }
+    }
+
+    .page-header h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 56px;
+      letter-spacing: 2.5px;
+      background: linear-gradient(135deg, var(--amarelo-brasil), var(--verde-neon));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+      line-height: 1.1;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* GRID DE CARDS DE ESTATÍSTICAS (KPIs) */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1.5px solid rgba(255, 223, 0, 0.22);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--amarelo-brasil);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .kpi-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-icon {
+      font-size: 24px;
+    }
+
+    .kpi-value {
+      font-family: 'Bangers', cursive;
+      font-size: 42px;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .kpi-value.verde {
+      color: var(--verde-neon);
+    }
+
+    .kpi-value.amarelo {
+      color: var(--amarelo-brasil);
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* BANNER DE DESTAQUE DO PAÍS LÍDER */
+    .top-leader-banner {
+      background: linear-gradient(135deg, rgba(0, 156, 59, 0.25), rgba(255, 223, 0, 0.15));
+      border: 2px solid var(--amarelo-brasil);
+      border-radius: 20px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 28px;
+      box-shadow: 0 0 30px rgba(255, 223, 0, 0.15);
+    }
+
+    .top-banner-icon {
+      font-size: 52px;
+      line-height: 1;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    }
+
+    .top-banner-info h3 {
+      font-family: 'Bangers', cursive;
+      font-size: 26px;
+      color: var(--amarelo-brasil);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .top-banner-info p {
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.4;
+    }
+
+    .top-banner-info strong {
+      color: var(--verde-neon);
+    }
+
+    /* LAYOUT DE 2 COLUNAS: RANKING + FEED AO VIVO */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1.45fr 0.95fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* PAINEL DO RANKING DE PAÍSES */
+    .panel-card {
+      background: var(--bg-card);
+      border: 1.5px solid rgba(255, 255, 255, 0.09);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-family: 'Bangers', cursive;
+      font-size: 28px;
+      color: #ffffff;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-box {
+      position: relative;
+      width: 100%;
+      max-width: 260px;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 10px 14px 10px 36px;
+      color: #fff;
+      font-size: 13.5px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: var(--verde-neon);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* LINHAS DA LISTA DE PAÍSES */
+    .countries-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .countries-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .countries-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
+    }
+
+    .country-row-card {
+      background: rgba(13, 17, 28, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 46px 42px 1fr 110px;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .country-row-card:hover {
+      background: rgba(22, 29, 45, 0.9);
+      border-color: rgba(255, 223, 0, 0.4);
+      transform: translateX(3px);
+    }
+
+    .country-row-card.top-leader {
+      background: rgba(0, 156, 59, 0.12);
+      border-color: rgba(0, 230, 118, 0.35);
+    }
+
+    .country-rank-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .rank-pos {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .rank-badge.gold {
+      background: linear-gradient(135deg, #ffd700, #ffae00);
+      color: #000;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .rank-badge.silver {
+      background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+      color: #000;
+    }
+
+    .rank-badge.bronze {
+      background: linear-gradient(135deg, #f97316, #c2410c);
+      color: #fff;
+    }
+
+    .country-flag-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .country-flag {
+      font-size: 28px;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+    }
+
+    .country-info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .country-name-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .country-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .country-code-pill {
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .country-progress-wrapper {
+      width: 100%;
+      height: 7px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .country-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--verde-neon), var(--amarelo-brasil));
+      border-radius: 999px;
+      transition: width 0.8s ease-out;
+      box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+    }
+
+    .country-stats-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .country-count {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .country-count small {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .country-percent {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amarelo-brasil);
+    }
+
+    /* FEED DE CONEXÕES AO VIVO */
+    .feed-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .feed-item {
+      background: rgba(13, 17, 28, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feed-pulse-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--verde-neon);
+      box-shadow: 0 0 10px var(--verde-neon);
+      flex-shrink: 0;
+    }
+
+    .feed-flag {
+      font-size: 26px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .feed-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .feed-location {
+      font-size: 13.5px;
+      color: #fff;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .feed-location strong {
+      color: var(--amarelo-brasil);
+    }
+
+    .feed-time {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* CONTROLES DE ATUALIZAÇÃO */
+    .controls-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .last-updated-text {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .btn-refresh {
+      background: rgba(255, 223, 0, 0.12);
+      border: 1.5px solid var(--amarelo-brasil);
+      color: var(--amarelo-brasil);
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-refresh:hover {
+      background: var(--amarelo-brasil);
+      color: #000;
+      box-shadow: 0 0 16px rgba(255, 223, 0, 0.4);
+    }
+
+    .btn-refresh.loading span {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    /* RESPONSIVIDADE */
+    @media (max-width: 900px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+      .page-header h1 {
+        font-size: 42px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        padding: 80px 14px 40px;
+      }
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .country-row-card {
+        grid-template-columns: 32px 36px 1fr 85px;
+        padding: 10px 12px;
+        gap: 8px;
+      }
+      .country-flag {
+        font-size: 24px;
+      }
+      .country-name {
+        font-size: 13.5px;
+      }
+      .country-count {
+        font-size: 13.5px;
+      }
+      .top-leader-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
+    <ul class="nav-links" id="navLinksList">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="conquistas.html">🏅 Conquistas</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="visitantes.html" class="active">🌍 Visitantes</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+    <div class="nav-right-group" id="profileBadgeContainer"></div>
+  </nav>
+
+  <!-- PÁGINA PRINCIPAL -->
+  <div class="page">
+
+    <!-- CABEÇALHO -->
+    <div class="page-header">
+      <div class="page-badge-pill">
+        <div class="pulse-dot"></div>
+        <span>Radar Global em Tempo Real</span>
+      </div>
+      <h1>VISITANTES DO MUNDO 🌍</h1>
+      <p>
+        Veja em tempo real de quais partes do planeta os patriotas e jogadores estão acessando o <strong>Lula Simulator</strong>!
+      </p>
+    </div>
+
+    <!-- CARDS DE MÉTRICAS (KPIs) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Total de Acessos</span>
+          <span class="kpi-icon">🚀</span>
+        </div>
+        <div class="kpi-value verde" id="statTotalVisits">--</div>
+        <div class="kpi-sub">Sessões globais registradas</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Países Conectados</span>
+          <span class="kpi-icon">🌐</span>
+        </div>
+        <div class="kpi-value amarelo" id="statTotalCountries">--</div>
+        <div class="kpi-sub">Nações diferentes no mapa</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">País Mais Patriota</span>
+          <span class="kpi-icon" id="statTopCountryFlag">🇧🇷</span>
+        </div>
+        <div class="kpi-value" id="statTopCountryName" style="font-size: 28px; padding-top: 6px;">Brasil</div>
+        <div class="kpi-sub" id="statTopCountryPercent">Líder isolado</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Status da Rede</span>
+          <span class="kpi-icon">⚡</span>
+        </div>
+        <div class="kpi-value verde" style="font-size: 26px; padding-top: 8px;">AO VIVO</div>
+        <div class="kpi-sub">Sincronização Cloud Ativa</div>
+      </div>
+    </div>
+
+    <!-- BANNER DE DESTAQUE DO PAÍS LÍDER -->
+    <div class="top-leader-banner" id="topCountryBanner">
+      <div class="top-banner-icon">🇧🇷</div>
+      <div class="top-banner-info">
+        <h3>O Brasil lidera a comunidade patriótica!</h3>
+        <p>A imensa maioria dos jogadores acessa diretamente de terras tupiniquins com orgulho e picanha!</p>
+      </div>
+    </div>
+
+    <!-- LAYOUT DO PAINEL PRINCIPAL -->
+    <div class="dashboard-layout">
+
+      <!-- COLUNA 1: RANKING DETALHADO DE PAÍSES -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🏆 Ranking por Países</span>
+          </div>
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="countrySearchInput" placeholder="Buscar país ou código..." autocomplete="off">
+          </div>
+        </div>
+
+        <div class="countries-list" id="countriesRankingList">
+          <div class="empty-state">
+            <p>Carregando mapa de nações... 🇧🇷</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUNA 2: RADAR AO VIVO / ÚLTIMOS ACESSOS -->
+      <div class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>⚡ Radar de Acessos</span>
+          </div>
+        </div>
+
+        <div class="feed-container" id="recentVisitsList">
+          <div class="empty-state">
+            <p>Sintonizando conexões... 📡</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RODAPÉ DE CONTROLES -->
+    <div class="controls-footer">
+      <div class="last-updated-text" id="lastUpdatedText">
+        Atualizando automaticamente a cada 25 segundos...
+      </div>
+      <button class="btn-refresh" id="refreshBtn">
+        <span>🔄</span> Atualizar Agora
+      </button>
+    </div>
+
+  </div>
+
+  <!-- SCRIPTS -->
+  <script type="module">
+    import { auth } from './js/auth.js';
+    auth.renderProfileBadge('#profileBadgeContainer');
+  </script>
+  <script src="js/tracker.js"></script>
+  <script src="js/analytics-view.js"></script>
+  <script type="module">
+    import { AdsManager } from './js/ads-manager.js';
+    AdsManager.init();
+  </script>
+
+</body>
+</html>
