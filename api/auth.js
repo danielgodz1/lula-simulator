@@ -1,7 +1,7 @@
 // api/auth.js — Autenticação Segura com Bcrypt, Rate Limiting (5 tentativas / 10 min -> Bloqueio 15 min), Migração Automática e CORS Restrito
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import admin, { db } from './_firebaseAdmin.js';
+import admin, { db, hasAdminCredentials } from './_firebaseAdmin.js';
 import { applyCors } from './_cors.js';
 
 // Memória local volátil para fast-path no mesmo container serverless
@@ -61,20 +61,22 @@ const RateLimiter = {
       }
     }
 
-    // 3. Fallback persistente no Firestore
-    try {
-      const limitRef = db.collection('_auth_rate_limits').doc(key);
-      const snap = await limitRef.get();
-      if (snap.exists) {
-        const data = snap.data();
-        if (data.blockedUntil && data.blockedUntil.toMillis() > now) {
-          const remainingSec = Math.ceil((data.blockedUntil.toMillis() - now) / 1000);
-          memoryRateLimits.set(key, { blockedUntil: data.blockedUntil.toMillis() });
-          return { blocked: true, remainingSec };
+    // 3. Fallback persistente no Firestore (somente se admin credentials existirem)
+    if (hasAdminCredentials) {
+      try {
+        const limitRef = db.collection('_auth_rate_limits').doc(key);
+        const snap = await limitRef.get();
+        if (snap.exists) {
+          const data = snap.data();
+          if (data.blockedUntil && data.blockedUntil.toMillis() > now) {
+            const remainingSec = Math.ceil((data.blockedUntil.toMillis() - now) / 1000);
+            memoryRateLimits.set(key, { blockedUntil: data.blockedUntil.toMillis() });
+            return { blocked: true, remainingSec };
+          }
         }
+      } catch (err) {
+        // Falha não-bloqueante no Firestore
       }
-    } catch (err) {
-      // Falha não-bloqueante no Firestore
     }
 
     return { blocked: false, remainingSec: 0 };
@@ -132,34 +134,36 @@ const RateLimiter = {
     }
 
     // 3. Fallback no Firestore
-    try {
-      const limitRef = db.collection('_auth_rate_limits').doc(key);
-      const snap = await limitRef.get();
-      let currentCount = 1;
-      let firstAttemptTime = admin.firestore.Timestamp.now();
+    if (hasAdminCredentials) {
+      try {
+        const limitRef = db.collection('_auth_rate_limits').doc(key);
+        const snap = await limitRef.get();
+        let currentCount = 1;
+        let firstAttemptTime = admin.firestore.Timestamp.now();
 
-      if (snap.exists) {
-        const data = snap.data();
-        const diffMs = now - (data.firstAttempt ? data.firstAttempt.toMillis() : now);
-        if (diffMs < WINDOW_MS) {
-          currentCount = (data.count || 0) + 1;
-          firstAttemptTime = data.firstAttempt;
+        if (snap.exists) {
+          const data = snap.data();
+          const diffMs = now - (data.firstAttempt ? data.firstAttempt.toMillis() : now);
+          if (diffMs < WINDOW_MS) {
+            currentCount = (data.count || 0) + 1;
+            firstAttemptTime = data.firstAttempt;
+          }
         }
+
+        const updatePayload = {
+          count: currentCount,
+          firstAttempt: firstAttemptTime,
+          lastAttempt: admin.firestore.Timestamp.now()
+        };
+
+        if (currentCount >= MAX_ATTEMPTS) {
+          updatePayload.blockedUntil = admin.firestore.Timestamp.fromMillis(now + BLOCK_MS);
+        }
+
+        await limitRef.set(updatePayload, { merge: true });
+      } catch (err) {
+        console.warn('⚠️ Falha ao gravar rate limit no Firestore:', err.message);
       }
-
-      const updatePayload = {
-        count: currentCount,
-        firstAttempt: firstAttemptTime,
-        lastAttempt: admin.firestore.Timestamp.now()
-      };
-
-      if (currentCount >= MAX_ATTEMPTS) {
-        updatePayload.blockedUntil = admin.firestore.Timestamp.fromMillis(now + BLOCK_MS);
-      }
-
-      await limitRef.set(updatePayload, { merge: true });
-    } catch (err) {
-      console.warn('⚠️ Falha ao gravar rate limit no Firestore:', err.message);
     }
   },
 
@@ -177,9 +181,11 @@ const RateLimiter = {
       } catch (e) {}
     }
 
-    try {
-      await db.collection('_auth_rate_limits').doc(key).delete();
-    } catch (err) {}
+    if (hasAdminCredentials) {
+      try {
+        await db.collection('_auth_rate_limits').doc(key).delete();
+      } catch (err) {}
+    }
   }
 };
 
@@ -221,8 +227,46 @@ export default async function handler(req, res) {
       });
     }
 
-    const userRef = db.collection('lula_users_v2').doc(normalizedName);
-    const credRef = userRef.collection('private').doc('credentials');
+    const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
+    const userRef = db ? db.collection('lula_users_v2').doc(normalizedName) : null;
+    const credRef = userRef ? userRef.collection('private').doc('credentials') : null;
+
+    const fetchUserData = async () => {
+      let userData = null;
+      let credData = null;
+      let userExists = false;
+      let credExists = false;
+
+      if (hasAdminCredentials && userRef && credRef) {
+        const [userSnap, credSnap] = await Promise.all([
+          userRef.get(),
+          credRef.get()
+        ]);
+        if (userSnap.exists) { userExists = true; userData = userSnap.data(); }
+        if (credSnap.exists) { credExists = true; credData = credSnap.data(); }
+      } else {
+        try {
+          const uRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_users_v2/${normalizedName}`);
+          if (uRes.ok) {
+            userExists = true;
+            const doc = await uRes.json();
+            userData = {
+              username: doc.fields?.username?.stringValue || cleanName,
+              hasPassword: Boolean(doc.fields?.hasPassword?.booleanValue),
+              passwordHash: doc.fields?.passwordHash?.stringValue || '',
+              totalPicanhas: parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10),
+              flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
+              runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
+              dilmaScore: parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10),
+              runnerCoins: parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10),
+              avatar: doc.fields?.avatar?.stringValue || ''
+            };
+          }
+        } catch (e) {}
+      }
+
+      return { userData, credData, userExists, credExists };
+    };
 
     // =========================================================================
     // 1. REGISTRO SEGURO COM BCRYPT E PROTEÇÃO ANTI-SOBREPOSIÇÃO
@@ -237,16 +281,13 @@ export default async function handler(req, res) {
       }
 
       try {
-        const [userSnap, credSnap] = await Promise.all([
-          userRef.get(),
-          credRef.get()
-        ]);
+        const { userData, credData, userExists, credExists } = await fetchUserData();
 
-        const hasCredsInSubcollection = credSnap.exists;
-        const hasLegacyPasswordInMainDoc = userSnap.exists && (
-          userSnap.data()?.hasPassword === true ||
-          !!userSnap.data()?.passwordHash ||
-          !!userSnap.data()?.password
+        const hasCredsInSubcollection = credExists;
+        const hasLegacyPasswordInMainDoc = userExists && (
+          userData?.hasPassword === true ||
+          !!userData?.passwordHash ||
+          !!userData?.password
         );
 
         if (hasCredsInSubcollection || hasLegacyPasswordInMainDoc) {
@@ -260,47 +301,27 @@ export default async function handler(req, res) {
         // Gera hash Bcrypt com fator de custo 10
         const bcryptHash = await bcrypt.hash(cleanPass, 10);
 
-        const batch = db.batch();
+        if (hasAdminCredentials && userRef && credRef) {
+          const batch = db.batch();
 
-        // 1. Salva credenciais criptografadas na subcoleção privada
-        batch.set(credRef, {
-          passwordHash: bcryptHash,
-          hasPassword: true,
-          authType: 'bcrypt',
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+          batch.set(credRef, {
+            passwordHash: bcryptHash,
+            hasPassword: true,
+            authType: 'bcrypt',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
 
-        // 2. Grava/mescla perfil público sem nenhum hash ou salt
-        const existingData = userSnap.exists ? userSnap.data() : {};
-        const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
-        const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
-        const safeRunner = Math.max(existingData.runnerScore || 0, parseInt(req.body.runnerScore || 0, 10));
-        const safeDilma = Math.max(existingData.dilmaScore || 0, parseInt(req.body.dilmaScore || 0, 10));
-        const safeRunnerCoins = Math.max(existingData.runnerCoins || 0, parseInt(req.body.runnerCoins || 0, 10));
-        const safeAvatar = typeof req.body.avatar === 'string' && req.body.avatar.length <= 25000 ? req.body.avatar : (existingData.avatar || '');
-        const safeUnlocked = Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : (existingData.unlockedCharacters || []);
+          const existingData = userData || {};
+          const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
+          const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
+          const safeRunner = Math.max(existingData.runnerScore || 0, parseInt(req.body.runnerScore || 0, 10));
+          const safeDilma = Math.max(existingData.dilmaScore || 0, parseInt(req.body.dilmaScore || 0, 10));
+          const safeRunnerCoins = Math.max(existingData.runnerCoins || 0, parseInt(req.body.runnerCoins || 0, 10));
+          const safeAvatar = typeof req.body.avatar === 'string' && req.body.avatar.length <= 25000 ? req.body.avatar : (existingData.avatar || '');
+          const safeUnlocked = Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : (existingData.unlockedCharacters || []);
 
-        batch.set(userRef, {
-          username: cleanName,
-          hasPassword: true,
-          totalPicanhas: safeTotalPicanhas,
-          flappyScore: safeFlappy,
-          runnerScore: safeRunner,
-          dilmaScore: safeDilma,
-          runnerCoins: safeRunnerCoins,
-          avatar: safeAvatar,
-          unlockedCharacters: safeUnlocked,
-          createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        await batch.commit();
-        await RateLimiter.clearRateLimit(rateLimitKey);
-
-        return res.status(200).json({
-          success: true,
-          user: {
+          batch.set(userRef, {
             username: cleanName,
             hasPassword: true,
             totalPicanhas: safeTotalPicanhas,
@@ -309,7 +330,28 @@ export default async function handler(req, res) {
             dilmaScore: safeDilma,
             runnerCoins: safeRunnerCoins,
             avatar: safeAvatar,
-            unlockedCharacters: safeUnlocked
+            unlockedCharacters: safeUnlocked,
+            createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+
+          await batch.commit();
+        }
+
+        await RateLimiter.clearRateLimit(rateLimitKey);
+
+        return res.status(200).json({
+          success: true,
+          user: {
+            username: cleanName,
+            hasPassword: true,
+            totalPicanhas: parseInt(req.body.totalPicanhas || 0, 10),
+            flappyScore: parseInt(req.body.flappyScore || 0, 10),
+            runnerScore: parseInt(req.body.runnerScore || 0, 10),
+            dilmaScore: parseInt(req.body.dilmaScore || 0, 10),
+            runnerCoins: parseInt(req.body.runnerCoins || 0, 10),
+            avatar: req.body.avatar || '',
+            unlockedCharacters: Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : []
           }
         });
       } catch (err) {
@@ -327,18 +369,12 @@ export default async function handler(req, res) {
       }
 
       try {
-        const [userSnap, credSnap] = await Promise.all([
-          userRef.get(),
-          credRef.get()
-        ]);
+        const { userData, credData, userExists, credExists } = await fetchUserData();
 
-        if (!userSnap.exists && !credSnap.exists) {
+        if (!userExists && !credExists) {
           await RateLimiter.recordFailedAttempt(rateLimitKey);
           return res.status(404).json({ success: false, error: 'Usuário não encontrado.' });
         }
-
-        const userData = userSnap.exists ? userSnap.data() : null;
-        const credData = credSnap.exists ? credSnap.data() : null;
 
         const hasAnyPassword = credData?.hasPassword || userData?.hasPassword || userData?.passwordHash || userData?.password;
         if (!hasAnyPassword) {

@@ -36,5 +36,6 @@ if (!admin.apps.length) {
   }
 }
 
+export const hasAdminCredentials = Boolean(clientEmail && privateKey);
 export const db = admin.firestore();
 export default admin;
