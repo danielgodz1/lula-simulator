@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /backups/
+
+Sitemap: https://lula-simulator.vercel.app/sitemap.xml
