@@ -17,11 +17,13 @@ const inMemoryLeaderboardCache = {
 // 2. SALVAR RECORDE MÁXIMO DO JOGADOR COM SINCRONIZAÇÃO RESILIENTE
 export async function savePlayerScore(gameType, score) {
   let playerName = 'Jogador';
+  let playerAvatar = '';
   try {
     const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
     if (rawUser) {
       const u = JSON.parse(rawUser);
       if (u && u.username) playerName = u.username;
+      if (u && u.avatar) playerAvatar = u.avatar;
     }
   } catch (e) {}
 
@@ -45,14 +47,9 @@ export async function savePlayerScore(gameType, score) {
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
   const lastSynced = parseInt(localStorage.getItem(syncedKey) || '0', 10);
 
-  // Se o score for menor que o recorde pessoal E já foi sincronizado, não precisa gravar
+  // Se o score for menor que o recorde pessoal E já foi sincronizado e o avatar não mudou
   if (numScore < currentBest && lastSynced >= currentBest) {
     return { saved: false, reason: 'score_not_improved' };
-  }
-
-  // Se esta mesma pontuação já foi sincronizada anteriormente com sucesso
-  if (numScore <= lastSynced && lastSynced > 0) {
-    return { saved: false, reason: 'score_already_synced' };
   }
 
   // Atualiza o recorde localmente
@@ -74,11 +71,11 @@ export async function savePlayerScore(gameType, score) {
     const pKey = playerName.toLowerCase();
     const exIdx = list.findIndex(item => (item.player || '').toLowerCase() === pKey);
     if (exIdx !== -1) {
-      if (numScore > list[exIdx].score) {
-        list[exIdx] = { player: playerName, score: numScore, updatedAt: new Date().toISOString() };
+      if (numScore >= list[exIdx].score) {
+        list[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || list[exIdx].avatar || '', updatedAt: new Date().toISOString() };
       }
     } else {
-      list.push({ player: playerName, score: numScore, updatedAt: new Date().toISOString() });
+      list.push({ player: playerName, score: numScore, avatar: playerAvatar || '', updatedAt: new Date().toISOString() });
     }
     list.sort((a, b) => b.score - a.score);
     const updatedList = list.slice(0, 300);
@@ -94,7 +91,7 @@ export async function savePlayerScore(gameType, score) {
     const res = await fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player: playerName, score: numScore, game: gameKey })
+      body: JSON.stringify({ player: playerName, score: numScore, game: gameKey, avatar: playerAvatar })
     });
     if (res.ok) {
       savedOk = true;
@@ -111,16 +108,19 @@ export async function savePlayerScore(gameType, score) {
 
       // Grava doc individual
       const userDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collName}/${docId}`;
+      const userFields = {
+        player: { stringValue: playerName },
+        score: { integerValue: numScore.toString() },
+        updatedAt: { timestampValue: new Date().toISOString() }
+      };
+      if (playerAvatar) {
+        userFields.avatar = { stringValue: playerAvatar };
+      }
+
       await fetch(userDocUrl, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            player: { stringValue: playerName },
-            score: { integerValue: numScore.toString() },
-            updatedAt: { timestampValue: new Date().toISOString() }
-          }
-        })
+        body: JSON.stringify({ fields: userFields })
       });
 
       // Atualiza documento consolidado
@@ -133,6 +133,7 @@ export async function savePlayerScore(gameType, score) {
         scoresArr = rawVals.map(v => ({
           player: (v.mapValue?.fields?.player?.stringValue || 'Anônimo').replace(/<[^>]*>?/gm, '').trim(),
           score: parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10),
+          avatar: v.mapValue?.fields?.avatar?.stringValue || '',
           updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
         })).filter(s => !isNaN(s.score) && s.score > 0);
       }
@@ -140,11 +141,11 @@ export async function savePlayerScore(gameType, score) {
       const pKey = playerName.toLowerCase();
       const exIdx = scoresArr.findIndex(s => (s.player || '').toLowerCase() === pKey);
       if (exIdx !== -1) {
-        if (numScore > scoresArr[exIdx].score) {
-          scoresArr[exIdx] = { player: playerName, score: numScore, updatedAt: new Date().toISOString() };
+        if (numScore >= scoresArr[exIdx].score) {
+          scoresArr[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || scoresArr[exIdx].avatar || '', updatedAt: new Date().toISOString() };
         }
       } else {
-        scoresArr.push({ player: playerName, score: numScore, updatedAt: new Date().toISOString() });
+        scoresArr.push({ player: playerName, score: numScore, avatar: playerAvatar || '', updatedAt: new Date().toISOString() });
       }
       scoresArr.sort((a, b) => b.score - a.score);
       const top300 = scoresArr.slice(0, 300);
@@ -158,15 +159,15 @@ export async function savePlayerScore(gameType, score) {
             updatedAt: { timestampValue: new Date().toISOString() },
             scores: {
               arrayValue: {
-                values: top300.map(s => ({
-                  mapValue: {
-                    fields: {
-                      player: { stringValue: s.player },
-                      score: { integerValue: s.score.toString() },
-                      updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
-                    }
-                  }
-                }))
+                values: top300.map(s => {
+                  const f = {
+                    player: { stringValue: s.player },
+                    score: { integerValue: s.score.toString() },
+                    updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
+                  };
+                  if (s.avatar) f.avatar = { stringValue: s.avatar };
+                  return { mapValue: { fields: f } };
+                })
               }
             }
           }
@@ -241,6 +242,7 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
       const scores = rawValues.map(v => ({
         player: (v.mapValue?.fields?.player?.stringValue || 'Anônimo').replace(/<[^>]*>?/gm, '').trim(),
         score: parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10),
+        avatar: v.mapValue?.fields?.avatar?.stringValue || '',
         updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
       })).filter(s => !isNaN(s.score) && s.score > 0);
 

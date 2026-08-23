@@ -150,9 +150,10 @@
 
     .ranking-row {
       display: grid;
-      grid-template-columns: 50px 1fr 140px;
+      grid-template-columns: 46px 42px 1fr 130px;
       align-items: center;
-      padding: 12px 18px;
+      gap: 10px;
+      padding: 10px 16px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       transition: background 0.15s ease;
     }
@@ -163,6 +164,18 @@
 
     .ranking-row:last-child {
       border-bottom: none;
+    }
+
+    .ranking-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid var(--amarelo-brasil);
+      background: #1e293b;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      flex-shrink: 0;
+      display: block;
     }
 
     .rank-badge {
@@ -187,8 +200,13 @@
 
     @media (max-width: 600px) {
       .ranking-row {
-        grid-template-columns: 36px 1fr 100px;
-        padding: 10px 12px;
+        grid-template-columns: 34px 34px 1fr 95px;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+      .ranking-avatar {
+        width: 32px;
+        height: 32px;
       }
       .score-val {
         font-size: 11px;
@@ -221,7 +239,7 @@
   <div class="page">
     <div class="page-header">
       <h1>🏆 RANKING NACIONAL</h1>
-      <p>Confira a lista completa de todos os jogadores classificados!</p>
+      <p>Confira a lista completa de todos os jogadores classificados com foto de perfil!</p>
     </div>
 
     <!-- SEÇÃO DO APELIDO DO JOGADOR -->
@@ -259,7 +277,7 @@
 
   <script type="module">
     import { getTopScores } from './js/firebase-config.js';
-    import { auth } from './js/auth.js';
+    import { auth, DEFAULT_AVATAR_SVG } from './js/auth.js';
     import { escapeHTML } from './js/security.js';
 
     auth.renderProfileBadge('nav');
@@ -316,7 +334,7 @@
         if (u) {
           const val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
           if (val > 0) {
-            allCurrentScores = [{ player: u.username, score: val }];
+            allCurrentScores = [{ player: u.username, score: val, avatar: u.avatar || '' }];
           }
         }
       }
@@ -357,16 +375,16 @@
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `${rankIdx + 1}º`;
         const safePlayer = escapeHTML(item.player || 'Anônimo');
         const safeScore = parseInt(item.score || 0, 10);
+        const avatarUrl = item.avatar && item.avatar.length > 5 ? item.avatar : DEFAULT_AVATAR_SVG;
 
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
-          <div style="font-weight:700; font-size:15px; color:#fff;">👤 ${safePlayer}</div>
+          <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy"></div>
+          <div style="font-weight:700; font-size:15px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</div>
           <div class="score-val">${safeScore} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
         container.appendChild(row);
       });
-    }
-
     document.getElementById('searchRankingInput').addEventListener('input', renderFilteredScores);
 
     loadRankingData();

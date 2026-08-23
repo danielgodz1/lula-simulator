@@ -94,6 +94,8 @@ export default async function handler(req, res) {
         const safeRunner = Math.max(existingData.runnerScore || 0, parseInt(req.body.runnerScore || 0, 10));
         const safeDilma = Math.max(existingData.dilmaScore || 0, parseInt(req.body.dilmaScore || 0, 10));
         const safeRunnerCoins = Math.max(existingData.runnerCoins || 0, parseInt(req.body.runnerCoins || 0, 10));
+        const safeAvatar = typeof req.body.avatar === 'string' && req.body.avatar.length <= 25000 ? req.body.avatar : (existingData.avatar || '');
+        const safeUnlocked = Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : (existingData.unlockedCharacters || []);
 
         batch.set(userRef, {
           username: cleanName,
@@ -103,6 +105,8 @@ export default async function handler(req, res) {
           runnerScore: safeRunner,
           dilmaScore: safeDilma,
           runnerCoins: safeRunnerCoins,
+          avatar: safeAvatar,
+          unlockedCharacters: safeUnlocked,
           createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
@@ -118,7 +122,9 @@ export default async function handler(req, res) {
             flappyScore: safeFlappy,
             runnerScore: safeRunner,
             dilmaScore: safeDilma,
-            runnerCoins: safeRunnerCoins
+            runnerCoins: safeRunnerCoins,
+            avatar: safeAvatar,
+            unlockedCharacters: safeUnlocked
           }
         });
       } catch (err) {
@@ -254,7 +260,9 @@ export default async function handler(req, res) {
             flappyScore: userData?.flappyScore || 0,
             runnerScore: userData?.runnerScore || 0,
             dilmaScore: userData?.dilmaScore || 0,
-            runnerCoins: userData?.runnerCoins || 0
+            runnerCoins: userData?.runnerCoins || 0,
+            avatar: userData?.avatar || '',
+            unlockedCharacters: Array.isArray(userData?.unlockedCharacters) ? userData.unlockedCharacters : []
           }
         });
       } catch (err) {

@@ -199,21 +199,39 @@ export class CharacterInventory {
   static async syncDilmaScoreToCloud(score) {
     try {
       let playerName = '';
+      let curUser = null;
       const rawUser = localStorage.getItem('lula_current_user_v2');
       if (rawUser) {
-        const u = JSON.parse(rawUser);
-        if (u && u.username) playerName = u.username;
+        curUser = JSON.parse(rawUser);
+        if (curUser && curUser.username) playerName = curUser.username;
       }
       if (!playerName) {
         playerName = localStorage.getItem('lula_player') || '';
       }
       if (!playerName) return;
 
+      // 1. Tenta sincronizar via API serverless
+      try {
+        const syncRes = await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: playerName,
+            dilmaScore: score,
+            totalPicanhas: this.getTotalPicanhas(),
+            avatar: curUser?.avatar || ''
+          })
+        });
+        if (syncRes.ok) return;
+      } catch (e) {}
+
+      // 2. Fallback direto ao Firestore com username incluído
       const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
+      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=username&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
       
       const payload = {
         fields: {
+          username: { stringValue: playerName },
           dilmaScore: { integerValue: score.toString() },
           lastSync: { timestampValue: new Date().toISOString() }
         }
@@ -230,22 +248,41 @@ export class CharacterInventory {
   static async syncPicanhasToCloud(total) {
     try {
       let playerName = '';
+      let curUser = null;
       const rawUser = localStorage.getItem('lula_current_user_v2');
       if (rawUser) {
-        const u = JSON.parse(rawUser);
-        if (u && u.username) playerName = u.username;
+        curUser = JSON.parse(rawUser);
+        if (curUser && curUser.username) playerName = curUser.username;
       }
       if (!playerName) {
         playerName = localStorage.getItem('lula_player') || '';
       }
       if (!playerName) return;
 
-      const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
       const dilmaBest = this.getDilmaBest();
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
+
+      // 1. Tenta sincronizar via API serverless
+      try {
+        const syncRes = await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: playerName,
+            totalPicanhas: total,
+            dilmaScore: dilmaBest,
+            avatar: curUser?.avatar || ''
+          })
+        });
+        if (syncRes.ok) return;
+      } catch (e) {}
+
+      // 2. Fallback direto ao Firestore
+      const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=username&updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
       
       const payload = {
         fields: {
+          username: { stringValue: playerName },
           totalPicanhas: { integerValue: total.toString() },
           dilmaScore: { integerValue: dilmaBest.toString() },
           lastSync: { timestampValue: new Date().toISOString() }
@@ -266,9 +303,23 @@ export class CharacterInventory {
 
     // Desbloqueio Especial do Pablo Marçal
     if (char.id === 'marcal') {
+      let isExplicitlyUnlocked = false;
+      try {
+        const rawUser = localStorage.getItem('lula_current_user_v2');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (Array.isArray(u?.unlockedCharacters) && u.unlockedCharacters.includes('marcal')) {
+            isExplicitlyUnlocked = true;
+          }
+          if (parseInt(u?.dilmaScore || '0', 10) >= 200) {
+            isExplicitlyUnlocked = true;
+          }
+        }
+      } catch (e) {}
+
       const isDilmaUnlocked = this.isUnlocked('dilma');
-      const dilmaBest = this.getDilmaBest();
-      return isDilmaUnlocked && dilmaBest >= 200;
+      const dilmaBest = Math.max(this.getDilmaBest(), parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10));
+      return isExplicitlyUnlocked || (isDilmaUnlocked && dilmaBest >= 200);
     }
 
     return this.getTotalPicanhas() >= char.requiredPicanhas;

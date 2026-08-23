@@ -1,10 +1,24 @@
-// js/auth.js — Sistema de Contas, Nomes de Jogador Personalizados e Persistência Cloud de Recordes e Picanhas
+// js/auth.js — Sistema de Contas, Perfis com Foto/Avatar Otimizado, Sincronização Cloud de Pablo Marçal e Recordes
 import { firebaseConfig } from './firebase-config.js';
 import { escapeHTML } from './security.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
+
+// Avatar padrão elegante em SVG Data URL (Zero requisições de rede, 100% offline-ready)
+export const DEFAULT_AVATAR_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231e293b'/%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23ffdf00' stroke-width='3'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2394a3b8'/%3E%3Cpath d='M20 86c0-16.5 13.5-30 30-30s30 13.5 30 30' fill='%2394a3b8'/%3E%3C/svg%3E";
+
+export const PRESET_AVATARS = [
+  { id: 'lula', name: 'Lula', src: 'img/lula.png' },
+  { id: 'marcal', name: 'Marçal', src: 'img/marcal.png' },
+  { id: 'dilma', name: 'Dilma', src: 'img/dilma.png' },
+  { id: 'empresario', name: 'Empresário', src: 'img/favela.png' },
+  { id: 'bolsonaro', name: 'Capitão', src: 'img/bolsonaro.png' },
+  { id: 'moraes', name: 'Xandão', src: 'img/moraes.png' },
+  { id: 'nikolas', name: 'Nikolas', src: 'img/nikolas.png' },
+  { id: 'janja', name: 'Janja', src: 'img/janja.png' }
+];
 
 class AuthManager {
   constructor() {
@@ -41,11 +55,146 @@ class AuthManager {
     localStorage.setItem(USERS_DB_KEY, JSON.stringify(db));
   }
 
+  // -------------------------------------------------------------
+  // COMPRESSÃO ULTRA-LEVE DE IMAGEM NO CLIENTE VIA CANVAS (MAX 100x100px ~3KB-6KB)
+  // -------------------------------------------------------------
+  static compressImageToAvatar(fileOrDataUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const size = 100;
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+
+          // Recorte 1:1 centralizado
+          const minDim = Math.min(img.width, img.height);
+          const sx = (img.width - minDim) / 2;
+          const sy = (img.height - minDim) / 2;
+
+          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+          let base64 = canvas.toDataURL('image/webp', 0.8);
+          if (!base64.startsWith('data:image/webp')) {
+            base64 = canvas.toDataURL('image/jpeg', 0.8);
+          }
+          resolve(base64);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.onerror = () => reject(new Error('Falha ao carregar imagem'));
+
+      if (typeof fileOrDataUrl === 'string') {
+        img.src = fileOrDataUrl;
+      } else if (fileOrDataUrl instanceof Blob || fileOrDataUrl instanceof File) {
+        const reader = new FileReader();
+        reader.onload = (e) => { img.src = e.target.result; };
+        reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+        reader.readAsDataURL(fileOrDataUrl);
+      } else {
+        reject(new Error('Formato inválido'));
+      }
+    });
+  }
+
+  // -------------------------------------------------------------
+  // ATUALIZAR E SINCRONIZAR FOTO DE PERFIL DO USUÁRIO
+  // -------------------------------------------------------------
+  async updateUserAvatar(avatarData) {
+    if (!this.currentUser) return { success: false, error: 'Faça login para salvar a foto!' };
+
+    let finalAvatar = avatarData;
+    if (avatarData && (avatarData.startsWith('data:image/') || avatarData instanceof File || avatarData instanceof Blob)) {
+      try {
+        finalAvatar = await AuthManager.compressImageToAvatar(avatarData);
+      } catch (e) {
+        console.warn('Fallback no processamento de imagem:', e);
+      }
+    }
+
+    this.currentUser.avatar = finalAvatar;
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
+
+    const localDB = this.getLocalUsersDB();
+    const norm = this.currentUser.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (localDB[norm]) {
+      localDB[norm].avatar = finalAvatar;
+      this.saveLocalUsersDB(localDB);
+    }
+
+    const syncRes = await this.syncUserDataNow();
+    return { success: true, avatar: finalAvatar, syncRes };
+  }
+
+  // -------------------------------------------------------------
   // SINCRONIZAÇÃO EM SEGUNDO PLANO COM O FIRESTORE (CLOUD)
+  // -------------------------------------------------------------
   async syncFromCloud() {
     if (!this.currentUser || !this.currentUser.username) return;
-    const normalizedName = this.currentUser.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    
+    return await this.syncUserDataNow();
+  }
+
+  // -------------------------------------------------------------
+  // SINCRONIZAÇÃO FORÇADA IMEDIATA DOS DADOS LOCAIS COM A NUVEM
+  // -------------------------------------------------------------
+  async syncUserDataNow() {
+    if (!this.currentUser || !this.currentUser.username) {
+      return { success: false, error: 'Nenhum usuário conectado.' };
+    }
+
+    const username = this.currentUser.username;
+    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+    const localAvatar = this.currentUser.avatar || '';
+
+    // Extrai personagens desbloqueados
+    const localUnlocked = [];
+    if (localDilma >= 200) localUnlocked.push('marcal');
+    try {
+      const runnerUnlocks = JSON.parse(localStorage.getItem('runner_unlocked_characters') || '[]');
+      if (Array.isArray(runnerUnlocks)) localUnlocked.push(...runnerUnlocks);
+    } catch(e) {}
+
+    // 1. Tenta sincronizar via API Serverless Segura
+    try {
+      const apiRes = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          flappyScore: Math.max(localFlappy, this.currentUser.flappyScore || 0),
+          runnerScore: Math.max(localRunner, this.currentUser.runnerScore || 0),
+          dilmaScore: Math.max(localDilma, this.currentUser.dilmaScore || 0),
+          totalPicanhas: Math.max(localPicanhas, this.currentUser.totalPicanhas || 0),
+          runnerCoins: Math.max(localRunnerCoins, this.currentUser.runnerCoins || 0),
+          unlockedCharacters: localUnlocked,
+          avatar: localAvatar
+        })
+      });
+
+      if (apiRes.ok) {
+        const data = await apiRes.json();
+        if (data.success && data.user) {
+          this.setCurrentUser(data.user);
+          return {
+            success: true,
+            user: data.user,
+            isMarcalUnlocked: (data.user.dilmaScore >= 200 || (data.user.unlockedCharacters && data.user.unlockedCharacters.includes('marcal')))
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Tentando fallback Firestore para sincronização:', err);
+    }
+
+    // 2. Fallback direto ao Firestore com username incluído
+    const normalizedName = username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
     try {
       const checkUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
       const res = await fetch(checkUrl);
@@ -56,90 +205,62 @@ class AuthManager {
         const cloudRunner = parseInt(doc.fields?.runnerScore?.integerValue || '0', 10);
         const cloudDilma = parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10);
         const cloudRunnerCoins = parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10);
-
-        const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
-        const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
-        const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
-        const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
-        const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+        const cloudAvatar = doc.fields?.avatar?.stringValue || '';
 
         const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas, this.currentUser.totalPicanhas || 0);
         const mergedFlappy = Math.max(localFlappy, cloudFlappy, this.currentUser.flappyScore || 0);
         const mergedRunner = Math.max(localRunner, cloudRunner, this.currentUser.runnerScore || 0);
         const mergedDilma = Math.max(localDilma, cloudDilma, this.currentUser.dilmaScore || 0);
         const mergedRunnerCoins = Math.max(localRunnerCoins, cloudRunnerCoins, this.currentUser.runnerCoins || 0);
+        const mergedAvatar = localAvatar || cloudAvatar || '';
 
-        this.currentUser.totalPicanhas = mergedPicanhas;
-        this.currentUser.flappyScore = mergedFlappy;
-        this.currentUser.runnerScore = mergedRunner;
-        this.currentUser.dilmaScore = mergedDilma;
-        this.currentUser.runnerCoins = mergedRunnerCoins;
+        const mergedUser = {
+          ...this.currentUser,
+          username,
+          totalPicanhas: mergedPicanhas,
+          flappyScore: mergedFlappy,
+          runnerScore: mergedRunner,
+          dilmaScore: mergedDilma,
+          runnerCoins: mergedRunnerCoins,
+          avatar: mergedAvatar
+        };
 
-        localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
-        localStorage.setItem(TOTAL_PICANHAS_KEY, mergedPicanhas.toString());
-        localStorage.setItem('lula_best', mergedFlappy.toString());
-        localStorage.setItem('run_best', mergedRunner.toString());
-        localStorage.setItem('flappy_dilma_record_score', mergedDilma.toString());
-        localStorage.setItem('runner_total_coins', mergedRunnerCoins.toString());
+        this.setCurrentUser(mergedUser);
 
-        // Se o local tinha mais que a nuvem, atualiza a nuvem imediatamente
-        if (localPicanhas > cloudPicanhas || localFlappy > cloudFlappy || localRunner > cloudRunner || localDilma > cloudDilma || localRunnerCoins > cloudRunnerCoins) {
-          const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=lastSync`;
-          const patchPayload = {
-            fields: {
-              totalPicanhas: { integerValue: mergedPicanhas.toString() },
-              flappyScore: { integerValue: mergedFlappy.toString() },
-              runnerScore: { integerValue: mergedRunner.toString() },
-              dilmaScore: { integerValue: mergedDilma.toString() },
-              runnerCoins: { integerValue: mergedRunnerCoins.toString() },
-              lastSync: { timestampValue: new Date().toISOString() }
-            }
-          };
-          fetch(patchUrl, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(patchPayload)
-          }).catch(() => {});
-        }
+        // Atualiza cloud com todos os campos incluindo username
+        const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=username&updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=avatar&updateMask.fieldPaths=lastSync`;
+        const patchPayload = {
+          fields: {
+            username: { stringValue: username },
+            totalPicanhas: { integerValue: mergedPicanhas.toString() },
+            flappyScore: { integerValue: mergedFlappy.toString() },
+            runnerScore: { integerValue: mergedRunner.toString() },
+            dilmaScore: { integerValue: mergedDilma.toString() },
+            runnerCoins: { integerValue: mergedRunnerCoins.toString() },
+            avatar: { stringValue: mergedAvatar },
+            lastSync: { timestampValue: new Date().toISOString() }
+          }
+        };
+
+        fetch(patchUrl, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patchPayload)
+        }).catch(() => {});
+
+        return {
+          success: true,
+          user: mergedUser,
+          isMarcalUnlocked: (mergedDilma >= 200)
+        };
       }
     } catch (e) {}
-  }
 
-  // SINCRONIZAÇÃO FORÇADA IMEDIATA DOS DADOS LOCAIS COM O FIRESTORE
-  async syncUserDataNow() {
-    if (!this.currentUser || !this.currentUser.username) return;
-    const normalizedName = this.currentUser.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
-    const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
-    const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
-    const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
-    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
-
-    this.currentUser.totalPicanhas = Math.max(this.currentUser.totalPicanhas || 0, localPicanhas);
-    this.currentUser.flappyScore = Math.max(this.currentUser.flappyScore || 0, localFlappy);
-    this.currentUser.runnerScore = Math.max(this.currentUser.runnerScore || 0, localRunner);
-    this.currentUser.dilmaScore = Math.max(this.currentUser.dilmaScore || 0, localDilma);
-    this.currentUser.runnerCoins = Math.max(this.currentUser.runnerCoins || 0, localRunnerCoins);
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
-
-    try {
-      const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=lastSync`;
-      const patchPayload = {
-        fields: {
-          totalPicanhas: { integerValue: (this.currentUser.totalPicanhas || 0).toString() },
-          flappyScore: { integerValue: (this.currentUser.flappyScore || 0).toString() },
-          runnerScore: { integerValue: (this.currentUser.runnerScore || 0).toString() },
-          dilmaScore: { integerValue: (this.currentUser.dilmaScore || 0).toString() },
-          runnerCoins: { integerValue: (this.currentUser.runnerCoins || 0).toString() },
-          lastSync: { timestampValue: new Date().toISOString() }
-        }
-      };
-      await fetch(patchUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patchPayload)
-      });
-    } catch (e) {}
+    return {
+      success: true,
+      user: this.currentUser,
+      isMarcalUnlocked: (localDilma >= 200)
+    };
   }
 
   // 1. JOGAR SEM SENHA COM NOME ESCOLHIDO PELO JOGADOR
@@ -152,7 +273,6 @@ class AuthManager {
     const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
     const localDB = this.getLocalUsersDB();
 
-    // 1. Verifica se esse nome já pertence a uma conta com senha no LocalStorage
     if (localDB[normalizedName] && localDB[normalizedName].hasPassword) {
       return {
         success: false,
@@ -161,7 +281,6 @@ class AuthManager {
     }
 
     let remoteUser = null;
-    // 2. Verifica no Firestore se existe conta
     try {
       const checkUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
       const res = await fetch(checkUrl);
@@ -179,7 +298,10 @@ class AuthManager {
           hasPassword: false,
           flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
           runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
+          dilmaScore: parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10),
           totalPicanhas: parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10),
+          runnerCoins: parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10),
+          avatar: doc.fields?.avatar?.stringValue || '',
           createdAt: doc.fields?.createdAt?.timestampValue || new Date().toISOString()
         };
       }
@@ -188,25 +310,30 @@ class AuthManager {
     const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
     const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
     const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
 
-    // Cria/Atualiza perfil de jogador
     let userObj = remoteUser || localDB[normalizedName] || {
       username: cleanName,
       hasPassword: false,
       flappyScore: localFlappy,
       runnerScore: localRunner,
+      dilmaScore: localDilma,
       totalPicanhas: localPicanhas,
+      runnerCoins: localRunnerCoins,
+      avatar: '',
       createdAt: new Date().toISOString()
     };
 
     userObj.totalPicanhas = Math.max(userObj.totalPicanhas || 0, localPicanhas);
     userObj.flappyScore = Math.max(userObj.flappyScore || 0, localFlappy);
     userObj.runnerScore = Math.max(userObj.runnerScore || 0, localRunner);
+    userObj.dilmaScore = Math.max(userObj.dilmaScore || 0, localDilma);
+    userObj.runnerCoins = Math.max(userObj.runnerCoins || 0, localRunnerCoins);
 
     localDB[normalizedName] = userObj;
     this.saveLocalUsersDB(localDB);
 
-    // Grava perfil público no Firestore se não for conta com senha
     try {
       const publicDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
       const publicPayload = {
@@ -215,7 +342,10 @@ class AuthManager {
           hasPassword: { booleanValue: false },
           flappyScore: { integerValue: (userObj.flappyScore || 0).toString() },
           runnerScore: { integerValue: (userObj.runnerScore || 0).toString() },
+          dilmaScore: { integerValue: (userObj.dilmaScore || 0).toString() },
           totalPicanhas: { integerValue: (userObj.totalPicanhas || 0).toString() },
+          runnerCoins: { integerValue: (userObj.runnerCoins || 0).toString() },
+          avatar: { stringValue: userObj.avatar || '' },
           createdAt: { timestampValue: userObj.createdAt }
         }
       };
@@ -230,7 +360,7 @@ class AuthManager {
     return { success: true, user: userObj };
   }
 
-  // 2. REGISTRAR CONTA COM PALAVRA-CHAVE (AUTENTICADO EXCLUSIVAMENTE VIA SERVERLESS COM FIREBASE ADMIN SDK)
+  // 2. REGISTRAR CONTA COM PALAVRA-CHAVE
   async register(username, password) {
     const cleanName = (username || '').trim();
     const cleanPass = (password || '').trim();
@@ -246,6 +376,9 @@ class AuthManager {
     const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
     const prevFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
     const prevRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const prevDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+    const prevCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+    const curAvatar = this.currentUser?.avatar || '';
 
     try {
       const response = await fetch('/api/auth', {
@@ -257,7 +390,10 @@ class AuthManager {
           password: cleanPass,
           flappyScore: prevFlappy,
           runnerScore: prevRunner,
-          totalPicanhas: localPicanhas
+          dilmaScore: prevDilma,
+          runnerCoins: prevCoins,
+          totalPicanhas: localPicanhas,
+          avatar: curAvatar
         })
       });
 
@@ -275,7 +411,10 @@ class AuthManager {
         hasPassword: true,
         flappyScore: data.user?.flappyScore ?? prevFlappy,
         runnerScore: data.user?.runnerScore ?? prevRunner,
+        dilmaScore: data.user?.dilmaScore ?? prevDilma,
+        runnerCoins: data.user?.runnerCoins ?? prevCoins,
         totalPicanhas: data.user?.totalPicanhas ?? localPicanhas,
+        avatar: data.user?.avatar || curAvatar,
         createdAt: new Date().toISOString()
       };
 
@@ -293,7 +432,7 @@ class AuthManager {
     }
   }
 
-  // 3. LOGIN COM NOME E PALAVRA-CHAVE (AUTENTICADO EXCLUSIVAMENTE VIA SERVERLESS COM FIREBASE ADMIN SDK)
+  // 3. LOGIN COM NOME E PALAVRA-CHAVE
   async login(username, password) {
     const cleanName = (username || '').trim();
     const cleanPass = (password || '').trim();
@@ -335,6 +474,9 @@ class AuthManager {
       this.saveLocalUsersDB(localDB);
       this.setCurrentUser(userObj);
 
+      // Sincroniza dados com o servidor após o login
+      this.syncUserDataNow().catch(() => {});
+
       return { success: true, user: userObj };
     } catch (err) {
       return {
@@ -345,6 +487,7 @@ class AuthManager {
   }
 
   setCurrentUser(user) {
+    if (!user) return;
     this.currentUser = user;
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     localStorage.setItem('lula_player', user.username);
@@ -400,19 +543,7 @@ class AuthManager {
         this.saveLocalUsersDB(localDB);
       }
 
-      try {
-        const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=${key}`;
-        const payload = {
-          fields: {
-            [key]: { integerValue: score.toString() }
-          }
-        };
-        fetch(docUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-      } catch (e) {}
+      this.syncUserDataNow().catch(() => {});
     }
   }
 
@@ -431,20 +562,6 @@ class AuthManager {
         localDB[norm].totalPicanhas = updated;
         this.saveLocalUsersDB(localDB);
       }
-
-      try {
-        const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas`;
-        const payload = {
-          fields: {
-            totalPicanhas: { integerValue: updated.toString() }
-          }
-        };
-        fetch(docUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-      } catch (e) {}
     }
   }
 
@@ -457,43 +574,151 @@ class AuthManager {
 
     const user = this.getCurrentUser();
     const currentName = user ? user.username : (localStorage.getItem('lula_player') || '');
+    const currentAvatar = user?.avatar || DEFAULT_AVATAR_SVG;
+
+    const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const flappyBest = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const runnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const dilmaBest = Math.max(parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10), user?.dilmaScore || 0);
+    const runnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+    const isMarcalUnlocked = dilmaBest >= 200 || (Array.isArray(user?.unlockedCharacters) && user.unlockedCharacters.includes('marcal'));
 
     const overlay = document.createElement('div');
     overlay.id = 'authModalOverlay';
     overlay.style.cssText = `
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
       display: flex; align-items: center; justify-content: center; z-index: 10000;
-      padding: 16px; font-family: 'Outfit', sans-serif;
+      padding: 16px; font-family: 'Inter', sans-serif;
     `;
 
+    const isUserLoggedIn = !!user;
+
     overlay.innerHTML = `
-      <div style="
+      <div class="auth-modal-box" style="
         background: #0f172a; border: 2px solid var(--amarelo-brasil, #ffd700);
-        border-radius: 16px; width: 100%; max-width: 420px; padding: 24px;
-        color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(255,215,0,0.2);
-        position: relative; animation: popIn 0.25s ease-out;
+        border-radius: 20px; width: 100%; max-width: 440px; padding: 24px;
+        color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.85), 0 0 30px rgba(255,215,0,0.25);
+        position: relative; animation: popIn 0.25s ease-out; max-height: 90vh; overflow-y: auto;
       ">
         <button id="closeAuthModal" style="
           position: absolute; top: 14px; right: 14px; background: none; border: none;
-          color: #94a3b8; font-size: 20px; cursor: pointer; font-weight: bold;
+          color: #94a3b8; font-size: 22px; cursor: pointer; font-weight: bold; line-height:1;
         ">✕</button>
 
-        <h2 style="font-size: 20px; font-weight: 800; margin: 0 0 6px 0; color: #fff; text-align: center;">
-          🇧🇷 Perfil do Jogador
+        <h2 style="font-family: 'Bangers', cursive; font-size: 26px; letter-spacing: 1px; margin: 0 0 4px 0; color: var(--amarelo-brasil, #ffd700); text-align: center;">
+          ${isUserLoggedIn ? '🇧🇷 PERFIL DO JOGADOR' : '🇧🇷 ACESSO / IDENTIFICAÇÃO'}
         </h2>
-        <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0 0 18px 0;">
-          Escolha seu nome público ou proteja sua conta com senha!
+        <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0 0 16px 0;">
+          ${isUserLoggedIn ? 'Gerencie sua foto de perfil, recordes e sincronização na nuvem.' : 'Escolha seu nome público ou proteja sua conta com senha!'}
         </p>
 
-        <!-- TABS -->
-        <div style="display: flex; gap: 8px; margin-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
-          <button id="tabChosenName" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Jogar sem Senha</button>
-          <button id="tabRegister" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔒 Criar Conta</button>
-          <button id="tabLogin" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔑 Entrar</button>
+        <!-- TABS DE NAVEGAÇÃO DO MODAL -->
+        <div style="display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+          ${isUserLoggedIn ? `
+            <button id="tabProfile" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Meu Perfil</button>
+            <button id="tabSync" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">☁️ Sincronizar</button>
+            <button id="tabSwitchAcc" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔄 Trocar Conta</button>
+          ` : `
+            <button id="tabChosenName" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Jogar sem Senha</button>
+            <button id="tabRegister" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔒 Criar Conta</button>
+            <button id="tabLogin" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔑 Entrar</button>
+          `}
         </div>
 
+        ${isUserLoggedIn ? `
+          <!-- PAINEL: MEU PERFIL -->
+          <div id="panelProfile" class="auth-form-panel">
+            <!-- AVATAR & NOME DO USUÁRIO -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 16px;">
+              <div style="position: relative;">
+                <img id="profileModalAvatarImg" src="${currentAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Foto de Perfil" style="
+                  width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--amarelo-brasil, #ffd700);
+                  object-fit: cover; box-shadow: 0 0 20px rgba(255,215,0,0.35); background: #1e293b; display: block;
+                ">
+                <label for="avatarFileInput" title="Carregar nova foto" style="
+                  position: absolute; bottom: -2px; right: -2px; background: var(--verde-neon, #00e676);
+                  color: #000; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center;
+                  justify-content: center; cursor: pointer; font-size: 14px; font-weight: bold; border: 2px solid #0f172a;
+                  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+                ">📷</label>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+              </div>
+
+              <div style="text-align: center;">
+                <div style="font-family: 'Bangers', cursive; font-size: 22px; color: #fff; letter-spacing: 0.5px;">
+                  👤 ${escapeHTML(user.username)}
+                </div>
+                <div style="font-size: 12px; color: ${user.hasPassword ? '#86efac' : '#94a3b8'};">
+                  ${user.hasPassword ? '🔒 Conta Protegida por Senha' : '👤 Nome Público de Jogador'}
+                </div>
+              </div>
+            </div>
+
+            <!-- PRESETS DE AVATAR RÁPIDO -->
+            <div style="margin-bottom: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px;">
+              <div style="font-size: 11px; color: #cbd5e1; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                🎨 Escolher Avatar do Jogo ou Enviar Foto:
+              </div>
+              <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
+                ${PRESET_AVATARS.map(p => `
+                  <button class="btn-preset-avatar" data-src="${p.src}" title="${p.name}" style="
+                    flex-shrink: 0; background: rgba(0,0,0,0.4); border: 1.5px solid rgba(255,255,255,0.2);
+                    border-radius: 50%; width: 40px; height: 40px; padding: 0; cursor: pointer; overflow: hidden;
+                    transition: transform 0.15s, border-color 0.15s;
+                  ">
+                    <img src="${p.src}" alt="${p.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                  </button>
+                `).join('')}
+                <button id="btnUploadCustomTrigger" title="Fazer Upload de Foto do Dispositivo" style="
+                  flex-shrink: 0; background: rgba(0, 230, 118, 0.15); border: 1.5px dashed var(--verde-neon, #00e676);
+                  border-radius: 50%; width: 40px; height: 40px; padding: 0; cursor: pointer; color: var(--verde-neon);
+                  font-size: 16px; display: flex; align-items: center; justify-content: center;
+                ">➕</button>
+              </div>
+            </div>
+
+            <!-- ESTATÍSTICAS E STATUS DO PABLO MARÇAL -->
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,223,0,0.2); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--amarelo-brasil, #ffd700); margin-bottom: 8px;">
+                📊 Estatísticas & Desbloqueios da Conta:
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                <div>🥩 Picanhas: <b style="color: #fff;">${totalPicanhas}</b></div>
+                <div>💰 Moedas 3D: <b style="color: #fff;">${runnerCoins}</b></div>
+                <div>🐦 Flappy Recorde: <b style="color: var(--verde-neon);">${flappyBest} pts</b></div>
+                <div>🏃 Runner Recorde: <b style="color: var(--verde-neon);">${runnerBest} km</b></div>
+              </div>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span>🥔 Recorde c/ Dilma: <b>${dilmaBest} pts</b></span>
+                <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isMarcalUnlocked ? 'background: rgba(14,165,233,0.2); color: #38bdf8; border: 1px solid #0284c7;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
+                  ${isMarcalUnlocked ? '✨ Marçal Desbloqueado' : '🔒 Marçal (200 pts Dilma)'}
+                </span>
+              </div>
+            </div>
+
+            <button id="btnProfileSyncNow" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; letter-spacing: 0.5px; margin-bottom: 8px;">
+              🔄 SINCRONIZAR DADOS COM A NUVEM
+            </button>
+          </div>
+
+          <!-- PAINEL: SINCRONIZAR NUVEM -->
+          <div id="panelSync" class="auth-form-panel" style="display: none;">
+            <div style="text-align: center; padding: 10px 0 16px;">
+              <div style="font-size: 38px; margin-bottom: 8px;">☁️</div>
+              <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px;">Sincronização Multi-Dispositivos</div>
+              <p style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                Se você desbloqueou o Pablo Marçal, acumulou picanhas ou bateu recordes no celular ou no PC, clique abaixo para fundir e salvar tudo na nuvem!
+              </p>
+            </div>
+            <button id="btnExplicitSyncAction" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 10px;">
+              🔄 SINCRONIZAR AGORA 🚀
+            </button>
+            <div id="syncReportDetails" style="font-size: 11px; color: #cbd5e1; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 8px; display: none;"></div>
+          </div>
+        ` : ''}
+
         <!-- FORM: JOGAR SEM SENHA -->
-        <div id="formChosenName" class="auth-form-panel">
+        <div id="formChosenName" class="auth-form-panel" style="${isUserLoggedIn ? 'display:none;' : ''}">
           <div style="margin-bottom: 14px;">
             <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Seu Nome no Placar:</label>
             <input type="text" id="inputChosenName" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Ex: Lula_Gamer_BR" style="
@@ -501,11 +726,7 @@ class AuthManager {
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitChosenName" style="
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--verde-bandeira, #009c3b), var(--verde-neon, #00ff88));
-            color: #000; font-weight: 800; font-size: 14px; cursor: pointer; transition: transform 0.15s;
-          ">SALVAR E JOGAR 🚀</button>
+          <button id="btnSubmitChosenName" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px;">SALVAR E JOGAR 🚀</button>
         </div>
 
         <!-- FORM: CRIAR CONTA COM SENHA -->
@@ -524,11 +745,7 @@ class AuthManager {
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitRegister" style="
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--amarelo-brasil, #ffd700), #f59e0b);
-            color: #000; font-weight: 800; font-size: 14px; cursor: pointer;
-          ">CRIAR CONTA PROTEGIDA 🔒</button>
+          <button id="btnSubmitRegister" class="btn-secondary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ffd700, #f59e0b); color: #000; border: none;">CRIAR CONTA PROTEGIDA 🔒</button>
         </div>
 
         <!-- FORM: ENTRAR -->
@@ -547,17 +764,13 @@ class AuthManager {
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitLogin" style="
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, #38bdf8, #2563eb);
-            color: #fff; font-weight: 800; font-size: 14px; cursor: pointer;
-          ">ENTRAR NA CONTA 🔑</button>
+          <button id="btnSubmitLogin" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #38bdf8, #2563eb); border: none;">ENTRAR NA CONTA 🔑</button>
         </div>
 
         <!-- MENSAGEM DE STATUS/ERRO -->
         <div id="authStatusMsg" style="
           margin-top: 14px; font-size: 12px; text-align: center; min-height: 18px;
-          display: none; padding: 8px; border-radius: 6px;
+          display: none; padding: 8px; border-radius: 6px; font-weight: 600;
         "></div>
       </div>
     `;
@@ -566,6 +779,7 @@ class AuthManager {
 
     const showMsg = (txt, isErr = true) => {
       const msg = document.getElementById('authStatusMsg');
+      if (!msg) return;
       msg.style.display = 'block';
       msg.style.background = isErr ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)';
       msg.style.color = isErr ? '#fca5a5' : '#86efac';
@@ -573,36 +787,141 @@ class AuthManager {
       msg.innerText = txt;
     };
 
-    // Tabs Switch
-    const tabChosen = document.getElementById('tabChosenName');
-    const tabReg = document.getElementById('tabRegister');
-    const tabLog = document.getElementById('tabLogin');
+    // Navegação de Tabs
+    const allTabs = overlay.querySelectorAll('.auth-tab');
+    const allPanels = overlay.querySelectorAll('.auth-form-panel');
 
-    const formChosen = document.getElementById('formChosenName');
-    const formReg = document.getElementById('formRegister');
-    const formLog = document.getElementById('formLogin');
-
-    const selectTab = (activeTab, activeForm) => {
-      [tabChosen, tabReg, tabLog].forEach(t => {
+    const selectTab = (btn, targetPanel) => {
+      allTabs.forEach(t => {
         t.style.background = 'transparent';
         t.style.color = '#94a3b8';
       });
-      [formChosen, formReg, formLog].forEach(f => f.style.display = 'none');
+      allPanels.forEach(p => p.style.display = 'none');
 
-      activeTab.style.background = 'var(--azul-bandeira, #1e3a8a)';
-      activeTab.style.color = '#fff';
-      activeForm.style.display = 'block';
+      btn.style.background = 'var(--azul-bandeira, #1e3a8a)';
+      btn.style.color = '#fff';
+      if (targetPanel) targetPanel.style.display = 'block';
       document.getElementById('authStatusMsg').style.display = 'none';
     };
 
-    tabChosen.onclick = () => selectTab(tabChosen, formChosen);
-    tabReg.onclick = () => selectTab(tabReg, formReg);
-    tabLog.onclick = () => selectTab(tabLog, formLog);
+    if (isUserLoggedIn) {
+      const tabProf = document.getElementById('tabProfile');
+      const tabSy = document.getElementById('tabSync');
+      const tabSw = document.getElementById('tabSwitchAcc');
+      const pProf = document.getElementById('panelProfile');
+      const pSync = document.getElementById('panelSync');
+      const fLog = document.getElementById('formLogin');
+
+      if (tabProf) tabProf.onclick = () => selectTab(tabProf, pProf);
+      if (tabSy) tabSy.onclick = () => selectTab(tabSy, pSync);
+      if (tabSw) tabSw.onclick = () => selectTab(tabSw, fLog);
+    } else {
+      const tabChosen = document.getElementById('tabChosenName');
+      const tabReg = document.getElementById('tabRegister');
+      const tabLog = document.getElementById('tabLogin');
+      const fChosen = document.getElementById('formChosenName');
+      const fReg = document.getElementById('formRegister');
+      const fLog = document.getElementById('formLogin');
+
+      if (tabChosen) tabChosen.onclick = () => selectTab(tabChosen, fChosen);
+      if (tabReg) tabReg.onclick = () => selectTab(tabReg, fReg);
+      if (tabLog) tabLog.onclick = () => selectTab(tabLog, fLog);
+    }
 
     document.getElementById('closeAuthModal').onclick = () => overlay.remove();
 
-    // Ações de Submit
-    document.getElementById('btnSubmitChosenName').onclick = async () => {
+    // ---------------------------------------------------------
+    // HANDLERS DE UPLOAD DE FOTO & PRESETS
+    // ---------------------------------------------------------
+    const avatarInput = document.getElementById('avatarFileInput');
+    const modalAvatarImg = document.getElementById('profileModalAvatarImg');
+
+    const handleAvatarUpdate = async (source) => {
+      showMsg('Otimizando e salvando foto de perfil... ⏳', false);
+      try {
+        const res = await this.updateUserAvatar(source);
+        if (res.success) {
+          if (modalAvatarImg) modalAvatarImg.src = res.avatar || DEFAULT_AVATAR_SVG;
+          showMsg('Foto de perfil atualizada com sucesso! ✨', false);
+          this.renderProfileBadge();
+        } else {
+          showMsg(res.error || 'Erro ao salvar foto.');
+        }
+      } catch (err) {
+        showMsg('Erro ao processar imagem: ' + err.message);
+      }
+    };
+
+    if (avatarInput) {
+      avatarInput.onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          await handleAvatarUpdate(file);
+        }
+      };
+    }
+
+    document.getElementById('btnUploadCustomTrigger')?.addEventListener('click', () => {
+      avatarInput?.click();
+    });
+
+    overlay.querySelectorAll('.btn-preset-avatar').forEach(btn => {
+      btn.onclick = async () => {
+        const src = btn.getAttribute('data-src');
+        if (src) {
+          await handleAvatarUpdate(src);
+        }
+      };
+    });
+
+    // ---------------------------------------------------------
+    // HANDLER DO BOTÃO DE SINCRONIZAÇÃO NUVEM
+    // ---------------------------------------------------------
+    const runSync = async (btn) => {
+      if (btn) {
+        btn.innerText = 'SINCRONIZANDO COM A NUVEM... ⏳';
+        btn.disabled = true;
+      }
+      showMsg('Conectando ao banco de dados e sincronizando recordes... ☁️', false);
+
+      const result = await this.syncUserDataNow();
+      if (btn) {
+        btn.innerText = '🔄 SINCRONIZAR AGORA 🚀';
+        btn.disabled = false;
+      }
+
+      if (result.success) {
+        const u = result.user;
+        const msg = result.isMarcalUnlocked
+          ? `✅ Sincronizado com sucesso! Pablo Marçal DESBLOQUEADO (Recorde Dilma: ${u.dilmaScore || 0} pts)!`
+          : `✅ Sincronizado com sucesso! Recordes e Picanhas atualizados na nuvem.`;
+        showMsg(msg, false);
+
+        const rep = document.getElementById('syncReportDetails');
+        if (rep) {
+          rep.style.display = 'block';
+          rep.innerHTML = `
+            <b>Status da Sincronização:</b><br>
+            • Picanhas: <b>${u.totalPicanhas}</b> 🥩<br>
+            • Recorde Flappy: <b>${u.flappyScore}</b> pts<br>
+            • Recorde Dilma: <b>${u.dilmaScore}</b> pts (${result.isMarcalUnlocked ? '✨ Pablo Marçal Desbloqueado' : '🔒 Marçal Bloqueado'})<br>
+            • Moedas Runner: <b>${u.runnerCoins}</b> 💰
+          `;
+        }
+
+        this.renderProfileBadge();
+      } else {
+        showMsg(result.error || 'Erro na sincronização.');
+      }
+    };
+
+    document.getElementById('btnProfileSyncNow')?.addEventListener('click', (e) => runSync(e.target));
+    document.getElementById('btnExplicitSyncAction')?.addEventListener('click', (e) => runSync(e.target));
+
+    // ---------------------------------------------------------
+    // SUBMIT ACTIONS
+    // ---------------------------------------------------------
+    document.getElementById('btnSubmitChosenName')?.addEventListener('click', async () => {
       const name = document.getElementById('inputChosenName').value;
       const res = await this.playWithChosenName(name);
       if (res.success) {
@@ -614,9 +933,9 @@ class AuthManager {
       } else {
         showMsg(res.error);
       }
-    };
+    });
 
-    document.getElementById('btnSubmitRegister').onclick = async () => {
+    document.getElementById('btnSubmitRegister')?.addEventListener('click', async () => {
       const name = document.getElementById('inputRegUser').value;
       const pass = document.getElementById('inputRegPass').value;
       const btn = document.getElementById('btnSubmitRegister');
@@ -636,9 +955,9 @@ class AuthManager {
       } else {
         showMsg(res.error);
       }
-    };
+    });
 
-    document.getElementById('btnSubmitLogin').onclick = async () => {
+    document.getElementById('btnSubmitLogin')?.addEventListener('click', async () => {
       const name = document.getElementById('inputLoginUser').value;
       const pass = document.getElementById('inputLoginPass').value;
       const btn = document.getElementById('btnSubmitLogin');
@@ -658,11 +977,11 @@ class AuthManager {
       } else {
         showMsg(res.error);
       }
-    };
+    });
   }
 
   // -------------------------------------------------------------
-  // RENDERIZAÇÃO DO BADGE NO HEADER / NAVBAR (SEM APAGAR OS LINKS DO MENU)
+  // RENDERIZAÇÃO DO BADGE NO HEADER / NAVBAR COM FOTO DE PERFIL
   // -------------------------------------------------------------
   renderProfileBadge(containerSelector = '#profileBadgeContainer') {
     let target = null;
@@ -676,8 +995,6 @@ class AuthManager {
       target = document.getElementById('profileBadgeContainer') || document.getElementById('authBadge');
     }
 
-    // Se o elemento selecionado for a tag <nav>, NÃO substitui o <nav>!
-    // Procura ou insere um contêiner filho <div id="profileBadgeContainer" class="nav-right-group">
     if (target && target.tagName === 'NAV') {
       let badgeHolder = target.querySelector('#profileBadgeContainer');
       if (!badgeHolder) {
@@ -689,7 +1006,6 @@ class AuthManager {
       target = badgeHolder;
     }
 
-    // Configura o menu mobile hambúrguer se existir (sem inline style para não quebrar desktop)
     const toggleBtn = document.getElementById('navToggle') || document.getElementById('btnNavToggle');
     const navLinks = document.getElementById('navLinks') || document.getElementById('navLinksList');
     if (toggleBtn && navLinks && !toggleBtn.dataset.bound) {
@@ -711,6 +1027,7 @@ class AuthManager {
     const user = this.getCurrentUser();
     const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
     const runnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+    const userAvatar = user?.avatar || DEFAULT_AVATAR_SVG;
 
     // 1. Renderiza Card de Usuário dentro do Menu Mobile (Drawer)
     if (navLinks) {
@@ -726,19 +1043,19 @@ class AuthManager {
         mobileCard.innerHTML = `
           <div class="mobile-user-card-content">
             <div class="mobile-user-header">
-              <div class="mobile-user-avatar">👤</div>
+              <img class="mobile-user-avatar-img" src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar">
               <div class="mobile-user-info">
                 <div class="mobile-user-name">${safeUsername}</div>
                 <div class="mobile-user-stats">🥩 <b>${totalPicanhas}</b> Picanhas · 💰 <b>${runnerCoins}</b> Moedas</div>
               </div>
             </div>
             <div class="mobile-user-buttons">
-              <button id="btnMobileChangeAcc" class="btn-user-action btn-user-change">🔄 Trocar Conta</button>
-              <button id="btnMobileLogoutAcc" class="btn-user-action btn-user-logout">🚪 Sair (Logout)</button>
+              <button id="btnMobileEditProfile" class="btn-user-action btn-user-change">👤 Ver Perfil & Foto</button>
+              <button id="btnMobileLogoutAcc" class="btn-user-action btn-user-logout">🚪 Sair</button>
             </div>
           </div>
         `;
-        mobileCard.querySelector('#btnMobileChangeAcc')?.addEventListener('click', (e) => {
+        mobileCard.querySelector('#btnMobileEditProfile')?.addEventListener('click', (e) => {
           e.stopPropagation();
           navLinks.classList.remove('open');
           if (toggleBtn) toggleBtn.innerHTML = '☰ Menu';
@@ -774,17 +1091,27 @@ class AuthManager {
     if (user) {
       const safeUsername = escapeHTML(user.username);
       target.innerHTML = `
-        <span title="Total acumulado: ${totalPicanhas} picanhas" class="desktop-user-pill" style="font-size:12px; font-weight:700; color:#fff; display:inline-flex; align-items:center; white-space:nowrap;">
-          👤 ${safeUsername} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b>
-        </span>
+        <div id="btnDesktopProfileTrigger" title="Abrir Perfil, Foto e Sincronização" class="desktop-user-pill" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: rgba(255,255,255,0.08); border: 1.5px solid var(--amarelo-brasil); border-radius: 20px; transition: all 0.2s;">
+          <img src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--amarelo-brasil); background: #1e293b;">
+          <span style="font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap;">
+            ${safeUsername} <b style="color: var(--verde-neon); margin-left: 2px;">(${totalPicanhas} 🥩)</b>
+          </span>
+        </div>
         <button id="btnLogoutProfile" title="Trocar ou Sair da Conta" style="
           background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
-          color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight:700; transition:all 0.2s;
-        ">Trocar / Sair</button>
+          color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight:700; transition:all 0.2s; white-space:nowrap;
+        ">Sair</button>
       `;
-      document.getElementById('btnLogoutProfile').onclick = (e) => {
+      document.getElementById('btnDesktopProfileTrigger').onclick = (e) => {
         e.stopPropagation();
         this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
+      };
+      document.getElementById('btnLogoutProfile').onclick = (e) => {
+        e.stopPropagation();
+        if (confirm('Deseja realmente sair da conta?')) {
+          this.logout();
+          window.location.reload();
+        }
       };
     } else {
       target.innerHTML = `

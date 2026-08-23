@@ -29,11 +29,12 @@ service cloud.firestore {
     // 4. Validação de Pontuação Legítima (Sem chaves extras, limites anti-hack)
     function isValidScoreData() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['player', 'score', 'updatedAt'])
+      return d.keys().hasOnly(['player', 'score', 'updatedAt', 'avatar'])
           && isSafeUsername(d.player, 2, 30)
           && d.score is int
           && d.score >= 0
-          && d.score <= 50000;
+          && d.score <= 50000
+          && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 25000));
     }
 
     // 5. Validação de Perfil Público de Usuários (SEM senha, SEM passwordHash, SEM passwordSalt)
@@ -42,7 +43,7 @@ service cloud.firestore {
       return d.keys().hasOnly([
         'username', 'hasPassword', 'totalPicanhas', 'runnerCoins', 'dilmaScore',
         'flappyScore', 'runnerScore', 'equippedBadge', 'selectedChar',
-        'unlockedCharacters', 'lastSync', 'updatedAt', 'createdAt'
+        'unlockedCharacters', 'avatar', 'lastSync', 'updatedAt', 'createdAt'
       ])
       && !('password' in d)
       && !('passwordHash' in d)
@@ -56,6 +57,7 @@ service cloud.firestore {
       && (!('runnerScore' in d) || (d.runnerScore is int && d.runnerScore >= 0 && d.runnerScore <= 50000))
       && (!('equippedBadge' in d) || (d.equippedBadge is string && d.equippedBadge.size() <= 60))
       && (!('selectedChar' in d) || (d.selectedChar is string && d.selectedChar.size() <= 40))
+      && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 25000))
       && (!('unlockedCharacters' in d) || d.unlockedCharacters is list);
     }
 

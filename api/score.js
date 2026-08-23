@@ -24,6 +24,18 @@ export default async function handler(req, res) {
       .slice(0, maxLen) || 'Jogador';
   };
 
+  const sanitizeAvatar = (str) => {
+    if (!str || typeof str !== 'string') return '';
+    const trimmed = str.trim();
+    if (trimmed.startsWith('data:image/') && trimmed.length <= 25000) {
+      return trimmed;
+    }
+    if ((trimmed.startsWith('https://') || trimmed.startsWith('http://') || trimmed.startsWith('img/')) && trimmed.length <= 500) {
+      return trimmed;
+    }
+    return '';
+  };
+
   const parseLeaderboardDoc = (doc) => {
     if (!doc || !doc.fields) return [];
     const rawValues = doc.fields?.scores?.arrayValue?.values || [];
@@ -31,7 +43,8 @@ export default async function handler(req, res) {
       const p = v.mapValue?.fields?.player?.stringValue || 'Anônimo';
       const s = parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10);
       const u = v.mapValue?.fields?.updatedAt?.timestampValue || '';
-      return { player: sanitize(p, 25), score: s, updatedAt: u };
+      const a = v.mapValue?.fields?.avatar?.stringValue || '';
+      return { player: sanitize(p, 25), score: s, updatedAt: u, avatar: sanitizeAvatar(a) };
     }).filter(item => !isNaN(item.score) && item.score > 0);
 
     list.sort((a, b) => b.score - a.score);
@@ -45,15 +58,17 @@ export default async function handler(req, res) {
         updatedAt: { timestampValue: new Date().toISOString() },
         scores: {
           arrayValue: {
-            values: scoresList.slice(0, 300).map(s => ({
-              mapValue: {
-                fields: {
-                  player: { stringValue: sanitize(s.player, 25) },
-                  score: { integerValue: parseInt(s.score, 10).toString() },
-                  updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
-                }
+            values: scoresList.slice(0, 300).map(s => {
+              const fields = {
+                player: { stringValue: sanitize(s.player, 25) },
+                score: { integerValue: parseInt(s.score, 10).toString() },
+                updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
+              };
+              if (s.avatar && typeof s.avatar === 'string') {
+                fields.avatar = { stringValue: sanitizeAvatar(s.avatar) };
               }
-            }))
+              return { mapValue: { fields } };
+            })
           }
         }
       }
@@ -123,11 +138,12 @@ export default async function handler(req, res) {
 
   // 2. POST: Gravação Segura e Otimizada
   if (req.method === 'POST') {
-    const { player, score, game = 'flappy' } = req.body || {};
+    const { player, score, game = 'flappy', avatar = '' } = req.body || {};
 
     const cleanPlayer = sanitize(player, 25);
     const numScore = parseInt(score, 10);
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
+    const cleanAvatar = sanitizeAvatar(avatar);
 
     if (!cleanPlayer || cleanPlayer.length < 2) {
       return res.status(400).json({ success: false, error: 'Nome de jogador inválido' });
@@ -145,28 +161,33 @@ export default async function handler(req, res) {
       const userDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}/${docId}`;
       const userDocRes = await fetch(userDocUrl);
       let isNewPersonalRecord = true;
+      let existingAvatar = '';
 
       if (userDocRes.ok) {
         const uDoc = await userDocRes.json();
         const existingScore = parseInt(uDoc.fields?.score?.integerValue || '0', 10);
+        existingAvatar = sanitizeAvatar(uDoc.fields?.avatar?.stringValue || '');
         if (numScore <= existingScore) {
           isNewPersonalRecord = false;
         }
       }
 
-      if (isNewPersonalRecord) {
-        const userPayload = {
-          fields: {
-            player: { stringValue: cleanPlayer },
-            score: { integerValue: numScore.toString() },
-            updatedAt: { timestampValue: new Date().toISOString() }
-          }
+      const finalAvatar = cleanAvatar || existingAvatar || '';
+
+      if (isNewPersonalRecord || (cleanAvatar && cleanAvatar !== existingAvatar)) {
+        const userFields = {
+          player: { stringValue: cleanPlayer },
+          score: { integerValue: numScore.toString() },
+          updatedAt: { timestampValue: new Date().toISOString() }
         };
+        if (finalAvatar) {
+          userFields.avatar = { stringValue: finalAvatar };
+        }
 
         await fetch(userDocUrl, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(userPayload)
+          body: JSON.stringify({ fields: userFields })
         });
       }
 
@@ -189,6 +210,10 @@ export default async function handler(req, res) {
         if (numScore > currentScores[existingIdx].score) {
           currentScores[existingIdx].score = numScore;
           currentScores[existingIdx].updatedAt = new Date().toISOString();
+          if (finalAvatar) currentScores[existingIdx].avatar = finalAvatar;
+          shouldUpdateLeaderboard = true;
+        } else if (finalAvatar && currentScores[existingIdx].avatar !== finalAvatar) {
+          currentScores[existingIdx].avatar = finalAvatar;
           shouldUpdateLeaderboard = true;
         }
       } else {
@@ -197,6 +222,7 @@ export default async function handler(req, res) {
           currentScores.push({
             player: cleanPlayer,
             score: numScore,
+            avatar: finalAvatar,
             updatedAt: new Date().toISOString()
           });
           shouldUpdateLeaderboard = true;
