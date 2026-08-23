@@ -143,10 +143,8 @@ export class Character {
 
                 // 2. Modificação no Pulo: Esticar no ar ou amortecer no pouso
                 if (uJumpProgress > 0.1) {
-                  // Subindo no ar: estica as pernas para baixo/trás com postura atlética
                   swing = -0.28 * legWeight;
                 } else if (uJumpProgress < -0.1) {
-                  // Descendo no ar: projeta as pernas para a frente preparando o pouso
                   swing = 0.24 * legWeight;
                 }
 
@@ -158,7 +156,6 @@ export class Character {
                 transformed.y = py * cosA - pz * sinA;
                 transformed.z = py * sinA + pz * cosA;
 
-                // Dobra e flexão do joelho quando a perna é puxada para trás
                 if (swing < -0.04) {
                   transformed.y += (-swing) * 0.18 * legWeight;
                 }
@@ -175,7 +172,7 @@ export class Character {
       // Itens de Power-up em 3D
       this.buildPowerupAccessories();
 
-      // Sombra Suave Realista com Gradiente Radial Difuso
+      // Sombra Suave Realista
       const shadowGeo = new THREE.PlaneGeometry(1.6, 2.0);
       const shadowMat = new THREE.MeshBasicMaterial({
         map: textureAtlas.softShadowTexture,
@@ -191,6 +188,184 @@ export class Character {
       if (!this.scene.children.includes(this.mesh)) {
         this.scene.add(this.mesh);
       }
+    } else {
+      // MODELO GLB AINDA NÃO BAIXOU: Constrói personagem 3D procedural instantâneo
+      this.buildProceduralCharacter(charId);
+
+      // Dispara carregamento assíncrono e auto-upgrade quando pronto
+      modelLoader.loadModel(charId);
+      modelLoader.onModelLoaded(charId, () => {
+        if (this.characterId === charId && !this.isGLB) {
+          this.build();
+        }
+      });
+    }
+  }
+
+  buildProceduralCharacter(charId) {
+    this.isGLB = false;
+    this.bodyPivot = new THREE.Group();
+
+    // Paleta de Cores Temática do Personagem
+    let suitColor = 0x1e293b;
+    let tieColor = 0xef4444;
+    let sashColor1 = 0x009c3b;
+    let sashColor2 = 0xffdf00;
+    let hairColor = 0x0f172a;
+    let hasBeard = false;
+    let hasSash = false;
+    let hasGlasses = false;
+
+    if (charId === 'lula') {
+      suitColor = 0x1e3a8a; // Terno Azul Presidencial
+      hairColor = 0xcbd5e1; // Grisalho
+      hasBeard = true;
+      hasSash = true;
+    } else if (charId === 'bolsonaro') {
+      suitColor = 0x111827; // Terno Escuro
+      tieColor = 0xeab308;  // Gravata Amarela
+      hairColor = 0x334155; // Cabelo Escuro Característico
+      hasSash = true;
+    } else {
+      // Empresário Faria Lima
+      suitColor = 0x1e293b;
+      tieColor = 0xef4444;
+      hasGlasses = true;
+    }
+
+    const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.5 });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: tieColor, roughness: 0.3 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfcd34d, roughness: 0.6 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+
+    // 1. Tronco / Terno
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.90, 0.44), suitMat);
+    torso.position.y = 1.25;
+    torso.castShadow = true;
+    this.bodyPivot.add(torso);
+
+    // Camisa Branca no Peito
+    const shirt = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.50), shirtMat);
+    shirt.position.set(0, 1.35, -0.23);
+    shirt.rotation.y = Math.PI;
+    this.bodyPivot.add(shirt);
+
+    // Gravata
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.42, 0.04), tieMat);
+    tie.position.set(0, 1.28, -0.24);
+    tie.castShadow = true;
+    this.bodyPivot.add(tie);
+
+    // Faixa Presidencial Verde-Amarela Cruzada
+    if (hasSash) {
+      const sashMat1 = new THREE.MeshStandardMaterial({ color: sashColor1 });
+      const sashMat2 = new THREE.MeshStandardMaterial({ color: sashColor2 });
+      const sash1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.80, 0.48), sashMat1);
+      sash1.position.set(0.04, 1.28, 0);
+      sash1.rotation.z = -0.35;
+      const sash2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.80, 0.49), sashMat2);
+      sash2.position.set(0.04, 1.28, 0);
+      sash2.rotation.z = -0.35;
+      this.bodyPivot.add(sash1, sash2);
+    }
+
+    // 2. Cabeça e Rosto
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.50, 0.46), skinMat);
+    head.position.y = 1.95;
+    head.castShadow = true;
+    this.bodyPivot.add(head);
+
+    // Cabelo
+    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.22, 0.50), hairMat);
+    hair.position.set(0, 2.15, 0);
+    hair.castShadow = true;
+    this.bodyPivot.add(hair);
+
+    // Barba Grisalha (Lula)
+    if (hasBeard) {
+      const beard = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.24, 0.28), hairMat);
+      beard.position.set(0, 1.82, -0.14);
+      this.bodyPivot.add(beard);
+    }
+
+    // Óculos Escuros Faria Lima
+    if (hasGlasses) {
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.1, metalness: 0.9 });
+      const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.08), glassMat);
+      glasses.position.set(0, 1.96, -0.24);
+      this.bodyPivot.add(glasses);
+    }
+
+    // 3. Braços Procedurais
+    this.procLeftArm = new THREE.Group();
+    this.procLeftArm.position.set(-0.48, 1.60, 0);
+    const lArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.70, 0.22), suitMat);
+    lArmMesh.position.y = -0.32;
+    lArmMesh.castShadow = true;
+    this.procLeftArm.add(lArmMesh);
+    this.bodyPivot.add(this.procLeftArm);
+
+    this.procRightArm = new THREE.Group();
+    this.procRightArm.position.set(0.48, 1.60, 0);
+    const rArmMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.70, 0.22), suitMat);
+    rArmMesh.position.y = -0.32;
+    rArmMesh.castShadow = true;
+    this.procRightArm.add(rArmMesh);
+
+    // Maleta de Couro do Empresário na Mão Direita
+    const caseMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
+    const suitcase = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.48), caseMat);
+    suitcase.position.set(0.12, -0.58, 0.08);
+    suitcase.castShadow = true;
+    this.procRightArm.add(suitcase);
+
+    this.bodyPivot.add(this.procRightArm);
+
+    // 4. Pernas Articuladas para Corrida
+    this.procLeftLeg = new THREE.Group();
+    this.procLeftLeg.position.set(-0.20, 0.85, 0);
+    const lLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.26), suitMat);
+    lLegMesh.position.y = -0.35;
+    lLegMesh.castShadow = true;
+    const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.16, 0.42), shoeMat);
+    lShoe.position.set(0, -0.74, 0.06);
+    lShoe.castShadow = true;
+    this.procLeftLeg.add(lLegMesh, lShoe);
+    this.bodyPivot.add(this.procLeftLeg);
+
+    this.procRightLeg = new THREE.Group();
+    this.procRightLeg.position.set(0.20, 0.85, 0);
+    const rLegMesh = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.26), suitMat);
+    rLegMesh.position.y = -0.35;
+    rLegMesh.castShadow = true;
+    const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.16, 0.42), shoeMat);
+    rShoe.position.set(0, -0.74, 0.06);
+    rShoe.castShadow = true;
+    this.procRightLeg.add(rLegMesh, rShoe);
+    this.bodyPivot.add(this.procRightLeg);
+
+    this.mesh.add(this.bodyPivot);
+
+    // Itens de Power-up em 3D
+    this.buildPowerupAccessories();
+
+    // Sombra Suave
+    const shadowGeo = new THREE.PlaneGeometry(1.6, 2.0);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: textureAtlas.softShadowTexture,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false
+    });
+    this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
+    this.shadow.rotation.x = -Math.PI / 2;
+    this.shadow.position.y = 0.03;
+    this.mesh.add(this.shadow);
+
+    if (!this.scene.children.includes(this.mesh)) {
+      this.scene.add(this.mesh);
     }
   }
 
@@ -531,6 +706,36 @@ export class Character {
         const stretch = (1.0 + runBounce * 0.03) - squashY * 0.8;
         const squash = (1.0 - runBounce * 0.02) + squashY * 0.4;
         this.bodyPivot.scale.set(squash, stretch, squash);
+      }
+    } else if (!this.isGLB && this.bodyPivot) {
+      if (this.isSliding) {
+        this.mesh.rotation.x = -Math.PI / 2.15;
+        this.mesh.position.y = this.y + 0.26;
+        if (this.procLeftLeg && this.procRightLeg) {
+          this.procLeftLeg.rotation.x = 0;
+          this.procRightLeg.rotation.x = 0;
+        }
+      } else if (this.isJumping || this.y > this.groundY + 0.05) {
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+        const isAscending = this.jumpVelocity > 0;
+        if (this.procLeftLeg && this.procRightLeg) {
+          this.procLeftLeg.rotation.x = isAscending ? -0.4 : 0.35;
+          this.procRightLeg.rotation.x = isAscending ? -0.4 : 0.35;
+        }
+      } else {
+        this.mesh.rotation.x = 0;
+        this.mesh.position.y = this.y;
+        const swing = Math.sin(this.animTime * 12);
+        if (this.procLeftLeg && this.procRightLeg) {
+          this.procLeftLeg.rotation.x = swing * 0.75;
+          this.procRightLeg.rotation.x = -swing * 0.75;
+        }
+        if (this.procLeftArm && this.procRightArm) {
+          this.procLeftArm.rotation.x = -swing * 0.55;
+          this.procRightArm.rotation.x = swing * 0.55;
+        }
+        this.bodyPivot.rotation.x = 0.12;
       }
     }
   }

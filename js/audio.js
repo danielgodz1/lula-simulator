@@ -1,15 +1,70 @@
 // js/audio.js — Sistema de Áudio Centralizado com Web Audio API Pura
 // Projetado para alta performance, zero latência e sem sobreposição acumulada
 
+const AUDIO_MODE_KEY = 'lula_audio_mode';
+
 class AudioManager {
   constructor() {
     this.ctx = null;
-    this.isMuted = false;
+    this.audioMode = localStorage.getItem(AUDIO_MODE_KEY) || 'full'; // 'full' | 'sfx_only' | 'muted'
+    this.isMuted = (this.audioMode === 'muted');
     this.ambienceNode = null;
     this.ambienceGain = null;
     this.lastJumpTime = 0;
     this.initialized = false;
     this.activeAudios = [];
+  }
+
+  // Retorna se falas / vinhetas / memes estão habilitados
+  areMemesEnabled() {
+    return !this.isMuted && this.audioMode === 'full';
+  }
+
+  getAudioMode() {
+    return this.audioMode;
+  }
+
+  setAudioMode(mode) {
+    if (mode !== 'full' && mode !== 'sfx_only' && mode !== 'muted') {
+      mode = 'full';
+    }
+    this.audioMode = mode;
+    this.isMuted = (mode === 'muted');
+    localStorage.setItem(AUDIO_MODE_KEY, mode);
+
+    if (this.ambienceGain) {
+      this.ambienceGain.gain.setValueAtTime(this.isMuted ? 0 : 0.035, this.ctx ? this.ctx.currentTime : 0);
+    }
+    if (mode !== 'full') {
+      this.stopAllVoiceAndDeathAudios();
+    }
+    return this.getModeInfo();
+  }
+
+  cycleAudioMode() {
+    let nextMode = 'full';
+    if (this.audioMode === 'full') nextMode = 'sfx_only';
+    else if (this.audioMode === 'sfx_only') nextMode = 'muted';
+    else if (this.audioMode === 'muted') nextMode = 'full';
+
+    return this.setAudioMode(nextMode);
+  }
+
+  getModeInfo() {
+    switch (this.audioMode) {
+      case 'full':
+        return { mode: 'full', icon: '🔊', label: 'Áudio: Completo (Sons + Memes)', shortLabel: '🔊 Jogo + Memes' };
+      case 'sfx_only':
+        return { mode: 'sfx_only', icon: '🎮', label: 'Áudio: Apenas Efeitos do Jogo (Sem Memes)', shortLabel: '🎮 Apenas Sons' };
+      case 'muted':
+      default:
+        return { mode: 'muted', icon: '🔇', label: 'Áudio: Mudo (Silenciado)', shortLabel: '🔇 Mudo' };
+    }
+  }
+
+  toggleMute() {
+    const info = this.cycleAudioMode();
+    return this.isMuted;
   }
 
   // Inicializa o contexto de áudio na primeira interação do usuário
@@ -370,7 +425,7 @@ class AudioManager {
   }
 
   playBrasilIntro() {
-    if (this.isMuted) return;
+    if (!this.areMemesEnabled()) return;
     this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/brasilbrasil.mp3');
@@ -386,7 +441,7 @@ class AudioManager {
   }
 
   playBestaEnjaulada() {
-    if (this.isMuted) return;
+    if (!this.areMemesEnabled()) return;
     this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
@@ -397,7 +452,10 @@ class AudioManager {
   }
 
   playLulaDeathAudio() {
-    if (this.isMuted) return;
+    if (!this.areMemesEnabled()) {
+      this.playCollision();
+      return;
+    }
     this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/ehsoissoacabou.mpeg');
@@ -417,7 +475,10 @@ class AudioManager {
   }
 
   playNoAuraDeathAudio() {
-    if (this.isMuted) return;
+    if (!this.areMemesEnabled()) {
+      this.playCollision();
+      return;
+    }
     this.stopAllVoiceAndDeathAudios();
     try {
       const audio = new Audio('audios/voce-nao-tem-aura.mp3');

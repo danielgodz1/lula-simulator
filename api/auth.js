@@ -92,6 +92,8 @@ export default async function handler(req, res) {
         const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
         const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
         const safeRunner = Math.max(existingData.runnerScore || 0, parseInt(req.body.runnerScore || 0, 10));
+        const safeDilma = Math.max(existingData.dilmaScore || 0, parseInt(req.body.dilmaScore || 0, 10));
+        const safeRunnerCoins = Math.max(existingData.runnerCoins || 0, parseInt(req.body.runnerCoins || 0, 10));
 
         batch.set(userRef, {
           username: cleanName,
@@ -99,6 +101,8 @@ export default async function handler(req, res) {
           totalPicanhas: safeTotalPicanhas,
           flappyScore: safeFlappy,
           runnerScore: safeRunner,
+          dilmaScore: safeDilma,
+          runnerCoins: safeRunnerCoins,
           createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
@@ -112,7 +116,9 @@ export default async function handler(req, res) {
             hasPassword: true,
             totalPicanhas: safeTotalPicanhas,
             flappyScore: safeFlappy,
-            runnerScore: safeRunner
+            runnerScore: safeRunner,
+            dilmaScore: safeDilma,
+            runnerCoins: safeRunnerCoins
           }
         });
       } catch (err) {
@@ -246,7 +252,9 @@ export default async function handler(req, res) {
             hasPassword: true,
             totalPicanhas: userData?.totalPicanhas || 0,
             flappyScore: userData?.flappyScore || 0,
-            runnerScore: userData?.runnerScore || 0
+            runnerScore: userData?.runnerScore || 0,
+            dilmaScore: userData?.dilmaScore || 0,
+            runnerCoins: userData?.runnerCoins || 0
           }
         });
       } catch (err) {

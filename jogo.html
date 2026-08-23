@@ -1228,11 +1228,19 @@
     applyActiveCharacterModifiers();
 
     if (btnSound) {
+      const updateSoundBtnUI = () => {
+        const info = sounds.getModeInfo();
+        btnSound.textContent = info.icon;
+        btnSound.title = info.label;
+      };
+      updateSoundBtnUI();
+
       btnSound.addEventListener('click', (e) => {
         e.stopPropagation();
         try { sounds.init(); } catch(e){}
-        const isMuted = sounds.toggleMute();
-        btnSound.textContent = isMuted ? '🔇' : '🔊';
+        const info = sounds.cycleAudioMode();
+        updateSoundBtnUI();
+        showBannerAlert(info.label, false);
       });
     }
 

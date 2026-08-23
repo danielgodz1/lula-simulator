@@ -93,11 +93,31 @@
 
 ---
 
+## 🌟 Últimas Atualizações & Melhorias Recentes
+
+- **🚀 Carregamento Instantâneo & Fallback 3D Procedural (Empresário 3D)**:
+  - Inicialização com zero delay em dispositivos móveis e computadores.
+  - Renderização procedural imediata de personagens 3D (ternos, faixas presidenciais, gravatas, maletas e sombras) enquanto os modelos `.glb` de alta fidelidade são baixados em segundo plano, com *hot-swap* automático.
+- **🔊 Seletor de Áudio em 3 Modos**:
+  - `🔊 Áudio Completo`: Efeitos arcade + falas e vinhetas de memes (*"Brasil, Brasil!"*, *"Besta Enjaulada"*, *"Faz o L"*).
+  - `🎮 Apenas Sons do Jogo`: Efeitos essenciais de gameplay (pulos, picanhas, moedas e colisão sintética) sem falas/memes sonoros.
+  - `🔇 Modo Mudo`: Silenciamento total.
+  - Preferência salva automaticamente no navegador e sincronizada entre os modos 2D e 3D.
+- **☁️ Sincronização Cross-Device em Tempo Real**:
+  - Sincronização bidirecional de recordes da Dilma (`dilmaScore`), moedas do runner (`runnerCoins`) e picanhas acumuladas via Firebase Firestore.
+  - Desbloqueio do **Pablo Marçal** sincronizado instantaneamente entre celular e PC.
+  - Painel de **Conquistas & Badges (8 de 8)** com cálculo dinâmico e botão de sincronização manual com feedback visual.
+- **📱 Navbar Responsiva & Menu Mobile Aprimorado**:
+  - Botão *"☰ Menu"* exibido exclusivamente em telas mobile (`<= 950px`) e oculto no Desktop.
+  - Cartão de perfil integrado no menu lateral mobile com opções de **Trocar de Conta** e **Sair (Logout)**.
+
+---
+
 ## 💻 Tecnologias Utilizadas
 
 - **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), Vanilla CSS3 (Design System próprio, Glassmorphism, Micro-animações).
-- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL).
-- **Backend Serverless**: Node.js 18+ em Vercel Functions.
+- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL) com Shaders GLSL customizados para animação fisiológica de corrida.
+- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`).
 - **Banco de Dados & Autenticação**: Google Cloud Firestore & Firebase Admin SDK.
 - **Deploy & CI/CD**: [Vercel](https://vercel.com) com deploy automático a cada push no GitHub.
 
@@ -129,4 +149,4 @@
 
 ## 📜 Licença & Créditos
 
-Projeto desenvolvido por **Daniel dos Santos** no **SENAI** (Curso de Programação com Inteligência Artificial) como uma crítica social satírica, bem-humorada e interativa sobre a realidade brasileira. 🇧🇷
+Projeto desenvolvido por **Daniel dos Santos** no **SENAI** (Curso de Programação com Inteligência Artificial) como uma sátira social e política interativa sobre o Brasil. 🇧🇷

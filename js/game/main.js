@@ -224,8 +224,11 @@ export class Game {
   }
 }
 
-export async function initGame() {
-  // Pré-carrega todos os modelos GLB antes de instanciar a cena
-  await modelLoader.preloadAll();
+export function initGame() {
+  const selectedChar = RunnerInventory.getSelectedCharacter();
+  // 1. Instancia o jogo e conecta botões/HUD imediatamente (0ms de espera)
   window.currentGameInstance = new Game();
+
+  // 2. Dispara o carregamento dos modelos 3D em segundo plano sem travar cliques
+  modelLoader.preloadAll(selectedChar.id).catch(() => {});
 }

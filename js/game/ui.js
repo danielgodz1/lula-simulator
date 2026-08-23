@@ -48,10 +48,18 @@ export class UIManager {
 
   setupSoundButton() {
     if (this.btnSoundToggle) {
+      const updateSoundUI = () => {
+        const info = gameAudio.getModeInfo();
+        this.btnSoundToggle.textContent = info.icon;
+        this.btnSoundToggle.title = info.label;
+      };
+      updateSoundUI();
+
       this.btnSoundToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isMuted = gameAudio.toggleMute();
-        this.btnSoundToggle.textContent = isMuted ? '🔇' : '🔊';
+        gameAudio.init();
+        const info = gameAudio.cycleAudioMode();
+        updateSoundUI();
       });
     }
   }
@@ -231,6 +239,18 @@ export class UIManager {
       // No preview o personagem fica de frente para o jogador ver o rosto e detalhes
       glbModel.rotation.y = 0;
       this.previewModelGroup.add(glbModel);
+    } else {
+      // PREVIEW PROCEDURAL SE O GLB AINDA ESTIVER SENDO BAIXADO
+      const procGroup = this.createProceduralPreviewModel(charId);
+      this.previewModelGroup.add(procGroup);
+
+      // Dispara download e auto-atualização no canvas
+      modelLoader.loadModel(charId);
+      modelLoader.onModelLoaded(charId, () => {
+        if (this.previewCharId === charId) {
+          this.update3DPreview(charId);
+        }
+      });
     }
 
     // Pedestal de Luz Circular Sob os Pés
@@ -269,6 +289,113 @@ export class UIManager {
         this.btnPlayWithSelectedChar.style.borderColor = '#eab308';
       }
     }
+  }
+
+  createProceduralPreviewModel(charId) {
+    const group = new THREE.Group();
+
+    let suitColor = 0x1e293b;
+    let tieColor = 0xef4444;
+    let sashColor1 = 0x009c3b;
+    let sashColor2 = 0xffdf00;
+    let hairColor = 0x0f172a;
+    let hasBeard = false;
+    let hasSash = false;
+    let hasGlasses = false;
+
+    if (charId === 'lula') {
+      suitColor = 0x1e3a8a;
+      hairColor = 0xcbd5e1;
+      hasBeard = true;
+      hasSash = true;
+    } else if (charId === 'bolsonaro') {
+      suitColor = 0x111827;
+      tieColor = 0xeab308;
+      hairColor = 0x334155;
+      hasSash = true;
+    } else {
+      suitColor = 0x1e293b;
+      tieColor = 0xef4444;
+      hasGlasses = true;
+    }
+
+    const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.5 });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: tieColor, roughness: 0.3 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfcd34d, roughness: 0.6 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
+    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
+
+    // Tronco
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.90, 0.44), suitMat);
+    torso.position.y = 1.25;
+    group.add(torso);
+
+    // Camisa
+    const shirt = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.50), shirtMat);
+    shirt.position.set(0, 1.35, 0.23);
+    group.add(shirt);
+
+    // Gravata
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.42, 0.04), tieMat);
+    tie.position.set(0, 1.28, 0.24);
+    group.add(tie);
+
+    // Faixa Presidencial
+    if (hasSash) {
+      const sashMat1 = new THREE.MeshStandardMaterial({ color: sashColor1 });
+      const sashMat2 = new THREE.MeshStandardMaterial({ color: sashColor2 });
+      const sash1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.80, 0.48), sashMat1);
+      sash1.position.set(-0.04, 1.28, 0);
+      sash1.rotation.z = 0.35;
+      const sash2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.80, 0.49), sashMat2);
+      sash2.position.set(-0.04, 1.28, 0);
+      sash2.rotation.z = 0.35;
+      group.add(sash1, sash2);
+    }
+
+    // Cabeça
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.50, 0.46), skinMat);
+    head.position.y = 1.95;
+    group.add(head);
+
+    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.22, 0.50), hairMat);
+    hair.position.set(0, 2.15, 0);
+    group.add(hair);
+
+    if (hasBeard) {
+      const beard = new THREE.Mesh(new THREE.BoxGeometry(0.49, 0.24, 0.28), hairMat);
+      beard.position.set(0, 1.82, 0.14);
+      group.add(beard);
+    }
+
+    if (hasGlasses) {
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 0.1, metalness: 0.9 });
+      const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.08), glassMat);
+      glasses.position.set(0, 1.96, 0.24);
+      group.add(glasses);
+    }
+
+    // Braços
+    const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.70, 0.22), suitMat);
+    lArm.position.set(-0.48, 1.28, 0);
+    const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.70, 0.22), suitMat);
+    rArm.position.set(0.48, 1.28, 0);
+    group.add(lArm, rArm);
+
+    // Pernas
+    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.26), suitMat);
+    lLeg.position.set(-0.20, 0.50, 0);
+    const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.16, 0.42), shoeMat);
+    lShoe.position.set(-0.20, 0.11, 0.06);
+
+    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.26), suitMat);
+    rLeg.position.set(0.20, 0.50, 0);
+    const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.16, 0.42), shoeMat);
+    rShoe.position.set(0.20, 0.11, 0.06);
+
+    group.add(lLeg, lShoe, rLeg, rShoe);
+    return group;
   }
 
   start3DPreviewLoop() {

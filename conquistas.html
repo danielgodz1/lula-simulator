@@ -331,7 +331,8 @@
       </div>
       <div class="stat-item">
         <span class="stat-label">🏆 Badges Liberadas</span>
-        <span class="stat-value green" id="statsUnlockedBadges">0 / 6</span>
+        <span class="stat-value green" id="statsUnlockedBadges">0 / 8</span>
+        <button id="btnSyncCloud" style="background:rgba(255,223,0,0.15); border:1.5px solid var(--amarelo-brasil); color:var(--amarelo-brasil); border-radius:10px; padding:4px 10px; font-size:11px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-top:6px; transition:all 0.2s;" title="Sincronizar com o banco de dados">🔄 Sincronizar</button>
       </div>
     </div>
 
@@ -520,17 +521,6 @@
 
     auth.renderProfileBadge('nav');
 
-    const totalPicanhas = CharacterInventory.getTotalPicanhas();
-    const user = auth.getCurrentUser();
-    const flappyBest = parseInt(localStorage.getItem('lula_best') || '0', 10);
-    const runnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
-
-    // Atualiza status do jogador no card
-    document.getElementById('statsPlayerName').textContent = user ? user.username : 'Visitante';
-    document.getElementById('statsTotalPicanhas').textContent = `${totalPicanhas} 🥩`;
-    document.getElementById('statsFlappyRecord').textContent = `${flappyBest} pts`;
-    document.getElementById('statsRunnerRecord').textContent = `${runnerBest} km`;
-
     // Lista de Badges e Configurações
     const badges = [
       {
@@ -623,52 +613,118 @@
       }
     ];
 
-    let unlockedCount = 0;
+    function updateBadgesUI() {
+      const user = auth.getCurrentUser();
+      const totalPicanhas = Math.max(CharacterInventory.getTotalPicanhas(), user?.totalPicanhas || 0);
+      const flappyBest = Math.max(parseInt(localStorage.getItem('lula_best') || '0', 10), user?.flappyScore || 0);
+      const runnerBest = Math.max(parseInt(localStorage.getItem('run_best') || '0', 10), user?.runnerScore || 0);
+      const dilmaBest = Math.max(CharacterInventory.getDilmaBest(), user?.dilmaScore || 0);
 
-    badges.forEach(b => {
-      const card = document.getElementById(b.cardId);
-      const fill = document.getElementById(b.fillId);
-      const text = document.getElementById(b.textId);
+      // Atualiza status do jogador no card
+      const nameEl = document.getElementById('statsPlayerName');
+      const picEl = document.getElementById('statsTotalPicanhas');
+      const flapEl = document.getElementById('statsFlappyRecord');
+      const runEl = document.getElementById('statsRunnerRecord');
+      if (nameEl) nameEl.textContent = user ? user.username : (localStorage.getItem('lula_player') || 'Visitante');
+      if (picEl) picEl.textContent = `${totalPicanhas} 🥩`;
+      if (flapEl) flapEl.textContent = `${flappyBest} pts`;
+      if (runEl) runEl.textContent = `${runnerBest} km`;
 
-      let percent = 0;
-      let isUnlocked = false;
+      let unlockedCount = 0;
 
-      if (b.id === 'marcal') {
-        isUnlocked = CharacterInventory.isUnlocked('marcal');
-        const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma');
-        const dilmaBest = CharacterInventory.getDilmaBest();
+      badges.forEach(b => {
+        const card = document.getElementById(b.cardId);
+        const fill = document.getElementById(b.fillId);
+        const text = document.getElementById(b.textId);
+        if (!card) return;
+
+        let percent = 0;
+        let isUnlocked = false;
+
+        if (b.id === 'marcal') {
+          const isMarcalDirectUnlocked = CharacterInventory.isUnlocked('marcal');
+          const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma') || totalPicanhas >= 100;
+          isUnlocked = isMarcalDirectUnlocked || (isDilmaUnlocked && dilmaBest >= 200);
+
+          if (isUnlocked) {
+            percent = 100;
+            if (text) text.textContent = `✨ DESBLOQUEADO (${dilmaBest}/200 pts com a Dilma)`;
+          } else if (!isDilmaUnlocked) {
+            percent = Math.min(50, Math.round((totalPicanhas / 100) * 50));
+            if (text) text.textContent = `Passo 1: Liberar Dilma (${totalPicanhas}/100 🥩)`;
+          } else {
+            percent = 50 + Math.min(50, Math.round((dilmaBest / 200) * 50));
+            if (text) text.textContent = `Passo 2: Fazer 200 pts com a Dilma (${dilmaBest}/200 pts)`;
+          }
+        } else if (b.id === 'badge50') {
+          percent = Math.min(100, Math.round((totalPicanhas / 50) * 100));
+          isUnlocked = totalPicanhas >= 50 || flappyBest >= 50;
+          if (text) text.textContent = `${totalPicanhas} / 50 Picanhas (${percent}%)`;
+        } else if (b.id === 'badge500') {
+          percent = Math.min(100, Math.round((totalPicanhas / 500) * 100));
+          isUnlocked = totalPicanhas >= 500 || flappyBest >= 500;
+          if (text) text.textContent = `${totalPicanhas} / 500 Picanhas (${percent}%)`;
+        } else {
+          // Personagens individuais
+          const charUnlocked = CharacterInventory.isUnlocked(b.id);
+          percent = Math.min(100, Math.round((totalPicanhas / b.target) * 100));
+          isUnlocked = charUnlocked || totalPicanhas >= b.target;
+          if (text) text.textContent = `${totalPicanhas} / ${b.target} Picanhas (${percent}%)`;
+        }
 
         if (isUnlocked) {
-          percent = 100;
-          if (text) text.textContent = `✨ DESBLOQUEADO (${dilmaBest}/200 pts com a Dilma)`;
-        } else if (!isDilmaUnlocked) {
-          percent = Math.min(50, Math.round((totalPicanhas / 100) * 50));
-          if (text) text.textContent = `Passo 1: Liberar Dilma (${totalPicanhas}/100 🥩)`;
+          unlockedCount++;
+          card.classList.add('unlocked');
+          card.classList.remove('locked');
         } else {
-          percent = 50 + Math.min(50, Math.round((dilmaBest / 200) * 50));
-          if (text) text.textContent = `Passo 2: Fazer 200 pts com a Dilma (${dilmaBest}/200 pts)`;
+          card.classList.add('locked');
+          card.classList.remove('unlocked');
         }
-      } else {
-        percent = Math.min(100, Math.round((totalPicanhas / b.target) * 100));
-        isUnlocked = totalPicanhas >= b.target;
-        if (text) text.textContent = `${totalPicanhas} / ${b.target} Picanhas (${percent}%)`;
+
+        if (fill) fill.style.width = `${percent}%`;
+
+        card.onclick = () => openBadgeModal(b, isUnlocked);
+      });
+
+      const unlockedBadgesEl = document.getElementById('statsUnlockedBadges');
+      if (unlockedBadgesEl) {
+        unlockedBadgesEl.textContent = `${unlockedCount} / ${badges.length}`;
       }
+    }
 
-      if (isUnlocked) {
-        unlockedCount++;
-        card.classList.add('unlocked');
-        card.classList.remove('locked');
-      } else {
-        card.classList.add('locked');
-        card.classList.remove('unlocked');
-      }
+    // Executa renderização inicial imediata
+    updateBadgesUI();
 
-      if (fill) fill.style.width = `${percent}%`;
+    // Sincroniza em segundo plano com a nuvem e atualiza a UI
+    auth.syncFromCloud().then(() => {
+      updateBadgesUI();
+    }).catch(() => {});
 
-      card.onclick = () => openBadgeModal(b, isUnlocked);
-    });
-
-    document.getElementById('statsUnlockedBadges').textContent = `${unlockedCount} / ${badges.length}`;
+    // Botão de Sincronização Manual com Feedback Visual
+    const btnSync = document.getElementById('btnSyncCloud');
+    if (btnSync) {
+      btnSync.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        btnSync.textContent = '⏳ Sincronizando...';
+        btnSync.style.opacity = '0.7';
+        try {
+          await auth.syncFromCloud();
+          updateBadgesUI();
+          btnSync.textContent = '✓ Sincronizado!';
+          btnSync.style.borderColor = 'var(--verde-neon)';
+          btnSync.style.color = 'var(--verde-neon)';
+          setTimeout(() => {
+            btnSync.textContent = '🔄 Sincronizar';
+            btnSync.style.borderColor = 'var(--amarelo-brasil)';
+            btnSync.style.color = 'var(--amarelo-brasil)';
+            btnSync.style.opacity = '1';
+          }, 2000);
+        } catch (err) {
+          btnSync.textContent = '🔄 Sincronizar';
+          btnSync.style.opacity = '1';
+        }
+      });
+    }
 
     // MODAL DE ZOOM
     const modal = document.getElementById('badgeZoomModal');
@@ -687,16 +743,9 @@
       modal.style.display = 'flex';
     }
 
-    btnClose.onclick = () => { modal.style.display = 'none'; };
-    modal.onclick = (e) => {
+    btnClose?.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
+    modal?.addEventListener('click', (e) => {
       if (e.target === modal) modal.style.display = 'none';
-    };
-
-    const btnNavToggle = document.getElementById('btnNavToggle');
-    const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      navLinksList?.classList.toggle('open');
     });
 
     import('./js/ads-manager.js').then(m => m.AdsManager.init());

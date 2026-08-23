@@ -1,10 +1,13 @@
 // js/game/audio.js — Gerenciador Central de Áudio (Web Audio API Pura com Sons de Trem e Metrô)
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
+const AUDIO_MODE_KEY = 'lula_audio_mode';
+
 export class GameAudio {
   constructor() {
     this.ctx = null;
-    this.isMuted = false;
+    this.audioMode = localStorage.getItem(AUDIO_MODE_KEY) || 'full'; // 'full' | 'sfx_only' | 'muted'
+    this.isMuted = (this.audioMode === 'muted');
     this.ambienceNode = null;
     this.ambienceGain = null;
     this.lastJumpTime = 0;
@@ -13,6 +16,52 @@ export class GameAudio {
     this.lastTrainHornTime = 0;
     this.initialized = false;
     this.activeAudios = [];
+  }
+
+  areMemesEnabled() {
+    return !this.isMuted && this.audioMode === 'full';
+  }
+
+  getAudioMode() {
+    return this.audioMode;
+  }
+
+  setAudioMode(mode) {
+    if (mode !== 'full' && mode !== 'sfx_only' && mode !== 'muted') {
+      mode = 'full';
+    }
+    this.audioMode = mode;
+    this.isMuted = (mode === 'muted');
+    localStorage.setItem(AUDIO_MODE_KEY, mode);
+
+    if (this.ambienceGain) {
+      this.ambienceGain.gain.setValueAtTime(this.isMuted ? 0 : 0.035, this.ctx ? this.ctx.currentTime : 0);
+    }
+    if (mode !== 'full') {
+      this.stopAllVoiceAudios();
+    }
+    return this.getModeInfo();
+  }
+
+  cycleAudioMode() {
+    let nextMode = 'full';
+    if (this.audioMode === 'full') nextMode = 'sfx_only';
+    else if (this.audioMode === 'sfx_only') nextMode = 'muted';
+    else if (this.audioMode === 'muted') nextMode = 'full';
+
+    return this.setAudioMode(nextMode);
+  }
+
+  getModeInfo() {
+    switch (this.audioMode) {
+      case 'full':
+        return { mode: 'full', icon: '🔊', label: 'Áudio: Completo (Sons + Memes)', shortLabel: '🔊 Jogo + Memes' };
+      case 'sfx_only':
+        return { mode: 'sfx_only', icon: '🎮', label: 'Áudio: Apenas Efeitos do Jogo (Sem Memes)', shortLabel: '🎮 Apenas Sons' };
+      case 'muted':
+      default:
+        return { mode: 'muted', icon: '🔇', label: 'Áudio: Mudo (Silenciado)', shortLabel: '🔇 Mudo' };
+    }
   }
 
   init() {
@@ -35,10 +84,7 @@ export class GameAudio {
   }
 
   toggleMute() {
-    this.isMuted = !this.isMuted;
-    if (this.ambienceGain) {
-      this.ambienceGain.gain.setValueAtTime(this.isMuted ? 0 : 0.035, this.ctx ? this.ctx.currentTime : 0);
-    }
+    const info = this.cycleAudioMode();
     return this.isMuted;
   }
 
@@ -298,7 +344,7 @@ export class GameAudio {
 
   // 9. VINHETA DO INÍCIO DA CORRIDA ("FAZ O L" BAIXINHO)
   playStartVinheta() {
-    if (this.isMuted) return;
+    if (!this.areMemesEnabled()) return;
     try {
       this.stopAllVoiceAudios();
       const audio = new Audio('audios/faz-o-l-vinheta.mp3');
@@ -308,45 +354,46 @@ export class GameAudio {
     } catch (e) {}
   }
 
-  // 10. IMPACTO / MORTE (TOCA "PENSE NO LULA" DO SEGUNDO 6 AO 10)
+  // 10. IMPACTO / MORTE (TOCA "PENSE NO LULA" DO SEGUNDO 6 AO 10 SE MEMES ATIVOS)
   playCrash() {
-    if (this.isMuted) return;
-    try {
-      this.stopAllVoiceAudios();
-      const deathAudio = new Audio('audios/pense-no-lula.mp3');
-      deathAudio.volume = 0.90;
+    if (this.areMemesEnabled()) {
+      try {
+        this.stopAllVoiceAudios();
+        const deathAudio = new Audio('audios/pense-no-lula.mp3');
+        deathAudio.volume = 0.90;
 
-      const onCanPlay = () => {
-        deathAudio.currentTime = 6.0;
-        deathAudio.play().catch(() => {});
-      };
+        const onCanPlay = () => {
+          deathAudio.currentTime = 6.0;
+          deathAudio.play().catch(() => {});
+        };
 
-      if (deathAudio.readyState >= 2) {
-        onCanPlay();
-      } else {
-        deathAudio.addEventListener('canplay', onCanPlay, { once: true });
-        deathAudio.currentTime = 6.0;
-        deathAudio.play().catch(() => {});
-      }
-
-      // Interrompe com precisão no segundo 10
-      const stopListener = () => {
-        if (deathAudio.currentTime >= 10.0) {
-          deathAudio.pause();
-          deathAudio.removeEventListener('timeupdate', stopListener);
+        if (deathAudio.readyState >= 2) {
+          onCanPlay();
+        } else {
+          deathAudio.addEventListener('canplay', onCanPlay, { once: true });
+          deathAudio.currentTime = 6.0;
+          deathAudio.play().catch(() => {});
         }
-      };
-      deathAudio.addEventListener('timeupdate', stopListener);
 
-      setTimeout(() => {
-        try {
-          deathAudio.pause();
-          deathAudio.removeEventListener('timeupdate', stopListener);
-        } catch (e) {}
-      }, 4200);
+        // Interrompe com precisão no segundo 10
+        const stopListener = () => {
+          if (deathAudio.currentTime >= 10.0) {
+            deathAudio.pause();
+            deathAudio.removeEventListener('timeupdate', stopListener);
+          }
+        };
+        deathAudio.addEventListener('timeupdate', stopListener);
 
-      this.activeAudios.push(deathAudio);
-    } catch (e) {}
+        setTimeout(() => {
+          try {
+            deathAudio.pause();
+            deathAudio.removeEventListener('timeupdate', stopListener);
+          } catch (e) {}
+        }, 4200);
+
+        this.activeAudios.push(deathAudio);
+      } catch (e) {}
+    }
 
     this.ensureContext();
     if (!this.ctx) return;

@@ -54,32 +54,45 @@ class AuthManager {
         const cloudPicanhas = parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10);
         const cloudFlappy = parseInt(doc.fields?.flappyScore?.integerValue || '0', 10);
         const cloudRunner = parseInt(doc.fields?.runnerScore?.integerValue || '0', 10);
+        const cloudDilma = parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10);
+        const cloudRunnerCoins = parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10);
 
         const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
         const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
         const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+        const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+        const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
 
         const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas, this.currentUser.totalPicanhas || 0);
         const mergedFlappy = Math.max(localFlappy, cloudFlappy, this.currentUser.flappyScore || 0);
         const mergedRunner = Math.max(localRunner, cloudRunner, this.currentUser.runnerScore || 0);
+        const mergedDilma = Math.max(localDilma, cloudDilma, this.currentUser.dilmaScore || 0);
+        const mergedRunnerCoins = Math.max(localRunnerCoins, cloudRunnerCoins, this.currentUser.runnerCoins || 0);
 
         this.currentUser.totalPicanhas = mergedPicanhas;
         this.currentUser.flappyScore = mergedFlappy;
         this.currentUser.runnerScore = mergedRunner;
+        this.currentUser.dilmaScore = mergedDilma;
+        this.currentUser.runnerCoins = mergedRunnerCoins;
 
         localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
         localStorage.setItem(TOTAL_PICANHAS_KEY, mergedPicanhas.toString());
         localStorage.setItem('lula_best', mergedFlappy.toString());
         localStorage.setItem('run_best', mergedRunner.toString());
+        localStorage.setItem('flappy_dilma_record_score', mergedDilma.toString());
+        localStorage.setItem('runner_total_coins', mergedRunnerCoins.toString());
 
-        // Se o local tinha mais que a nuvem, atualiza a nuvem
-        if (localPicanhas > cloudPicanhas || localFlappy > cloudFlappy || localRunner > cloudRunner) {
-          const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore`;
+        // Se o local tinha mais que a nuvem, atualiza a nuvem imediatamente
+        if (localPicanhas > cloudPicanhas || localFlappy > cloudFlappy || localRunner > cloudRunner || localDilma > cloudDilma || localRunnerCoins > cloudRunnerCoins) {
+          const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=lastSync`;
           const patchPayload = {
             fields: {
               totalPicanhas: { integerValue: mergedPicanhas.toString() },
               flappyScore: { integerValue: mergedFlappy.toString() },
-              runnerScore: { integerValue: mergedRunner.toString() }
+              runnerScore: { integerValue: mergedRunner.toString() },
+              dilmaScore: { integerValue: mergedDilma.toString() },
+              runnerCoins: { integerValue: mergedRunnerCoins.toString() },
+              lastSync: { timestampValue: new Date().toISOString() }
             }
           };
           fetch(patchUrl, {
@@ -89,6 +102,43 @@ class AuthManager {
           }).catch(() => {});
         }
       }
+    } catch (e) {}
+  }
+
+  // SINCRONIZAÇÃO FORÇADA IMEDIATA DOS DADOS LOCAIS COM O FIRESTORE
+  async syncUserDataNow() {
+    if (!this.currentUser || !this.currentUser.username) return;
+    const normalizedName = this.currentUser.username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+
+    this.currentUser.totalPicanhas = Math.max(this.currentUser.totalPicanhas || 0, localPicanhas);
+    this.currentUser.flappyScore = Math.max(this.currentUser.flappyScore || 0, localFlappy);
+    this.currentUser.runnerScore = Math.max(this.currentUser.runnerScore || 0, localRunner);
+    this.currentUser.dilmaScore = Math.max(this.currentUser.dilmaScore || 0, localDilma);
+    this.currentUser.runnerCoins = Math.max(this.currentUser.runnerCoins || 0, localRunnerCoins);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(this.currentUser));
+
+    try {
+      const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=lastSync`;
+      const patchPayload = {
+        fields: {
+          totalPicanhas: { integerValue: (this.currentUser.totalPicanhas || 0).toString() },
+          flappyScore: { integerValue: (this.currentUser.flappyScore || 0).toString() },
+          runnerScore: { integerValue: (this.currentUser.runnerScore || 0).toString() },
+          dilmaScore: { integerValue: (this.currentUser.dilmaScore || 0).toString() },
+          runnerCoins: { integerValue: (this.currentUser.runnerCoins || 0).toString() },
+          lastSync: { timestampValue: new Date().toISOString() }
+        }
+      };
+      await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patchPayload)
+      });
     } catch (e) {}
   }
 
@@ -311,6 +361,16 @@ class AuthManager {
       const cur = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
       const finalPicanhas = Math.max(cur, user.totalPicanhas);
       localStorage.setItem(TOTAL_PICANHAS_KEY, finalPicanhas.toString());
+    }
+    if (user.dilmaScore !== undefined) {
+      const cur = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+      const finalDilma = Math.max(cur, user.dilmaScore);
+      localStorage.setItem('flappy_dilma_record_score', finalDilma.toString());
+    }
+    if (user.runnerCoins !== undefined) {
+      const cur = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+      const finalCoins = Math.max(cur, user.runnerCoins);
+      localStorage.setItem('runner_total_coins', finalCoins.toString());
     }
   }
 
@@ -629,13 +689,12 @@ class AuthManager {
       target = badgeHolder;
     }
 
-    // Configura o menu mobile hambúrguer se existir
+    // Configura o menu mobile hambúrguer se existir (sem inline style para não quebrar desktop)
     const toggleBtn = document.getElementById('navToggle') || document.getElementById('btnNavToggle');
     const navLinks = document.getElementById('navLinks') || document.getElementById('navLinksList');
     if (toggleBtn && navLinks && !toggleBtn.dataset.bound) {
       toggleBtn.dataset.bound = 'true';
       toggleBtn.innerHTML = '☰ Menu';
-      toggleBtn.style.display = 'inline-flex';
       toggleBtn.onclick = (e) => {
         e.stopPropagation();
         navLinks.classList.toggle('open');
@@ -649,25 +708,83 @@ class AuthManager {
       });
     }
 
-    if (!target) return;
-
     const user = this.getCurrentUser();
     const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const runnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+
+    // 1. Renderiza Card de Usuário dentro do Menu Mobile (Drawer)
+    if (navLinks) {
+      let mobileCard = navLinks.querySelector('.mobile-nav-profile-card');
+      if (!mobileCard) {
+        mobileCard = document.createElement('li');
+        mobileCard.className = 'mobile-nav-profile-card';
+        navLinks.insertBefore(mobileCard, navLinks.firstChild);
+      }
+
+      if (user) {
+        const safeUsername = escapeHTML(user.username);
+        mobileCard.innerHTML = `
+          <div class="mobile-user-card-content">
+            <div class="mobile-user-header">
+              <div class="mobile-user-avatar">👤</div>
+              <div class="mobile-user-info">
+                <div class="mobile-user-name">${safeUsername}</div>
+                <div class="mobile-user-stats">🥩 <b>${totalPicanhas}</b> Picanhas · 💰 <b>${runnerCoins}</b> Moedas</div>
+              </div>
+            </div>
+            <div class="mobile-user-buttons">
+              <button id="btnMobileChangeAcc" class="btn-user-action btn-user-change">🔄 Trocar Conta</button>
+              <button id="btnMobileLogoutAcc" class="btn-user-action btn-user-logout">🚪 Sair (Logout)</button>
+            </div>
+          </div>
+        `;
+        mobileCard.querySelector('#btnMobileChangeAcc')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navLinks.classList.remove('open');
+          if (toggleBtn) toggleBtn.innerHTML = '☰ Menu';
+          this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
+        });
+        mobileCard.querySelector('#btnMobileLogoutAcc')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm('Deseja realmente sair da sua conta?')) {
+            this.logout();
+            window.location.reload();
+          }
+        });
+      } else {
+        mobileCard.innerHTML = `
+          <div class="mobile-user-card-content" style="padding: 10px 6px;">
+            <button id="btnMobileLoginAcc" class="btn-primary" style="width:100%; font-size:15px; padding:10px 14px; letter-spacing:0.5px;">
+              🔑 ENTRAR / ESCOLHER NICK
+            </button>
+          </div>
+        `;
+        mobileCard.querySelector('#btnMobileLoginAcc')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          navLinks.classList.remove('open');
+          if (toggleBtn) toggleBtn.innerHTML = '☰ Menu';
+          this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
+        });
+      }
+    }
+
+    // 2. Renderiza no cabeçalho Desktop
+    if (!target) return;
 
     if (user) {
       const safeUsername = escapeHTML(user.username);
       target.innerHTML = `
-        <span title="Total acumulado: ${totalPicanhas} picanhas" style="font-size:12px; font-weight:700; color:#fff; display:inline-flex; align-items:center; white-space:nowrap;">
+        <span title="Total acumulado: ${totalPicanhas} picanhas" class="desktop-user-pill" style="font-size:12px; font-weight:700; color:#fff; display:inline-flex; align-items:center; white-space:nowrap;">
           👤 ${safeUsername} <b style="color:var(--verde-neon); margin-left:4px;">(${totalPicanhas} 🥩)</b>
         </span>
-        <button id="btnLogoutProfile" style="
+        <button id="btnLogoutProfile" title="Trocar ou Sair da Conta" style="
           background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
-          color: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; font-weight:700;
-        ">Trocar</button>
+          color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight:700; transition:all 0.2s;
+        ">Trocar / Sair</button>
       `;
-      document.getElementById('btnLogoutProfile').onclick = () => {
-        this.logout();
-        window.location.reload();
+      document.getElementById('btnLogoutProfile').onclick = (e) => {
+        e.stopPropagation();
+        this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
       };
     } else {
       target.innerHTML = `
@@ -677,7 +794,8 @@ class AuthManager {
           box-shadow: 0 0 12px rgba(255,223,0,0.2); transition: all 0.2s; white-space:nowrap;
         ">🔑 Entrar / Mudar Nome</button>
       `;
-      document.getElementById('btnLoginProfile').onclick = () => {
+      document.getElementById('btnLoginProfile').onclick = (e) => {
+        e.stopPropagation();
         this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
       };
     }

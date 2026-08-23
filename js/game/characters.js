@@ -175,10 +175,12 @@ export class CharacterInventory {
   static recordDilmaScore(score) {
     const num = parseInt(score, 10) || 0;
     const current = this.getDilmaBest();
-    if (num > current) {
-      localStorage.setItem(DILMA_BEST_SCORE_KEY, num.toString());
+    const newBest = Math.max(num, current);
+    localStorage.setItem(DILMA_BEST_SCORE_KEY, newBest.toString());
+    if (newBest > 0) {
+      this.syncDilmaScoreToCloud(newBest);
     }
-    return Math.max(num, current);
+    return newBest;
   }
 
   static addPicanhas(amount) {
@@ -192,6 +194,37 @@ export class CharacterInventory {
   static async syncPicanhasNow() {
     const total = this.getTotalPicanhas();
     this.syncPicanhasToCloud(total);
+  }
+
+  static async syncDilmaScoreToCloud(score) {
+    try {
+      let playerName = '';
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u && u.username) playerName = u.username;
+      }
+      if (!playerName) {
+        playerName = localStorage.getItem('lula_player') || '';
+      }
+      if (!playerName) return;
+
+      const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
+      
+      const payload = {
+        fields: {
+          dilmaScore: { integerValue: score.toString() },
+          lastSync: { timestampValue: new Date().toISOString() }
+        }
+      };
+
+      fetch(docUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } catch (e) {}
   }
 
   static async syncPicanhasToCloud(total) {
@@ -208,11 +241,13 @@ export class CharacterInventory {
       if (!playerName) return;
 
       const norm = playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=lastSync`;
+      const dilmaBest = this.getDilmaBest();
+      const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(norm)}?updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=lastSync`;
       
       const payload = {
         fields: {
           totalPicanhas: { integerValue: total.toString() },
+          dilmaScore: { integerValue: dilmaBest.toString() },
           lastSync: { timestampValue: new Date().toISOString() }
         }
       };
