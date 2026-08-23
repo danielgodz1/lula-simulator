@@ -5,6 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Publicidade</title>
+
+  <!-- MOCK DE PROTEÇÃO ANTES DE QUALQUER SCRIPT EXTERNO: Evita SecurityError em sandbox estrito -->
+  <script>
+    (function() {
+      // 1. Mock de document.cookie para evitar SecurityError quando sandbox não tem allow-same-origin
+      try {
+        Object.defineProperty(document, 'cookie', {
+          get: () => '',
+          set: () => {},
+          configurable: true
+        });
+      } catch (e) {}
+
+      // 2. Mock de localStorage / sessionStorage para evitar SecurityError no script de terceiros
+      try {
+        const dummyStorage = {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {},
+          key: () => null,
+          length: 0
+        };
+        Object.defineProperty(window, 'localStorage', {
+          get: () => dummyStorage,
+          configurable: true
+        });
+        Object.defineProperty(window, 'sessionStorage', {
+          get: () => dummyStorage,
+          configurable: true
+        });
+      } catch (e) {}
+    })();
+  </script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -55,7 +90,7 @@
         script.src = cfg.scriptUrl;
         document.body.appendChild(script);
       } catch (err) {
-        console.warn('Falha no carregamento do frame de anúncio:', err);
+        console.warn('Falha ao inicializar banner:', err);
       }
     })();
   </script>
