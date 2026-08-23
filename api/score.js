@@ -2,7 +2,17 @@
 import crypto from 'crypto';
 import { applyCors } from './_cors.js';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || process.env.FIREBASE_PRIVATE_KEY || 'lula_session_sec_key_2026_brazil';
+function getSessionSecret() {
+  const secret = process.env.SESSION_SECRET || process.env.FIREBASE_PRIVATE_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+      console.error('🚨 ERRO CRÍTICO: Defina a variável SESSION_SECRET ou FIREBASE_PRIVATE_KEY no painel da Vercel!');
+      return null;
+    }
+    return 'lula_dev_session_secret_local_only';
+  }
+  return secret;
+}
 
 const COUNTRY_NAMES_PT = {
   BR: 'Brasil', PT: 'Portugal', US: 'Estados Unidos', AR: 'Argentina', UY: 'Uruguai',
@@ -35,10 +45,13 @@ function getCountryName(countryCode) {
 
 function verifySessionToken(token, expectedGame) {
   if (!token || typeof token !== 'string' || !token.includes('.')) return false;
+  const secret = getSessionSecret();
+  if (!secret) return false;
+
   try {
     const [payloadStr, signature] = token.split('.');
     const expectedSig = crypto
-      .createHmac('sha256', SESSION_SECRET)
+      .createHmac('sha256', secret)
       .update(payloadStr)
       .digest('base64url');
 

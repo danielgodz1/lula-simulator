@@ -2,10 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Verificação Estrita de Administrador (Custom Claim via Firebase Admin SDK)
+    // 1. Verificação Estrita de Administrador (Custom Claim 'admin: true' ou E-mail Verificado do Criador)
     function isAdmin() {
-      return request.auth != null 
-          && request.auth.token.admin == true;
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        (request.auth.token.email == 'insanodanieldoublegaming@gmail.com' && request.auth.token.email_verified == true)
+      );
     }
 
     // 2. Sanitização Estrita de Nomes e Nicks (Anti-XSS / Anti-Script Injection)
