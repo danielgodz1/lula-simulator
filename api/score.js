@@ -75,8 +75,9 @@ export default async function handler(req, res) {
     };
   };
 
-  // 1. GET: Consulta de 1 ÚNICA LEITURA no documento consolidado
+  // 1. GET: Consulta de 1 ÚNICA LEITURA no documento consolidado (com Cache na Edge CDN)
   if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
     const { game = 'flappy', limit = 300 } = req.query;
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const leaderboardDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${cleanGame}`;
