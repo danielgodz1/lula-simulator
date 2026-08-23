@@ -5,27 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Flappy Lula — Jogo do Lula 2D Arcade Online | Lula Simulator</title>
   <meta name="description" content="Jogue Flappy Lula online grátis! Voe entre os canos, colete picanhas, desbloqueie personagens lendários e fuja da prisão no jogo 2D oficial do Lula Simulator.">
-  <meta name="keywords" content="flappy lula, jogo do lula, jogo flappy lula online, lula bird, lula simulator 2d, picanhas jogo lula, jogar lula online">
   <meta name="author" content="Daniel dos Santos">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#080914">
-  <link rel="canonical" href="https://lula-simulator.vercel.app/jogo.html">
+  <link rel="canonical" href="https://lulasimulator.com.br/jogo.html">
 
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://lula-simulator.vercel.app/jogo.html">
+  <meta property="og:url" content="https://lulasimulator.com.br/jogo.html">
   <meta property="og:title" content="Flappy Lula — Jogo do Lula 2D Arcade Online">
   <meta property="og:description" content="Voe com o Lula, desvie de canos, pegue picanhas e dispute o Top 1 do Ranking Nacional!">
-  <meta property="og:image" content="https://lula-simulator.vercel.app/img/flappy_lula_hero.jpg">
+  <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
   <meta property="og:site_name" content="Lula Simulator">
   <meta property="og:locale" content="pt_BR">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://lula-simulator.vercel.app/jogo.html">
+  <meta name="twitter:url" content="https://lulasimulator.com.br/jogo.html">
   <meta name="twitter:title" content="Flappy Lula — Jogo do Lula Arcade Online">
   <meta name="twitter:description" content="Jogue Flappy Lula direto no navegador! Voe, pegue picanhas e desbloqueie personagens!">
-  <meta name="twitter:image" content="https://lula-simulator.vercel.app/img/flappy_lula_hero.jpg">
+  <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+
+  <!-- Schema.org / JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Flappy Lula",
+    "alternateName": ["Flappy Lula 2D", "Jogo do Lula Flappy", "Lula Bird Arcade"],
+    "url": "https://lulasimulator.com.br/jogo.html",
+    "description": "Modo de jogo arcade 2D do Lula Simulator. Voe entre os canos, colete picanhas, desbloqueie personagens e entre no modo prisão aos 13 pontos.",
+    "genre": ["Arcade", "Flappy", "Satire", "Casual Game"],
+    "playMode": "SinglePlayer",
+    "inLanguage": "pt-BR",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any (Web Browser)",
+    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
+    "author": {
+      "@type": "Person",
+      "name": "Daniel dos Santos"
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    }
+  }
+  </script>
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="img/favicon.png">
@@ -826,7 +852,7 @@
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
           <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
-            <img id="equippedCharImg" src="img/lula.png" style="width:100%; height:100%; object-fit:cover;">
+            <img id="equippedCharImg" src="img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
             <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
@@ -883,7 +909,7 @@
 
         <div class="go-quick-options">
           <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
-            <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem">
+            <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem Equipado">
             <span id="goEquippedCharName">Lula da Silva</span>
             <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Trocar</span>
           </div>

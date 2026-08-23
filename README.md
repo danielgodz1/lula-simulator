@@ -191,27 +191,27 @@ Para o Google encontrar e colocar seu site nas pesquisas em poucos dias (em vez 
    - Entre em [search.google.com/search-console](https://search.google.com/search-console) e faça login com sua conta Google.
 2. **Adicione a Propriedade**:
    - Selecione a opção **"Prefixo do URL"** (à direita).
-   - Digite: `https://lula-simulator.vercel.app` e clique em **Continuar**.
+   - Digite: `https://lulasimulator.com.br` e clique em **Continuar**.
 3. **Confirme a Propriedade**:
    - Escolha o método **"Tag HTML"** ou faça login na mesma conta do Google Analytics se já possuir.
 4. **Envie o Sitemap**:
    - No menu lateral esquerdo do Search Console, clique em **Sitemaps**.
    - No campo *"Adicionar um novo sitemap"*, digite: `sitemap.xml` e clique em **Enviar**.
 5. **Solicite a Indexação Prioritária da Página Principal**:
-   - Na barra de busca superior *"Inspecionar qualquer URL em https://lula-simulator.vercel.app"*, cole `https://lula-simulator.vercel.app/`.
+   - Na barra de busca superior *"Inspecionar qualquer URL em https://lulasimulator.com.br"*, cole `https://lulasimulator.com.br/`.
    - Quando o relatório carregar, clique no botão **"Solicitar Indexação"**.
    - Pronto! O robô do Google (*Googlebot*) visitará o site em caráter prioritário.
 
 ---
 
-### 💡 Dicas para Turbinar o Alcance Orgânico & Futuro Domínio Próprio
+### 💡 Dicas para Turbinar o Alcance Orgânico & Migração de Domínio
 
 1. **Compartilhamento em Redes Sociais (Vídeos Curtos)**:
    - Publique clipes de gameplay no **TikTok**, **Instagram Reels** e **YouTube Shorts** mostrando momentos engraçados (o modo prisão aos 13 pontos, o meme do Pablo Marçal 3x, a chuva de mandiocas da Dilma).
    - Coloque o link na bio e nos comentários. O tráfego direto e menções geram forte sinal de relevância para o Google.
-2. **Domínio Personalizado (Opcional para o futuro)**:
-   - Caso decida registrar um domínio próprio (ex: `lula-simulator.com.br` no Registro.br por R$ 40/ano), a Vercel permite conectá-lo com apenas 2 cliques na aba *Settings > Domains*.
-   - Todo o tráfego e autoridade do `.vercel.app` serão redirecionados automaticamente sem perder posicionamento.
+2. **Migração & Redirecionamento Automático na Vercel**:
+   - Com o domínio `lulasimulator.com.br` adicionado na Vercel (*Settings > Domains*), marque-o como **Primary Domain**.
+   - A própria Vercel gerará o redirecionamento `301 Permanent Redirect` do subdomínio antigo `.vercel.app` para `https://lulasimulator.com.br` automaticamente, preservando 100% da autoridade e visitas.
 
 ---
 

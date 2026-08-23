@@ -1291,7 +1291,7 @@ class AuthManager {
         mobileCard.innerHTML = `
           <div class="mobile-user-card-content">
             <div class="mobile-user-header">
-              <img class="mobile-user-avatar-img" src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar">
+              <img class="mobile-user-avatar-img" src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar do Jogador">
               <div class="mobile-user-info">
                 <div class="mobile-user-name">${safeUsername}</div>
                 <div class="mobile-user-stats">🥩 <b>${totalPicanhas}</b> Picanhas · 💰 <b>${runnerCoins}</b> Moedas</div>
@@ -1340,7 +1340,7 @@ class AuthManager {
       const safeUsername = escapeHTML(user.username);
       target.innerHTML = `
         <div id="btnDesktopProfileTrigger" title="Abrir Perfil, Foto e Sincronização" class="desktop-user-pill" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; background: rgba(255,255,255,0.08); border: 1.5px solid var(--amarelo-brasil); border-radius: 20px; transition: all 0.2s;">
-          <img src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--amarelo-brasil); background: #1e293b;">
+          <img src="${userAvatar}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="Avatar do Jogador" style="width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--amarelo-brasil); background: #1e293b;">
           <span style="font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap;">
             ${safeUsername} <b style="color: var(--verde-neon); margin-left: 2px;">(${totalPicanhas} 🥩)</b>
           </span>
