@@ -464,22 +464,7 @@
     </div>
   </section>
 
-  <!-- SEÇÃO DE PUBLICIDADE / ANÚNCIOS RECOMENDADOS (TOTALMENTE ISOLADA EM IFRAME SANDBOX) -->
-  <section style="max-width: 1100px; margin: 30px auto 40px; padding: 0 24px;">
-    <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(255, 255, 255, 0.18); border-radius: 18px; padding: 18px 20px; text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
-        <span style="font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); background: rgba(255, 255, 255, 0.08); padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.15);">
-          📢 PUBLICIDADE · ANÚNCIOS PATROCINADOS DE TERCEIROS
-        </span>
-      </div>
-      <p style="font-size: 11px; color: #64748b; margin-bottom: 12px;">
-        Os links e banners abaixo são veiculados por redes de anúncios parceiras e não refletem o conteúdo do jogo ou do projeto educacional.
-      </p>
-      <div id="adNativeHomeSlot" style="min-height: 140px; display: flex; justify-content: center; align-items: center;"></div>
-    </div>
-  </section>
-
-  <!-- BANNER DE MONETIZAÇÃO ACIMA DO RODAPÉ 320x50 (AUTO-REFRESH) -->
+  <!-- BANNER DE MONETIZAÇÃO ESTÁTICO 320x50 (AUTO-REFRESH ISOLADO) -->
   <div id="adBannerFooter" class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 20px;"></div>
 
   <!-- RODAPÉ -->
@@ -502,7 +487,6 @@
     });
 
     AdsManager.init();
-    AdsManager.loadNativeBanner('adNativeHomeSlot');
   </script>
 </body>
 </html>

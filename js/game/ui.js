@@ -639,7 +639,6 @@ export class UIManager {
     }
 
     this.gameOverModal.style.display = 'flex';
-    AdsManager.loadNativeBanner('adBannerGameOverNativeRunner');
 
     if (this.btnRestart) {
       this.btnRestart.onclick = (e) => {

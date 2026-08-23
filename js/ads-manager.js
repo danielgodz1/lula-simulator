@@ -13,6 +13,9 @@ import { CharacterInventory } from './game/characters.js';
 export const AD_CONFIG = {
   REFRESH_INTERVAL_SEC: 50, // Entre 45 e 60 segundos (recomendação de redes de anúncios)
   
+  // FLAG DE SEGURANÇA: Desativa completamente formatos nativos/arriscados
+  ENABLE_NATIVE_BANNER: false,
+
   // Rede Ativa: 'adsterra' | 'monetag' | 'propellerads'
   ACTIVE_NETWORK: 'adsterra',
 
@@ -142,6 +145,8 @@ class AdsManagerService {
     iframe.scrolling = 'no';
     iframe.title = `Ad ${slot.formatType}`;
     iframe.setAttribute('loading', 'lazy');
+    // ISOLAMENTO RIGOROSO: SEM 'allow-same-origin' para impedir qualquer acesso ao DOM/LocalStorage do site
+    iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -265,10 +270,18 @@ class AdsManagerService {
   }
 
   /**
-   * Carrega o Native Banner em um iframe sandboxed isolado para segurança total
+   * Carrega o Native Banner (DESATIVADO POR SEGURANÇA)
    * @param {string} [targetContainerId]
    */
   loadNativeBanner(targetContainerId) {
+    // DESATIVAÇÃO IMEDIATA: Bloqueia qualquer execução de Native Banner
+    if (!AD_CONFIG.ENABLE_NATIVE_BANNER) {
+      const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
+      const container = document.getElementById(id);
+      if (container) container.innerHTML = '';
+      return;
+    }
+
     const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
     const container = document.getElementById(id);
     if (!container || container.dataset.adLoaded) return;
@@ -288,7 +301,8 @@ class AdsManagerService {
       iframe.style.overflow = 'hidden';
       iframe.style.display = 'block';
       iframe.style.margin = '0 auto';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin');
+      // ISOLAMENTO RIGOROSO: SEM 'allow-same-origin'
+      iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
       iframe.title = 'Publicidade Patrocinada';
       iframe.setAttribute('loading', 'lazy');
 

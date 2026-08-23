@@ -983,16 +983,8 @@
           </button>
         </div>
 
-        <!-- BANNER DE MONETIZAÇÃO GAME OVER 320x50 -->
+        <!-- BANNER DE MONETIZAÇÃO ESTÁTICO GAME OVER 320x50 -->
         <div id="adBannerGameOver" class="ad-banner-container-320x50" style="margin-top: 8px; margin-bottom: 0;"></div>
-
-        <!-- BANNER NATIVO ISOLADO GAME OVER (IFRAME SANDBOX) -->
-        <div style="margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px; text-align: center;">
-          <div style="font-size: 9px; font-weight: 700; color: #64748b; letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase;">
-            📢 Publicidade Patrocinada de Terceiros
-          </div>
-          <div id="adBannerGameOverNative" style="min-height: 90px;"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -2107,7 +2099,6 @@
       document.getElementById('goYouScore').textContent = `${Math.max(score, bestScore)} 🥩`;
 
       gameOverModal.style.display = 'flex';
-      AdsManager.loadNativeBanner('adBannerGameOverNative');
       loadGameOverLeaderboard();
     }
 
