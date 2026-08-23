@@ -2,11 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Verificação Estrita de Administrador (Exclusivamente a conta Google oficial do dono do projeto)
+    // 1. Verificação Estrita de Administrador (Custom Claim via Firebase Admin SDK)
     function isAdmin() {
       return request.auth != null 
-          && request.auth.token.email == 'insanodanieldoublegaming@gmail.com'
-          && request.auth.token.email_verified == true;
+          && request.auth.token.admin == true;
     }
 
     // 2. Sanitização Estrita de Nomes e Nicks (Anti-XSS / Anti-Script Injection)
@@ -26,15 +25,18 @@ service cloud.firestore {
           && !val.matches('.*data:text/html.*');
     }
 
-    // 4. Validação de Pontuação Legítima (Sem chaves extras, limites anti-hack)
+    // 4. Validação de Pontuação Legítima (Sem chaves extras, limites anti-hack, suporte a bandeira e país)
     function isValidScoreData() {
       let d = request.resource.data;
-      return d.keys().hasOnly(['player', 'score', 'updatedAt', 'avatar'])
+      return d.keys().hasOnly(['player', 'score', 'updatedAt', 'avatar', 'country', 'countryName', 'flag'])
           && isSafeUsername(d.player, 2, 30)
           && d.score is int
           && d.score >= 0
           && d.score <= 50000
-          && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 25000));
+          && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 25000))
+          && (!('country' in d) || (d.country is string && d.country.size() <= 10))
+          && (!('countryName' in d) || (d.countryName is string && d.countryName.size() <= 60))
+          && (!('flag' in d) || (d.flag is string && d.flag.size() <= 20));
     }
 
     // 5. Validação de Perfil Público de Usuários (SEM senha, SEM passwordHash, SEM passwordSalt)

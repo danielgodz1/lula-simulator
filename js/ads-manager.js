@@ -24,7 +24,11 @@ export const AD_CONFIG = {
     height: 50,
     scriptUrl: 'https://www.highrevenueformat.com/590c47d997603e6ea80ae7b922875e55/invoke.js'
   },
-  SMARTLINK_URL: 'https://www.highrevenueformat.com/590c47d997603e6ea80ae7b922875e55'
+  NATIVE_BANNER: {
+    scriptUrl: 'https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js',
+    containerId: 'container-455bffdd2f0b77226264233d844b73cd'
+  },
+  SMARTLINK_URL: 'https://www.profitableratecpmnetwork.com/ubkm86hdi8?key=0a585a8c0148e62aa70cb535ad809ece'
 };
 
 class AdsManagerService {
@@ -228,12 +232,33 @@ class AdsManagerService {
   }
 
   /**
+   * Carrega o Native Banner da Adsterra de forma assíncrona e não-bloqueante
+   * @param {string} [targetContainerId]
+   */
+  loadNativeBanner(targetContainerId) {
+    const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
+    const container = document.getElementById(id);
+    if (!container || container.dataset.adLoaded) return;
+    container.dataset.adLoaded = 'true';
+
+    try {
+      const script = document.createElement('script');
+      script.async = true;
+      script.setAttribute('data-cfasync', 'false');
+      script.src = AD_CONFIG.NATIVE_BANNER.scriptUrl;
+      container.appendChild(script);
+    } catch (e) {
+      console.warn('Falha ao carregar Native Banner:', e);
+    }
+  }
+
+  /**
    * Botão de Recompensa (Rewarded / Smartlink)
    * Abre o Smartlink em nova aba e concede recompensa em picanhas no retorno
    */
   openRewardedLink(rewardCallback) {
     try {
-      window.open(AD_CONFIG.SMARTLINK_URL, '_blank');
+      window.open(AD_CONFIG.SMARTLINK_URL, '_blank', 'noopener,noreferrer');
       
       // Concede 10 picanhas bônus
       CharacterInventory.addPicanhas(10);

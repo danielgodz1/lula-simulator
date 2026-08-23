@@ -4,6 +4,7 @@
   "description": "Lula Simulator — Endless Runner & Flappy Lula 3D com Firebase Backend",
   "type": "module",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "firebase-admin": "^12.0.0"
   }
 }

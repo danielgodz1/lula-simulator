@@ -985,12 +985,18 @@
 
         <!-- BANNER DE MONETIZAÇÃO GAME OVER 320x50 -->
         <div id="adBannerGameOver" class="ad-banner-container-320x50" style="margin-top: 8px; margin-bottom: 0;"></div>
+
+        <!-- BANNER NATIVO ADSTERRA GAME OVER (NÃO-BLOQUEANTE) -->
+        <div style="margin-top: 8px; text-align: center;">
+          <script async="async" data-cfasync="false" src="https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js"></script>
+          <div id="container-455bffdd2f0b77226264233d844b73cd"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script type="module">
-    import { savePlayerScore, getTopScores } from './js/firebase-config.js';
+    import { savePlayerScore, getTopScores, startScoreSession } from './js/firebase-config.js';
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
     import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
@@ -2117,9 +2123,14 @@
             const medals = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.'];
             const safePlayer = escapeHTML(item.player || 'Anônimo');
             const safeScore = parseInt(item.score || 0, 10);
+            const safeFlag = item.flag || '🇧🇷';
+            const safeCountry = escapeHTML(item.countryName || 'Brasil');
             row.innerHTML = `
               <span class="go-lb-rank">${medals[i] || (i+1)}</span>
-              <span class="go-lb-name">${safePlayer}</span>
+              <span class="go-lb-name" style="display:inline-flex; align-items:center; gap:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:130px;">
+                <span title="${safeCountry}" style="font-size:11px;">${safeFlag}</span>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</span>
+              </span>
               <span class="go-lb-score">${safeScore} 🥩</span>
             `;
             listEl.appendChild(row);
@@ -2139,6 +2150,7 @@
         if (startOverlay) startOverlay.style.display = 'none';
         if (gameOverModal) gameOverModal.style.display = 'none';
         state = STATE.PLAYING;
+        startScoreSession('flappy');
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         hasPlayedBesta = false;
         sessionPlayTime = 0;
@@ -2167,6 +2179,7 @@
       if (startOverlay) startOverlay.style.display = 'none';
       if (gameOverModal) gameOverModal.style.display = 'none';
       state = STATE.PLAYING;
+      startScoreSession('flappy');
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       hasPlayedBesta = false;
       sessionPlayTime = 0;

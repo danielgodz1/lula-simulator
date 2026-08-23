@@ -1,33 +1,201 @@
-// api/auth.js — Autenticação Segura com Firebase Admin SDK, Migração Automática de Contas Legadas e Limpeza de Documentos Públicos
+// api/auth.js — Autenticação Segura com Bcrypt, Rate Limiting (5 tentativas / 10 min -> Bloqueio 15 min), Migração Automática e CORS Restrito
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import admin, { db } from './_firebaseAdmin.js';
+import { applyCors } from './_cors.js';
+
+// Memória local volátil para fast-path no mesmo container serverless
+const memoryRateLimits = new Map();
+
+/**
+ * Obtém o IP do cliente através dos cabeçalhos do proxy Vercel
+ */
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.headers['x-real-ip'] || req.socket?.remoteAddress || '127.0.0.1';
+}
+
+/**
+ * Gerenciador de Rate Limiting (Upstash Redis + Fallback Firestore/Memória)
+ * Regra: 5 tentativas falhas em 10 minutos -> Bloqueio por 15 minutos (HTTP 429)
+ */
+const RateLimiter = {
+  getLimitKey(ip, username) {
+    const raw = `${ip}_${(username || 'anonymous').toLowerCase()}`;
+    return crypto.createHash('sha256').update(raw).digest('hex').slice(0, 32);
+  },
+
+  async checkRateLimit(key) {
+    const now = Date.now();
+
+    // 1. Checagem rápida em memória
+    const mem = memoryRateLimits.get(key);
+    if (mem && mem.blockedUntil && mem.blockedUntil > now) {
+      const remainingSec = Math.ceil((mem.blockedUntil - now) / 1000);
+      return { blocked: true, remainingSec };
+    }
+
+    // 2. Se houver Upstash Redis configurado
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      try {
+        const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+        const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+        const blockRes = await fetch(`${redisUrl}/get/blocked_${key}`, {
+          headers: { Authorization: `Bearer ${redisToken}` }
+        });
+        if (blockRes.ok) {
+          const data = await blockRes.json();
+          if (data.result) {
+            const ttlRes = await fetch(`${redisUrl}/ttl/blocked_${key}`, {
+              headers: { Authorization: `Bearer ${redisToken}` }
+            });
+            const ttlData = await ttlRes.json();
+            return { blocked: true, remainingSec: Math.max(1, ttlData.result || 900) };
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ Falha na checagem Upstash Redis, utilizando Firestore:', e.message);
+      }
+    }
+
+    // 3. Fallback persistente no Firestore
+    try {
+      const limitRef = db.collection('_auth_rate_limits').doc(key);
+      const snap = await limitRef.get();
+      if (snap.exists) {
+        const data = snap.data();
+        if (data.blockedUntil && data.blockedUntil.toMillis() > now) {
+          const remainingSec = Math.ceil((data.blockedUntil.toMillis() - now) / 1000);
+          memoryRateLimits.set(key, { blockedUntil: data.blockedUntil.toMillis() });
+          return { blocked: true, remainingSec };
+        }
+      }
+    } catch (err) {
+      // Falha não-bloqueante no Firestore
+    }
+
+    return { blocked: false, remainingSec: 0 };
+  },
+
+  async recordFailedAttempt(key) {
+    const now = Date.now();
+    const WINDOW_MS = 10 * 60 * 1000; // 10 minutos
+    const BLOCK_MS = 15 * 60 * 1000;  // 15 minutos de bloqueio
+    const MAX_ATTEMPTS = 5;
+
+    // 1. Atualiza memória
+    let mem = memoryRateLimits.get(key) || { count: 0, firstAttempt: now };
+    if (now - mem.firstAttempt > WINDOW_MS) {
+      mem = { count: 1, firstAttempt: now };
+    } else {
+      mem.count += 1;
+    }
+
+    if (mem.count >= MAX_ATTEMPTS) {
+      mem.blockedUntil = now + BLOCK_MS;
+    }
+    memoryRateLimits.set(key, mem);
+
+    // 2. Se Upstash Redis estiver disponível
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      try {
+        const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+        const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+        const incrRes = await fetch(`${redisUrl}/incr/attempts_${key}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${redisToken}` }
+        });
+        const incrData = await incrRes.json();
+        const attempts = incrData.result || 1;
+
+        if (attempts === 1) {
+          await fetch(`${redisUrl}/expire/attempts_${key}/600`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${redisToken}` }
+          });
+        }
+
+        if (attempts >= MAX_ATTEMPTS) {
+          await fetch(`${redisUrl}/set/blocked_${key}/1/ex/900`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${redisToken}` }
+          });
+        }
+        return;
+      } catch (e) {
+        console.warn('⚠️ Falha ao registrar falha no Upstash Redis:', e.message);
+      }
+    }
+
+    // 3. Fallback no Firestore
+    try {
+      const limitRef = db.collection('_auth_rate_limits').doc(key);
+      const snap = await limitRef.get();
+      let currentCount = 1;
+      let firstAttemptTime = admin.firestore.Timestamp.now();
+
+      if (snap.exists) {
+        const data = snap.data();
+        const diffMs = now - (data.firstAttempt ? data.firstAttempt.toMillis() : now);
+        if (diffMs < WINDOW_MS) {
+          currentCount = (data.count || 0) + 1;
+          firstAttemptTime = data.firstAttempt;
+        }
+      }
+
+      const updatePayload = {
+        count: currentCount,
+        firstAttempt: firstAttemptTime,
+        lastAttempt: admin.firestore.Timestamp.now()
+      };
+
+      if (currentCount >= MAX_ATTEMPTS) {
+        updatePayload.blockedUntil = admin.firestore.Timestamp.fromMillis(now + BLOCK_MS);
+      }
+
+      await limitRef.set(updatePayload, { merge: true });
+    } catch (err) {
+      console.warn('⚠️ Falha ao gravar rate limit no Firestore:', err.message);
+    }
+  },
+
+  async clearRateLimit(key) {
+    memoryRateLimits.delete(key);
+
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      try {
+        const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+        const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+        await fetch(`${redisUrl}/del/attempts_${key}/blocked_${key}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${redisToken}` }
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    try {
+      await db.collection('_auth_rate_limits').doc(key).delete();
+    } catch (err) {}
+  }
+};
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  // Aplica CORS restrito
+  if (applyCors(req, res)) return;
 
   const sanitizeName = (str) => {
     if (!str || typeof str !== 'string') return '';
     return str.replace(/<[^>]*>?/gm, '').replace(/[^a-zA-Z0-9_\- .À-ÿ]/g, '').trim().slice(0, 30);
   };
 
-  const hashWithSalt = (password, salt) => {
+  // Função legado SHA-256 para compatibilidade e migração transparente
+  const hashWithSaltLegacy = (password, salt) => {
     const effectiveSalt = salt || 'lula_simulator_sec_salt_2026_';
     return crypto.createHash('sha256').update(effectiveSalt + password).digest('hex');
-  };
-
-  const generateRandomSalt = () => {
-    return crypto.randomBytes(16).toString('hex');
   };
 
   if (req.method === 'POST') {
@@ -40,19 +208,35 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Nome de usuário inválido.' });
     }
 
+    // Rate Limiting baseado em IP + Nome de Usuário
+    const clientIp = getClientIp(req);
+    const rateLimitKey = RateLimiter.getLimitKey(clientIp, normalizedName);
+    const rateStatus = await RateLimiter.checkRateLimit(rateLimitKey);
+
+    if (rateStatus.blocked) {
+      const minutesRemaining = Math.ceil(rateStatus.remainingSec / 60);
+      return res.status(429).json({
+        success: false,
+        error: `Muitas tentativas incorretas. Conta bloqueada por segurança. Tente novamente em ${minutesRemaining} minuto(s).`
+      });
+    }
+
     const userRef = db.collection('lula_users_v2').doc(normalizedName);
     const credRef = userRef.collection('private').doc('credentials');
 
     // =========================================================================
-    // 1. REGISTRO SEGURO (COM VERIFICAÇÃO ANTI-SOBRESCRITA E SALT NO SERVIDOR)
+    // 1. REGISTRO SEGURO COM BCRYPT E PROTEÇÃO ANTI-SOBREPOSIÇÃO
     // =========================================================================
     if (action === 'register') {
       if (!cleanPass) {
         return res.status(400).json({ success: false, error: 'Senha é obrigatória.' });
       }
 
+      if (cleanPass.length < 3) {
+        return res.status(400).json({ success: false, error: 'A senha deve ter no mínimo 3 caracteres.' });
+      }
+
       try {
-        // Verifica se a conta já existe e já possui senha cadastrada
         const [userSnap, credSnap] = await Promise.all([
           userRef.get(),
           credRef.get()
@@ -66,28 +250,28 @@ export default async function handler(req, res) {
         );
 
         if (hasCredsInSubcollection || hasLegacyPasswordInMainDoc) {
+          await RateLimiter.recordFailedAttempt(rateLimitKey);
           return res.status(409).json({
             success: false,
             error: 'Este nome já está cadastrado com senha. Escolha outro nome ou faça login.'
           });
         }
 
-        // Gera salt criptográfico e hash estritamente no servidor
-        const salt = generateRandomSalt();
-        const finalHash = hashWithSalt(cleanPass, salt);
+        // Gera hash Bcrypt com fator de custo 10
+        const bcryptHash = await bcrypt.hash(cleanPass, 10);
 
         const batch = db.batch();
 
-        // 1. Grava credenciais na subcoleção privada (acessível apenas pelo Admin SDK)
+        // 1. Salva credenciais criptografadas na subcoleção privada
         batch.set(credRef, {
-          passwordHash: finalHash,
-          passwordSalt: salt,
+          passwordHash: bcryptHash,
           hasPassword: true,
+          authType: 'bcrypt',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Grava ou mescla perfil público (garantindo que NENHUM hash ou salt fique no doc público)
+        // 2. Grava/mescla perfil público sem nenhum hash ou salt
         const existingData = userSnap.exists ? userSnap.data() : {};
         const safeTotalPicanhas = Math.max(existingData.totalPicanhas || 0, parseInt(req.body.totalPicanhas || 0, 10));
         const safeFlappy = Math.max(existingData.flappyScore || 0, parseInt(req.body.flappyScore || 0, 10));
@@ -112,6 +296,7 @@ export default async function handler(req, res) {
         }, { merge: true });
 
         await batch.commit();
+        await RateLimiter.clearRateLimit(rateLimitKey);
 
         return res.status(200).json({
           success: true,
@@ -128,26 +313,13 @@ export default async function handler(req, res) {
           }
         });
       } catch (err) {
-        console.error('❌ Erro no registro de usuário no Firestore via Admin SDK:', err);
-        const errMsg = err.message || '';
-        if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded')) {
-          return res.status(503).json({
-            success: false,
-            error: 'Limite diário gratuito do Firebase atingido. Tente novamente mais tarde.'
-          });
-        }
-        if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-          return res.status(500).json({
-            success: false,
-            error: 'Servidor em configuração: Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não cadastradas na Vercel.'
-          });
-        }
+        console.error('❌ Erro no registro de usuário no Firestore:', err);
         return res.status(500).json({ success: false, error: 'Erro ao registrar credenciais no servidor.' });
       }
     }
 
     // =========================================================================
-    // 2. LOGIN SEGURO (COM SUPORTE A CONTAS MODERNAS, LEGADAS E LIMPEZA AUTOMÁTICA)
+    // 2. LOGIN SEGURO (BCRYPT + MIGRAÇÃO TRANSPARENTE DE CONTAS SHA-256)
     // =========================================================================
     if (action === 'login') {
       if (!cleanPass) {
@@ -155,20 +327,19 @@ export default async function handler(req, res) {
       }
 
       try {
-        // Busca perfil público e subcoleção privada via Admin SDK
         const [userSnap, credSnap] = await Promise.all([
           userRef.get(),
           credRef.get()
         ]);
 
         if (!userSnap.exists && !credSnap.exists) {
+          await RateLimiter.recordFailedAttempt(rateLimitKey);
           return res.status(404).json({ success: false, error: 'Usuário não encontrado.' });
         }
 
         const userData = userSnap.exists ? userSnap.data() : null;
         const credData = credSnap.exists ? credSnap.data() : null;
 
-        // Se o usuário existir mas não possuir credenciais cadastradas
         const hasAnyPassword = credData?.hasPassword || userData?.hasPassword || userData?.passwordHash || userData?.password;
         if (!hasAnyPassword) {
           return res.status(400).json({
@@ -181,32 +352,34 @@ export default async function handler(req, res) {
         let needsMigration = false;
         let cleanupUserDataFields = false;
 
-        // 1. Extrai credenciais da subcoleção privada OU do documento principal legado
         const effectiveSalt = credData?.passwordSalt || userData?.passwordSalt || '';
         const effectiveHash = credData?.passwordHash || userData?.passwordHash || '';
         const effectivePlain = credData?.password || userData?.password || '';
 
-        // Se existirem credenciais antigas no documento principal, marca para limpeza automática
         if (userData?.passwordHash || userData?.passwordSalt || userData?.password) {
           cleanupUserDataFields = true;
           needsMigration = true;
         }
 
-        if (effectiveSalt && effectiveHash) {
-          // A. Conta Moderna: Hash SHA-256 com Salt Individual
-          const calculatedHash = hashWithSalt(cleanPass, effectiveSalt);
+        // A. Checagem Bcrypt
+        if (effectiveHash && (effectiveHash.startsWith('$2a$') || effectiveHash.startsWith('$2b$') || effectiveHash.startsWith('$2y$'))) {
+          isMatch = await bcrypt.compare(cleanPass, effectiveHash);
+        } else if (effectiveSalt && effectiveHash) {
+          // B. Conta Legada: Hash SHA-256 com Salt Individual
+          const calculatedHash = hashWithSaltLegacy(cleanPass, effectiveSalt);
           if (calculatedHash === effectiveHash) {
             isMatch = true;
+            needsMigration = true;
           }
         } else if (effectiveHash) {
-          // B. Conta Legada: Salt Fixo
-          const legacyHash = hashWithSalt(cleanPass, 'lula_simulator_sec_salt_2026_');
+          // C. Conta Legada: Salt Fixo
+          const legacyHash = hashWithSaltLegacy(cleanPass, 'lula_simulator_sec_salt_2026_');
           if (legacyHash === effectiveHash || cleanPass === effectiveHash) {
             isMatch = true;
             needsMigration = true;
           }
         } else if (effectivePlain) {
-          // C. Conta Legada: Texto Puro
+          // D. Conta Legada: Texto Puro
           if (cleanPass === effectivePlain) {
             isMatch = true;
             needsMigration = true;
@@ -214,26 +387,27 @@ export default async function handler(req, res) {
         }
 
         if (!isMatch) {
+          await RateLimiter.recordFailedAttempt(rateLimitKey);
           return res.status(401).json({ success: false, error: 'Palavra-chave incorreta!' });
         }
 
-        // Migração automática e limpeza de campos confidenciais do documento público
-        if (needsMigration || cleanupUserDataFields || !credSnap.exists) {
-          try {
-            const newSalt = generateRandomSalt();
-            const newHash = hashWithSalt(cleanPass, newSalt);
+        // Login bem-sucedido: limpa o contador de falhas do rate limiter
+        await RateLimiter.clearRateLimit(rateLimitKey);
 
+        // Migração automática e transparente para Bcrypt
+        if (needsMigration || cleanupUserDataFields || !credSnap.exists || !effectiveHash.startsWith('$2')) {
+          try {
+            const newBcryptHash = await bcrypt.hash(cleanPass, 10);
             const batch = db.batch();
 
-            // Grava na subcoleção privada protegida
             batch.set(credRef, {
-              passwordHash: newHash,
-              passwordSalt: newSalt,
+              passwordHash: newBcryptHash,
+              passwordSalt: admin.firestore.FieldValue.delete(),
               hasPassword: true,
+              authType: 'bcrypt',
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
 
-            // Se haviam hashes/senhas no documento público, remove-os definitivamente
             if (cleanupUserDataFields) {
               batch.update(userRef, {
                 password: admin.firestore.FieldValue.delete(),
@@ -245,9 +419,9 @@ export default async function handler(req, res) {
             }
 
             await batch.commit();
-            console.log(`🔒 Conta "${cleanName}" migrada com sucesso: Salt Individual gerado e campos limpos do documento público.`);
+            console.log(`🔒 Conta "${cleanName}" migrada automaticamente para Bcrypt e dados confidenciais limpos.`);
           } catch (migErr) {
-            console.error('⚠️ Falha não-bloqueante na migração/limpeza:', migErr);
+            console.error('⚠️ Falha não-bloqueante na migração Bcrypt:', migErr);
           }
         }
 
@@ -266,21 +440,7 @@ export default async function handler(req, res) {
           }
         });
       } catch (err) {
-        console.error('❌ Erro no login de usuário no Firestore via Admin SDK:', err);
-        const errMsg = (err.message || '') + ' ' + (err.details || '') + ' ' + (err.code || '');
-
-        if (err.code === 8 || errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('Quota exceeded') || errMsg.includes('quota')) {
-          return res.status(503).json({
-            success: false,
-            error: 'O banco de dados atingiu a cota diária gratuita de 50.000 leituras do Firebase (Quota Exceeded). O Google Cloud reinicia a cota às 04:00 da manhã (horário de Brasília).'
-          });
-        }
-        if (!process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
-          return res.status(500).json({
-            success: false,
-            error: 'Servidor em configuração: Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY não foram cadastradas na Vercel.'
-          });
-        }
+        console.error('❌ Erro no login de usuário no Firestore:', err);
         return res.status(500).json({
           success: false,
           error: `Erro ao conectar com o banco de dados: ${err.message || 'Falha no servidor.'}`

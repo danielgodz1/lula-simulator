@@ -357,7 +357,14 @@
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO CONQUISTAS 320x50 (AUTO-REFRESH) -->
-    <div id="adBannerConquistas" class="ad-banner-container-320x50" style="margin: 18px auto 24px;"></div>
+    <div id="adBannerConquistas" class="ad-banner-container-320x50" style="margin: 18px auto 14px;"></div>
+
+    <!-- BOTÃO SMARTLINK DE RECOMPENSA PICANHAS BÔNUS -->
+    <div style="display: flex; justify-content: center; margin: 10px auto 24px;">
+      <button id="btnRewardConquistas" class="btn-rewarded-smartlink" style="font-size: 14px; padding: 10px 22px; border-radius: 12px;">
+        🎁 GANHAR +10 PICANHAS BÔNUS (PARCEIRO)
+      </button>
+    </div>
 
     <!-- SEÇÃO 1: BADGES SUPREMAS DE PICANHAS -->
     <div class="badges-section-title">
@@ -768,7 +775,16 @@
       if (e.target === modal) modal.style.display = 'none';
     });
 
-    import('./js/ads-manager.js').then(m => m.AdsManager.init());
+    import('./js/ads-manager.js').then(m => {
+      m.AdsManager.init();
+      document.getElementById('btnRewardConquistas')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        m.AdsManager.openRewardedLink((bonus) => {
+          alert(`🎁 Recompensa coletada! +${bonus} picanhas adicionadas à sua conta!`);
+          updateBadgesUI();
+        });
+      });
+    });
   </script>
   <script src="js/tracker.js"></script>
 </body>

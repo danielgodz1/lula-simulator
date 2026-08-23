@@ -1,17 +1,17 @@
-// api/feedback.js — Vercel Serverless Function com sanitização total contra Script Injection (XSS)
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+// api/feedback.js — Vercel Serverless Function com sanitização total contra Script Injection (XSS), CORS restrito e Proteção Anti-Spam
+import { applyCors } from './_cors.js';
 
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+// Memória local para rate limit básico de feedback (máx 6 envios em 10 min por IP)
+const feedbackRateLimits = new Map();
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return req.headers['x-real-ip'] || req.socket?.remoteAddress || '127.0.0.1';
+}
+
+export default async function handler(req, res) {
+  if (applyCors(req, res)) return;
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
@@ -47,14 +47,35 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, stars, comment } = req.body || {};
+    const { name, stars, comment, _gotcha, botField } = req.body || {};
+
+    // Honeypot anti-bot
+    if (_gotcha || botField) {
+      return res.status(200).json({ success: true, message: 'Avaliação enviada com sucesso!' });
+    }
 
     const cleanName = sanitizeStr(name, 40) || 'Anônimo';
     const cleanComment = sanitizeStr(comment, 500);
     const numStars = Math.max(1, Math.min(5, parseInt(stars || 5, 10)));
 
     if (!cleanComment) {
-      return res.status(400).json({ success: false, error: 'O comentário não pode ser vazio' });
+      return res.status(400).json({ success: false, error: 'O comentário não pode ser vazio.' });
+    }
+
+    // Rate limiting por IP
+    const ip = getClientIp(req);
+    const now = Date.now();
+    const limit = feedbackRateLimits.get(ip) || { count: 0, first: now };
+    if (now - limit.first > 10 * 60 * 1000) {
+      feedbackRateLimits.set(ip, { count: 1, first: now });
+    } else {
+      limit.count += 1;
+      if (limit.count > 6) {
+        return res.status(429).json({
+          success: false,
+          error: 'Muitas avaliações enviadas recentemente. Por favor aguarde um momento.'
+        });
+      }
     }
 
     try {
@@ -84,5 +105,5 @@ export default async function handler(req, res) {
     return res.status(200).json({ success: true });
   }
 
-  return res.status(405).json({ success: false, error: 'Método não permitido' });
+  return res.status(405).json({ success: false, error: 'Método não permitido.' });
 }

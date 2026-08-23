@@ -384,13 +384,17 @@
 
       let filtered = allCurrentScores;
       if (searchTerm) {
-        filtered = allCurrentScores.filter(item => (item.player || '').toLowerCase().includes(searchTerm));
+        filtered = allCurrentScores.filter(item => 
+          (item.player || '').toLowerCase().includes(searchTerm) ||
+          (item.countryName || '').toLowerCase().includes(searchTerm) ||
+          (item.country || '').toLowerCase().includes(searchTerm)
+        );
       }
 
       if (filtered.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; padding: 36px; color: var(--text-muted); font-size:14px;">
-            ${searchTerm ? `Nenhum jogador encontrado com o nome "${escapeHTML(searchTerm)}"` : 'Nenhum jogador pontuou ainda. Seja o primeiro! 🚀'}
+            ${searchTerm ? `Nenhum jogador encontrado para "${escapeHTML(searchTerm)}"` : 'Nenhum jogador pontuou ainda. Seja o primeiro! 🚀'}
           </div>
         `;
         return;
@@ -409,6 +413,8 @@
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `${rankIdx + 1}º`;
         const safePlayer = escapeHTML(item.player || 'Anônimo');
         const safeScore = parseInt(item.score || 0, 10);
+        const safeFlag = item.flag || '🇧🇷';
+        const safeCountryName = escapeHTML(item.countryName || 'Brasil');
 
         // Se for o jogador atual e tiver avatar no perfil, garante a exibição
         const isCurPlayer = curUser && curUser.username && (item.player || '').toLowerCase() === curUser.username.toLowerCase();
@@ -418,7 +424,13 @@
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
           <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
-          <div style="font-weight:700; font-size:15px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</div>
+          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+            <div style="font-weight:700; font-size:15px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</div>
+            <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted);">
+              <span style="font-size: 13px;" title="${safeCountryName}">${safeFlag}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
+            </div>
+          </div>
           <div class="score-val">${safeScore} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
         container.appendChild(row);

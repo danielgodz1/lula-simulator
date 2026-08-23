@@ -1,5 +1,5 @@
-// api/analytics.js — Vercel Serverless Function para Geolocalização de Visitantes e Estatísticas por País
 import { db } from './_firebaseAdmin.js';
+import { applyCors } from './_cors.js';
 
 // Mapeamento de nomes de países em Português
 const COUNTRY_NAMES = {
@@ -51,18 +51,7 @@ function getFlagEmoji(countryCode) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
+  if (applyCors(req, res)) return;
 
   const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
   const hasAdminCreds = Boolean(process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY);

@@ -6,7 +6,7 @@ import { Character } from './character.js';
 import { Environment } from './environment.js';
 import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
-import { savePlayerScore } from '../firebase-config.js';
+import { savePlayerScore, startScoreSession } from '../firebase-config.js';
 import { auth } from '../auth.js';
 import { RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
@@ -76,6 +76,7 @@ export class Game {
     gameAudio.playStartVinheta();
     gameAudio.startAmbience();
     this.state = this.STATE.PLAYING;
+    startScoreSession('runner');
     this.speed = this.baseSpeed;
     this.distance = 0;
     this.coins = 0;

@@ -14,6 +14,46 @@ const inMemoryLeaderboardCache = {
   runner: { data: null, timestamp: 0 }
 };
 
+let currentSessionTokens = {
+  flappy: '',
+  runner: ''
+};
+
+/**
+ * Inicia uma sessão de partida segura obtendo um token assinado do servidor
+ */
+export async function startScoreSession(gameType = 'flappy') {
+  const isRunner = gameType === 'runner' || (typeof gameType === 'string' && gameType.includes('runner'));
+  const cleanGame = isRunner ? 'runner' : 'flappy';
+
+  let playerName = 'Jogador';
+  try {
+    const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
+    if (rawUser) {
+      const u = JSON.parse(rawUser);
+      if (u && u.username) playerName = u.username;
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch('/api/start-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game: cleanGame, player: playerName })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sessionToken) {
+        currentSessionTokens[cleanGame] = data.sessionToken;
+        return data.sessionToken;
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ Falha ao obter sessionToken no início:', e.message);
+  }
+  return '';
+}
+
 // 2. SALVAR RECORDE MÁXIMO DO JOGADOR COM SINCRONIZAÇÃO RESILIENTE
 export async function savePlayerScore(gameType, score) {
   let playerName = 'Jogador';
@@ -45,7 +85,6 @@ export async function savePlayerScore(gameType, score) {
   const localKey = isRunner ? 'run_best' : 'lula_best';
   const syncedKey = isRunner ? 'run_synced_best' : 'lula_synced_best';
   const currentBest = parseInt(localStorage.getItem(localKey) || '0', 10);
-  const lastSynced = parseInt(localStorage.getItem(syncedKey) || '0', 10);
 
   const finalScoreToSend = Math.max(numScore, currentBest);
 
@@ -53,6 +92,14 @@ export async function savePlayerScore(gameType, score) {
   if (numScore > currentBest) {
     localStorage.setItem(localKey, numScore.toString());
   }
+
+  // Garante que haja um session token válido
+  let token = currentSessionTokens[gameKey];
+  if (!token) {
+    token = await startScoreSession(gameKey);
+  }
+
+  const detectedCountry = localStorage.getItem('lula_detected_country') || 'BR';
 
   // Atualização otimista imediata no cache em memória e localStorage
   const cacheKey = `lula_cache_scores_v2_${gameKey}`;
@@ -69,10 +116,10 @@ export async function savePlayerScore(gameType, score) {
     const exIdx = list.findIndex(item => (item.player || '').toLowerCase() === pKey);
     if (exIdx !== -1) {
       if (numScore >= list[exIdx].score) {
-        list[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || list[exIdx].avatar || '', updatedAt: new Date().toISOString() };
+        list[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || list[exIdx].avatar || '', country: detectedCountry, updatedAt: new Date().toISOString() };
       }
     } else {
-      list.push({ player: playerName, score: numScore, avatar: playerAvatar || '', updatedAt: new Date().toISOString() });
+      list.push({ player: playerName, score: numScore, avatar: playerAvatar || '', country: detectedCountry, updatedAt: new Date().toISOString() });
     }
     list.sort((a, b) => b.score - a.score);
     const updatedList = list.slice(0, 300);
@@ -82,17 +129,26 @@ export async function savePlayerScore(gameType, score) {
     localStorage.setItem(timestampKey, Date.now().toString());
   } catch (e) {}
 
-  // 1. Tenta salvar via API Serverless
+  // 1. Salva via API Serverless Segura
   let savedOk = false;
   try {
     const res = await fetch('/api/score', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ player: playerName, score: finalScoreToSend, game: gameKey, avatar: playerAvatar })
+      body: JSON.stringify({
+        player: playerName,
+        score: finalScoreToSend,
+        game: gameKey,
+        avatar: playerAvatar,
+        sessionToken: token,
+        country: detectedCountry
+      })
     });
     if (res.ok) {
       savedOk = true;
       localStorage.setItem(syncedKey, finalScoreToSend.toString());
+      // Renova o token de sessão para a próxima partida
+      currentSessionTokens[gameKey] = '';
       return { saved: true, ok: true };
     }
   } catch (e) {}
@@ -240,6 +296,9 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
         player: (v.mapValue?.fields?.player?.stringValue || 'Anônimo').replace(/<[^>]*>?/gm, '').trim(),
         score: parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10),
         avatar: v.mapValue?.fields?.avatar?.stringValue || '',
+        country: v.mapValue?.fields?.country?.stringValue || 'BR',
+        countryName: v.mapValue?.fields?.countryName?.stringValue || 'Brasil',
+        flag: v.mapValue?.fields?.flag?.stringValue || '🇧🇷',
         updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
       })).filter(s => !isNaN(s.score) && s.score > 0);
 
