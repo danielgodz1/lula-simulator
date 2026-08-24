@@ -518,20 +518,20 @@
         <div class="progress-text" id="textJanja">0 / 25 Picanhas</div>
       </div>
 
-      <!-- NIKOLAS FERREIRA (60 PICANHAS) -->
+      <!-- NIKOLAS FERREIRA (100 PTS FLAPPY + 300 KM 3D) -->
       <div class="badge-card" id="badgeNikolas">
         <div class="badge-img-wrapper" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">
           <img src="img/nikolas.png" alt="Nikolas Ferreira" class="badge-img">
         </div>
         <div class="badge-title">O Deputado Viral</div>
-        <div class="badge-req">⚡ 60 Picanhas Acumuladas</div>
+        <div class="badge-req">⚡ 100 pts no Flappy + 300 km no 3D</div>
         <div class="badge-desc">
           Desbloqueie Nikolas Ferreira para jogar no modo hiper velocidade com dobro de picanhas (2x Pontos)!
         </div>
         <div class="progress-bar-container">
           <div class="progress-bar-fill" id="fillNikolas" style="width: 0%;"></div>
         </div>
-        <div class="progress-text" id="textNikolas">0 / 60 Picanhas</div>
+        <div class="progress-text" id="textNikolas">Flappy: 0/100 pts · 3D: 0/300 km</div>
       </div>
 
       <!-- ALEXANDRE DE MORAES (120 PICANHAS) -->
@@ -736,11 +736,11 @@
         cardId: 'badgeNikolas',
         fillId: 'fillNikolas',
         textId: 'textNikolas',
-        target: 60,
+        target: 100,
         title: 'Nikolas Ferreira — O Deputado Viral',
-        req: '⚡ 60 Picanhas Acumuladas',
+        req: '⚡ 100 pts no Flappy + 300 km no 3D',
         img: 'img/nikolas.png',
-        desc: 'Nikolas Ferreira em velocidade máxima no comício! Cada cano ultrapassado rende o dobro de picanhas no placar.'
+        desc: 'Nikolas Ferreira em velocidade máxima no comício! Cada cano ultrapassado rende o dobro de picanhas no placar (2x Pontos).'
       },
       {
         id: 'moraes',
@@ -818,7 +818,20 @@
         let percent = 0;
         let isUnlocked = false;
 
-        if (b.id === 'marcal') {
+        if (b.id === 'nikolas') {
+          const isNikolasDirectUnlocked = CharacterInventory.isUnlocked('nikolas');
+          isUnlocked = isNikolasDirectUnlocked || (flappyBest >= 100 && runnerBest >= 300);
+
+          if (isUnlocked) {
+            percent = 100;
+            if (text) text.textContent = `✨ DESBLOQUEADO (100 pts Flappy + 300 km 3D)`;
+          } else {
+            const p1 = Math.min(50, Math.round((flappyBest / 100) * 50));
+            const p2 = Math.min(50, Math.round((runnerBest / 300) * 50));
+            percent = p1 + p2;
+            if (text) text.textContent = `Flappy: ${flappyBest}/100 pts · 3D: ${runnerBest}/300 km (${percent}%)`;
+          }
+        } else if (b.id === 'marcal') {
           const isMarcalDirectUnlocked = CharacterInventory.isUnlocked('marcal');
           const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma') || totalPicanhas >= 100;
           isUnlocked = isMarcalDirectUnlocked || (isDilmaUnlocked && dilmaBest >= 200);

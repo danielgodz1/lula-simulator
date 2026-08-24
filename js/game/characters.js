@@ -53,10 +53,10 @@ export const CHARACTERS = [
     name: 'Nikolas Ferreira',
     nickname: 'O Deputado Viral',
     title: 'Nikolas Ferreira — O Deputado Viral',
-    desc: 'Microfone em punho e gravata verde-amarela. Velocidade turbo com dobro de picanhas!',
+    desc: 'Requer 100 pontos no Flappy Lula e 300 km no Empresário 3D! Velocidade turbo com dobro de picanhas (2X)!',
     sprite: 'img/nikolas.png',
     flySprite: 'img/characters/nikolas_fly.png',
-    requiredPicanhas: 60,
+    requiredPicanhas: 0, // Desbloqueio especial por missão: 100 pts no Flappy + 300 km no 3D
     skillName: '⚡ Ritmo Acelerado (2x Picanhas)',
     skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
@@ -314,34 +314,99 @@ export class CharacterInventory {
   static isUnlocked(charId) {
     const char = CHARACTERS.find(c => c.id === charId || c.id === this.mapLegacyId(charId));
     if (!char) return false;
+    if (char.id === 'lula') return true;
 
-    // Desbloqueio Especial do Pablo Marçal
-    if (char.id === 'marcal') {
-      let isExplicitlyUnlocked = false;
-      try {
-        const rawUser = localStorage.getItem('lula_current_user_v2');
-        if (rawUser) {
-          const u = JSON.parse(rawUser);
-          if (Array.isArray(u?.unlockedCharacters) && u.unlockedCharacters.includes('marcal')) {
-            isExplicitlyUnlocked = true;
-          }
-          if (parseInt(u?.dilmaScore || '0', 10) >= 200) {
-            isExplicitlyUnlocked = true;
-          }
+    // 1. CHECAGEM CLOUD-FIRST & RETROCOMPATIBILIDADE (FONTE DE VERDADE: lula_users_v2)
+    // Se o personagem já está no array unlockedCharacters do perfil do usuário, MANTÉM ACESSO PERMANENTE.
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (Array.isArray(u?.unlockedCharacters) && u.unlockedCharacters.includes(char.id)) {
+          return true;
         }
-      } catch (e) {}
+      }
+    } catch (e) {}
 
-      const isDilmaUnlocked = this.isUnlocked('dilma');
-      const dilmaBest = Math.max(this.getDilmaBest(), parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10));
-      return isExplicitlyUnlocked || (isDilmaUnlocked && dilmaBest >= 200);
+    try {
+      const localFlappyUnlocks = JSON.parse(localStorage.getItem('flappy_unlocked_characters') || '[]');
+      if (Array.isArray(localFlappyUnlocks) && localFlappyUnlocks.includes(char.id)) {
+        return true;
+      }
+    } catch (e) {}
+
+    // 2. REQUISITO DO NIKOLAS FERREIRA: 100 pts no Flappy Lula E 300 km no Empresário 3D
+    if (char.id === 'nikolas') {
+      const flappyBest = Math.max(
+        parseInt(localStorage.getItem('lula_best') || '0', 10),
+        parseInt(localStorage.getItem('lula_synced_best') || '0', 10)
+      );
+      const runnerBest = Math.max(
+        parseInt(localStorage.getItem('run_best') || '0', 10),
+        parseInt(localStorage.getItem('run_synced_best') || '0', 10)
+      );
+      const meetsNikolasReq = flappyBest >= 100 && runnerBest >= 300;
+      if (meetsNikolasReq) {
+        this.recordUnlockedCharacter('nikolas');
+      }
+      return meetsNikolasReq;
     }
 
-    return this.getTotalPicanhas() >= char.requiredPicanhas;
+    // 3. DESBLOQUEIO ESPECIAL DO PABLO MARÇAL (200 pts com a Dilma)
+    if (char.id === 'marcal') {
+      const isDilmaUnlocked = this.isUnlocked('dilma');
+      const dilmaBest = Math.max(this.getDilmaBest(), parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10));
+      const meetsMarcalReq = isDilmaUnlocked && dilmaBest >= 200;
+      if (meetsMarcalReq) {
+        this.recordUnlockedCharacter('marcal');
+      }
+      return meetsMarcalReq;
+    }
+
+    // 4. PERSONAGENS POR PICANHAS ACUMULADAS (Janja, Moraes, Bolsonaro, Dilma)
+    const hasPicanhas = this.getTotalPicanhas() >= char.requiredPicanhas;
+    if (hasPicanhas && char.requiredPicanhas > 0) {
+      this.recordUnlockedCharacter(char.id);
+    }
+    return hasPicanhas;
+  }
+
+  static recordUnlockedCharacter(charId) {
+    try {
+      const raw = localStorage.getItem('flappy_unlocked_characters');
+      const list = raw ? JSON.parse(raw) : [];
+      if (!list.includes(charId)) {
+        list.push(charId);
+        localStorage.setItem('flappy_unlocked_characters', JSON.stringify(list));
+      }
+
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u) {
+          if (!Array.isArray(u.unlockedCharacters)) u.unlockedCharacters = [];
+          if (!u.unlockedCharacters.includes(charId)) {
+            u.unlockedCharacters.push(charId);
+            localStorage.setItem('lula_current_user_v2', JSON.stringify(u));
+          }
+        }
+      }
+    } catch(e) {}
   }
 
   static getUnlockDescription(charId) {
     const char = CHARACTERS.find(c => c.id === charId || c.id === this.mapLegacyId(charId));
     if (!char) return '';
+
+    if (this.isUnlocked(char.id)) {
+      return `✨ DESBLOQUEADO`;
+    }
+
+    if (char.id === 'nikolas') {
+      const flappyBest = parseInt(localStorage.getItem('lula_best') || '0', 10);
+      const runnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
+      return `🔒 100 pts Flappy + 300 km 3D (${flappyBest}/100 pts · ${runnerBest}/300 km)`;
+    }
 
     if (char.id === 'marcal') {
       const isDilmaUnlocked = this.isUnlocked('dilma');
@@ -349,16 +414,10 @@ export class CharacterInventory {
       if (!isDilmaUnlocked) {
         return `🔒 Requer liberar a Dilma (100 🥩)`;
       }
-      if (dilmaBest < 200) {
-        return `🔒 Faça 200 pts com a Dilma (${dilmaBest}/200 pts)`;
-      }
-      return `✨ DESBLOQUEADO!`;
+      return `🔒 Faça 200 pts com a Dilma (${dilmaBest}/200 pts)`;
     }
 
-    if (this.isUnlocked(char.id)) {
-      return `✨ DESBLOQUEADO`;
-    }
-    return `🔒 ${char.requiredPicanhas} 🥩`;
+    return `🔒 ${char.requiredPicanhas} 🥩 (${this.getTotalPicanhas()}/${char.requiredPicanhas})`;
   }
 
   static mapLegacyId(id) {
@@ -459,15 +518,26 @@ export class RunnerInventory {
   }
 
   static getUnlockedCharacters() {
+    const set = new Set(['empresario']);
     try {
       const raw = localStorage.getItem(RUNNER_UNLOCKED_KEY);
-      const list = raw ? JSON.parse(raw) : ['empresario'];
-      if (!Array.isArray(list)) return ['empresario'];
-      if (!list.includes('empresario')) list.push('empresario');
-      return list;
-    } catch(e) {
-      return ['empresario'];
-    }
+      if (raw) {
+        const list = JSON.parse(raw);
+        if (Array.isArray(list)) list.forEach(x => set.add(x));
+      }
+    } catch(e) {}
+
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (Array.isArray(u?.unlockedCharacters)) {
+          u.unlockedCharacters.forEach(x => set.add(x));
+        }
+      }
+    } catch(e) {}
+
+    return Array.from(set);
   }
 
   static isUnlocked(charId) {

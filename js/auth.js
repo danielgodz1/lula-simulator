@@ -415,16 +415,21 @@ class AuthManager {
     const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
     const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
     const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
-    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
-    const localAvatar = this.currentUser.avatar || '';
-
-    // Extrai personagens desbloqueados
-    const localUnlocked = [];
-    if (localDilma >= 200) localUnlocked.push('marcal');
+    // Extrai personagens desbloqueados garantindo preservação retrocompatível
+    const localUnlockedSet = new Set(['lula']);
+    if (localDilma >= 200) localUnlockedSet.add('marcal');
     try {
       const runnerUnlocks = JSON.parse(localStorage.getItem('runner_unlocked_characters') || '[]');
-      if (Array.isArray(runnerUnlocks)) localUnlocked.push(...runnerUnlocks);
+      if (Array.isArray(runnerUnlocks)) runnerUnlocks.forEach(x => localUnlockedSet.add(x));
     } catch(e) {}
+    try {
+      const flappyUnlocks = JSON.parse(localStorage.getItem('flappy_unlocked_characters') || '[]');
+      if (Array.isArray(flappyUnlocks)) flappyUnlocks.forEach(x => localUnlockedSet.add(x));
+    } catch(e) {}
+    if (Array.isArray(this.currentUser.unlockedCharacters)) {
+      this.currentUser.unlockedCharacters.forEach(x => localUnlockedSet.add(x));
+    }
+    const localUnlocked = Array.from(localUnlockedSet);
 
     const localPrestige = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
     let localSkins = [];
@@ -1037,6 +1042,24 @@ class AuthManager {
       const cur = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
       const finalCoins = Math.max(cur, user.runnerCoins);
       localStorage.setItem('runner_total_coins', finalCoins.toString());
+    }
+
+    if (Array.isArray(user.unlockedCharacters) && user.unlockedCharacters.length > 0) {
+      // 1. Sincroniza desbloqueados no Flappy
+      try {
+        const rawFlappy = localStorage.getItem('flappy_unlocked_characters');
+        const setFlappy = new Set(rawFlappy ? JSON.parse(rawFlappy) : ['lula']);
+        user.unlockedCharacters.forEach(c => setFlappy.add(c));
+        localStorage.setItem('flappy_unlocked_characters', JSON.stringify(Array.from(setFlappy)));
+      } catch(e) {}
+
+      // 2. Sincroniza desbloqueados no Runner 3D
+      try {
+        const rawRunner = localStorage.getItem('runner_unlocked_characters');
+        const setRunner = new Set(rawRunner ? JSON.parse(rawRunner) : ['empresario']);
+        user.unlockedCharacters.forEach(c => setRunner.add(c));
+        localStorage.setItem('runner_unlocked_characters', JSON.stringify(Array.from(setRunner)));
+      } catch(e) {}
     }
   }
 
