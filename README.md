@@ -44,33 +44,59 @@
 | 🕊️ **Lula da Silva** | *O Presidente* | **Inicial (Padrão)** | Voo suave e tolerante a colisões leves. Acúmulo padrão de picanhas. |
 | 👠 **Janja da Silva** | *A Primeira-Dama* | **30 Picanhas** 🥩 | Hitbox reduzida e voo ágil com aura violeta/rosa. |
 | 🏛️ **Alexandre de Moraes** | *O Ministro* | **50 Picanhas** 🥩 | Voo imponente com aura azul e tolerância judicial a impactos. |
-| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **60 Picanhas** 🥩 | **Habilidade Viral**: Velocidade acelerada com 2x picanhas. A cada 1 minuto de partida, o Lula aparece flutuando concedendo **20 segundos de lentidão** e pontos triplicados (3x)! |
+| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **100 Pts Flappy + 300 km Corredor** 🏃 | **Habilidade Viral**: Velocidade acelerada com 2x picanhas. A cada 1 minuto de partida, o Lula aparece flutuando concedendo **20 segundos de lentidão** e pontos triplicados (3x)! |
 | 🏍️ **Jair Bolsonaro** | *O Ex-Presidente* | **100 Picanhas** 🥩 | **Modo Motociata**: Aura verde-amarela acelerada e impulsão aerodinâmica. |
 | 🥔 **Dilma Rousseff** | *A Estocadora de Vento* | **100 Picanhas** 🥩 | **Saudação à Mandioca**: Solta chuva contínua de mandiocas e aipins dourados (`🥔`, `🍠`, `🌾`) pelos canos. Acumula picanhas normalmente no placar! |
 | 💵 **Pablo Marçal** | *O Homem do Código* | **Liberar Dilma + Fazer 200 pts com ela** 🏆 | **Mindset Quântico 3X**: Velocidade 1.35x maior, **triplica todos os pontos obtidos (3X score)** e joga chuva de notas de dinheiro e dólares (`💵`, `💸`, `💰`, `🤑`) pelo ar. |
 
 ---
 
+## 🛍️ Loja de Skins Cosméticas & Prestígio Lendário ([loja.html](loja.html))
+
+- **17 Skins Visuais Exclusivas**: Variações estilizadas para todos os personagens, compráveis com **Picanhas Acumuladas** (Flappy Lula) ou **Moedas do Corredor** (Empresário 3D):
+  - **Lula**: *Terno Presidencial Dourado*, *Lula Ciborgue 2077*, *Lula de Férias na Praia*.
+  - **Bolsonaro**: *Capitão Motociclista*, *Patriota Dourado Lendário*.
+  - **Nikolas**: *Nikolas Gamer RGB*, *Nikole de Peruca*.
+  - **Janja**: *Janja Alta Costura*, *Janja Fashionista Neon*.
+  - **Moraes**: *Xandão Toga Dourada STF*, *Guardião Cósmico da Constituição*.
+  - **Dilma**: *Mandiocósmica Dourada*, *Estocadora do Vento Galáctica*.
+  - **Marçal**: *Marçal Black Card Bilionário*, *Holográfico Quântico 3X*.
+  - **Empresário 3D**: *Faria Lima Colete Puffer*, *Empresário Cyberpunk Neon*.
+- **Seleção & Equipamento In-Game ([jogo.html](jogo.html))**: Seletor visual integrado no modal de personagens do Flappy Lula, permitindo alternar livremente entre o visual *Padrão* e qualquer skin desbloqueada.
+- **Renderização com Alfa Transparente Puro**: Sprites com canal alfa de 32 bits, alinhamento anatômico de voo e animação de capas ondulantes temáticas.
+- **Nível de Prestígio**: Reinicie seu saldo de picanhas em troca de insígnias permanentes de prestígio exibidas no Perfil e no Ranking Nacional.
+
+---
+
 ## 🏅 Sistema de Conquistas & Badges ([conquistas.html](conquistas.html))
 
-- **Galeria Visual Completa**: Acompanhe seu progresso de picanhas e recordes para desbloquear cada figura histórica.
-- **Barra de Progresso Dinâmica**: Percentuais calculados em tempo real com metas específicas por personagem e missão.
+- **Galeria Visual Completa**: Acompanhe seu progresso de picanhas, quilômetros corridos e recordes para desbloquear cada figura histórica.
+- **Barra de Progresso Combinada**: Percentuais calculados em tempo real com metas específicas por personagem e missões multi-jogo (ex: requisito duplo de Flappy + Corredor 3D).
 - **Modal de Zoom**: Inspecione o avatar em alta definição e leia a descrição detalhada da habilidade.
 
 ---
 
 ## 🏆 Placar Global & Ranking de Líderes ([ranking.html](ranking.html))
 
-- **Classificação Dupla**: Abas separadas para o **Flappy Lula** (pontos em picanhas 🥩) e **Empresário 3D** (distância em km 🏃).
+- **Classificação Dupla**: Abas para o **Flappy Lula** (pontos em picanhas 🥩) e **Empresário 3D** (distância em km 🏃).
+- **Abas de Recorde de Partida vs Total Acumulado**: Disputa tanto pelo maior recorde de uma única corrida quanto pelo volume total acumulado de picanhas e moedas.
+- **Classificação Semanal Rotativa**: Início automático a cada segunda-feira com cálculo baseado em semana ISO (`YYYY-Www`), permitindo que novos jogadores cheguem ao Topo da Semana.
 - **Consolidação Otimizada**: Utiliza documento consolidado Top 50 com 1 única leitura por consulta e cache local TTL (90s).
-- **Busca em Tempo Real**: Filtro instantâneo por nome/apelido de jogador.
-- **Pódios & Medalhas**: Destaque visual para o 1º (👑), 2º (🥈), 3º (🥉) e demais posições.
+
+---
+
+## ✉️ Formulário de Contato & E-mail Transacional ([contato.html](contato.html) & [api/contact.js](api/contact.js))
+
+- **Envio de E-mails via Resend**: Integração direta com a API do Resend (`RESEND_API_KEY`) para encaminhamento imediato de mensagens com formatação HTML e `reply-to` automático.
+- **Armazenamento Resiliente no Firestore**: Mensagens gravadas na coleção `lula_contact_messages`, garantindo zero perda de dados mesmo em instabilidades de rede.
+- **Proteção Anti-Spam & Rate Limiting**: Honeypots invisíveis e controle de frequência por IP.
 
 ---
 
 ## ⭐ Avaliações da Comunidade & Feedbacks ([feedback.html](feedback.html))
 
 - Envio de avaliações de 1 a 5 estrelas com comentários públicos sobre a experiência.
+- Notificação automática por e-mail para novas avaliações enviadas.
 - Sanitização rigorosa contra injeção de scripts (XSS) e filtros de integridade.
 
 ---
@@ -80,7 +106,7 @@
 ### 1. Autenticação Autoritativa com Firebase Admin SDK (`/api/auth`)
 - **Geração Segura de Hash e Salt no Servidor**: O servidor gera um Salt criptográfico individual de 128-bit (`crypto.randomBytes(16)`) associado a hash **SHA-256**. O cliente nunca decide ou envia hashes diretamente.
 - **Proteção Anti-Sobrescrita no Registro**: Antes de cadastrar, o servidor verifica se o documento de credenciais ou perfil já possui senha, retornando `HTTP 409 Conflict` em tentativas de registro duplicado.
-- **Migração Automática & Limpeza**: Contas legadas são autenticadas e migradas automaticamente para o padrão com Salt Individual, removendo campos confidenciais residuais do documento público via `admin.firestore.FieldValue.delete()`.
+- **Sincronização Multiplataforma**: Inventário de personagens (`unlockedCharacters`) e skins (`unlockedSkins`/`equippedSkins`) sincronizado em nuvem no Firestore (`lula_users_v2`), mantendo o progresso entre celular e computador.
 
 ### 2. Cloud Firestore com Regras Restritivas ([firestore.rules](firestore.rules))
 - **Subcoleção Privada Isolada (`/private/credentials`)**: 100% fechada para o cliente (`allow read, write: if isAdmin();`). Leituras e gravações ocorrem exclusivamente através do Admin SDK autenticado.
@@ -88,8 +114,19 @@
 - **Validação de Esquema (`keys().hasOnly(...)`)**: Bloqueia a injeção de propriedades arbitrárias em todas as coleções.
 
 ### 3. Vercel Serverless Functions (`/api/`)
-- **Gestão Segura de Credenciais**: Chaves de serviço gerenciadas via variáveis de ambiente seguras da Vercel (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`), mantendo o repositório público 100% livre de segredos.
+- **Gestão Segura de Credenciais**: Chaves de serviço gerenciadas via variáveis de ambiente seguras da Vercel (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `RESEND_API_KEY`), mantendo o repositório público 100% livre de segredos.
 - **Prevenção de NoSQL Injection**: Higienização e codificação de parâmetros de entrada com `encodeURIComponent()` e regex sanitizadora.
+
+---
+
+## 💻 Tecnologias Utilizadas
+
+- **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), Vanilla CSS3 (Design System próprio, Glassmorphism, Micro-animações).
+- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL) com Shaders GLSL customizados e Otimização de Garbage Collection (Object Pooling).
+- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`, `/api/score`, `/api/shop`, `/api/contact`, `/api/feedback`, `/api/sync`).
+- **Comunicação Transacional**: [Resend](https://resend.com) SDK para disparo de e-mails em HTML.
+- **Banco de Dados & Autenticação**: Google Cloud Firestore & Firebase Admin SDK.
+- **Deploy & CI/CD**: [Vercel](https://vercel.com) com deploy automático a cada push no GitHub.
 
 ---
 
