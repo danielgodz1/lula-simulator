@@ -11,7 +11,9 @@ const LEADERBOARD_CACHE_TTL_MS = 90 * 1000; // 90 segundos de cache no cliente
 
 const inMemoryLeaderboardCache = {
   flappy: { data: null, timestamp: 0 },
-  runner: { data: null, timestamp: 0 }
+  flappy_weekly: { data: null, timestamp: 0 },
+  runner: { data: null, timestamp: 0 },
+  runner_weekly: { data: null, timestamp: 0 }
 };
 
 let currentSessionTokens = {
@@ -238,16 +240,18 @@ export async function savePlayerScore(gameType, score) {
 }
 
 // 3. OBTER PLACAR COM DOCUMENTO ÚNICO E CACHE LOCAL TTL (1 LEITURA POR CONSULTA EXPIRADA)
-export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300, forceRefresh = false) {
+export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300, forceRefresh = false, period = 'general') {
   const isRunner = typeof gameTypeOrCollection === 'string' && gameTypeOrCollection.includes('runner');
   const game = isRunner ? 'runner' : 'flappy';
+  const isWeekly = period === 'weekly';
+  const cacheSlot = isWeekly ? `${game}_weekly` : game;
   const now = Date.now();
-  const cacheKey = `lula_cache_scores_v2_${game}`;
-  const timestampKey = `lula_cache_scores_ts_${game}`;
+  const cacheKey = `lula_cache_scores_v2_${cacheSlot}`;
+  const timestampKey = `lula_cache_scores_ts_${cacheSlot}`;
 
   // 1. Verificação instantânea do Cache em Memória (0 requisições, 0 leituras)
-  if (!forceRefresh && inMemoryLeaderboardCache[game].data && (now - inMemoryLeaderboardCache[game].timestamp < LEADERBOARD_CACHE_TTL_MS)) {
-    return inMemoryLeaderboardCache[game].data.slice(0, limit);
+  if (!forceRefresh && inMemoryLeaderboardCache[cacheSlot]?.data && (now - inMemoryLeaderboardCache[cacheSlot].timestamp < LEADERBOARD_CACHE_TTL_MS)) {
+    return inMemoryLeaderboardCache[cacheSlot].data.slice(0, limit);
   }
 
   // 2. Verificação de Cache em LocalStorage
@@ -257,8 +261,8 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
       const cachedTs = parseInt(localStorage.getItem(timestampKey) || '0', 10);
       if (cachedRaw && (now - cachedTs < LEADERBOARD_CACHE_TTL_MS)) {
         const cachedData = JSON.parse(cachedRaw);
-        if (Array.isArray(cachedData) && cachedData.length > 0) {
-          inMemoryLeaderboardCache[game] = { data: cachedData, timestamp: cachedTs };
+        if (Array.isArray(cachedData)) {
+          inMemoryLeaderboardCache[cacheSlot] = { data: cachedData, timestamp: cachedTs };
           return cachedData.slice(0, limit);
         }
       }
@@ -266,28 +270,29 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
   }
 
   const setCacheData = (data) => {
-    inMemoryLeaderboardCache[game] = { data, timestamp: Date.now() };
+    inMemoryLeaderboardCache[cacheSlot] = { data, timestamp: Date.now() };
     try {
       localStorage.setItem(cacheKey, JSON.stringify(data));
       localStorage.setItem(timestampKey, Date.now().toString());
     } catch(e) {}
   };
 
-  // 3. Consulta à API Serverless Otimizada (Que lê 1 único documento consolidado)
+  // 3. Consulta à API Serverless Otimizada (Lê 1 único documento consolidado)
   try {
-    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}`);
+    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}&type=${isWeekly ? 'weekly' : 'general'}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
-      if (data.success && Array.isArray(data.scores) && data.scores.length > 0) {
+      if (data.success && Array.isArray(data.scores)) {
         setCacheData(data.scores);
         return data.scores.slice(0, limit);
       }
     }
   } catch (e) {}
 
-  // 4. Fallback direto ao Firestore: Leitura de 1 ÚNICO documento consolidado (lula_leaderboards_v2/{game})
+  // 4. Fallback direto ao Firestore: Leitura de 1 ÚNICO documento consolidado (lula_leaderboards_v2/{docName})
   try {
-    const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_leaderboards_v2/${game}`;
+    const docName = isWeekly ? `${game}_weekly` : game;
+    const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
     const res = await fetch(docUrl);
     if (res.ok) {
       const docData = await res.json();
@@ -304,23 +309,21 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
 
       scores.sort((a, b) => b.score - a.score);
 
-      if (scores.length > 0) {
-        setCacheData(scores);
-        return scores.slice(0, limit);
-      }
+      setCacheData(scores);
+      return scores.slice(0, limit);
     }
   } catch (e) {}
 
   // 5. Fallback Resiliente: Retorna cache anterior mesmo que expirado se estiver offline
-  if (inMemoryLeaderboardCache[game].data && inMemoryLeaderboardCache[game].data.length > 0) {
-    return inMemoryLeaderboardCache[game].data.slice(0, limit);
+  if (inMemoryLeaderboardCache[cacheSlot]?.data) {
+    return inMemoryLeaderboardCache[cacheSlot].data.slice(0, limit);
   }
 
   try {
     const cachedRaw = localStorage.getItem(cacheKey);
     if (cachedRaw) {
       const parsed = JSON.parse(cachedRaw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed.slice(0, limit);
+      if (Array.isArray(parsed)) return parsed.slice(0, limit);
     }
   } catch (e) {}
 

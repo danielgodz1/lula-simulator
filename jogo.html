@@ -1359,18 +1359,18 @@
       });
     }
 
-    // CURVA DE VELOCIDADE CALIBRADA (1.0x até 10.0x)
-    // 0 a 100 pts: 1.0x -> 2.0x linear
-    // 100 a 667 pts: 2.0x -> 10.0x linear
-    // Acima de 667 pts: fixa em 10.0x
+    // CURVA DE VELOCIDADE GRADUAL E CALIBRADA
+    // 0 a 500 pts: 1.0x -> 3.0x linear suave (conforme solicitado)
+    // 500 a 1500 pts: 3.0x -> 4.5x linear
+    // Acima de 1500 pts: fixa em 4.5x
     function getBaseScoreSpeedMultiplier(currentScore) {
       if (currentScore <= 0) return 1.0;
-      if (currentScore <= 100) {
-        return 1.0 + (currentScore / 100) * 1.0;
-      } else if (currentScore <= 667) {
-        return 2.0 + ((currentScore - 100) / 567) * 8.0;
+      if (currentScore <= 500) {
+        return 1.0 + (currentScore / 500) * 2.0;
+      } else if (currentScore <= 1500) {
+        return 3.0 + ((currentScore - 500) / 1000) * 1.5;
       } else {
-        return 10.0;
+        return 4.5;
       }
     }
 
@@ -1379,7 +1379,7 @@
       const baseMult = getBaseScoreSpeedMultiplier(score);
       if (lulaSlowTimer <= 0) return baseMult;
 
-      const maxReduction = Math.min(3.0, baseMult - 1.0);
+      const maxReduction = Math.min(2.5, baseMult - 1.0);
       if (maxReduction <= 0) return baseMult;
 
       // Retorno gradual nos últimos 3 segundos
@@ -1392,13 +1392,21 @@
     }
 
     function spawnPipe() {
-      const GH = H * GH_RATIO, GAP = H * gameState.GAP_RATIO;
-      const topH = GH + 25 + Math.random() * (H - GH - GAP - 60);
-      pipes.push({ x: W + 10, topH, botY: topH + GAP, scored: false });
+      const GH = H * GH_RATIO;
+      const usableH = H - GH;
+      const GAP = Math.max(140, Math.min(usableH * 0.44, H * (gameState.GAP_RATIO || 0.42)));
+      const minTopH = 50;
+      const maxTopH = usableH - GAP - 50;
+      const topH = Math.max(minTopH, minTopH + Math.random() * Math.max(10, maxTopH - minTopH));
+      const botY = topH + GAP;
+      const PW = W * PW_RATIO;
+
+      const spawnX = W + 20;
+      pipes.push({ x: spawnX, topH, botY, scored: false });
 
       if (gameState.spawnExtraLikes && Math.random() > 0.45) {
         likesBonus.push({
-          x: W + 10 + (W * PW_RATIO) / 2,
+          x: spawnX + PW / 2,
           y: topH + GAP / 2,
           collected: false
         });
@@ -1431,18 +1439,23 @@
         nikolasTripleTimer -= dt;
       }
 
-      // Velocidade calculada com base na curva 1x-10x e desaceleração ativa
+      // Velocidade calculada com base na curva gradual 1.0x -> 3.0x aos 500 pts
       const speedMult = getEffectiveSpeedMultiplier();
-      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.5 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
+      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
 
-      // Frequência adaptada de canos para manter jogabilidade justa e fluida em altas velocidades
-      const effectiveSpawnFreq = (gameState.isTurboActive ? 1.4 : gameState.SPEED_MULT) * speedMult;
-      const spawnInterval = Math.max(22, Math.round(SPAWN_FREQ / effectiveSpawnFreq));
-      if (frameCount % spawnInterval === 0) {
+      // Espaçamento clássico de Flappy Bird por distância (elimina sobreposição de canos)
+      const PW = W * PW_RATIO;
+      const minPipeSpacing = Math.max(220, Math.round(W * 0.54));
+
+      if (pipes.length === 0) {
         spawnPipe();
+      } else {
+        const lastPipe = pipes[pipes.length - 1];
+        if ((W + 20) - lastPipe.x >= minPipeSpacing) {
+          spawnPipe();
+        }
       }
 
-      const PW = W * PW_RATIO;
       for (const p of pipes) {
         p.x -= currentSpeed;
         if (!p.scored && p.x + PW < lula.x) {
@@ -1463,12 +1476,12 @@
           if (score >= 100 && !hasPlayedBesta) {
             hasPlayedBesta = true;
             try { sounds.playBestaEnjaulada(); } catch(e){}
-            showBannerAlert('🔥 100 PONTOS (2.0x VELOCIDADE): O HOMEM É UMA MÁQUINA!', false);
+            showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA!', false);
           }
 
-          // AVISO AO ATINGIR VELOCIDADE MÁXIMA DE 10x AOS 667 PONTOS
-          if (score >= 667 && (score - pointsEarned) < 667) {
-            showBannerAlert('⚡ 667 PONTOS: VELOCIDADE MÁXIMA DE 10.0x ATINGIDA!', false);
+          // AVISO AO ATINGIR 500 PONTOS (3.0x VELOCIDADE)
+          if (score >= 500 && (score - pointsEarned) < 500) {
+            showBannerAlert('⚡ 500 PONTOS: VELOCIDADE 3.0x ATINGIDA!', false);
           }
 
           if (gameState.isTurboAllowed) {

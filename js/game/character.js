@@ -525,21 +525,21 @@ export class Character {
   }
 
   getAABB() {
+    if (!this._aabb) {
+      this._aabb = { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 };
+    }
     const halfWidth = 0.38;
     const halfDepth = 0.38;
 
     const boxHeight = this.isSliding ? 0.80 : 2.10;
-    const minY = this.y;
-    const maxY = this.y + boxHeight;
+    this._aabb.minX = this.x - halfWidth;
+    this._aabb.maxX = this.x + halfWidth;
+    this._aabb.minY = this.y;
+    this._aabb.maxY = this.y + boxHeight;
+    this._aabb.minZ = -halfDepth;
+    this._aabb.maxZ = halfDepth;
 
-    return {
-      minX: this.x - halfWidth,
-      maxX: this.x + halfWidth,
-      minY: minY,
-      maxY: maxY,
-      minZ: -halfDepth,
-      maxZ: halfDepth
-    };
+    return this._aabb;
   }
 
   update(dt, speed) {

@@ -160,7 +160,7 @@ export class Game {
   loop() {
     requestAnimationFrame(() => this.loop());
 
-    const dt = Math.min(this.clock.getDelta(), 0.05);
+    const dt = Math.min(this.clock.getDelta(), 0.0333);
     const elapsedTime = this.clock.getElapsedTime();
 
     // 1. Atualização do Ciclo Dia/Noite com base no tempo decorrido total

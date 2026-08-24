@@ -260,23 +260,59 @@
         font-size: 38px;
       }
     }
+
+    .period-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      justify-content: center;
+    }
+
+    .period-btn {
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .period-btn:hover {
+      background: rgba(255, 255, 255, 0.10);
+      color: #fff;
+    }
+
+    .period-btn.active {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: var(--verde-neon);
+      color: var(--verde-neon);
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.25);
+    }
   </style>
 </head>
 <body>
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
+    <a href="index.html" class="nav-brand">
+      <span>🇧🇷</span>
+      <span>Lula Simulator</span>
+    </a>
+    <button class="nav-toggle" id="navToggle" aria-label="Abrir Menu">☰</button>
     <ul class="nav-links" id="navLinksList">
-      <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html" class="active">🏆 Ranking</a></li>
-      <li><a href="visitantes.html">🌍 Visitantes</a></li>
-      <li><a href="feedback.html">⭐ Feedbacks</a></li>
-      <li><a href="contato.html">📬 Contato</a></li>
+      <li><a href="feedback.html">⭐ Avaliações</a></li>
+      <li><a href="visitantes.html">📊 Tráfego</a></li>
+      <li><a href="contato.html">✉️ Contato</a></li>
     </ul>
     <div class="nav-right-group" id="profileBadgeContainer"></div>
   </nav>
@@ -284,13 +320,19 @@
   <div class="page">
     <div class="page-header">
       <h1>🏆 RANKING NACIONAL</h1>
-      <p>Confira a lista completa de todos os jogadores classificados com foto de perfil!</p>
+      <p>Confira a classificação dos jogadores em tempo real nos modos Geral e Semanal!</p>
     </div>
 
     <!-- ABAS FLAPPY vs RUNNER 3D -->
     <div class="tab-buttons">
       <button class="tab-btn active" id="tabFlappy">🐦 Flappy Lula (Picanhas)</button>
       <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (KM)</button>
+    </div>
+
+    <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL -->
+    <div class="period-buttons">
+      <button class="period-btn active" id="periodGeneral">🌟 Geral (Todos os Tempos)</button>
+      <button class="period-btn" id="periodWeekly">📅 Semanal (Top da Semana)</button>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -321,10 +363,13 @@
     auth.renderProfileBadge('nav');
 
     let currentTab = 'flappy';
+    let currentPeriod = 'general';
     let allCurrentScores = [];
 
     document.getElementById('tabFlappy').onclick = () => switchTab('flappy');
     document.getElementById('tabRunner').onclick = () => switchTab('runner');
+    document.getElementById('periodGeneral').onclick = () => switchPeriod('general');
+    document.getElementById('periodWeekly').onclick = () => switchPeriod('weekly');
 
     function switchTab(tab) {
       currentTab = tab;
@@ -334,13 +379,22 @@
       loadRankingData();
     }
 
+    function switchPeriod(period) {
+      currentPeriod = period;
+      document.getElementById('periodGeneral').className = `period-btn ${period === 'general' ? 'active' : ''}`;
+      document.getElementById('periodWeekly').className = `period-btn ${period === 'weekly' ? 'active' : ''}`;
+      document.getElementById('searchRankingInput').value = '';
+      loadRankingData();
+    }
+
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');
       const totalBadge = document.getElementById('totalPlayersBadge');
-      container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando todos os jogadores... 🇧🇷</div>';
+      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : 'geral';
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando placar ${periodLabel}... 🇧🇷</div>`;
 
-      // Busca todos os jogadores pelo documento consolidado (com cache TTL)
-      allCurrentScores = await getTopScores(currentTab, 300, force);
+      // Busca todos os jogadores pelo documento consolidado (com cache TTL e filtro de período)
+      allCurrentScores = await getTopScores(currentTab, 300, force, currentPeriod);
 
       // Fallback da conta atual caso banco esteja vazio ou jogador ainda não esteja no ranking
       const u = auth.getCurrentUser();
@@ -351,7 +405,8 @@
         }
       }
 
-      totalBadge.textContent = `Total: ${allCurrentScores.length} Jogadores`;
+      const countText = allCurrentScores.length === 1 ? '1 Jogador' : `${allCurrentScores.length} Jogadores`;
+      totalBadge.textContent = currentPeriod === 'weekly' ? `Semanal: ${countText}` : `Total Geral: ${countText}`;
       renderFilteredScores();
     }
 

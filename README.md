@@ -93,36 +93,25 @@
 
 ---
 
-## 🌟 Últimas Atualizações & Novas Funcionalidades (v2.5)
+## 🌟 Últimas Atualizações & Novas Funcionalidades (v2.6)
 
+- **⚡ Super Auditoria & Otimização de Performance 3D ([correr.html](correr.html))**:
+  - **Object Pooling Rigoroso (Zero Garbage Collection)**: Moedas, partículas e elementos dinâmicos são reciclados continuamente a partir de pools em memória (`coinPool`, `particlePool`), eliminando quedas de quadros (*GC spikes*).
+  - **Eliminação de Alocações por Frame**: Estruturas de Bounding Box (`_aabb`) e vetores auxiliares pré-alocados para cálculo de física e colisões instantâneas.
+  - **Painel de Métricas de Debug em Tempo Real**: Novo HUD ativável via tecla `D`, botão `⚡ FPS` no cabeçalho ou parâmetro `?debug=1`, exibindo **FPS** (Atual/Médio/Mínimo), **Draw Calls**, **Contagem de Triângulos**, **Geometrias/Texturas** e **Memória JS Heap**.
+  - **Timestep Travado (Clamp de Física)**: Limite de $\Delta t \le 33.3\text{ms}$ prevenindo quebras de colisão e *tunneling* em celulares fracos ou notebooks sem GPU dedicada.
+- **📅 Placar Geral vs Placar Semanal Rotativo ([ranking.html](ranking.html) & [/api/score.js](api/score.js))**:
+  - **Classificação Rotativa por Semana ISO (`YYYY-Www`)**: Além do Placar Geral histórico, os jogadores agora disputam o **Top 1 Semanal**, renovado automaticamente a cada nova semana.
+  - **Seletor de Período**: Abas estilizadas no [ranking.html](ranking.html) para alternar instantaneamente entre *🌟 Geral (Todos os Tempos)* e *📅 Semanal (Top da Semana)* para Flappy Lula e Empresário 3D.
+- **🐦 Balanceamento & Física Arcade no Flappy Lula ([jogo.html](jogo.html))**:
+  - **Curva de Velocidade Gradual Suave**: Aceleração progressiva e humana ($1.0\text{x}$ a $3.0\text{x}$ suavemente dos $0$ aos $500$ pontos), atingindo teto máximo equilibrado em vez de saltos incontroláveis.
+  - **Geração de Canos Estilo Flappy Bird Clássico**: Espaçamento por distância mínima percorrida em pixels ($>240\text{px}$), eliminando 100% dos canos sobrepostos ou intransponíveis e garantindo variedade rica de alturas.
 - **🎖️ Medalhas de Honra & Selos Exclusivos no Ranking Nacional ([ranking.html](ranking.html) & [conquistas.html](conquistas.html))**:
-  - **Medalha Imbrochável (Clube Bolsonaro)**: A relíquia máxima dos patriotas (*"Imorrível, Imbrochável e Incomível"*) comprável por 3.000 Picanhas.
-  - **Selos de Prestígio Colecionáveis**: *Picanha de Ouro Presidencial* (1.500 🥩), *Habeas Corpus Supremo STF* (2.500 🥩), *Código Quântico do Mindset 3X* (2.000 🥩) e *Estocador de Vento Oficial* (1.000 🥩).
-  - **Equipar no Ranking**: Ao desbloquear ou comprar, clique em *"🎖️ EQUIPAR NO RANKING"* no painel de conquistas para exibir a medalha e a tag dourada ao lado do seu nome no topo do Ranking e no Game Over!
-- **🏆 Ranking Nacional Limpo & Focado**:
-  - Removido o campo redundante de salvar apelido no topo da página.
-  - Interface otimizada com pesquisa instantânea por jogador/país, bandeiras internacionais e fotos de perfil dos classificados.
-- **⚡ Super Otimização Mobile no Empresário 3D ([correr.html](correr.html))**:
-  - Otimizado especialmente para celulares intermediários e de entrada (ex: Samsung Galaxy A26, A15, A25 e linhas Moto G).
-  - **Desativação de MSAA Antialiasing no Mobile**: Economiza mais de 40% da banda de fillrate das GPUs Mali/Adreno.
-  - **Resolução Adaptativa Fluida (`pixelRatio 1.0x - 1.2x`)**: Elimina engasgos e quedas bruscas de frames, garantindo **60 FPS fixos**.
-  - **Correção da Navbar Touch no Celular**: Botão *"☰ Menu"* com eventos de toque otimizados (`touchstart`/`touchend`) e prioridade de renderização sobre o canvas 3D.
-- **🕊️ Flappy Lula: Visual Flappy Bird Clássico & Animações Dinâmicas ([jogo.html](jogo.html))**:
-  - **Tela Expandida no Desktop**: Visão arcade ampla (até 640px) estilo Flappy Bird clássico.
-  - **Capa Flutuante Procedural com Física Reativa**: Animação ondulatória em tempo real da capa vermelha atrás dos personagens voando na horizontal.
-  - **Efeitos de Impacto**: *Screen shake* (tremedeira suave de tela) e estrelas giratórias de atordoamento/tontura na cabeça do personagem ao colidir.
-  - **Física Fluida a 60 FPS**: Sincronização inteligente com taxas de atualização de 60Hz, 90Hz e 120Hz com salvaguarda anti-queda de frames.
-- **⭐ Feedbacks da Comunidade com Data e País ([feedback.html](feedback.html))**:
-  - Identificação automática do país e bandeira do usuário através de geolocalização IP da Vercel (ex: `🇧🇷 Brasil`).
-  - Exibição da data e hora de envio formatada (ex: `📅 24/08/2026 às 00:03`).
-  - Botão de envio simplificado e validação rigorosa contra comentários vazios.
+  - **Medalha Imbrochável (Clube Bolsonaro)**, **Picanha de Ouro Presidencial**, **Habeas Corpus Supremo STF**, **Código Quântico do Mindset 3X** e **Estocador de Vento Oficial**.
+  - **Equipar no Ranking**: Exibição da medalha e tag dourada ao lado do seu nome no topo do Ranking e no Game Over!
 - **🌐 SEO Avançado & Redirecionamento 301 Permanente**:
-  - Redirecionamento permanente (`HTTP 301`) de `lula-simulator.vercel.app` para o domínio próprio `https://www.lulasimulator.com.br/`.
-  - `sitemap.xml` e `robots.txt` consolidados para acelerar a indexação orgânica no Google.
-- **✂️ Perfil do Jogador com Foto Customizada & Recorte Interativo**:
-  - Upload e enquadramento circular de fotos com zoom (`1x a 3.5x`) e compressão ultra-leve no cliente ($\approx 3\text{KB}$ a $6\text{KB}$ em WebP/JPEG).
-- **☁️ Sincronização Multi-Dispositivo na Nuvem (`/api/sync`)**:
-  - Sincronização atômica de recordes, personagens desbloqueados, recursos e medalhas entre celular e computador.
+  - Redirecionamento permanente (`HTTP 301`) de `lula-simulator.vercel.app` para `https://www.lulasimulator.com.br/`.
+  - `sitemap.xml`, `robots.txt` e favicon suite de alta resolução para Google Search.
 
 ---
 

@@ -14,6 +14,10 @@ export class ObstacleManager {
     this.movingTrains = [];
     this.particles = [];
 
+    // Object Pooling para Moedas e Partículas (Zero GC / Alta Performance Mobile)
+    this.coinPool = [];
+    this.particlePool = [];
+
     this.textureLoader = new THREE.TextureLoader();
     this.picanhaTexture = this.textureLoader.load('img/picanha.png');
 
@@ -109,8 +113,8 @@ export class ObstacleManager {
     };
 
     this.geometries = {
-      coinCore: new THREE.CylinderGeometry(0.46, 0.46, 0.08, 24),
-      coinRim: new THREE.TorusGeometry(0.46, 0.045, 8, 24),
+      coinCore: new THREE.CylinderGeometry(0.46, 0.46, 0.08, 20),
+      coinRim: new THREE.TorusGeometry(0.46, 0.045, 6, 20),
       particle: new THREE.BoxGeometry(0.09, 0.09, 0.09),
       train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
       documentCard: new THREE.PlaneGeometry(2.3, 1.45),
@@ -132,6 +136,10 @@ export class ObstacleManager {
     this.coins = this.coins.filter(c => {
       if (c.parent === parent) {
         parent.remove(c.mesh);
+        if (!c.isPicanha && this.coinPool.length < 50) {
+          c.mesh.visible = false;
+          this.coinPool.push(c.mesh);
+        }
         return false;
       }
       return true;
@@ -148,6 +156,10 @@ export class ObstacleManager {
     this.particles = this.particles.filter(p => {
       if (p.parent === parent) {
         parent.remove(p.mesh);
+        if (this.particlePool.length < 60) {
+          p.mesh.visible = false;
+          this.particlePool.push(p.mesh);
+        }
         return false;
       }
       return true;
@@ -487,19 +499,25 @@ export class ObstacleManager {
   }
 
   createSingleCoin(parent, laneX, y, localZ) {
-    const coinGroup = new THREE.Group();
+    let coinGroup;
+    if (this.coinPool.length > 0) {
+      coinGroup = this.coinPool.pop();
+      coinGroup.visible = true;
+    } else {
+      coinGroup = new THREE.Group();
+      const core = new THREE.Mesh(this.geometries.coinCore, this.materials.goldCoin);
+      core.rotation.x = Math.PI / 2;
+      core.castShadow = true;
+      core.receiveShadow = true;
+
+      const rim = new THREE.Mesh(this.geometries.coinRim, this.materials.goldCoinRim);
+      rim.castShadow = true;
+      rim.receiveShadow = true;
+
+      coinGroup.add(core, rim);
+    }
+
     coinGroup.position.set(laneX, y, localZ);
-
-    const core = new THREE.Mesh(this.geometries.coinCore, this.materials.goldCoin);
-    core.rotation.x = Math.PI / 2;
-    core.castShadow = true;
-    core.receiveShadow = true;
-
-    const rim = new THREE.Mesh(this.geometries.coinRim, this.materials.goldCoinRim);
-    rim.castShadow = true;
-    rim.receiveShadow = true;
-
-    coinGroup.add(core, rim);
     parent.add(coinGroup);
 
     this.coins.push({
@@ -525,9 +543,17 @@ export class ObstacleManager {
   }
 
   spawnCoinParticles(x, y, z, parent) {
-    const count = 7;
+    const count = 6;
     for (let i = 0; i < count; i++) {
-      const pMesh = new THREE.Mesh(this.geometries.particle, this.materials.goldParticle);
+      let pMesh;
+      if (this.particlePool.length > 0) {
+        pMesh = this.particlePool.pop();
+        pMesh.visible = true;
+        pMesh.scale.set(1, 1, 1);
+      } else {
+        pMesh = new THREE.Mesh(this.geometries.particle, this.materials.goldParticle);
+      }
+
       pMesh.position.set(x, y, z);
       parent.add(pMesh);
       const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
@@ -538,8 +564,8 @@ export class ObstacleManager {
         vx: Math.cos(angle) * speed,
         vy: 3.5 + Math.random() * 4.0,
         vz: Math.sin(angle) * speed,
-        life: 0.45,
-        maxLife: 0.45
+        life: 0.40,
+        maxLife: 0.40
       });
     }
   }
@@ -841,6 +867,10 @@ export class ObstacleManager {
         coin.collected = true;
         this.spawnCoinParticles(coin.mesh.position.x, coin.mesh.position.y, coin.mesh.position.z, coin.parent);
         coin.parent.remove(coin.mesh);
+        if (!coin.isPicanha && this.coinPool.length < 50) {
+          coin.mesh.visible = false;
+          this.coinPool.push(coin.mesh);
+        }
         this.coins.splice(i, 1);
 
         if (coin.isPicanha) {
@@ -891,20 +921,62 @@ export class ObstacleManager {
 
       if (p.life <= 0) {
         p.parent.remove(p.mesh);
+        if (this.particlePool.length < 60) {
+          p.mesh.visible = false;
+          this.particlePool.push(p.mesh);
+        }
         this.particles.splice(i, 1);
       }
     }
   }
 
   reset() {
-    this.obstacles.forEach(o => o.parent.remove(o.mesh));
-    this.coins.forEach(c => c.parent.remove(c.mesh));
-    this.powerups.forEach(p => p.parent.remove(p.mesh));
-    this.particles.forEach(p => p.parent.remove(p.mesh));
+    this.obstacles.forEach(o => o.parent?.remove(o.mesh));
+    this.coins.forEach(c => {
+      c.parent?.remove(c.mesh);
+      if (!c.isPicanha && this.coinPool.length < 50) {
+        c.mesh.visible = false;
+        this.coinPool.push(c.mesh);
+      }
+    });
+    this.powerups.forEach(p => p.parent?.remove(p.mesh));
+    this.particles.forEach(p => {
+      p.parent?.remove(p.mesh);
+      if (this.particlePool.length < 60) {
+        p.mesh.visible = false;
+        this.particlePool.push(p.mesh);
+      }
+    });
     this.obstacles = [];
     this.coins = [];
     this.powerups = [];
     this.particles = [];
     this.movingTrains = [];
+  }
+
+  dispose() {
+    this.reset();
+    this.coinPool.forEach(mesh => {
+      mesh.traverse(child => {
+        if (child.isMesh) {
+          child.geometry?.dispose();
+        }
+      });
+    });
+    this.particlePool.forEach(mesh => {
+      mesh.geometry?.dispose();
+    });
+    this.coinPool = [];
+    this.particlePool = [];
+
+    for (const key in this.geometries) {
+      this.geometries[key]?.dispose();
+    }
+    for (const key in this.materials) {
+      const mat = this.materials[key];
+      if (Array.isArray(mat)) mat.forEach(m => m?.dispose());
+      else mat?.dispose();
+    }
+    this.picanhaTexture?.dispose();
   }
 }

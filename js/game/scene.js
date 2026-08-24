@@ -315,6 +315,18 @@ export class GameScene {
     // 8. Pipas
     this.createFloatingKites();
 
+    // 9. Painel de Debug de Performance em Tempo Real
+    this.isDebugVisible = new URLSearchParams(window.location.search).get('debug') === '1';
+    this.debugOverlay = null;
+    this.minFpsSeen = 60;
+    this.createDebugOverlay();
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'd' || e.key === 'D') {
+        this.toggleDebugOverlay();
+      }
+    });
+
     window.addEventListener('resize', () => this.onResize());
   }
 
@@ -461,6 +473,38 @@ export class GameScene {
     return `${icon} ${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
   }
 
+  createDebugOverlay() {
+    this.debugOverlay = document.createElement('div');
+    this.debugOverlay.id = 'perfDebugOverlay';
+    this.debugOverlay.style.cssText = `
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(8, 12, 22, 0.92);
+      border: 1.5px solid #00e676;
+      border-radius: 10px;
+      padding: 8px 12px;
+      color: #00e676;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      z-index: 10000;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.85);
+      pointer-events: auto;
+      display: ${this.isDebugVisible ? 'block' : 'none'};
+      backdrop-filter: blur(8px);
+      user-select: none;
+    `;
+    document.body.appendChild(this.debugOverlay);
+  }
+
+  toggleDebugOverlay() {
+    this.isDebugVisible = !this.isDebugVisible;
+    if (this.debugOverlay) {
+      this.debugOverlay.style.display = this.isDebugVisible ? 'block' : 'none';
+    }
+  }
+
   monitorPerformance() {
     const now = performance.now();
     const delta = now - this.lastFrameTime;
@@ -470,22 +514,52 @@ export class GameScene {
     this.fpsHistory.push(fps);
     if (this.fpsHistory.length > 60) this.fpsHistory.shift();
 
-    this.perfCheckTimer++;
-    // A cada ~120 frames (2 segundos), avalia a taxa de quadros e escala a resolução
-    if (this.perfCheckTimer > 120 && this.fpsHistory.length >= 45) {
-      this.perfCheckTimer = 0;
-      const avgFps = this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length;
+    if (fps < this.minFpsSeen && this.fpsHistory.length > 10) {
+      this.minFpsSeen = Math.round(fps);
+    }
 
-      // Se o celular estiver rodando muito liso (>= 58 FPS), aumenta a nitidez e resolução
+    this.perfCheckTimer++;
+    const avgFps = this.fpsHistory.reduce((a, b) => a + b, 0) / this.fpsHistory.length;
+
+    // A cada ~90 frames (1.5s), avalia a taxa de quadros e escala a resolução
+    if (this.perfCheckTimer > 90 && this.fpsHistory.length >= 45) {
+      this.perfCheckTimer = 0;
+
+      // Se estiver acima de 57.5 FPS, aumenta suavemente a resolução
       if (avgFps >= 57.5 && this.currentPixelRatio < this.maxPixelRatio) {
-        this.currentPixelRatio = Math.min(this.maxPixelRatio, Number((this.currentPixelRatio + 0.15).toFixed(2)));
+        this.currentPixelRatio = Math.min(this.maxPixelRatio, Number((this.currentPixelRatio + 0.10).toFixed(2)));
         this.renderer.setPixelRatio(this.currentPixelRatio);
       }
-      // Se houver queda de frames (< 48 FPS), reduz a resolução dinamicamente para manter 60 FPS
+      // Se houver queda de frames (< 48 FPS), reduz a resolução dinamicamente para preservar 60 FPS
       else if (avgFps < 48.0 && this.currentPixelRatio > this.minPixelRatio) {
-        this.currentPixelRatio = Math.max(this.minPixelRatio, Number((this.currentPixelRatio - 0.20).toFixed(2)));
+        this.currentPixelRatio = Math.max(this.minPixelRatio, Number((this.currentPixelRatio - 0.15).toFixed(2)));
         this.renderer.setPixelRatio(this.currentPixelRatio);
       }
+    }
+
+    // Atualiza o painel visual de métricas de debug
+    if (this.isDebugVisible && this.debugOverlay && this.renderer) {
+      const info = this.renderer.info;
+      const mem = info.memory || {};
+      const rnd = info.render || {};
+      const curFps = Math.round(fps);
+      const roundedAvg = Math.round(avgFps);
+      const fpsColor = curFps >= 55 ? '#00e676' : curFps >= 40 ? '#facc15' : '#ef4444';
+
+      let heapMb = '';
+      if (window.performance && window.performance.memory) {
+        heapMb = ` | JS Heap: ${(window.performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1)}MB`;
+      }
+
+      this.debugOverlay.innerHTML = `
+        <div style="font-weight:bold; color:${fpsColor}; font-size:12px; margin-bottom:2px;">
+          ⚡ ${curFps} FPS (Méd: ${roundedAvg} | Mín: ${this.minFpsSeen}) [${delta.toFixed(1)}ms]
+        </div>
+        <div>🎯 Draw Calls: <b>${rnd.calls || 0}</b> | Triângulos: <b>${(rnd.triangles || 0).toLocaleString()}</b></div>
+        <div>💾 Geometrias: <b>${mem.geometries || 0}</b> | Texturas: <b>${mem.textures || 0}</b></div>
+        <div>🖥️ DPR: <b>${this.currentPixelRatio.toFixed(2)}x</b> | Sombras: <b>${this.renderer.shadowMap.enabled ? 'ON' : 'OFF'}</b>${heapMb}</div>
+        <div style="font-size:9px; color:#94a3b8; margin-top:2px;">Pressione [D] para ocultar</div>
+      `;
     }
   }
 
