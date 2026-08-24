@@ -147,9 +147,10 @@ export default async function handler(req, res) {
 
       if (resend) {
         try {
+          const recipient = process.env.CONTACT_EMAIL || 'insanodanieldoublegaming@gmail.com';
           resend.emails.send({
             from: 'onboarding@resend.dev',
-            to: 'daniel.jaupavi1@gmail.com',
+            to: recipient,
             subject: `Nova Avaliação ⭐ ${numStars}/5 — ${cleanName}`,
             html: `
               <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">

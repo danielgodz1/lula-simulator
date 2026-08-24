@@ -71,9 +71,10 @@ export default async function handler(req, res) {
   // 2. Envia e-mail via Resend
   if (resend) {
     try {
+      const recipient = process.env.CONTACT_EMAIL || 'insanodanieldoublegaming@gmail.com';
       await resend.emails.send({
         from: 'onboarding@resend.dev',
-        to: 'daniel.jaupavi1@gmail.com',
+        to: recipient,
         reply_to: cleanEmail || undefined,
         subject: `Novo contato: ${cleanSubject || cleanName}`,
         html: `
