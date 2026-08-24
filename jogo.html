@@ -206,21 +206,19 @@
 
     /* OVERLAYS & MODAIS FIXOS E ROLÁVEIS */
     .start-overlay, .modal-overlay {
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100dvh !important;
-      height: 100vh !important;
-      background: rgba(8, 9, 20, 0.88);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.40);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
       z-index: 1000 !important;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 12px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
 
     #startScreen {
@@ -273,15 +271,15 @@
       to { transform: scale(1); opacity: 1; }
     }
 
-    /* MODAL DE GAME OVER */
+    /* MODAL DE GAME OVER CENTRADO & AMPLO (ESTILO FLAPPY BIRD RETRO) */
     .game-over-container {
-      background: rgba(20, 24, 36, 0.98);
-      border: 3px solid #eab308;
+      background: rgba(18, 24, 38, 0.94);
+      border: 3.5px solid #ffdf00;
       border-radius: 20px;
-      padding: 14px;
-      max-width: 600px;
+      padding: 18px 20px;
+      max-width: 580px;
       width: 100%;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(234, 179, 8, 0.3);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 223, 0, 0.35);
       animation: popIn 0.25s ease-out;
       text-align: center;
       max-height: 92dvh;
@@ -292,21 +290,21 @@
 
     .go-header-title {
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 24px;
+      font-size: 32px;
       color: #ef4444;
-      text-shadow: 2px 2px 0px #fff, -1px -1px 0px #7f1d1d;
-      margin-bottom: 8px;
+      text-shadow: 3px 3px 0px #fff, -2px -2px 0px #7f1d1d, 3px -2px 0px #fff, -2px 3px 0px #fff;
+      margin-bottom: 12px;
       letter-spacing: 2px;
     }
 
     .go-quick-options {
       display: flex;
       gap: 8px;
-      margin-bottom: 10px;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 6px 10px;
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 12px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
@@ -318,11 +316,11 @@
       gap: 8px;
       background: rgba(255, 255, 255, 0.08);
       border: 1.5px solid var(--amarelo-brasil);
-      padding: 4px 8px;
+      padding: 4px 10px;
       border-radius: 10px;
       color: #fff;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
       transition: all 0.2s ease;
     }
@@ -375,43 +373,44 @@
 
     .go-panels-grid {
       display: grid;
-      grid-template-columns: 1fr 1.1fr;
-      gap: 10px;
-      margin-bottom: 12px;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 14px;
+      margin-bottom: 14px;
       text-align: left;
     }
 
     .go-left-panel {
       background: #dfd7b6;
-      border: 2.5px solid #543847;
+      border: 3px solid #543847;
       border-radius: 12px;
-      padding: 10px 8px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       color: #543847;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .go-score-box {
       display: flex;
       justify-content: space-around;
       text-align: center;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       border-bottom: 2px dashed #b8ad88;
-      padding-bottom: 4px;
+      padding-bottom: 6px;
     }
 
     .go-score-item label {
       display: block;
       font-family: 'Press Start 2P', cursive;
-      font-size: 7px;
+      font-size: 8px;
       color: #e65100;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
 
     .go-score-item span {
       font-family: 'Press Start 2P', cursive;
-      font-size: 15px;
+      font-size: 18px;
       color: #000;
     }
 
@@ -419,41 +418,41 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
-      padding: 0 2px;
+      margin-bottom: 8px;
+      padding: 0 4px;
     }
 
     .go-medal-row label {
       font-family: 'Press Start 2P', cursive;
-      font-size: 7px;
+      font-size: 8px;
       color: #e65100;
     }
 
     .go-medal-circle {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: #c59b27;
-      border: 1.5px solid #543847;
+      border: 2px solid #543847;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 18px;
     }
 
     .go-lula-meme-box {
       background: #ffffff;
-      border: 1.5px solid #543847;
+      border: 2px solid #543847;
       border-radius: 8px;
-      padding: 5px 6px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .go-lula-avatar {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: 1.5px solid #ef4444;
       overflow: hidden;
@@ -467,40 +466,41 @@
     }
 
     .go-meme-text {
-      font-size: 9.5px;
+      font-size: 10px;
       color: #1e293b;
-      line-height: 1.2;
+      line-height: 1.3;
       font-weight: 600;
       font-style: italic;
     }
 
     .go-right-panel {
       background: #fbf8eb;
-      border: 2.5px solid #543847;
+      border: 3px solid #543847;
       border-radius: 12px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .go-lb-header {
       background: #ef4444;
       color: #fff;
-      padding: 5px 6px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Press Start 2P', cursive;
-      font-size: 7.5px;
+      font-size: 8.5px;
       letter-spacing: 1px;
       text-transform: uppercase;
-      border-bottom: 2.5px solid #543847;
+      border-bottom: 3px solid #543847;
     }
 
     .go-lb-list {
       flex: 1;
-      padding: 4px 6px;
-      max-height: 120px;
+      padding: 6px 8px;
+      max-height: 130px;
       overflow-y: auto;
     }
 
@@ -508,9 +508,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 2px 2px;
+      padding: 3px 2px;
       border-bottom: 1px solid #e2d9bc;
-      font-size: 9.5px;
+      font-size: 10px;
       color: #334155;
     }
 
@@ -520,8 +520,8 @@
 
     .go-lb-rank {
       font-family: 'Press Start 2P', cursive;
-      font-size: 7px;
-      width: 14px;
+      font-size: 7.5px;
+      width: 16px;
       color: #b45309;
     }
 
@@ -536,79 +536,93 @@
 
     .go-lb-score {
       font-family: 'Press Start 2P', cursive;
-      font-size: 8px;
+      font-size: 8.5px;
       color: #15803d;
       background: #dcfce7;
-      padding: 1px 4px;
+      padding: 2px 5px;
       border-radius: 4px;
       border: 1px solid #86efac;
     }
 
     .go-lb-you-row {
       background: #38bdf8;
-      border-top: 2px solid #543847;
+      border-top: 3px solid #543847;
       color: #082f49;
-      padding: 4px 6px;
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-weight: 900;
-      font-size: 9.5px;
+      font-size: 10px;
     }
 
     .go-buttons-row {
       display: flex;
-      gap: 6px;
+      gap: 10px;
       justify-content: center;
     }
 
     .btn-pixel-play {
       flex: 1.4;
       background: #22c55e;
-      border: 2px solid #14532d;
+      border: 3px solid #14532d;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 10px;
-      padding: 8px 10px;
-      border-radius: 10px;
+      font-size: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 3px 0px #14532d;
-      transition: transform 0.1s ease;
+      box-shadow: 0 4px 0px #14532d, 0 6px 16px rgba(34, 197, 94, 0.4);
+      transition: all 0.15s ease;
     }
 
     .btn-pixel-play:hover {
-      transform: translateY(-1px);
+      transform: translateY(-2px);
       background: #16a34a;
+      box-shadow: 0 6px 0px #14532d, 0 8px 20px rgba(34, 197, 94, 0.6);
     }
 
     .btn-pixel-share {
-      flex: 1;
+      flex: 1.1;
       background: #0284c7;
-      border: 2px solid #0c4a6e;
+      border: 3px solid #0c4a6e;
       color: #fff;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 8px;
-      padding: 8px 4px;
-      border-radius: 10px;
+      font-size: 11px;
+      padding: 12px 10px;
+      border-radius: 12px;
       cursor: pointer;
-      box-shadow: 0 3px 0px #0c4a6e;
+      box-shadow: 0 4px 0px #0c4a6e, 0 6px 16px rgba(2, 132, 199, 0.4);
+      transition: all 0.15s ease;
+    }
+
+    .btn-pixel-share:hover {
+      transform: translateY(-2px);
+      background: #0369a1;
+      box-shadow: 0 6px 0px #082f49, 0 8px 20px rgba(2, 132, 199, 0.6);
     }
 
     .btn-pixel-badges {
       flex: 1;
       background: #eab308;
-      border: 2px solid #713f12;
+      border: 3px solid #713f12;
       color: #000;
       font-family: 'Press Start 2P', 'Bangers', cursive;
-      font-size: 8px;
-      padding: 8px 4px;
-      border-radius: 10px;
-      cursor: pointer;
+      font-size: 10.5px;
+      padding: 12px 10px;
+      border-radius: 12px;
       text-decoration: none;
-      box-shadow: 0 3px 0px #713f12;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 0px #713f12;
+      transition: all 0.15s ease;
+    }
+
+    .btn-pixel-badges:hover {
+      transform: translateY(-2px);
+      background: #ca8a04;
+      box-shadow: 0 6px 0px #713f12;
     }
 
     .btn-pixel-home {
@@ -1087,19 +1101,17 @@
       if (isFs) {
         // Preserva a proporção arcade de retrato para NUNCA distorcer em tela cheia de PCs ultra-wide
         H = window.innerHeight;
-        W = Math.min(window.innerWidth - 20, Math.round(H * 0.58));
+        W = Math.min(window.innerWidth - 20, Math.round(H * 0.70));
       } else if (isMobile) {
         W = Math.min(window.innerWidth - 10, 480);
         H = Math.max(400, Math.min(window.innerHeight - 56, 800));
       } else {
-        // Desktop / Computador: tela expandida para cima aproveitando a altura total como Flappy Bird clássico
-        const availableH = window.innerHeight - 68; // Desconta navbar (52px) e margens
-        H = Math.max(560, Math.min(availableH, 1020));
-        // Proporção Flappy Bird arcade (~0.58) para visão vertical ampla e voo fluido
-        W = Math.min(Math.round(H * 0.58), window.innerWidth - 340);
-        if (W < 440 && window.innerWidth > 650) {
-          W = Math.min(480, window.innerWidth - 40);
-        }
+        // Desktop / Computador: tela mais ampla e espaçosa estilo Flappy Bird arcade
+        const availableH = window.innerHeight - 68; // Desconta navbar e margens
+        H = Math.max(560, Math.min(availableH, 980));
+        // Largura generosa com proporção ~0.70
+        W = Math.min(Math.round(H * 0.70), window.innerWidth - 60);
+        W = Math.max(500, Math.min(W, 640));
       }
 
       // Resolução Retina HD máxima (2.0x a 3.0x) para máxima nitidez em telas de PC e celulares
@@ -1108,6 +1120,8 @@
       
       // Proporção ideal e reduzida do personagem conforme solicitado (não fica gigante)
       LR_RATIO = isMobile ? 0.036 : 0.038;
+      PW_RATIO = isMobile ? 0.145 : 0.125;
+      SPAWN_FREQ = isMobile ? 120 : 132;
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
@@ -1116,10 +1130,10 @@
 
       // Ajuste dinâmico suave da física para o tamanho maior da tela
       const scaleH = H / 640;
-      const scaleW = W / 440;
+      const scaleW = W / 480;
       GRAVITY = 0.35 * Math.sqrt(scaleH);
       JUMP_POWER = -7.8 * Math.sqrt(scaleH);
-      BASE_PIPE_SPEED = 2.2 * Math.sqrt(scaleW);
+      BASE_PIPE_SPEED = 2.3 * Math.sqrt(scaleW);
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
@@ -1156,6 +1170,7 @@
     let hasPlayedBesta = false;
     let sessionPlayTime = 0;
     let hasAlerted30s = false;
+    let screenShake = 0;
 
     // Evento Lula Desacelerador de Tempo (-3x) para todos os personagens
     let lulaSpawnTimer = 0;
@@ -1175,10 +1190,21 @@
       y: 0, vy: 0, rotation: 0,
       init() { this.y = H * 0.44; this.vy = 0; this.rotation = 0; },
       jump() {
+        if (state === STATE.DEAD) return;
         this.vy = JUMP_POWER;
         try { sounds.playJump(); } catch(e){}
       },
       update() {
+        if (state === STATE.DEAD) {
+          const GH = H * GH_RATIO;
+          const groundLimit = H - GH - (H * 0.035);
+          if (this.y < groundLimit) {
+            this.vy += GRAVITY * 1.4;
+            this.y = Math.min(groundLimit, this.y + this.vy);
+            this.rotation = Math.min(85, this.rotation + 6);
+          }
+          return;
+        }
         if (state !== STATE.PLAYING) return;
         this.vy += GRAVITY;
         this.y += this.vy;
@@ -1698,8 +1724,8 @@
 
     function drawPixelPipes(GH) {
       const PW = W * PW_RATIO;
-      const collarH = 24;
-      const collarExtra = 4;
+      const collarH = 26;
+      const collarExtra = 6;
 
       for (const p of pipes) {
         if (isPrisonMode) {
@@ -1717,15 +1743,16 @@
           ctx.strokeRect(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
           ctx.strokeRect(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
         } else {
-          // CANOS RETRO RETOS COM FAIXAS DE LUZ (EXATAMENTE COMO NA IMAGEM)
+          // CANOS RETRO VIBRANTES (ESTILO FLAPPY BIRD ORIGINAL)
           
-          // --- CANO SUPERIOR (Caule) ---
+          // --- CANO SUPERIOR ---
           drawPipeSegment(p.x, 0, PW, p.topH - collarH);
-          // Topo Collar Superior
-          drawPipeCollar(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
+          // Boca do Cano Superior (invertida)
+          drawPipeCollar(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH, true);
 
-          // --- CANO INFERIOR (Collar) ---
-          drawPipeCollar(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+          // --- CANO INFERIOR ---
+          // Boca do Cano Inferior
+          drawPipeCollar(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH, false);
           // Caule Inferior
           drawPipeSegment(p.x, p.botY + collarH, PW, H - GH - (p.botY + collarH));
         }
@@ -1735,51 +1762,55 @@
     function drawPipeSegment(x, y, w, h) {
       if (h <= 0) return;
 
-      // 1. Fundo Verde Principal
+      // 1. Base Verde
       ctx.fillStyle = '#73bf2e';
       ctx.fillRect(x, y, w, h);
 
-      // 2. Sombra Verde Escura à Direita
+      // 2. Sombra Escura Lateral Direita
       ctx.fillStyle = '#558022';
-      ctx.fillRect(x + w - 10, y, 10, h);
+      ctx.fillRect(x + w - 12, y, 12, h);
 
       // 3. Faixa de Luz Clara (Verde Limão)
       ctx.fillStyle = '#9ae243';
-      ctx.fillRect(x + 4, y, 8, h);
+      ctx.fillRect(x + 5, y, 9, h);
 
-      // 4. Brilho Puro Branco-Amarelado
+      // 4. Brilho Puro Branco
       ctx.fillStyle = '#d4f686';
-      ctx.fillRect(x + 6, y, 3.5, h);
+      ctx.fillRect(x + 7, y, 3.5, h);
 
-      // 5. Contorno Preto/Verde Escuro Sólido (3px)
-      ctx.strokeStyle = '#10360a';
-      ctx.lineWidth = 2.5;
+      // 5. Contorno Escuro Sólido
+      ctx.strokeStyle = '#0e380e';
+      ctx.lineWidth = 3;
       ctx.strokeRect(x, y, w, h);
     }
 
-    function drawPipeCollar(x, y, w, h) {
+    function drawPipeCollar(x, y, w, h, isTopPipe = false) {
       // 1. Base
       ctx.fillStyle = '#73bf2e';
       ctx.fillRect(x, y, w, h);
 
       // 2. Sombra Direita
       ctx.fillStyle = '#558022';
-      ctx.fillRect(x + w - 12, y, 12, h);
+      ctx.fillRect(x + w - 14, y, 14, h);
 
       // 3. Faixa de Luz
       ctx.fillStyle = '#9ae243';
-      ctx.fillRect(x + 5, y, 9, h);
+      ctx.fillRect(x + 6, y, 10, h);
 
       // 4. Brilho Puro
       ctx.fillStyle = '#d4f686';
-      ctx.fillRect(x + 7, y, 4, h);
+      ctx.fillRect(x + 8, y, 4, h);
 
-      // 5. Linha de Sombra Inferior
+      // 5. Linha de Sombra 3D na borda interna
       ctx.fillStyle = '#3a6015';
-      ctx.fillRect(x, y + h - 3, w, 3);
+      if (isTopPipe) {
+        ctx.fillRect(x, y, w, 3.5);
+      } else {
+        ctx.fillRect(x, y + h - 3.5, w, 3.5);
+      }
 
-      // 6. Contorno Preto Sólido
-      ctx.strokeStyle = '#10360a';
+      // 6. Contorno Escuro Sólido
+      ctx.strokeStyle = '#0e380e';
       ctx.lineWidth = 3;
       ctx.strokeRect(x, y, w, h);
     }
@@ -1837,8 +1868,41 @@
       ctx.restore();
     }
 
+    function drawPixelClouds(scroll) {
+      const clouds = [
+        { x: 30, y: H * 0.12, s: 1.0 },
+        { x: 190, y: H * 0.20, s: 0.85 },
+        { x: 360, y: H * 0.10, s: 1.15 },
+        { x: 520, y: H * 0.18, s: 0.9 },
+        { x: 680, y: H * 0.13, s: 1.05 }
+      ];
+      
+      const totalSpan = W + 240;
+      for (const c of clouds) {
+        const cx = ((c.x - scroll * 0.12) % totalSpan + totalSpan) % totalSpan - 90;
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx, c.y, 14 * c.s, 0, Math.PI * 2);
+        ctx.arc(cx + 12 * c.s, c.y - 7 * c.s, 16 * c.s, 0, Math.PI * 2);
+        ctx.arc(cx + 28 * c.s, c.y - 4 * c.s, 14 * c.s, 0, Math.PI * 2);
+        ctx.arc(cx + 38 * c.s, c.y, 12 * c.s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
     function draw() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // Tremedeira / Screen Shake na morte
+      if (screenShake > 0) {
+        const sx = (Math.random() - 0.5) * screenShake;
+        const sy = (Math.random() - 0.5) * screenShake;
+        ctx.translate(sx, sy);
+        screenShake *= 0.86;
+        if (screenShake < 0.2) screenShake = 0;
+      }
 
       const GH = H * GH_RATIO;
       const horizonY = H - GH;
@@ -1847,6 +1911,19 @@
         // CÉU AZUL NÍTIDO (DA IMAGEM DE REFERÊNCIA)
         ctx.fillStyle = '#5ac5dc';
         ctx.fillRect(0, 0, W, H);
+
+        // SOL BRILHANTE RETRO
+        const sunX = W * 0.82;
+        const sunY = H * 0.12;
+        const sunGlow = ctx.createRadialGradient(sunX, sunY, 6, sunX, sunY, 38);
+        sunGlow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        sunGlow.addColorStop(0.35, 'rgba(235, 250, 255, 0.55)');
+        sunGlow.addColorStop(1, 'rgba(90, 197, 220, 0)');
+        ctx.fillStyle = sunGlow;
+        ctx.beginPath(); ctx.arc(sunX, sunY, 38, 0, Math.PI * 2); ctx.fill();
+
+        // NUVENS PIXELADAS FLUTUANTES
+        drawPixelClouds(groundScroll);
 
         // CIDADE EM PIXEL ART AO FUNDO
         drawPixelCity(horizonY);
@@ -1959,6 +2036,40 @@
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
+      // ANIMAÇÃO DE ONDULAÇÃO DA CAPA VERMELHA ATRÁS DO CORPO (FLAPPY HERO CAPE)
+      if (state !== STATE.DEAD) {
+        const capeWave1 = Math.sin(frameCount * 0.38) * (charHeight * 0.14);
+        const capeWave2 = Math.cos(frameCount * 0.44) * (charHeight * 0.16);
+        const vyOffset = -lula.vy * 0.6;
+
+        ctx.save();
+        const sX = -charWidth * 0.12;
+        const sY = -charHeight * 0.10;
+        const tipX1 = -charWidth * 0.62;
+        const tipY1 = -charHeight * 0.08 + capeWave1 + vyOffset;
+        const tipX2 = -charWidth * 0.58;
+        const tipY2 = charHeight * 0.20 + capeWave2 + vyOffset;
+
+        const capeGrad = ctx.createLinearGradient(sX, sY, tipX1, tipY1);
+        capeGrad.addColorStop(0, '#ef4444');
+        capeGrad.addColorStop(0.5, '#dc2626');
+        capeGrad.addColorStop(1, '#991b1b');
+
+        ctx.fillStyle = capeGrad;
+        ctx.beginPath();
+        ctx.moveTo(sX, sY);
+        ctx.quadraticCurveTo(sX - charWidth * 0.25, sY - charHeight * 0.12 + capeWave1 * 0.5, tipX1, tipY1);
+        ctx.lineTo(tipX2, tipY2);
+        ctx.quadraticCurveTo(sX - charWidth * 0.22, sY + charHeight * 0.16, sX, sY + charHeight * 0.12);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#7f1d1d';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // Efeito de Escudo do Moraes
       if (gameState.hasShield && gameState.shieldCharges > 0) {
         ctx.save();
@@ -1997,6 +2108,39 @@
           ctx.font = `${charHeight}px serif`;
           ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
         }
+      }
+
+      // ANIMAÇÃO DE ATORDOAMENTO NA CABEÇA QUANDO MORTO (ATORDOADO / DIZZY COM ESTRELAS E AURÉOLA)
+      if (state === STATE.DEAD) {
+        ctx.save();
+        const dizzyAngle = frameCount * 0.14;
+        const headX = charWidth * 0.15;
+        const headY = -charHeight * 0.42;
+
+        // Auréola elíptica giratória dourada
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(headX, headY, charWidth * 0.26, charHeight * 0.15, Math.PI / 10, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 3 Estrelas brilhantes orbitando a cabeça
+        for (let i = 0; i < 3; i++) {
+          const ang = dizzyAngle + (i * Math.PI * 2 / 3);
+          const sx = headX + Math.cos(ang) * (charWidth * 0.28);
+          const sy = headY + Math.sin(ang) * (charHeight * 0.15);
+
+          ctx.fillStyle = '#ffdf00';
+          ctx.beginPath();
+          ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(sx - 1, sy - 1, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
       }
 
       ctx.restore();
@@ -2056,6 +2200,9 @@
 
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
+        screenShake = 18; // Ativa tremedeira intensa da tela
+        lula.vy = -3.5; // Salto de impacto ao colidir antes de despencar no chão
+        try { sounds.playHit(); } catch(e){}
 
         // Se jogou com a Dilma, registra pontuação para desbloquear o Pablo Marçal (200 pts)
         if (activeCharacter.id === 'dilma') {
