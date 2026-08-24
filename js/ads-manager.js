@@ -26,7 +26,7 @@ export const AD_CONFIG = {
         containerId: 'container-455bffdd2f0b77226264233d844b73cd',
         scriptUrl: 'https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js'
       },
-      smartlink: 'https://www.profitableratecpmnetwork.com/ubkm86hdi8?key=0a585a8c0148e62aa70cb535ad809ece'
+      smartlink: 'https://grannyreproof.com/h6xu2jgbbn?key=513c68ca4f57b334e0bce004c067ea2b'
     },
     monetag: {
       // Modelo alternativo para troca rápida caso desejar
@@ -47,22 +47,22 @@ export const AD_CONFIG = {
   },
 
   SKYSCRAPER_160x600: {
-    key: 'dda14d693428bdb35d633d7f7c78c2cd',
+    key: 'ed07225cb34a228aede2dbebc0ca00ef',
     width: 160,
     height: 600,
-    scriptUrl: 'https://www.highrevenueformat.com/dda14d693428bdb35d633d7f7c78c2cd/invoke.js'
+    scriptUrl: 'https://grannyreproof.com/ed07225cb34a228aede2dbebc0ca00ef/invoke.js'
   },
   BANNER_320x50: {
-    key: '590c47d997603e6ea80ae7b922875e55',
+    key: '66d34c9bfbb1a19bb44210de393265f9',
     width: 320,
     height: 50,
-    scriptUrl: 'https://www.highrevenueformat.com/590c47d997603e6ea80ae7b922875e55/invoke.js'
+    scriptUrl: 'https://grannyreproof.com/66d34c9bfbb1a19bb44210de393265f9/invoke.js'
   },
   NATIVE_BANNER: {
     scriptUrl: 'https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js',
     containerId: 'container-455bffdd2f0b77226264233d844b73cd'
   },
-  SMARTLINK_URL: 'https://www.profitableratecpmnetwork.com/ubkm86hdi8?key=0a585a8c0148e62aa70cb535ad809ece'
+  SMARTLINK_URL: 'https://grannyreproof.com/h6xu2jgbbn?key=513c68ca4f57b334e0bce004c067ea2b'
 };
 
 class AdsManagerService {
