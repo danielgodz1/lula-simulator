@@ -69,9 +69,9 @@ export default async function handler(req, res) {
   }
 
   // 2. Envia e-mail via Resend
-  if (resend) {
+  const recipient = process.env.CONTACT_EMAIL;
+  if (resend && recipient) {
     try {
-      const recipient = process.env.CONTACT_EMAIL || 'insanodanieldoublegaming@gmail.com';
       await resend.emails.send({
         from: 'onboarding@resend.dev',
         to: recipient,
