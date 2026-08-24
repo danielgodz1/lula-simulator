@@ -810,6 +810,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
       <li><a href="visitantes.html">🌍 Visitantes</a></li>
@@ -1016,6 +1017,7 @@
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
     import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
+    import { SKIN_PRICING_TABLE, getEquippedSkin } from './js/game/skins.js';
     import { escapeHTML } from './js/security.js';
     import { AdsManager } from './js/ads-manager.js';
 
@@ -2053,7 +2055,33 @@
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      // ANIMAÇÃO DE ONDULAÇÃO DA CAPA VERMELHA ATRÁS DO CORPO (FLAPPY HERO CAPE)
+      // DETECTA SKIN COSMÉTICA EQUIPADA DO PERSONAGEM
+      const curUser = auth.getCurrentUser();
+      const equippedSkinId = getEquippedSkin(curUser, activeCharacter.id);
+      const skinDef = SKIN_PRICING_TABLE[equippedSkinId];
+      let capeStartColor = '#ef4444';
+      let capeMidColor = '#dc2626';
+      let capeEndColor = '#991b1b';
+      let capeStrokeColor = '#7f1d1d';
+      let auraGlow = skinDef ? skinDef.glowColor : null;
+
+      if (equippedSkinId === 'lula_presidencial') {
+        capeStartColor = '#22c55e'; capeMidColor = '#16a34a'; capeEndColor = '#ffd700'; capeStrokeColor = '#15803d';
+      } else if (equippedSkinId === 'bolsonaro_moto') {
+        capeStartColor = '#eab308'; capeMidColor = '#ca8a04'; capeEndColor = '#000000'; capeStrokeColor = '#a16207';
+      } else if (equippedSkinId === 'nikolas_gamer') {
+        capeStartColor = '#a855f7'; capeMidColor = '#7e22ce'; capeEndColor = '#06b6d4'; capeStrokeColor = '#581c87';
+      } else if (equippedSkinId === 'moraes_gold') {
+        capeStartColor = '#ffd700'; capeMidColor = '#eab308'; capeEndColor = '#78350f'; capeStrokeColor = '#b45309';
+      } else if (equippedSkinId === 'dilma_vento') {
+        capeStartColor = '#38bdf8'; capeMidColor = '#0284c7'; capeEndColor = '#ffffff'; capeStrokeColor = '#0369a1';
+      } else if (equippedSkinId === 'marcal_coach') {
+        capeStartColor = '#10b981'; capeMidColor = '#059669'; capeEndColor = '#0f172a'; capeStrokeColor = '#047857';
+      } else if (skinDef && skinDef.glowColor) {
+        capeStartColor = skinDef.glowColor; capeMidColor = skinDef.glowColor; capeEndColor = '#0f172a';
+      }
+
+      // ANIMAÇÃO DE ONDULAÇÃO DA CAPA PERSONALIZADA ATRÁS DO CORPO (FLAPPY HERO CAPE)
       if (state !== STATE.DEAD) {
         const capeWave1 = Math.sin(frameCount * 0.38) * (charHeight * 0.14);
         const capeWave2 = Math.cos(frameCount * 0.44) * (charHeight * 0.16);
@@ -2068,9 +2096,9 @@
         const tipY2 = charHeight * 0.20 + capeWave2 + vyOffset;
 
         const capeGrad = ctx.createLinearGradient(sX, sY, tipX1, tipY1);
-        capeGrad.addColorStop(0, '#ef4444');
-        capeGrad.addColorStop(0.5, '#dc2626');
-        capeGrad.addColorStop(1, '#991b1b');
+        capeGrad.addColorStop(0, capeStartColor);
+        capeGrad.addColorStop(0.5, capeMidColor);
+        capeGrad.addColorStop(1, capeEndColor);
 
         ctx.fillStyle = capeGrad;
         ctx.beginPath();
@@ -2081,8 +2109,21 @@
         ctx.closePath();
         ctx.fill();
 
-        ctx.strokeStyle = '#7f1d1d';
+        ctx.strokeStyle = capeStrokeColor;
         ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Efeito de Aura da Skin Cosmética
+      if (auraGlow) {
+        ctx.save();
+        ctx.strokeStyle = auraGlow;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = auraGlow;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, charWidth * 0.52, charHeight * 0.75, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
@@ -2246,8 +2287,10 @@
         }
 
         auth.updateUserScore('flappy', score);
-        savePlayerScore('flappy', score);
+        savePlayerScore('flappy', score, score);
         CharacterInventory.syncPicanhasNow();
+        auth.updateMissionProgress('m_flappy_games', 1);
+        auth.updateMissionProgress('m_flappy_score', score, true);
 
         setTimeout(() => {
           showGameOverScreen();

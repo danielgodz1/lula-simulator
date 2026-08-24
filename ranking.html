@@ -308,6 +308,7 @@
     <ul class="nav-links" id="navLinksList">
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html" class="active">🏆 Ranking</a></li>
       <li><a href="feedback.html">⭐ Avaliações</a></li>
@@ -329,10 +330,11 @@
       <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (KM)</button>
     </div>
 
-    <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL -->
+    <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO -->
     <div class="period-buttons">
-      <button class="period-btn active" id="periodGeneral">🌟 Geral (Todos os Tempos)</button>
-      <button class="period-btn" id="periodWeekly">📅 Semanal (Top da Semana)</button>
+      <button class="period-btn active" id="periodGeneral">🌟 Recorde Geral</button>
+      <button class="period-btn" id="periodWeekly">📅 Recorde Semanal</button>
+      <button class="period-btn" id="periodAccumulated">💰 Total Acumulado</button>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -370,6 +372,7 @@
     document.getElementById('tabRunner').onclick = () => switchTab('runner');
     document.getElementById('periodGeneral').onclick = () => switchPeriod('general');
     document.getElementById('periodWeekly').onclick = () => switchPeriod('weekly');
+    document.getElementById('periodAccumulated').onclick = () => switchPeriod('accumulated');
 
     function switchTab(tab) {
       currentTab = tab;
@@ -383,6 +386,7 @@
       currentPeriod = period;
       document.getElementById('periodGeneral').className = `period-btn ${period === 'general' ? 'active' : ''}`;
       document.getElementById('periodWeekly').className = `period-btn ${period === 'weekly' ? 'active' : ''}`;
+      document.getElementById('periodAccumulated').className = `period-btn ${period === 'accumulated' ? 'active' : ''}`;
       document.getElementById('searchRankingInput').value = '';
       loadRankingData();
     }
@@ -390,7 +394,7 @@
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');
       const totalBadge = document.getElementById('totalPlayersBadge');
-      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : 'geral';
+      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : (currentPeriod === 'accumulated' ? 'acumulado' : 'geral');
       container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando placar ${periodLabel}... 🇧🇷</div>`;
 
       // Busca todos os jogadores pelo documento consolidado (com cache TTL e filtro de período)
@@ -399,21 +403,29 @@
       // Fallback da conta atual caso banco esteja vazio ou jogador ainda não esteja no ranking
       const u = auth.getCurrentUser();
       if (allCurrentScores.length === 0 && u) {
-        const val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
+        let val = 0;
+        if (currentPeriod === 'accumulated') {
+          val = currentTab === 'runner' ? (u.runnerCoins || 0) : (u.totalPicanhas || 0);
+        } else {
+          val = currentTab === 'runner' ? (u.runnerScore || 0) : (u.flappyScore || 0);
+        }
         if (val > 0) {
-          allCurrentScores = [{ player: u.username, score: val, avatar: u.avatar || '' }];
+          allCurrentScores = [{ player: u.username, score: val, avatar: u.avatar || '', prestigeLevel: u.prestigeLevel || 0 }];
         }
       }
 
       const countText = allCurrentScores.length === 1 ? '1 Jogador' : `${allCurrentScores.length} Jogadores`;
-      totalBadge.textContent = currentPeriod === 'weekly' ? `Semanal: ${countText}` : `Total Geral: ${countText}`;
+      const prefix = currentPeriod === 'weekly' ? 'Semanal' : (currentPeriod === 'accumulated' ? 'Acumulado' : 'Geral');
+      totalBadge.textContent = `${prefix}: ${countText}`;
       renderFilteredScores();
     }
 
     function renderFilteredScores() {
       const container = document.getElementById('rankingList');
       const searchTerm = (document.getElementById('searchRankingInput').value || '').trim().toLowerCase();
-      const unit = currentTab === 'runner' ? 'km' : '🥩';
+      const unit = currentPeriod === 'accumulated' 
+        ? (currentTab === 'runner' ? '💰' : '🥩') 
+        : (currentTab === 'runner' ? 'km' : '🥩');
       const curUser = auth.getCurrentUser();
 
       let filtered = allCurrentScores;
@@ -470,12 +482,20 @@
           medalHtml = `<span class="ranking-medal-tag medal-dilma" title="Estocador de Vento Oficial">🌪️ Vento</span>`;
         }
 
+        // Insígnia de Prestígio
+        const prestigeLvl = (isCurPlayer && curUser.prestigeLevel) ? curUser.prestigeLevel : (item.prestigeLevel || 0);
+        let prestigeHtml = '';
+        if (prestigeLvl > 0) {
+          prestigeHtml = `<span style="font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(255,215,0,0.18); border:1px solid #ffd700; color:#ffd700;" title="Nível de Prestígio ${prestigeLvl}">⭐ P.${prestigeLvl}</span>`;
+        }
+
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
           <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
           <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
             <div style="font-weight:700; font-size:15px; color:#fff; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</span>
+              ${prestigeHtml}
               ${medalHtml}
             </div>
             <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted);">
@@ -483,7 +503,7 @@
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
             </div>
           </div>
-          <div class="score-val">${safeScore} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
+          <div class="score-val">${safeScore.toLocaleString('pt-BR')} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
         container.appendChild(row);
       });

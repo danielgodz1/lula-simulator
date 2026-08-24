@@ -113,7 +113,7 @@ export class Game {
     }
 
     auth.updateUserScore('runner', distanceKm);
-    savePlayerScore('runner', distanceKm);
+    savePlayerScore('runner', distanceKm, distanceKm);
 
     setTimeout(() => {
       this.ui.showGameOver(obstacle, distanceKm, this.coins, this.picanhas, () => this.restart());
@@ -123,6 +123,7 @@ export class Game {
   onCollectCoin(value) {
     this.coins += value;
     RunnerInventory.addCoins(value);
+    auth.updateMissionProgress('m_runner_coins', value);
     this.updateHUD();
   }
 
@@ -130,6 +131,7 @@ export class Game {
     this.picanhas++;
     this.coins += value;
     RunnerInventory.addCoins(value);
+    auth.updateMissionProgress('m_runner_coins', value);
     this.updateHUD();
   }
 

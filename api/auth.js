@@ -320,6 +320,9 @@ export default async function handler(req, res) {
           const safeRunnerCoins = Math.max(existingData.runnerCoins || 0, parseInt(req.body.runnerCoins || 0, 10));
           const safeAvatar = typeof req.body.avatar === 'string' && req.body.avatar.length <= 25000 ? req.body.avatar : (existingData.avatar || '');
           const safeUnlocked = Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : (existingData.unlockedCharacters || []);
+          const safeSkins = Array.isArray(req.body.unlockedSkins) ? req.body.unlockedSkins : (existingData.unlockedSkins || []);
+          const safeEquippedSkins = (req.body.equippedSkins && typeof req.body.equippedSkins === 'object') ? req.body.equippedSkins : (existingData.equippedSkins || {});
+          const safePrestige = Math.max(existingData.prestigeLevel || 0, parseInt(req.body.prestigeLevel || 0, 10));
 
           batch.set(userRef, {
             username: cleanName,
@@ -331,6 +334,12 @@ export default async function handler(req, res) {
             runnerCoins: safeRunnerCoins,
             avatar: safeAvatar,
             unlockedCharacters: safeUnlocked,
+            unlockedSkins: safeSkins,
+            equippedSkins: safeEquippedSkins,
+            prestigeLevel: safePrestige,
+            loginStreak: Math.max(1, parseInt(req.body.loginStreak || existingData.loginStreak || 1, 10)),
+            lastLoginDate: req.body.lastLoginDate || existingData.lastLoginDate || '',
+            dailyMissions: req.body.dailyMissions || existingData.dailyMissions || {},
             createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
@@ -351,7 +360,13 @@ export default async function handler(req, res) {
             dilmaScore: parseInt(req.body.dilmaScore || 0, 10),
             runnerCoins: parseInt(req.body.runnerCoins || 0, 10),
             avatar: req.body.avatar || '',
-            unlockedCharacters: Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : []
+            unlockedCharacters: Array.isArray(req.body.unlockedCharacters) ? req.body.unlockedCharacters : [],
+            unlockedSkins: Array.isArray(req.body.unlockedSkins) ? req.body.unlockedSkins : [],
+            equippedSkins: (req.body.equippedSkins && typeof req.body.equippedSkins === 'object') ? req.body.equippedSkins : {},
+            prestigeLevel: parseInt(req.body.prestigeLevel || 0, 10),
+            loginStreak: parseInt(req.body.loginStreak || 1, 10),
+            lastLoginDate: req.body.lastLoginDate || '',
+            dailyMissions: req.body.dailyMissions || {}
           }
         });
       } catch (err) {

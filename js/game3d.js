@@ -1047,7 +1047,7 @@ function triggerGameOver(obstacle) {
   }
 
   try { auth.updateUserScore('runner', finalDistanceKm); } catch(e){}
-  savePlayerScore('runner', finalDistanceKm);
+  savePlayerScore('runner', finalDistanceKm, finalDistanceKm);
 
   const modal = document.getElementById('gameOverModal');
   const goTitle = document.getElementById('goTitle');

@@ -32,7 +32,14 @@ export default async function handler(req, res) {
       totalPicanhas = 0,
       runnerCoins = 0,
       unlockedCharacters = [],
-      avatar = ''
+      unlockedSkins = [],
+      equippedSkins = {},
+      prestigeLevel = 0,
+      loginStreak = 1,
+      lastLoginDate = '',
+      dailyMissions = {},
+      avatar = '',
+      country = 'BR'
     } = req.body || {};
 
     const cleanName = sanitizeName(username);
@@ -52,12 +59,14 @@ export default async function handler(req, res) {
       const localDilma = Math.max(0, parseInt(dilmaScore || 0, 10));
       const localPicanhas = Math.max(0, parseInt(totalPicanhas || 0, 10));
       const localCoins = Math.max(0, parseInt(runnerCoins || 0, 10));
+      const localPrestige = Math.max(0, parseInt(prestigeLevel || 0, 10));
 
       const cloudFlappy = Math.max(0, parseInt(existingData.flappyScore || 0, 10));
       const cloudRunner = Math.max(0, parseInt(existingData.runnerScore || 0, 10));
       const cloudDilma = Math.max(0, parseInt(existingData.dilmaScore || 0, 10));
       const cloudPicanhas = Math.max(0, parseInt(existingData.totalPicanhas || 0, 10));
       const cloudCoins = Math.max(0, parseInt(existingData.runnerCoins || 0, 10));
+      const cloudPrestige = Math.max(0, parseInt(existingData.prestigeLevel || 0, 10));
 
       // Fusão segura: sempre o maior valor entre Local e Cloud
       const mergedFlappy = Math.max(localFlappy, cloudFlappy);
@@ -65,6 +74,7 @@ export default async function handler(req, res) {
       const mergedDilma = Math.max(localDilma, cloudDilma);
       const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas);
       const mergedCoins = Math.max(localCoins, cloudCoins);
+      const mergedPrestige = Math.max(localPrestige, cloudPrestige);
 
       // Fusão de personagens desbloqueados (unifica arrays)
       const cloudUnlocked = Array.isArray(existingData.unlockedCharacters) ? existingData.unlockedCharacters : [];
@@ -76,6 +86,17 @@ export default async function handler(req, res) {
         mergedUnlockedSet.add('marcal');
       }
       const mergedUnlocked = Array.from(mergedUnlockedSet);
+
+      // Fusão de skins desbloqueadas
+      const cloudSkins = Array.isArray(existingData.unlockedSkins) ? existingData.unlockedSkins : [];
+      const localSkins = Array.isArray(unlockedSkins) ? unlockedSkins : [];
+      const mergedSkins = Array.from(new Set([...cloudSkins, ...localSkins]));
+
+      // Fusão de skins equipadas
+      const mergedEquippedSkins = {
+        ...(existingData.equippedSkins && typeof existingData.equippedSkins === 'object' ? existingData.equippedSkins : {}),
+        ...(equippedSkins && typeof equippedSkins === 'object' ? equippedSkins : {})
+      };
 
       // Tratamento do Avatar: prioriza novo avatar enviado válido, ou mantém o do banco
       const cleanAvatar = sanitizeAvatar(avatar);
@@ -89,6 +110,12 @@ export default async function handler(req, res) {
         totalPicanhas: mergedPicanhas,
         runnerCoins: mergedCoins,
         unlockedCharacters: mergedUnlocked,
+        unlockedSkins: mergedSkins,
+        equippedSkins: mergedEquippedSkins,
+        prestigeLevel: mergedPrestige,
+        loginStreak: Math.max(1, parseInt(loginStreak || existingData.loginStreak || 1, 10)),
+        lastLoginDate: lastLoginDate || existingData.lastLoginDate || '',
+        dailyMissions: (dailyMissions && typeof dailyMissions === 'object') ? dailyMissions : (existingData.dailyMissions || {}),
         avatar: finalAvatar,
         lastSync: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -101,46 +128,50 @@ export default async function handler(req, res) {
 
       await userRef.set(updatedPayload, { merge: true });
 
-      // Propaga o avatar atualizado para os placares e rankings consolidados
-      if (finalAvatar) {
-        const updateLeaderboardAvatar = async (gameType) => {
-          try {
-            const lbRef = db.collection('lula_leaderboards_v2').doc(gameType);
+      // Atualiza Documento Consolidado de Acumulados (Top 300)
+      const updateAccumulatedLeaderboards = async () => {
+        try {
+          const updateBoard = async (docName, scoreValue) => {
+            const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
             const snap = await lbRef.get();
-            if (!snap.exists) return;
-            const data = snap.data();
-            const scores = Array.isArray(data.scores) ? data.scores : [];
-            let changed = false;
-            const updated = scores.map(item => {
-              if (item && item.player && item.player.toLowerCase() === cleanName.toLowerCase()) {
-                changed = true;
-                return { ...item, avatar: finalAvatar };
-              }
-              return item;
-            });
-            if (changed) {
-              await lbRef.set({ scores: updated, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+            let scoresList = [];
+            if (snap.exists) {
+              const data = snap.data();
+              scoresList = Array.isArray(data.scores) ? data.scores : [];
             }
-          } catch (e) {
-            console.warn(`Aviso: falha ao atualizar avatar no ranking ${gameType}:`, e);
-          }
-        };
+            const pKey = cleanName.toLowerCase();
+            const exIdx = scoresList.findIndex(s => (s.player || '').toLowerCase() === pKey);
+            if (exIdx !== -1) {
+              scoresList[exIdx].score = scoreValue;
+              if (finalAvatar) scoresList[exIdx].avatar = finalAvatar;
+              if (mergedPrestige) scoresList[exIdx].prestigeLevel = mergedPrestige;
+              scoresList[exIdx].updatedAt = new Date().toISOString();
+            } else {
+              scoresList.push({
+                player: cleanName,
+                score: scoreValue,
+                avatar: finalAvatar,
+                country: country || 'BR',
+                prestigeLevel: mergedPrestige,
+                updatedAt: new Date().toISOString()
+              });
+            }
+            scoresList.sort((a, b) => b.score - a.score);
+            await lbRef.set({
+              game: docName,
+              scores: scoresList.slice(0, 300),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          };
 
-        const updateScoreDocs = async () => {
-          try {
-            const fScoreRef = db.collection('lula_scores_v2').doc(normalizedName);
-            const rScoreRef = db.collection('lula_runner_scores_v2').doc(normalizedName);
-            await Promise.allSettled([
-              fScoreRef.set({ avatar: finalAvatar, player: cleanName }, { merge: true }),
-              rScoreRef.set({ avatar: finalAvatar, player: cleanName }, { merge: true }),
-              updateLeaderboardAvatar('flappy'),
-              updateLeaderboardAvatar('runner')
-            ]);
-          } catch(e) {}
-        };
+          if (mergedPicanhas > 0) await updateBoard('flappy_accumulated', mergedPicanhas);
+          if (mergedCoins > 0) await updateBoard('runner_accumulated', mergedCoins);
+        } catch (e) {
+          console.warn('Aviso: falha ao atualizar ranking acumulado:', e);
+        }
+      };
 
-        await updateScoreDocs();
-      }
+      await updateAccumulatedLeaderboards();
 
       return res.status(200).json({
         success: true,
@@ -153,6 +184,12 @@ export default async function handler(req, res) {
           totalPicanhas: mergedPicanhas,
           runnerCoins: mergedCoins,
           unlockedCharacters: mergedUnlocked,
+          unlockedSkins: mergedSkins,
+          equippedSkins: mergedEquippedSkins,
+          prestigeLevel: mergedPrestige,
+          loginStreak: updatedPayload.loginStreak,
+          lastLoginDate: updatedPayload.lastLoginDate,
+          dailyMissions: updatedPayload.dailyMissions,
           avatar: finalAvatar
         }
       });

@@ -47,7 +47,8 @@ service cloud.firestore {
       return d.keys().hasOnly([
         'username', 'hasPassword', 'totalPicanhas', 'runnerCoins', 'dilmaScore',
         'flappyScore', 'runnerScore', 'equippedBadge', 'selectedChar',
-        'unlockedCharacters', 'avatar', 'lastSync', 'updatedAt', 'createdAt'
+        'unlockedCharacters', 'unlockedSkins', 'equippedSkins', 'prestigeLevel',
+        'loginStreak', 'lastLoginDate', 'dailyMissions', 'avatar', 'lastSync', 'updatedAt', 'createdAt'
       ])
       && !('password' in d)
       && !('passwordHash' in d)
@@ -59,10 +60,16 @@ service cloud.firestore {
       && (!('dilmaScore' in d) || (d.dilmaScore is int && d.dilmaScore >= 0 && d.dilmaScore <= 50000))
       && (!('flappyScore' in d) || (d.flappyScore is int && d.flappyScore >= 0 && d.flappyScore <= 50000))
       && (!('runnerScore' in d) || (d.runnerScore is int && d.runnerScore >= 0 && d.runnerScore <= 50000))
+      && (!('prestigeLevel' in d) || (d.prestigeLevel is int && d.prestigeLevel >= 0 && d.prestigeLevel <= 1000))
+      && (!('loginStreak' in d) || (d.loginStreak is int && d.loginStreak >= 0 && d.loginStreak <= 365))
+      && (!('lastLoginDate' in d) || (d.lastLoginDate is string && d.lastLoginDate.size() <= 25))
       && (!('equippedBadge' in d) || (d.equippedBadge is string && d.equippedBadge.size() <= 60))
       && (!('selectedChar' in d) || (d.selectedChar is string && d.selectedChar.size() <= 40))
       && (!('avatar' in d) || (d.avatar is string && d.avatar.size() <= 25000))
-      && (!('unlockedCharacters' in d) || d.unlockedCharacters is list);
+      && (!('unlockedCharacters' in d) || d.unlockedCharacters is list)
+      && (!('unlockedSkins' in d) || d.unlockedSkins is list)
+      && (!('equippedSkins' in d) || d.equippedSkins is map || d.equippedSkins is string)
+      && (!('dailyMissions' in d) || d.dailyMissions is map);
     }
 
     // 6. Validação de Feedbacks

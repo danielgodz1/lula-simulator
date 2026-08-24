@@ -315,17 +315,13 @@ export class GameScene {
     // 8. Pipas
     this.createFloatingKites();
 
-    // 9. Painel de Debug de Performance em Tempo Real
+    // 9. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
     this.isDebugVisible = new URLSearchParams(window.location.search).get('debug') === '1';
     this.debugOverlay = null;
     this.minFpsSeen = 60;
-    this.createDebugOverlay();
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'd' || e.key === 'D') {
-        this.toggleDebugOverlay();
-      }
-    });
+    if (this.isDebugVisible) {
+      this.createDebugOverlay();
+    }
 
     window.addEventListener('resize', () => this.onResize());
   }

@@ -27,7 +27,10 @@ class AuthManager {
     if (this.currentUser) {
       this.syncFromCloud().then(() => {
         this.renderProfileBadge();
+        this.checkDailyLoginStreak();
       }).catch(() => {});
+    } else {
+      setTimeout(() => this.checkDailyLoginStreak(), 500);
     }
   }
 
@@ -36,7 +39,22 @@ class AuthManager {
       const data = localStorage.getItem(CURRENT_USER_KEY);
       if (data) {
         const parsed = JSON.parse(data);
-        if (parsed && parsed.username) return parsed;
+        if (parsed && parsed.username) {
+          if (!Array.isArray(parsed.unlockedSkins)) {
+            try {
+              parsed.unlockedSkins = JSON.parse(localStorage.getItem('lula_unlocked_skins') || '[]');
+            } catch(e) { parsed.unlockedSkins = []; }
+          }
+          if (!parsed.equippedSkins) {
+            try {
+              parsed.equippedSkins = JSON.parse(localStorage.getItem('lula_equipped_skins') || '{}');
+            } catch(e) { parsed.equippedSkins = {}; }
+          }
+          if (!parsed.prestigeLevel) {
+            parsed.prestigeLevel = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
+          }
+          return parsed;
+        }
       }
       const legacyPlayer = localStorage.getItem('lula_player');
       if (legacyPlayer && legacyPlayer.trim().length >= 2) {
@@ -48,7 +66,10 @@ class AuthManager {
           runnerScore: parseInt(localStorage.getItem('run_best') || '0', 10),
           totalPicanhas: parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10),
           dilmaScore: parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10),
-          runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10)
+          runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10),
+          prestigeLevel: parseInt(localStorage.getItem('lula_prestige_level') || '0', 10),
+          unlockedSkins: JSON.parse(localStorage.getItem('lula_unlocked_skins') || '[]'),
+          equippedSkins: JSON.parse(localStorage.getItem('lula_equipped_skins') || '{}')
         };
       }
       return null;
@@ -405,6 +426,14 @@ class AuthManager {
       if (Array.isArray(runnerUnlocks)) localUnlocked.push(...runnerUnlocks);
     } catch(e) {}
 
+    const localPrestige = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
+    let localSkins = [];
+    let localEquippedSkins = {};
+    try {
+      localSkins = JSON.parse(localStorage.getItem('lula_unlocked_skins') || '[]');
+      localEquippedSkins = JSON.parse(localStorage.getItem('lula_equipped_skins') || '{}');
+    } catch(e) {}
+
     // 1. Tenta sincronizar via API Serverless Segura
     try {
       const apiRes = await fetch('/api/sync', {
@@ -418,6 +447,12 @@ class AuthManager {
           totalPicanhas: Math.max(localPicanhas, this.currentUser.totalPicanhas || 0),
           runnerCoins: Math.max(localRunnerCoins, this.currentUser.runnerCoins || 0),
           unlockedCharacters: localUnlocked,
+          unlockedSkins: localSkins.length > 0 ? localSkins : (this.currentUser.unlockedSkins || []),
+          equippedSkins: Object.keys(localEquippedSkins).length > 0 ? localEquippedSkins : (this.currentUser.equippedSkins || {}),
+          prestigeLevel: Math.max(localPrestige, this.currentUser.prestigeLevel || 0),
+          loginStreak: this.currentUser.loginStreak || 1,
+          lastLoginDate: this.currentUser.lastLoginDate || '',
+          dailyMissions: this.currentUser.dailyMissions || {},
           avatar: localAvatar
         })
       });
@@ -437,74 +472,318 @@ class AuthManager {
       console.warn('Tentando fallback Firestore para sincronização:', err);
     }
 
-    // 2. Fallback direto ao Firestore com username incluído
-    const normalizedName = username.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    try {
-      const checkUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const res = await fetch(checkUrl);
-      if (res.ok) {
-        const doc = await res.json();
-        const cloudPicanhas = parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10);
-        const cloudFlappy = parseInt(doc.fields?.flappyScore?.integerValue || '0', 10);
-        const cloudRunner = parseInt(doc.fields?.runnerScore?.integerValue || '0', 10);
-        const cloudDilma = parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10);
-        const cloudRunnerCoins = parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10);
-        const cloudAvatar = doc.fields?.avatar?.stringValue || '';
-
-        const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas, this.currentUser.totalPicanhas || 0);
-        const mergedFlappy = Math.max(localFlappy, cloudFlappy, this.currentUser.flappyScore || 0);
-        const mergedRunner = Math.max(localRunner, cloudRunner, this.currentUser.runnerScore || 0);
-        const mergedDilma = Math.max(localDilma, cloudDilma, this.currentUser.dilmaScore || 0);
-        const mergedRunnerCoins = Math.max(localRunnerCoins, cloudRunnerCoins, this.currentUser.runnerCoins || 0);
-        const mergedAvatar = localAvatar || cloudAvatar || '';
-
-        const mergedUser = {
-          ...this.currentUser,
-          username,
-          totalPicanhas: mergedPicanhas,
-          flappyScore: mergedFlappy,
-          runnerScore: mergedRunner,
-          dilmaScore: mergedDilma,
-          runnerCoins: mergedRunnerCoins,
-          avatar: mergedAvatar
-        };
-
-        this.setCurrentUser(mergedUser);
-
-        // Atualiza cloud com todos os campos incluindo username
-        const patchUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}?updateMask.fieldPaths=username&updateMask.fieldPaths=totalPicanhas&updateMask.fieldPaths=flappyScore&updateMask.fieldPaths=runnerScore&updateMask.fieldPaths=dilmaScore&updateMask.fieldPaths=runnerCoins&updateMask.fieldPaths=avatar&updateMask.fieldPaths=lastSync`;
-        const patchPayload = {
-          fields: {
-            username: { stringValue: username },
-            totalPicanhas: { integerValue: mergedPicanhas.toString() },
-            flappyScore: { integerValue: mergedFlappy.toString() },
-            runnerScore: { integerValue: mergedRunner.toString() },
-            dilmaScore: { integerValue: mergedDilma.toString() },
-            runnerCoins: { integerValue: mergedRunnerCoins.toString() },
-            avatar: { stringValue: mergedAvatar },
-            lastSync: { timestampValue: new Date().toISOString() }
-          }
-        };
-
-        fetch(patchUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(patchPayload)
-        }).catch(() => {});
-
-        return {
-          success: true,
-          user: mergedUser,
-          isMarcalUnlocked: (mergedDilma >= 200)
-        };
-      }
-    } catch (e) {}
-
     return {
       success: true,
       user: this.currentUser,
       isMarcalUnlocked: (localDilma >= 200)
     };
+  }
+
+  // -------------------------------------------------------------
+  // LOJA DE SKINS: COMPRA E EQUIPAMENTO
+  // -------------------------------------------------------------
+  async buySkin(skinId) {
+    const user = this.getCurrentUser();
+    if (!user || !user.username) {
+      return { success: false, error: 'Faça login ou escolha seu apelido para comprar skins na Loja Oficial!' };
+    }
+
+    try {
+      const res = await fetch('/api/shop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user.username,
+          skinId,
+          action: 'buy'
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (data.totalPicanhas !== undefined) {
+            localStorage.setItem(TOTAL_PICANHAS_KEY, data.totalPicanhas.toString());
+            user.totalPicanhas = data.totalPicanhas;
+          }
+          if (data.runnerCoins !== undefined) {
+            localStorage.setItem('runner_total_coins', data.runnerCoins.toString());
+            user.runnerCoins = data.runnerCoins;
+          }
+          user.unlockedSkins = data.unlockedSkins || [];
+          user.equippedSkins = data.equippedSkins || {};
+          this.setCurrentUser(user);
+          localStorage.setItem('lula_unlocked_skins', JSON.stringify(user.unlockedSkins));
+          localStorage.setItem('lula_equipped_skins', JSON.stringify(user.equippedSkins));
+          this.renderProfileBadge();
+          return { success: true, message: data.message };
+        } else {
+          return { success: false, error: data.error || 'Falha ao comprar skin.' };
+        }
+      }
+    } catch(e) {
+      return { success: false, error: 'Erro de conexão ao processar compra.' };
+    }
+    return { success: false, error: 'Erro desconhecido ao comprar skin.' };
+  }
+
+  async equipSkin(charId, skinId) {
+    const user = this.getCurrentUser();
+    if (!user) return { success: false, error: 'Usuário não conectado' };
+
+    const unlocked = Array.isArray(user.unlockedSkins) ? user.unlockedSkins : [];
+    if (!unlocked.includes(skinId)) {
+      return { success: false, error: 'Skin não desbloqueada.' };
+    }
+
+    const equipped = user.equippedSkins || {};
+    equipped[charId] = skinId;
+    user.equippedSkins = equipped;
+    this.setCurrentUser(user);
+    localStorage.setItem('lula_equipped_skins', JSON.stringify(equipped));
+
+    try {
+      fetch('/api/shop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: user.username,
+          skinId,
+          action: 'equip'
+        })
+      }).catch(() => {});
+    } catch(e) {}
+
+    return { success: true, message: 'Skin equipada com sucesso!' };
+  }
+
+  // -------------------------------------------------------------
+  // SISTEMA DE PRESTÍGIO (RESETA PICANHAS E CONCEDE SELO PERMANENTE)
+  // -------------------------------------------------------------
+  async applyPrestige() {
+    const user = this.getCurrentUser();
+    if (!user || !user.username) {
+      return { success: false, error: 'Faça login para utilizar o sistema de prestígio.' };
+    }
+    const currentPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+    const PRESTIGE_COST = 10000;
+    if (currentPicanhas < PRESTIGE_COST) {
+      return { success: false, error: `Você precisa de pelo menos ${PRESTIGE_COST} 🥩 para prestigiar. Saldo atual: ${currentPicanhas} 🥩.` };
+    }
+
+    const newPrestige = (user.prestigeLevel || 0) + 1;
+    const remainingPicanhas = 0; // Conforme especificado pelo usuário
+    localStorage.setItem(TOTAL_PICANHAS_KEY, remainingPicanhas.toString());
+    localStorage.setItem('lula_prestige_level', newPrestige.toString());
+
+    user.prestigeLevel = newPrestige;
+    user.totalPicanhas = remainingPicanhas;
+    this.setCurrentUser(user);
+    await this.syncUserDataNow();
+    this.renderProfileBadge();
+
+    return {
+      success: true,
+      prestigeLevel: newPrestige,
+      message: `🎉 Parabéns! Você atingiu o PRESTÍGIO NÍVEL ${newPrestige}! Seu selo exclusivo foi ativado.`
+    };
+  }
+
+  // -------------------------------------------------------------
+  // STREAK DE LOGIN DIÁRIO (FUSO DE BRASÍLIA)
+  // -------------------------------------------------------------
+  checkDailyLoginStreak() {
+    const user = this.getCurrentUser();
+    if (!user || !user.username) return;
+
+    let todayStr;
+    try {
+      todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+    } catch(e) {
+      todayStr = new Date().toISOString().split('T')[0];
+    }
+
+    const lastDate = user.lastLoginDate || localStorage.getItem('lula_last_login_date') || '';
+    if (lastDate === todayStr) {
+      return; // Já resgatou o bônus hoje
+    }
+
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    let yesterdayStr;
+    try {
+      yesterdayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(yesterday);
+    } catch(e) {
+      yesterdayStr = yesterday.toISOString().split('T')[0];
+    }
+
+    let streak = parseInt(user.loginStreak || localStorage.getItem('lula_login_streak') || '0', 10);
+    if (lastDate === yesterdayStr) {
+      streak = (streak % 7) + 1;
+    } else {
+      streak = 1;
+    }
+
+    const rewards = [
+      { day: 1, picanhas: 10, coins: 0 },
+      { day: 2, picanhas: 20, coins: 0 },
+      { day: 3, picanhas: 35, coins: 0 },
+      { day: 4, picanhas: 50, coins: 0 },
+      { day: 5, picanhas: 75, coins: 0 },
+      { day: 6, picanhas: 100, coins: 0 },
+      { day: 7, picanhas: 150, coins: 50 }
+    ];
+
+    const currentReward = rewards[streak - 1] || rewards[0];
+    const currentPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10) + currentReward.picanhas;
+    const currentCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10) + (currentReward.coins || 0);
+
+    localStorage.setItem(TOTAL_PICANHAS_KEY, currentPicanhas.toString());
+    if (currentReward.coins > 0) {
+      localStorage.setItem('runner_total_coins', currentCoins.toString());
+    }
+    localStorage.setItem('lula_last_login_date', todayStr);
+    localStorage.setItem('lula_login_streak', streak.toString());
+
+    user.lastLoginDate = todayStr;
+    user.loginStreak = streak;
+    user.totalPicanhas = currentPicanhas;
+    user.runnerCoins = currentCoins;
+    this.setCurrentUser(user);
+    this.syncUserDataNow();
+
+    this.showDailyStreakModal(streak, currentReward, rewards);
+  }
+
+  showDailyStreakModal(streak, currentReward, rewards) {
+    let existing = document.getElementById('dailyStreakModalOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'dailyStreakModalOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center; z-index: 10060;
+      padding: 16px; font-family: 'Inter', sans-serif;
+    `;
+
+    const daysHTML = rewards.map(r => `
+      <div style="
+        flex: 1; min-width: 38px; padding: 8px 4px; text-align: center; border-radius: 10px;
+        background: ${r.day === streak ? 'rgba(0, 230, 118, 0.2)' : (r.day < streak ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)')};
+        border: 1.5px solid ${r.day === streak ? '#00e676' : (r.day < streak ? '#22c55e' : 'rgba(255,255,255,0.1)')};
+        color: #fff;
+      ">
+        <div style="font-size: 11px; font-weight: 700; opacity: 0.8;">D${r.day}</div>
+        <div style="font-size: 16px; margin: 4px 0;">${r.day === streak ? '🎁' : (r.day < streak ? '✅' : '🔒')}</div>
+        <div style="font-size: 10px; font-weight: 800; color: #ffd700;">+${r.picanhas}🥩</div>
+      </div>
+    `).join('');
+
+    overlay.innerHTML = `
+      <div style="
+        background: #0f172a; border: 2px solid #00e676; border-radius: 20px;
+        width: 100%; max-width: 440px; padding: 22px; color: #fff; text-align: center;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(0,230,118,0.3);
+      ">
+        <div style="font-size: 40px; margin-bottom: 6px;">🔥</div>
+        <div style="font-family: 'Bangers', cursive; font-size: 26px; color: #00e676; letter-spacing: 1px;">
+          STREAK DIÁRIO: DIA ${streak}!
+        </div>
+        <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 16px;">
+          Você entrou no jogo em dias consecutivos e resgatou sua recompensa diária!
+        </p>
+
+        <div style="display: flex; gap: 6px; margin-bottom: 20px; justify-content: space-between;">
+          ${daysHTML}
+        </div>
+
+        <div style="background: rgba(255, 223, 0, 0.12); border: 1px solid #ffd700; border-radius: 12px; padding: 12px; margin-bottom: 18px;">
+          <div style="font-size: 12px; color: #ffd700; font-weight: 700;">BÔNUS COLETADO HOJE:</div>
+          <div style="font-size: 22px; font-weight: 900; color: #fff; margin-top: 2px;">
+            +${currentReward.picanhas} 🥩 PICANHAS ${currentReward.coins > 0 ? `+${currentReward.coins} 💰` : ''}
+          </div>
+        </div>
+
+        <button id="btnCloseStreakModal" class="btn-primary" style="width: 100%; padding: 12px; font-size: 16px; background: #00e676; color: #000; font-weight: 800; border-radius: 12px; cursor: pointer; border: none;">
+          CONTINUAR JOGANDO 🇧🇷
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    overlay.querySelector('#btnCloseStreakModal').onclick = () => overlay.remove();
+  }
+
+  // -------------------------------------------------------------
+  // MISSÕES DIÁRIAS (RESET À MEIA-NOITE DE BRASÍLIA)
+  // -------------------------------------------------------------
+  getDailyMissions() {
+    let todayStr;
+    try {
+      todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+    } catch(e) {
+      todayStr = new Date().toISOString().split('T')[0];
+    }
+
+    let data = null;
+    try {
+      const stored = localStorage.getItem('lula_daily_missions_data');
+      if (stored) data = JSON.parse(stored);
+    } catch(e) {}
+
+    if (!data || data.date !== todayStr) {
+      data = {
+        date: todayStr,
+        missions: [
+          { id: 'm_flappy_games', title: 'Voo Sindical', desc: 'Jogue 3 partidas no Flappy Lula', target: 3, current: 0, reward: 30, currency: 'picanhas', claimed: false },
+          { id: 'm_flappy_score', title: 'Churrasco Presidencial', desc: 'Atinja 25 pontos numa única corrida no Flappy Lula', target: 25, current: 0, reward: 50, currency: 'picanhas', claimed: false },
+          { id: 'm_runner_coins', title: 'Investimento Faria Lima', desc: 'Colete 40 moedas no Empresário 3D', target: 40, current: 0, reward: 60, currency: 'coins', claimed: false }
+        ]
+      };
+      localStorage.setItem('lula_daily_missions_data', JSON.stringify(data));
+    }
+    return data;
+  }
+
+  updateMissionProgress(missionId, progressToAdd = 1, isMax = false) {
+    const data = this.getDailyMissions();
+    const m = data.missions.find(x => x.id === missionId);
+    if (m && !m.claimed) {
+      if (isMax) {
+        m.current = Math.max(m.current, progressToAdd);
+      } else {
+        m.current += progressToAdd;
+      }
+      localStorage.setItem('lula_daily_missions_data', JSON.stringify(data));
+      return m;
+    }
+    return null;
+  }
+
+  claimMissionReward(missionId) {
+    const data = this.getDailyMissions();
+    const m = data.missions.find(x => x.id === missionId);
+    if (m && !m.claimed && m.current >= m.target) {
+      m.claimed = true;
+      localStorage.setItem('lula_daily_missions_data', JSON.stringify(data));
+
+      const user = this.getCurrentUser() || {};
+      if (m.currency === 'picanhas') {
+        const cur = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10) + m.reward;
+        localStorage.setItem(TOTAL_PICANHAS_KEY, cur.toString());
+        user.totalPicanhas = cur;
+      } else {
+        const cur = parseInt(localStorage.getItem('runner_total_coins') || '0', 10) + m.reward;
+        localStorage.setItem('runner_total_coins', cur.toString());
+        user.runnerCoins = cur;
+      }
+      this.setCurrentUser(user);
+      this.syncUserDataNow();
+      this.renderProfileBadge();
+      return { success: true, mission: m };
+    }
+    return { success: false };
   }
 
   // 1. JOGAR SEM SENHA COM NOME ESCOLHIDO PELO JOGADOR

@@ -362,6 +362,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html" class="active">🏃 Empresário 3D</a></li>
+      <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
       <li><a href="visitantes.html">🌍 Visitantes</a></li>
@@ -406,9 +407,6 @@
       </button>
       <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Som">
         🔊
-      </button>
-      <button id="btnDebugToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#00e676; color:#00e676; font-size:13px; font-weight:bold; font-family:'Consolas',monospace;" title="Métricas de Performance / Debug (FPS, Draw Calls, Memória) [Tecla D]">
-        ⚡ FPS
       </button>
       <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:16px;" title="Tela Cheia">
         ⛶
@@ -610,17 +608,6 @@
             document.webkitExitFullscreen();
           }
           btnFullscreen.textContent = '⛶';
-        }
-      });
-    }
-
-    // Alternar painel de métricas de debug
-    const btnDebug = document.getElementById('btnDebugToggle');
-    if (btnDebug) {
-      btnDebug.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (window.currentGameInstance?.sceneManager) {
-          window.currentGameInstance.sceneManager.toggleDebugOverlay();
         }
       });
     }

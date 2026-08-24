@@ -172,14 +172,19 @@ function getISOWeekKey(d = new Date()) {
     return { fields };
   };
 
-  // 1. GET: Consulta no documento consolidado Top 300 (Geral ou Semanal) com Cache na CDN
+  // 1. GET: Consulta no documento consolidado Top 300 (Geral, Semanal ou Total Acumulado)
   if (req.method === 'GET') {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
     const { game = 'flappy', limit = 300, type = 'general' } = req.query;
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const isWeekly = type === 'weekly';
+    const isAccumulated = type === 'accumulated';
     const currentWeekKey = getISOWeekKey();
-    const docName = isWeekly ? `${cleanGame}_weekly` : cleanGame;
+
+    let docName = cleanGame;
+    if (isWeekly) docName = `${cleanGame}_weekly`;
+    else if (isAccumulated) docName = `${cleanGame}_accumulated`;
+
     const leaderboardDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
 
     try {
@@ -198,24 +203,42 @@ function getISOWeekKey(d = new Date()) {
           success: true,
           count: scores.length,
           scores: scores.slice(0, maxLimit),
-          type: isWeekly ? 'weekly' : 'general',
+          type: isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general'),
           weekKey: isWeekly ? currentWeekKey : undefined
         });
       }
 
-      // Se ainda não existir documento consolidado, retorna lista padrão vazia
-      return res.status(200).json({ success: true, count: 0, scores: [], type: isWeekly ? 'weekly' : 'general', weekKey: isWeekly ? currentWeekKey : undefined });
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        scores: [],
+        type: isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general'),
+        weekKey: isWeekly ? currentWeekKey : undefined
+      });
     } catch (err) {
-      return res.status(200).json({ success: false, scores: [], type: isWeekly ? 'weekly' : 'general' });
+      return res.status(200).json({ success: false, scores: [], type });
     }
   }
 
   // 2. POST: Gravação com Validação de Session Token HMAC e Geolocalização
   if (req.method === 'POST') {
-    const { player, score, game = 'flappy', avatar = '', sessionToken = '', country: userCountry = '' } = req.body || {};
+    const {
+      player,
+      score,
+      matchScore = 0,
+      totalAccumulated = 0,
+      prestigeLevel = 0,
+      game = 'flappy',
+      avatar = '',
+      sessionToken = '',
+      country: userCountry = ''
+    } = req.body || {};
 
     const cleanPlayer = sanitize(player, 25);
     const numScore = parseInt(score, 10);
+    const thisMatchScore = Math.max(1, parseInt(matchScore || score, 10));
+    const numAccumulated = Math.max(0, parseInt(totalAccumulated, 10));
+    const numPrestige = Math.max(0, parseInt(prestigeLevel, 10));
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const cleanAvatar = sanitizeAvatar(avatar);
 
@@ -290,8 +313,8 @@ function getISOWeekKey(d = new Date()) {
         });
       }
 
-      // Função auxiliar para atualizar um documento consolidado de leaderboard (Geral ou Semanal)
-      const updateLeaderboardDoc = async (docName, isWeeklyBoard = false) => {
+      // Função auxiliar para atualizar um documento consolidado de leaderboard (Geral, Semanal ou Acumulado)
+      const updateLeaderboardDoc = async (docName, scoreToUse, isWeeklyBoard = false) => {
         const lbDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
         const lbRes = await fetch(lbDocUrl);
         let currentScores = [];
@@ -301,7 +324,7 @@ function getISOWeekKey(d = new Date()) {
           const lbDoc = await lbRes.json();
           docWeek = lbDoc.fields?.weekKey?.stringValue || '';
           if (isWeeklyBoard && docWeek !== currentWeekKey) {
-            // Nova semana: reseta a lista semanal
+            // Nova semana: reseta a lista semanal iniciando na segunda-feira
             currentScores = [];
           } else {
             currentScores = parseLeaderboardDoc(lbDoc);
@@ -313,12 +336,13 @@ function getISOWeekKey(d = new Date()) {
         let shouldUpdate = false;
 
         if (existingIdx !== -1) {
-          if (numScore > currentScores[existingIdx].score) {
-            currentScores[existingIdx].score = numScore;
+          if (scoreToUse > currentScores[existingIdx].score) {
+            currentScores[existingIdx].score = scoreToUse;
             currentScores[existingIdx].updatedAt = new Date().toISOString();
             currentScores[existingIdx].country = detectedCountry;
             currentScores[existingIdx].countryName = detectedCountryName;
             currentScores[existingIdx].flag = detectedFlag;
+            if (numPrestige) currentScores[existingIdx].prestigeLevel = numPrestige;
             if (finalAvatar) currentScores[existingIdx].avatar = finalAvatar;
             shouldUpdate = true;
           } else if (finalAvatar && currentScores[existingIdx].avatar !== finalAvatar) {
@@ -327,14 +351,15 @@ function getISOWeekKey(d = new Date()) {
           }
         } else {
           const lowestScore = currentScores.length >= 300 ? currentScores[currentScores.length - 1].score : 0;
-          if (currentScores.length < 300 || numScore > lowestScore) {
+          if (currentScores.length < 300 || scoreToUse > lowestScore) {
             currentScores.push({
               player: cleanPlayer,
-              score: numScore,
+              score: scoreToUse,
               avatar: finalAvatar,
               country: detectedCountry,
               countryName: detectedCountryName,
               flag: detectedFlag,
+              prestigeLevel: numPrestige,
               updatedAt: new Date().toISOString()
             });
             shouldUpdate = true;
@@ -352,11 +377,29 @@ function getISOWeekKey(d = new Date()) {
         }
       };
 
-      // 2. Atualiza Placar Geral e Placar Semanal em paralelo
-      await Promise.all([
-        updateLeaderboardDoc(cleanGame, false),
-        updateLeaderboardDoc(`${cleanGame}_weekly`, true)
-      ]);
+      // Atualizações:
+      // 1. Placar Geral: usa o maior recorde histórico (numScore)
+      // 2. Placar Semanal: usa a pontuação conquistada na partida atual (thisMatchScore)
+      // 3. Placar Acumulado: atualiza o total somado
+      const tasks = [
+        updateLeaderboardDoc(cleanGame, numScore, false),
+        updateLeaderboardDoc(`${cleanGame}_weekly`, thisMatchScore, true)
+      ];
+
+      if (numAccumulated > 0) {
+        tasks.push(updateLeaderboardDoc(`${cleanGame}_accumulated`, numAccumulated, false));
+      }
+
+      await Promise.all(tasks);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Recorde processado com sucesso',
+        country: detectedCountry,
+        countryName: detectedCountryName,
+        flag: detectedFlag,
+        weekKey: currentWeekKey
+      });
 
       return res.status(200).json({
         success: true,

@@ -12,8 +12,10 @@ const LEADERBOARD_CACHE_TTL_MS = 90 * 1000; // 90 segundos de cache no cliente
 const inMemoryLeaderboardCache = {
   flappy: { data: null, timestamp: 0 },
   flappy_weekly: { data: null, timestamp: 0 },
+  flappy_accumulated: { data: null, timestamp: 0 },
   runner: { data: null, timestamp: 0 },
-  runner_weekly: { data: null, timestamp: 0 }
+  runner_weekly: { data: null, timestamp: 0 },
+  runner_accumulated: { data: null, timestamp: 0 }
 };
 
 let currentSessionTokens = {
@@ -57,15 +59,17 @@ export async function startScoreSession(gameType = 'flappy') {
 }
 
 // 2. SALVAR RECORDE MÁXIMO DO JOGADOR COM SINCRONIZAÇÃO RESILIENTE
-export async function savePlayerScore(gameType, score) {
+export async function savePlayerScore(gameType, score, sessionMatchScore = null) {
   let playerName = 'Jogador';
   let playerAvatar = '';
+  let prestigeLevel = 0;
   try {
     const rawUser = localStorage.getItem('lula_current_user_v2') || localStorage.getItem('lula_current_user');
     if (rawUser) {
       const u = JSON.parse(rawUser);
       if (u && u.username) playerName = u.username;
       if (u && u.avatar) playerAvatar = u.avatar;
+      if (u && u.prestigeLevel) prestigeLevel = u.prestigeLevel;
     }
   } catch (e) {}
 
@@ -76,6 +80,7 @@ export async function savePlayerScore(gameType, score) {
   // Sanitização e validação numérica
   playerName = (playerName || 'Jogador').trim().slice(0, 25);
   const numScore = parseInt(score, 10);
+  const matchScore = Math.max(1, parseInt(sessionMatchScore || score, 10));
 
   // Anti-Cheat: Ignora valores inválidos, zerados ou negativos
   if (isNaN(numScore) || numScore <= 0 || numScore > 50000) {
@@ -90,6 +95,10 @@ export async function savePlayerScore(gameType, score) {
 
   const finalScoreToSend = Math.max(numScore, currentBest);
 
+  // Pega o total acumulado do jogador
+  const accumulatedKey = isRunner ? 'runner_total_coins' : 'flappy_total_accumulated_picanhas';
+  const totalAccumulated = parseInt(localStorage.getItem(accumulatedKey) || '0', 10);
+
   // Atualiza o recorde localmente
   if (numScore > currentBest) {
     localStorage.setItem(localKey, numScore.toString());
@@ -103,34 +112,6 @@ export async function savePlayerScore(gameType, score) {
 
   const detectedCountry = localStorage.getItem('lula_detected_country') || 'BR';
 
-  // Atualização otimista imediata no cache em memória e localStorage
-  const cacheKey = `lula_cache_scores_v2_${gameKey}`;
-  const timestampKey = `lula_cache_scores_ts_${gameKey}`;
-  try {
-    let list = inMemoryLeaderboardCache[gameKey]?.data;
-    if (!Array.isArray(list)) {
-      const stored = localStorage.getItem(cacheKey);
-      if (stored) list = JSON.parse(stored);
-    }
-    if (!Array.isArray(list)) list = [];
-
-    const pKey = playerName.toLowerCase();
-    const exIdx = list.findIndex(item => (item.player || '').toLowerCase() === pKey);
-    if (exIdx !== -1) {
-      if (numScore >= list[exIdx].score) {
-        list[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || list[exIdx].avatar || '', country: detectedCountry, updatedAt: new Date().toISOString() };
-      }
-    } else {
-      list.push({ player: playerName, score: numScore, avatar: playerAvatar || '', country: detectedCountry, updatedAt: new Date().toISOString() });
-    }
-    list.sort((a, b) => b.score - a.score);
-    const updatedList = list.slice(0, 300);
-
-    inMemoryLeaderboardCache[gameKey] = { data: updatedList, timestamp: Date.now() };
-    localStorage.setItem(cacheKey, JSON.stringify(updatedList));
-    localStorage.setItem(timestampKey, Date.now().toString());
-  } catch (e) {}
-
   // 1. Salva via API Serverless Segura
   let savedOk = false;
   try {
@@ -140,6 +121,9 @@ export async function savePlayerScore(gameType, score) {
       body: JSON.stringify({
         player: playerName,
         score: finalScoreToSend,
+        matchScore: matchScore,
+        totalAccumulated: totalAccumulated,
+        prestigeLevel: prestigeLevel,
         game: gameKey,
         avatar: playerAvatar,
         sessionToken: token,
@@ -149,92 +133,10 @@ export async function savePlayerScore(gameType, score) {
     if (res.ok) {
       savedOk = true;
       localStorage.setItem(syncedKey, finalScoreToSend.toString());
-      // Renova o token de sessão para a próxima partida
       currentSessionTokens[gameKey] = '';
       return { saved: true, ok: true };
     }
   } catch (e) {}
-
-  // 2. Fallback direto ao Firestore (para localhost / fallback resiliente)
-  if (!savedOk) {
-    try {
-      const collName = isRunner ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-      const docId = encodeURIComponent(playerName.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
-
-      // Grava doc individual
-      const userDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/${collName}/${docId}`;
-      const userFields = {
-        player: { stringValue: playerName },
-        score: { integerValue: finalScoreToSend.toString() },
-        updatedAt: { timestampValue: new Date().toISOString() }
-      };
-      if (playerAvatar) {
-        userFields.avatar = { stringValue: playerAvatar };
-      }
-
-      await fetch(userDocUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fields: userFields })
-      });
-
-      // Atualiza documento consolidado
-      const lbDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_leaderboards_v2/${gameKey}`;
-      const lbRes = await fetch(lbDocUrl);
-      let scoresArr = [];
-      if (lbRes.ok) {
-        const lbDoc = await lbRes.json();
-        const rawVals = lbDoc.fields?.scores?.arrayValue?.values || [];
-        scoresArr = rawVals.map(v => ({
-          player: (v.mapValue?.fields?.player?.stringValue || 'Anônimo').replace(/<[^>]*>?/gm, '').trim(),
-          score: parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10),
-          avatar: v.mapValue?.fields?.avatar?.stringValue || '',
-          updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
-        })).filter(s => !isNaN(s.score) && s.score > 0);
-      }
-
-      const pKey = playerName.toLowerCase();
-      const exIdx = scoresArr.findIndex(s => (s.player || '').toLowerCase() === pKey);
-      if (exIdx !== -1) {
-        if (numScore >= scoresArr[exIdx].score) {
-          scoresArr[exIdx] = { player: playerName, score: numScore, avatar: playerAvatar || scoresArr[exIdx].avatar || '', updatedAt: new Date().toISOString() };
-        }
-      } else {
-        scoresArr.push({ player: playerName, score: numScore, avatar: playerAvatar || '', updatedAt: new Date().toISOString() });
-      }
-      scoresArr.sort((a, b) => b.score - a.score);
-      const top300 = scoresArr.slice(0, 300);
-
-      await fetch(lbDocUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            game: { stringValue: gameKey },
-            updatedAt: { timestampValue: new Date().toISOString() },
-            scores: {
-              arrayValue: {
-                values: top300.map(s => {
-                  const f = {
-                    player: { stringValue: s.player },
-                    score: { integerValue: s.score.toString() },
-                    updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() }
-                  };
-                  if (s.avatar) f.avatar = { stringValue: s.avatar };
-                  return { mapValue: { fields: f } };
-                })
-              }
-            }
-          }
-        })
-      });
-
-      localStorage.setItem(syncedKey, numScore.toString());
-      return { saved: true, directFirestore: true };
-    } catch (err) {
-      console.warn('Erro no salvamento de recorde direto:', err);
-    }
-  }
 
   return { saved: true, cached: true };
 }
@@ -244,12 +146,17 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
   const isRunner = typeof gameTypeOrCollection === 'string' && gameTypeOrCollection.includes('runner');
   const game = isRunner ? 'runner' : 'flappy';
   const isWeekly = period === 'weekly';
-  const cacheSlot = isWeekly ? `${game}_weekly` : game;
+  const isAccumulated = period === 'accumulated';
+
+  let cacheSlot = game;
+  if (isWeekly) cacheSlot = `${game}_weekly`;
+  else if (isAccumulated) cacheSlot = `${game}_accumulated`;
+
   const now = Date.now();
   const cacheKey = `lula_cache_scores_v2_${cacheSlot}`;
   const timestampKey = `lula_cache_scores_ts_${cacheSlot}`;
 
-  // 1. Verificação instantânea do Cache em Memória (0 requisições, 0 leituras)
+  // 1. Verificação instantânea do Cache em Memória
   if (!forceRefresh && inMemoryLeaderboardCache[cacheSlot]?.data && (now - inMemoryLeaderboardCache[cacheSlot].timestamp < LEADERBOARD_CACHE_TTL_MS)) {
     return inMemoryLeaderboardCache[cacheSlot].data.slice(0, limit);
   }
@@ -277,9 +184,10 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
     } catch(e) {}
   };
 
-  // 3. Consulta à API Serverless Otimizada (Lê 1 único documento consolidado)
+  // 3. Consulta à API Serverless Otimizada
   try {
-    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}&type=${isWeekly ? 'weekly' : 'general'}`);
+    const queryType = isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general');
+    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}&type=${queryType}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
       if (data.success && Array.isArray(data.scores)) {
@@ -289,9 +197,12 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
     }
   } catch (e) {}
 
-  // 4. Fallback direto ao Firestore: Leitura de 1 ÚNICO documento consolidado (lula_leaderboards_v2/{docName})
+  // 4. Fallback direto ao Firestore: Leitura de 1 ÚNICO documento consolidado
   try {
-    const docName = isWeekly ? `${game}_weekly` : game;
+    let docName = game;
+    if (isWeekly) docName = `${game}_weekly`;
+    else if (isAccumulated) docName = `${game}_accumulated`;
+
     const docUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
     const res = await fetch(docUrl);
     if (res.ok) {
@@ -304,6 +215,7 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
         country: v.mapValue?.fields?.country?.stringValue || 'BR',
         countryName: v.mapValue?.fields?.countryName?.stringValue || 'Brasil',
         flag: v.mapValue?.fields?.flag?.stringValue || '🇧🇷',
+        prestigeLevel: parseInt(v.mapValue?.fields?.prestigeLevel?.integerValue || '0', 10),
         updatedAt: v.mapValue?.fields?.updatedAt?.timestampValue || ''
       })).filter(s => !isNaN(s.score) && s.score > 0);
 
@@ -314,7 +226,7 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
     }
   } catch (e) {}
 
-  // 5. Fallback Resiliente: Retorna cache anterior mesmo que expirado se estiver offline
+  // 5. Fallback Resiliente
   if (inMemoryLeaderboardCache[cacheSlot]?.data) {
     return inMemoryLeaderboardCache[cacheSlot].data.slice(0, limit);
   }
