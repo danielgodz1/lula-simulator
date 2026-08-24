@@ -119,36 +119,57 @@
 
 ---
 
+---
+
+## 👥 Sistema Social, Amizades & Duelos Competitivos ([social.html](social.html) & [api/social.js](api/social.js))
+
+- **🤝 Sistema de Amigos Completo**:
+  - **Busca Instantânea por Username**: Pesquisa de jogadores em tempo real com auto-completar inteligente.
+  - **Badges de Status Dinâmicos**: O sistema identifica o estado da relação com cada jogador, exibindo `⭐ JÁ É AMIGO`, `⏳ PEDIDO ENVIADO` ou `ACEITAR PEDIDO` de forma automática.
+  - **Gestão de Solicitações**: Seção de solicitações enviadas (com opção de cancelamento) e solicitações recebidas (aceitar/recusar).
+  - **Bloqueio de Auto-Amizade**: Proteção nativa impedindo que o jogador envie solicitações para si mesmo ou apareça nos seus próprios resultados de busca.
+- **⚔️ Duelos Assíncronos & Placar de Invictos (*Win Streak*)**:
+  - Desafie qualquer amigo ou jogador para duelos de 48 horas no **Flappy Lula** ou no **Empresário 3D**.
+  - Comparação de pontuação em tempo real: ao bater o recorde do adversário, a vitória é confirmada e o jogador acumula sequências de vitórias no placar de invictos.
+- **🏆 Copa Brasília (Torneio Semanal)**:
+  - Chaveamento eliminatório gerado semanalmente reunindo os 8 melhores jogadores do ranking nacional.
+  - Premiação automática e troféu virtual para o grande campeão da semana.
+- **🔔 Central de Notificações In-App**:
+  - Sino de alertas integrado no cabeçalho de todas as páginas com contador de notificações não lidas.
+  - Alertas automáticos para novos pedidos de amizade, aceitações, desafios recebidos e vitórias em duelos.
+
+---
+
 ## 💻 Tecnologias Utilizadas
 
 - **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), Vanilla CSS3 (Design System próprio, Glassmorphism, Micro-animações).
 - **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL) com Shaders GLSL customizados e Otimização de Garbage Collection (Object Pooling).
-- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`, `/api/score`, `/api/shop`, `/api/contact`, `/api/feedback`, `/api/sync`).
+- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`, `/api/score`, `/api/shop`, `/api/social`, `/api/contact`, `/api/feedback`, `/api/sync`).
 - **Comunicação Transacional**: [Resend](https://resend.com) SDK para disparo de e-mails em HTML.
 - **Banco de Dados & Autenticação**: Google Cloud Firestore & Firebase Admin SDK.
 - **Deploy & CI/CD**: [Vercel](https://vercel.com) com deploy automático a cada push no GitHub.
 
 ---
 
-## 🌟 Últimas Atualizações & Novas Funcionalidades (v2.6)
+## 🌟 Últimas Atualizações & Novas Funcionalidades (v3.0)
 
+- **👥 Sistema Social Completo & Duelos Competitivos ([social.html](social.html) & [api/social.js](api/social.js))**:
+  - Adição direta de amigos, gestão de pedidos pendentes e cancelamento.
+  - Duelos assíncronos com sistema de pontuação e ranking de invictos.
+  - Torneio Semanal "Copa Brasília" e sino de notificações in-app em tempo real.
+- **🐦 Rebalanceamento de Física & Dificuldade Progressiva Arcade ([jogo.html](jogo.html))**:
+  - **Curva de Velocidade Calibrada**: Progressão suave de $1.0\times \to 2.0\times$ aos 1.000 pontos (similar ao tempo clássico de 24 min do Flappy Bird original) e aceleração progressiva de $2.0\times \to 5.0\times$ aos 5.000 pontos.
+  - **Variação Orgânica de Altura dos Canos**: Alternância dinâmica entre zonas altas (céu), médias e baixas (solo) com espaçamento horizontal confortável ($>300\text{px}$).
+  - **Vão de Passagem (GAP) de Alta Precisão**: Vão vertical calibrado para premiar precisão e controle de salto.
+  - **Remoção de Silhueta Shadow/Ghost**: Tela 100% limpa e nítida durante a gameplay para máximo foco.
+- **🏆 Pódio Top 3 Nacional Simplificado na Home ([index.html](index.html))**:
+  - Exibição focada exclusivamente no **Top 3** do Brasil (Flappy Lula e Empresário 3D), mantendo a página inicial ultra-rápida, leve e elegante.
+  - Ranking completo Top 300 disponível com filtros detalhados na página dedicada [ranking.html](ranking.html).
 - **⚡ Super Auditoria & Otimização de Performance 3D ([correr.html](correr.html))**:
-  - **Object Pooling Rigoroso (Zero Garbage Collection)**: Moedas, partículas e elementos dinâmicos são reciclados continuamente a partir de pools em memória (`coinPool`, `particlePool`), eliminando quedas de quadros (*GC spikes*).
-  - **Eliminação de Alocações por Frame**: Estruturas de Bounding Box (`_aabb`) e vetores auxiliares pré-alocados para cálculo de física e colisões instantâneas.
-  - **Painel de Métricas de Debug em Tempo Real**: Novo HUD ativável via tecla `D`, botão `⚡ FPS` no cabeçalho ou parâmetro `?debug=1`, exibindo **FPS** (Atual/Médio/Mínimo), **Draw Calls**, **Contagem de Triângulos**, **Geometrias/Texturas** e **Memória JS Heap**.
-  - **Timestep Travado (Clamp de Física)**: Limite de $\Delta t \le 33.3\text{ms}$ prevenindo quebras de colisão e *tunneling* em celulares fracos ou notebooks sem GPU dedicada.
+  - **Object Pooling Rigoroso (Zero Garbage Collection)**: Moedas, partículas e elementos dinâmicos reciclados continuamente.
+  - **Painel de Métricas de Debug em Tempo Real**: Ativável via tecla `D` ou botão `⚡ FPS`.
 - **📅 Placar Geral vs Placar Semanal Rotativo ([ranking.html](ranking.html) & [/api/score.js](api/score.js))**:
-  - **Classificação Rotativa por Semana ISO (`YYYY-Www`)**: Além do Placar Geral histórico, os jogadores agora disputam o **Top 1 Semanal**, renovado automaticamente a cada nova semana.
-  - **Seletor de Período**: Abas estilizadas no [ranking.html](ranking.html) para alternar instantaneamente entre *🌟 Geral (Todos os Tempos)* e *📅 Semanal (Top da Semana)* para Flappy Lula e Empresário 3D.
-- **🐦 Balanceamento & Física Arcade no Flappy Lula ([jogo.html](jogo.html))**:
-  - **Curva de Velocidade Gradual Suave**: Aceleração progressiva e humana ($1.0\text{x}$ a $3.0\text{x}$ suavemente dos $0$ aos $500$ pontos), atingindo teto máximo equilibrado em vez de saltos incontroláveis.
-  - **Geração de Canos Estilo Flappy Bird Clássico**: Espaçamento por distância mínima percorrida em pixels ($>240\text{px}$), eliminando 100% dos canos sobrepostos ou intransponíveis e garantindo variedade rica de alturas.
-- **🎖️ Medalhas de Honra & Selos Exclusivos no Ranking Nacional ([ranking.html](ranking.html) & [conquistas.html](conquistas.html))**:
-  - **Medalha Imbrochável (Clube Bolsonaro)**, **Picanha de Ouro Presidencial**, **Habeas Corpus Supremo STF**, **Código Quântico do Mindset 3X** e **Estocador de Vento Oficial**.
-  - **Equipar no Ranking**: Exibição da medalha e tag dourada ao lado do seu nome no topo do Ranking e no Game Over!
-- **🌐 SEO Avançado & Redirecionamento 301 Permanente**:
-  - Redirecionamento permanente (`HTTP 301`) de `lula-simulator.vercel.app` para `https://www.lulasimulator.com.br/`.
-  - `sitemap.xml`, `robots.txt` e favicon suite de alta resolução para Google Search.
+  - Classificação rotativa por Semana ISO (`YYYY-Www`) com medalhas de honra equipáveis.
 
 ---
 
