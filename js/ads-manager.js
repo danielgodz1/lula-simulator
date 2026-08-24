@@ -146,8 +146,8 @@ class AdsManagerService {
     iframe.title = `Ad ${slot.formatType}`;
     iframe.setAttribute('loading', 'lazy');
 
-    // ISOLAMENTO RIGOROSO TOTAL: Sem 'allow-same-origin', origem do frame é 'null' opaco
-    iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
+    // Permissões completas para o script de anúncios carregar sem bloqueio do navegador
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
 
     // Carrega o documento dedicado via src (com timestamp para cache-busting suave no auto-refresh)
     iframe.src = `/ad-frame.html?format=${slot.formatType}&v=${Date.now()}`;
