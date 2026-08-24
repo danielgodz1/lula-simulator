@@ -345,7 +345,10 @@ export async function sendFeedback(feedbackData) {
         name: { stringValue: (feedbackData.name || 'Anônimo').slice(0, 40) },
         stars: { integerValue: (feedbackData.stars || 5).toString() },
         comment: { stringValue: (feedbackData.comment || '').slice(0, 500) },
-        createdAt: { timestampValue: new Date().toISOString() }
+        country: { stringValue: (feedbackData.country || 'BR').slice(0, 5) },
+        countryName: { stringValue: (feedbackData.countryName || 'Brasil').slice(0, 40) },
+        flag: { stringValue: (feedbackData.flag || '🇧🇷').slice(0, 10) },
+        createdAt: { timestampValue: feedbackData.createdAt || new Date().toISOString() }
       }
     };
     const res = await fetch(url, {
@@ -361,7 +364,7 @@ export async function sendFeedback(feedbackData) {
 }
 
 // 4. OBTER AVALIAÇÕES COM CACHE RESILIENTE
-export async function getFeedbacks(limit = 20) {
+export async function getFeedbacks(limit = 30) {
   const cacheKey = 'lula_cache_feedbacks';
   const getCached = () => {
     try {
@@ -391,6 +394,9 @@ export async function getFeedbacks(limit = 20) {
           name: doc.fields?.name?.stringValue || 'Anônimo',
           stars: parseInt(doc.fields?.stars?.integerValue || '5', 10),
           comment: doc.fields?.comment?.stringValue || '',
+          country: doc.fields?.country?.stringValue || 'BR',
+          countryName: doc.fields?.countryName?.stringValue || 'Brasil',
+          flag: doc.fields?.flag?.stringValue || '🇧🇷',
           createdAt: doc.fields?.createdAt?.timestampValue || ''
         }));
         localStorage.setItem(cacheKey, JSON.stringify(list));

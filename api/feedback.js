@@ -10,6 +10,37 @@ function getClientIp(req) {
   return req.headers['x-real-ip'] || req.socket?.remoteAddress || '127.0.0.1';
 }
 
+function getCountryFlag(countryCode) {
+  if (!countryCode || countryCode.length !== 2) return '🇧🇷';
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split('')
+      .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  } catch (e) {
+    return '🇧🇷';
+  }
+}
+
+const COUNTRY_NAMES = {
+  BR: 'Brasil',
+  US: 'Estados Unidos',
+  PT: 'Portugal',
+  JP: 'Japão',
+  AR: 'Argentina',
+  DE: 'Alemanha',
+  FR: 'França',
+  GB: 'Reino Unido',
+  IT: 'Itália',
+  ES: 'Espanha',
+  CA: 'Canadá',
+  MX: 'México',
+  UY: 'Uruguai',
+  CL: 'Chile',
+  PY: 'Paraguai'
+};
+
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
 
@@ -25,7 +56,7 @@ export default async function handler(req, res) {
   };
 
   if (req.method === 'GET') {
-    const limit = Math.min(50, parseInt(req.query.limit || '25', 10));
+    const limit = Math.min(50, parseInt(req.query.limit || '30', 10));
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
       const fireRes = await fetch(url);
@@ -33,12 +64,18 @@ export default async function handler(req, res) {
       const data = await fireRes.json();
       if (data.documents && data.documents.length > 0) {
         const feedbacks = data.documents
-          .map(doc => ({
-            name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
-            stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
-            comment: sanitizeStr(doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '', 500),
-            createdAt: doc.fields?.createdAt?.timestampValue || ''
-          }))
+          .map(doc => {
+            const country = sanitizeStr(doc.fields?.country?.stringValue || 'BR', 5).toUpperCase();
+            return {
+              name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
+              stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
+              comment: sanitizeStr(doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '', 500),
+              createdAt: doc.fields?.createdAt?.timestampValue || '',
+              country: country,
+              countryName: sanitizeStr(doc.fields?.countryName?.stringValue || COUNTRY_NAMES[country] || 'Brasil', 40),
+              flag: sanitizeStr(doc.fields?.flag?.stringValue || getCountryFlag(country), 10)
+            };
+          })
           .filter(fb => fb.comment.length > 0);
         return res.status(200).json({ success: true, feedbacks });
       }
@@ -49,7 +86,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, stars, comment, message, _gotcha, botField } = req.body || {};
+    const { name, stars, comment, message, country, countryName, flag, _gotcha, botField } = req.body || {};
 
     // Honeypot anti-bot
     if (_gotcha || botField) {
@@ -63,6 +100,11 @@ export default async function handler(req, res) {
     if (!cleanComment || cleanComment.length < 2) {
       return res.status(400).json({ success: false, error: 'O comentário não pode ser vazio.' });
     }
+
+    const headerCountry = (req.headers['x-vercel-ip-country'] || '').toUpperCase();
+    const cleanCountry = sanitizeStr(country || headerCountry || 'BR', 5).toUpperCase();
+    const cleanFlag = sanitizeStr(flag || getCountryFlag(cleanCountry), 10);
+    const cleanCountryName = sanitizeStr(countryName || COUNTRY_NAMES[cleanCountry] || cleanCountry, 40);
 
     // Rate limiting por IP
     const ip = getClientIp(req);
@@ -87,6 +129,9 @@ export default async function handler(req, res) {
           name: { stringValue: cleanName },
           stars: { integerValue: numStars.toString() },
           comment: { stringValue: cleanComment },
+          country: { stringValue: cleanCountry },
+          countryName: { stringValue: cleanCountryName },
+          flag: { stringValue: cleanFlag },
           createdAt: { timestampValue: new Date().toISOString() }
         }
       };

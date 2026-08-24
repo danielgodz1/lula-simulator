@@ -118,6 +118,35 @@
       padding: 20px 24px;
       margin-bottom: 16px;
       backdrop-filter: blur(8px);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .feedback-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 223, 0, 0.25);
+    }
+
+    .fb-country-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .fb-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
     .status-badge {
@@ -225,6 +254,24 @@
       });
     });
 
+    function formatFeedbackDate(isoStr) {
+      if (!isoStr) return 'Recentemente';
+      try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return 'Recentemente';
+
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+
+        return `${day}/${month}/${year} às ${hours}:${mins}`;
+      } catch (e) {
+        return 'Recentemente';
+      }
+    }
+
     window.submitFB = async function() {
       const name = document.getElementById('fbName').value.trim() || 'Anônimo';
       const comment = document.getElementById('fbComment').value.trim();
@@ -246,7 +293,20 @@
       const alertBox = document.getElementById('statusAlert');
       alertBox.style.display = 'none';
 
-      const newFb = { name, stars: selectedStars, comment, createdAt: new Date().toISOString() };
+      const detectedCountry = localStorage.getItem('lula_detected_country') || 'BR';
+      const detectedFlag = localStorage.getItem('lula_detected_flag') || '🇧🇷';
+      const detectedCountryName = detectedCountry === 'BR' ? 'Brasil' : detectedCountry;
+
+      const newFb = {
+        name,
+        stars: selectedStars,
+        comment,
+        country: detectedCountry,
+        countryName: detectedCountryName,
+        flag: detectedFlag,
+        createdAt: new Date().toISOString()
+      };
+
       const result = await sendFeedback(newFb);
 
       if (result.success) {
@@ -288,8 +348,8 @@
 
       if (validItems.length === 0) {
         validItems.push(
-          { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!' },
-          { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!' }
+          { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!', flag: '🇧🇷', countryName: 'Brasil', createdAt: new Date().toISOString() },
+          { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!', flag: '🇧🇷', countryName: 'Brasil', createdAt: new Date().toISOString() }
         );
       }
 
@@ -301,13 +361,25 @@
         const rawComment = (f.comment || f.message || f.mensagem || '').trim();
         const safeComment = escapeHTML(rawComment);
         const safeStars = Math.max(1, Math.min(5, parseInt(f.stars || 5, 10)));
+        const safeFlag = f.flag || '🇧🇷';
+        const safeCountry = escapeHTML(f.countryName || f.country || 'Brasil');
+        const formattedDate = formatFeedbackDate(f.createdAt);
 
         card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
-            <div style="font-weight:700; color:var(--amarelo-brasil); font-size:15px;">👤 ${safeName}</div>
-            <div style="font-size:14px;">${'⭐'.repeat(safeStars)}</div>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <div style="font-weight:700; color:var(--amarelo-brasil); font-size:16px;">👤 ${safeName}</div>
+              <span class="fb-country-badge" title="${safeCountry}">
+                <span>${safeFlag}</span>
+                <span>${safeCountry}</span>
+              </span>
+            </div>
+            <div style="font-size:15px; letter-spacing:1px;">${'⭐'.repeat(safeStars)}</div>
           </div>
-          <p style="color:var(--text-main); font-size:14.5px; line-height:1.5; font-style:italic;">"${safeComment}"</p>
+          <p style="color:var(--text-main); font-size:15px; line-height:1.55; font-style:italic; margin-bottom:12px; background:rgba(0,0,0,0.25); padding:10px 14px; border-radius:10px;">"${safeComment}"</p>
+          <div style="display:flex; justify-content:flex-end; align-items:center;">
+            <span class="fb-date">📅 ${formattedDate}</span>
+          </div>
         `;
         container.appendChild(card);
       });
