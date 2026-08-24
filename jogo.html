@@ -2224,19 +2224,6 @@
         ctx.restore();
       }
 
-      // Efeito de Aura da Skin Cosmética
-      if (auraGlow) {
-        ctx.save();
-        ctx.strokeStyle = auraGlow;
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = auraGlow;
-        ctx.shadowBlur = 14;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, charWidth * 0.52, charHeight * 0.75, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
       // Efeito de Escudo do Moraes
       if (gameState.hasShield && gameState.shieldCharges > 0) {
         ctx.save();
@@ -2268,12 +2255,19 @@
       const flySprite = characterFlySprites[activeCharacter.id];
       const baseSprite = characterSprites[activeCharacter.id];
 
-      if (skinSprite && skinSprite.complete && skinSprite.naturalWidth > 0) {
-        ctx.drawImage(skinSprite, -charWidth * 0.52, -charHeight * 0.5, charWidth, charHeight);
-      } else if (flySprite && flySprite.complete && flySprite.naturalWidth > 0) {
-        ctx.drawImage(flySprite, -charWidth * 0.52, -charHeight * 0.5, charWidth, charHeight);
-      } else if (baseSprite && baseSprite.complete && baseSprite.naturalWidth > 0) {
-        ctx.drawImage(baseSprite, -charWidth * 0.5, -charHeight * 0.5, charWidth, charHeight);
+      const spriteToDraw = (skinSprite && skinSprite.complete && skinSprite.naturalWidth > 0)
+        ? skinSprite
+        : (flySprite && flySprite.complete && flySprite.naturalWidth > 0)
+          ? flySprite
+          : (baseSprite && baseSprite.complete && baseSprite.naturalWidth > 0)
+            ? baseSprite
+            : null;
+
+      if (spriteToDraw) {
+        const aspect = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
+        const targetH = charHeight;
+        const targetW = targetH * aspect;
+        ctx.drawImage(spriteToDraw, -targetW * 0.5, -targetH * 0.5, targetW, targetH);
       } else {
         ctx.font = `${charHeight}px serif`;
         ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
