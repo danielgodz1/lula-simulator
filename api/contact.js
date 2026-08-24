@@ -1,5 +1,9 @@
-// api/contact.js — Vercel Serverless Function para envio seguro, confidencial e anti-spam de e-mails
+// api/contact.js — Vercel Serverless Function com Resend Email e Firestore
+import { Resend } from 'resend';
+import admin, { db } from './_firebaseAdmin.js';
 import { applyCors } from './_cors.js';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Memória local para rate limit básico de contato (máx 5 envios em 10 min por IP)
 const contactRateLimits = new Map();
@@ -49,33 +53,65 @@ export default async function handler(req, res) {
     }
   }
 
+  // 1. Salva no Firestore
   try {
-    const recipient = 'daniel.jaupavi1@gmail.com';
-    const formSubmitUrl = `https://formsubmit.co/ajax/${recipient}`;
-
-    const response = await fetch(formSubmitUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        _subject: `[Lula Simulator] Novo Contato: ${cleanSubject || 'Sem Assunto'} (${cleanName})`,
-        _replyto: cleanEmail || 'sem-email@lulasimulator.com.br',
-        Nome: cleanName,
-        Email: cleanEmail || 'Não informado',
-        Assunto: cleanSubject || 'Sem Assunto',
-        Mensagem: cleanMessage,
-        _template: 'table'
-      })
+    await db.collection('lula_contact_messages').add({
+      name: cleanName,
+      email: cleanEmail,
+      subject: cleanSubject,
+      message: cleanMessage,
+      ip,
+      userAgent: req.headers['user-agent'] || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
-
-    if (response.ok) {
-      return res.status(200).json({ success: true, message: 'E-mail enviado com sucesso!' });
-    } else {
-      return res.status(200).json({ success: true, message: 'Mensagem recebida com sucesso!' });
-    }
-  } catch (err) {
-    return res.status(200).json({ success: true, message: 'Mensagem gravada!' });
+  } catch (dbErr) {
+    console.warn('⚠️ Aviso ao gravar contato no Firestore:', dbErr);
   }
+
+  // 2. Envia e-mail via Resend
+  if (resend) {
+    try {
+      await resend.emails.send({
+        from: 'onboarding@resend.dev',
+        to: 'daniel.jaupavi1@gmail.com',
+        reply_to: cleanEmail || undefined,
+        subject: `Novo contato: ${cleanSubject || cleanName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="color: #009c3b; margin: 0; font-size: 22px;">📬 Nova Mensagem de Contato</h2>
+              <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Lula Simulator Oficial</p>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;">
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px 12px; font-weight: bold; width: 110px; color: #475569; border-bottom: 1px solid #e2e8f0;">Nome:</td>
+                <td style="padding: 10px 12px; color: #0f172a; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${cleanName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">E-mail:</td>
+                <td style="padding: 10px 12px; border-bottom: 1px solid #e2e8f0;"><a href="mailto:${cleanEmail}" style="color: #0284c7; text-decoration: none;">${cleanEmail || 'Não informado'}</a></td>
+              </tr>
+              <tr style="background: #f8fafc;">
+                <td style="padding: 10px 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;">Assunto:</td>
+                <td style="padding: 10px 12px; color: #0f172a; border-bottom: 1px solid #e2e8f0;">${cleanSubject || 'Sem Assunto'}</td>
+              </tr>
+            </table>
+            <div style="background: #f1f5f9; padding: 16px; border-radius: 8px; border-left: 4px solid #009c3b; margin: 18px 0;">
+              <div style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Mensagem:</div>
+              <p style="white-space: pre-wrap; margin: 0; color: #1e293b; font-size: 14px;">${cleanMessage}</p>
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 20px; text-align: center;">
+              Enviado automaticamente pelo formulário de contato do <a href="https://www.lulasimulator.com.br" style="color: #009c3b;">Lula Simulator</a> em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}.
+            </div>
+          </div>
+        `
+      });
+    } catch (err) {
+      console.error('❌ Erro no envio de e-mail via Resend (/api/contact):', err);
+    }
+  } else {
+    console.warn('⚠️ RESEND_API_KEY não encontrada nas variáveis de ambiente.');
+  }
+
+  return res.status(200).json({ success: true, message: 'Mensagem enviada com sucesso!' });
 }

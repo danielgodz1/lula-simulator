@@ -1,5 +1,8 @@
 // api/feedback.js — Vercel Serverless Function com sanitização total contra Script Injection (XSS), CORS restrito e Proteção Anti-Spam
+import { Resend } from 'resend';
 import { applyCors } from './_cors.js';
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Memória local para rate limit básico de feedback (máx 6 envios em 10 min por IP)
 const feedbackRateLimits = new Map();
@@ -141,6 +144,26 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
+      if (resend) {
+        try {
+          resend.emails.send({
+            from: 'onboarding@resend.dev',
+            to: 'daniel.jaupavi1@gmail.com',
+            subject: `Nova Avaliação ⭐ ${numStars}/5 — ${cleanName}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+                <h3 style="color: #009c3b; margin-top: 0;">⭐ Nova Avaliação no Lula Simulator</h3>
+                <p><strong>Jogador:</strong> ${cleanName} (${cleanFlag} ${cleanCountryName})</p>
+                <p><strong>Nota:</strong> ${'⭐'.repeat(numStars)} (${numStars}/5)</p>
+                <div style="background: #f8fafc; padding: 12px; border-left: 4px solid #ffdf00; border-radius: 6px;">
+                  <p style="margin: 0; font-style: italic;">"${cleanComment}"</p>
+                </div>
+              </div>
+            `
+          }).catch(err => console.error('Erro Resend Feedback:', err));
+        } catch(e) {}
+      }
 
       if (fireRes.ok) {
         return res.status(200).json({ success: true, message: 'Avaliação enviada com sucesso!' });
