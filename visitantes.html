@@ -305,6 +305,9 @@
       align-items: center;
       gap: 12px;
       transition: all 0.2s ease;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
     }
 
     .country-row-card:hover {
@@ -313,142 +316,240 @@
       transform: translateX(3px);
     }
 
+    .country-row-card.selected-country {
+      background: rgba(0, 230, 118, 0.14) !important;
+      border-color: var(--verde-neon) !important;
+      box-shadow: 0 0 20px rgba(0, 230, 118, 0.3) !important;
+      transform: translateX(4px);
+    }
+
     .country-row-card.top-leader {
       background: rgba(0, 156, 59, 0.12);
       border-color: rgba(0, 230, 118, 0.35);
     }
 
-    .country-rank-col {
+    .country-row-card.top-leader.selected-country {
+      border-color: var(--amarelo-brasil) !important;
+      background: rgba(255, 223, 0, 0.18) !important;
+      box-shadow: 0 0 20px rgba(255, 223, 0, 0.35) !important;
+    }
+
+    .ranking-click-hint {
+      font-size: 11.5px;
+      color: var(--amarelo-brasil);
+      background: rgba(255, 223, 0, 0.08);
+      border: 1px dashed rgba(255, 223, 0, 0.25);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 14px;
       display: flex;
-      justify-content: center;
       align-items: center;
-    }
-
-    .rank-pos {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--text-muted);
-    }
-
-    .rank-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 900;
-      padding: 3px 8px;
-      border-radius: 8px;
-      white-space: nowrap;
-    }
-
-    .rank-badge.gold {
-      background: linear-gradient(135deg, #ffd700, #ffae00);
-      color: #000;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-    }
-
-    .rank-badge.silver {
-      background: linear-gradient(135deg, #e2e8f0, #94a3b8);
-      color: #000;
-    }
-
-    .rank-badge.bronze {
-      background: linear-gradient(135deg, #f97316, #c2410c);
-      color: #fff;
-    }
-
-    .country-flag-col {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .country-flag {
-      font-size: 28px;
-      line-height: 1;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-    }
-
-    .country-info-col {
-      display: flex;
-      flex-direction: column;
       gap: 6px;
-      min-width: 0;
-    }
-
-    .country-name-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .country-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #ffffff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .country-code-pill {
-      font-size: 10px;
-      font-weight: 800;
-      background: rgba(255, 255, 255, 0.1);
-      color: var(--text-muted);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .country-progress-wrapper {
-      width: 100%;
-      height: 7px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .country-progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--verde-neon), var(--amarelo-brasil));
-      border-radius: 999px;
-      transition: width 0.8s ease-out;
-      box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
-    }
-
-    .country-stats-col {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 2px;
-    }
-
-    .country-count {
-      font-size: 15px;
-      font-weight: 800;
-      color: #fff;
-    }
-
-    .country-count small {
-      font-size: 11px;
-      color: var(--text-muted);
       font-weight: 600;
     }
 
-    .country-percent {
-      font-size: 12px;
-      font-weight: 700;
+    .filter-active-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--verde-neon);
+      color: #000;
+      padding: 1px 6px;
+      border-radius: 999px;
+      margin-left: 6px;
+      text-transform: uppercase;
+    }
+
+    /* FILTROS DO RADAR DE ACESSOS */
+    .radar-filters-wrapper {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .active-filter-banner {
+      background: linear-gradient(90deg, rgba(0, 230, 118, 0.16), rgba(255, 223, 0, 0.12));
+      border: 1.5px solid var(--verde-neon);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      color: #fff;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .active-filter-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+
+    .active-filter-content strong {
       color: var(--amarelo-brasil);
+    }
+
+    .btn-clear-filter {
+      background: rgba(255, 68, 68, 0.2);
+      border: 1px solid #ff4d4d;
+      color: #ff8080;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .btn-clear-filter:hover {
+      background: #ff4d4d;
+      color: #fff;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .filter-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-pill {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .filter-pill:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      border-color: rgba(255, 223, 0, 0.4);
+    }
+
+    .filter-pill.active {
+      background: var(--amarelo-brasil);
+      color: #080914;
+      border-color: var(--amarelo-brasil);
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(255, 223, 0, 0.4);
+    }
+
+    .filter-pill.active-neon {
+      background: var(--verde-neon);
+      color: #080914;
+      border-color: var(--verde-neon);
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(0, 230, 118, 0.4);
+    }
+
+    .custom-date-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .custom-date-input-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .custom-date-input-group input {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      padding: 5px 8px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+      color-scheme: dark;
+    }
+
+    .custom-date-input-group input:focus {
+      border-color: var(--amarelo-brasil);
+    }
+
+    .count-pill {
+      font-size: 11.5px;
+      font-weight: 800;
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--verde-neon);
+      border: 1px solid var(--verde-neon);
+      padding: 3px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* FEED DE CONEXÕES AO VIVO */
     .feed-container {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      max-height: 520px;
+      gap: 10px;
+      max-height: 560px;
       overflow-y: auto;
       padding-right: 4px;
+    }
+
+    .feed-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .feed-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 4px;
     }
 
     .feed-item {
@@ -459,7 +560,13 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      animation: fadeIn 0.4s ease-in-out;
+      animation: fadeIn 0.3s ease-in-out;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .feed-item:hover {
+      background: rgba(20, 26, 42, 0.85);
+      border-color: rgba(255, 223, 0, 0.25);
     }
 
     @keyframes fadeIn {
@@ -485,8 +592,9 @@
     .feed-details {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
       min-width: 0;
+      flex: 1;
     }
 
     .feed-location {
@@ -502,9 +610,62 @@
       color: var(--amarelo-brasil);
     }
 
+    .feed-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .feed-time {
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-muted);
+    }
+
+    .feed-badge-day {
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-transform: capitalize;
+    }
+
+    .feed-badge-day.weekend {
+      background: rgba(255, 223, 0, 0.14);
+      color: var(--amarelo-brasil);
+      border: 1px solid rgba(255, 223, 0, 0.25);
+    }
+
+    .feed-badge-exact {
+      font-size: 10.5px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    .btn-load-more {
+      width: 100%;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      color: var(--text-muted);
+      padding: 11px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-load-more:hover {
+      background: rgba(255, 223, 0, 0.12);
+      border-color: var(--amarelo-brasil);
+      color: var(--amarelo-brasil);
     }
 
     /* CONTROLES DE ATUALIZAÇÃO */
@@ -555,7 +716,7 @@
 
     .empty-state {
       text-align: center;
-      padding: 40px 20px;
+      padding: 30px 16px;
       color: var(--text-muted);
     }
 
@@ -602,6 +763,10 @@
         flex-direction: column;
         text-align: center;
         gap: 10px;
+      }
+      .custom-date-row {
+        flex-direction: column;
+        align-items: stretch;
       }
     }
   </style>
@@ -703,6 +868,10 @@
           </div>
         </div>
 
+        <div class="ranking-click-hint">
+          <span>💡</span> <span>Clique em qualquer país para filtrar o radar de acessos ao lado!</span>
+        </div>
+
         <div class="countries-list" id="countriesRankingList">
           <div class="empty-state">
             <p>Carregando mapa de nações... 🇧🇷</p>
@@ -716,6 +885,65 @@
           <div class="panel-title">
             <span>⚡ Radar de Acessos</span>
           </div>
+          <span class="count-pill" id="filteredCountBadge">0 conexões</span>
+        </div>
+
+        <!-- BANNER DE FILTRO ATIVO -->
+        <div id="activeFilterBanner" class="active-filter-banner" style="display: none; margin-bottom: 12px;">
+          <div class="active-filter-content">
+            <span id="activeFilterText">Filtrando por 🇧🇷 Brasil</span>
+          </div>
+          <button type="button" class="btn-clear-filter" id="btnClearAllFilters">✕ Limpar</button>
+        </div>
+
+        <!-- CONTROLES AVANÇADOS DE FILTRO -->
+        <div class="radar-filters-wrapper">
+          <!-- Busca por Cidade / Localidade -->
+          <div class="search-box" style="max-width: 100%;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="radarSearchInput" placeholder="Buscar cidade, estado ou país no histórico..." autocomplete="off">
+          </div>
+
+          <!-- Filtro por Período / Data -->
+          <div class="filter-group">
+            <div class="filter-label"><span>📅</span> Período / Data</div>
+            <div class="filter-pills-row" id="periodFilterPills">
+              <button type="button" class="filter-pill active" data-period="all">Todos</button>
+              <button type="button" class="filter-pill" data-period="today">Hoje</button>
+              <button type="button" class="filter-pill" data-period="yesterday">Ontem</button>
+              <button type="button" class="filter-pill" data-period="7d">Últimos 7 dias</button>
+              <button type="button" class="filter-pill" data-period="30d">Últimos 30 dias</button>
+              <button type="button" class="filter-pill" data-period="custom">Personalizado 🗓️</button>
+            </div>
+            <div class="custom-date-row" id="customDateRow" style="display: none;">
+              <div class="custom-date-input-group">
+                <label for="filterDateFrom">De:</label>
+                <input type="date" id="filterDateFrom">
+              </div>
+              <div class="custom-date-input-group">
+                <label for="filterDateTo">Até:</label>
+                <input type="date" id="filterDateTo">
+              </div>
+              <button type="button" class="filter-pill active-neon" id="btnApplyCustomDate" style="padding: 5px 12px; font-size: 11.5px;">Aplicar</button>
+            </div>
+          </div>
+
+          <!-- Filtro por Dia da Semana -->
+          <div class="filter-group">
+            <div class="filter-label"><span>🗓️</span> Dia da Semana</div>
+            <div class="filter-pills-row" id="weekdayFilterPills">
+              <button type="button" class="filter-pill active" data-weekday="all">Todos</button>
+              <button type="button" class="filter-pill" data-weekday="weekdays">Dias Úteis</button>
+              <button type="button" class="filter-pill" data-weekday="weekend">Fim de Semana</button>
+              <button type="button" class="filter-pill" data-weekday="1">Seg</button>
+              <button type="button" class="filter-pill" data-weekday="2">Ter</button>
+              <button type="button" class="filter-pill" data-weekday="3">Qua</button>
+              <button type="button" class="filter-pill" data-weekday="4">Qui</button>
+              <button type="button" class="filter-pill" data-weekday="5">Sex</button>
+              <button type="button" class="filter-pill" data-weekday="6">Sáb</button>
+              <button type="button" class="filter-pill" data-weekday="0">Dom</button>
+            </div>
+          </div>
         </div>
 
         <div class="feed-container" id="recentVisitsList">
@@ -723,6 +951,10 @@
             <p>Sintonizando conexões... 📡</p>
           </div>
         </div>
+
+        <button type="button" id="btnLoadMoreVisits" class="btn-load-more" style="display: none;">
+          <span>Exibir Mais Conexões</span> <span>⬇️</span>
+        </button>
       </div>
 
     </div>

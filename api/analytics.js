@@ -153,7 +153,7 @@ export default async function handler(req, res) {
         totalCountries: countriesList.length,
         topCountry: countriesList[0] || { code: 'BR', name: 'Brasil', flag: '🇧🇷', count: totalVisits, percentage: 100 },
         countries: countriesList,
-        recentVisits: (analyticsData.recentVisits || []).slice(0, 15),
+        recentVisits: (analyticsData.recentVisits || []).slice(0, 200),
         updatedAt: analyticsData.updatedAt || new Date().toISOString()
       });
     } catch (e) {
@@ -283,7 +283,7 @@ export default async function handler(req, res) {
             const countries = data.countries || {};
             countries[countryCode] = (countries[countryCode] || 0) + 1;
 
-            const recentVisits = [visitRecord, ...(data.recentVisits || [])].slice(0, 20);
+            const recentVisits = [visitRecord, ...(data.recentVisits || [])].slice(0, 200);
 
             await docRef.set({
               totalVisits: currentTotal,
@@ -352,7 +352,7 @@ export default async function handler(req, res) {
 
         currentTotal += 1;
         countriesMap[countryCode] = (countriesMap[countryCode] || 0) + 1;
-        recentVisits = [visitRecord, ...recentVisits].slice(0, 20);
+        recentVisits = [visitRecord, ...recentVisits].slice(0, 200);
 
         // Constrói payload REST
         const countryFields = {};
