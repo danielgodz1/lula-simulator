@@ -415,6 +415,8 @@ class AuthManager {
     const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
     const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
     const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
+    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
+    const localAvatar = this.currentUser?.avatar || '';
     // Extrai personagens desbloqueados garantindo preservação retrocompatível
     const localUnlockedSet = new Set(['lula']);
     if (localDilma >= 200) localUnlockedSet.add('marcal');
