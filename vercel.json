@@ -1,3 +1,16 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "lula-simulator.vercel.app"
+        }
+      ],
+      "destination": "https://www.lulasimulator.com.br/:path*",
+      "permanent": true
+    }
+  ]
 }

@@ -25,19 +25,21 @@ export default async function handler(req, res) {
   };
 
   if (req.method === 'GET') {
-    const limit = Math.min(50, parseInt(req.query.limit || '20', 10));
+    const limit = Math.min(50, parseInt(req.query.limit || '25', 10));
     try {
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
       const fireRes = await fetch(url);
       if (!fireRes.ok) throw new Error('Firestore response error');
       const data = await fireRes.json();
       if (data.documents && data.documents.length > 0) {
-        const feedbacks = data.documents.map(doc => ({
-          name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
-          stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
-          comment: sanitizeStr(doc.fields?.comment?.stringValue || '', 500),
-          createdAt: doc.fields?.createdAt?.timestampValue || ''
-        }));
+        const feedbacks = data.documents
+          .map(doc => ({
+            name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
+            stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
+            comment: sanitizeStr(doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '', 500),
+            createdAt: doc.fields?.createdAt?.timestampValue || ''
+          }))
+          .filter(fb => fb.comment.length > 0);
         return res.status(200).json({ success: true, feedbacks });
       }
       return res.status(200).json({ success: true, feedbacks: [] });
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { name, stars, comment, _gotcha, botField } = req.body || {};
+    const { name, stars, comment, message, _gotcha, botField } = req.body || {};
 
     // Honeypot anti-bot
     if (_gotcha || botField) {
@@ -55,10 +57,10 @@ export default async function handler(req, res) {
     }
 
     const cleanName = sanitizeStr(name, 40) || 'Anônimo';
-    const cleanComment = sanitizeStr(comment, 500);
+    const cleanComment = sanitizeStr(comment || message, 500);
     const numStars = Math.max(1, Math.min(5, parseInt(stars || 5, 10)));
 
-    if (!cleanComment) {
+    if (!cleanComment || cleanComment.length < 2) {
       return res.status(400).json({ success: false, error: 'O comentário não pode ser vazio.' });
     }
 

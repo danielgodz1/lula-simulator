@@ -230,12 +230,18 @@
       const comment = document.getElementById('fbComment').value.trim();
 
       if (selectedStars === 0) {
-        alert('Por favor selecione pelo menos 1 estrela!');
+        alert('Por favor, selecione pelo menos 1 estrela!');
+        return;
+      }
+
+      if (!comment || comment.length < 2) {
+        alert('Por favor, escreva sua avaliação no campo de comentário antes de enviar!');
+        document.getElementById('fbComment').focus();
         return;
       }
 
       const btn = document.getElementById('btnSubmit');
-      btn.disabled = true; btn.textContent = 'Enviando...';
+      btn.disabled = true; btn.textContent = 'Gravando no Firestore...';
 
       const alertBox = document.getElementById('statusAlert');
       alertBox.style.display = 'none';
@@ -244,12 +250,12 @@
       const result = await sendFeedback(newFb);
 
       if (result.success) {
-        alertBox.textContent = `✅ Avaliação gravada com segurança no banco de dados!`;
+        alertBox.textContent = `✅ Avaliação gravada com sucesso no banco de dados!`;
         alertBox.style.display = 'inline-block';
         alertBox.style.borderColor = 'rgba(0,196,74,0.4)';
         alertBox.style.color = 'var(--verde-neon)';
       } else {
-        alertBox.textContent = `⚠️ Salvo no modo backup local (${result.error || 'Firestore regras'})`;
+        alertBox.textContent = `⚠️ Salvo no modo local (${result.error || 'Erro'})`;
         alertBox.style.display = 'inline-block';
         alertBox.style.borderColor = 'rgba(255,152,0,0.4)';
         alertBox.style.color = '#ff9800';
@@ -268,33 +274,40 @@
 
     async function loadFeedbacksList() {
       const container = document.getElementById('feedbacksList');
-      let items = await getFeedbacks(25);
+      let items = await getFeedbacks(30);
 
-      if (items.length === 0) {
+      if (!items || items.length === 0) {
         items = JSON.parse(localStorage.getItem('lula_feedbacks_local') || '[]');
       }
 
-      if (items.length === 0) {
-        items = [
+      // Filtra estritamente avaliações com comentários válidos (nunca renderiza "")
+      const validItems = (items || []).filter(f => {
+        const text = (f.comment || f.message || f.mensagem || '').trim();
+        return text.length > 0;
+      });
+
+      if (validItems.length === 0) {
+        validItems.push(
           { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!' },
           { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!' }
-        ];
+        );
       }
 
       container.innerHTML = '';
-      items.forEach(f => {
+      validItems.forEach(f => {
         const card = document.createElement('div');
         card.className = 'feedback-card';
         const safeName = escapeHTML(f.name || 'Anônimo');
-        const safeComment = escapeHTML(f.comment || '');
+        const rawComment = (f.comment || f.message || f.mensagem || '').trim();
+        const safeComment = escapeHTML(rawComment);
         const safeStars = Math.max(1, Math.min(5, parseInt(f.stars || 5, 10)));
 
         card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-            <div style="font-weight:700;">👤 ${safeName}</div>
-            <div>${'⭐'.repeat(safeStars)}</div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center;">
+            <div style="font-weight:700; color:var(--amarelo-brasil); font-size:15px;">👤 ${safeName}</div>
+            <div style="font-size:14px;">${'⭐'.repeat(safeStars)}</div>
           </div>
-          <p style="color:var(--text-main); font-size:14px; font-style:italic;">"${safeComment}"</p>
+          <p style="color:var(--text-main); font-size:14.5px; line-height:1.5; font-style:italic;">"${safeComment}"</p>
         `;
         container.appendChild(card);
       });
