@@ -431,31 +431,33 @@ export default async function handler(req, res) {
         await RateLimiter.clearRateLimit(rateLimitKey);
 
         // Migração automática e transparente para Bcrypt
-        if (needsMigration || cleanupUserDataFields || !credSnap.exists || !effectiveHash.startsWith('$2')) {
+        if (needsMigration || cleanupUserDataFields || !credExists || !effectiveHash.startsWith('$2')) {
           try {
             const newBcryptHash = await bcrypt.hash(cleanPass, 10);
-            const batch = db.batch();
+            if (hasAdminCredentials && userRef && credRef) {
+              const batch = db.batch();
 
-            batch.set(credRef, {
-              passwordHash: newBcryptHash,
-              passwordSalt: admin.firestore.FieldValue.delete(),
-              hasPassword: true,
-              authType: 'bcrypt',
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-
-            if (cleanupUserDataFields) {
-              batch.update(userRef, {
-                password: admin.firestore.FieldValue.delete(),
-                passwordHash: admin.firestore.FieldValue.delete(),
+              batch.set(credRef, {
+                passwordHash: newBcryptHash,
                 passwordSalt: admin.firestore.FieldValue.delete(),
                 hasPassword: true,
+                authType: 'bcrypt',
                 updatedAt: admin.firestore.FieldValue.serverTimestamp()
-              });
-            }
+              }, { merge: true });
 
-            await batch.commit();
-            console.log(`🔒 Conta "${cleanName}" migrada automaticamente para Bcrypt e dados confidenciais limpos.`);
+              if (cleanupUserDataFields) {
+                batch.update(userRef, {
+                  password: admin.firestore.FieldValue.delete(),
+                  passwordHash: admin.firestore.FieldValue.delete(),
+                  passwordSalt: admin.firestore.FieldValue.delete(),
+                  hasPassword: true,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+              }
+
+              await batch.commit();
+              console.log(`🔒 Conta "${cleanName}" migrada automaticamente para Bcrypt e dados confidenciais limpos.`);
+            }
           } catch (migErr) {
             console.error('⚠️ Falha não-bloqueante na migração Bcrypt:', migErr);
           }
