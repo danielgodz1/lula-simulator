@@ -348,6 +348,158 @@
       font-weight: 600;
     }
 
+    .country-rank-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .rank-pos {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .rank-badge.gold {
+      background: linear-gradient(135deg, #ffd700, #ffae00);
+      color: #000;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
+    .rank-badge.silver {
+      background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+      color: #000;
+    }
+
+    .rank-badge.bronze {
+      background: linear-gradient(135deg, #f97316, #c2410c);
+      color: #fff;
+    }
+
+    .country-flag-col {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 36px;
+    }
+
+    .country-flag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      font-size: 24px;
+    }
+
+    .country-flag-img {
+      width: 28px;
+      height: 20px;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+      vertical-align: middle;
+      display: inline-block;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: transform 0.2s;
+    }
+
+    .country-flag-img.large {
+      width: 56px;
+      height: 40px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      border: 1.5px solid rgba(255, 223, 0, 0.4);
+    }
+
+    .country-flag-img.small {
+      width: 22px;
+      height: 15px;
+      border-radius: 3px;
+    }
+
+    .country-info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .country-name-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .country-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .country-code-pill {
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .country-progress-wrapper {
+      width: 100%;
+      height: 7px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .country-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--verde-neon), var(--amarelo-brasil));
+      border-radius: 999px;
+      transition: width 0.8s ease-out;
+      box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+    }
+
+    .country-stats-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .country-count {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .country-count small {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .country-percent {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--amarelo-brasil);
+    }
+
     .filter-active-pill {
       display: inline-flex;
       align-items: center;

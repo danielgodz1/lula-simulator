@@ -56,6 +56,27 @@
     btnLoadMoreVisits: document.getElementById('btnLoadMoreVisits')
   };
 
+  // Converte código de país em bandeira gráfica HD (compatível com todos os navegadores e Windows)
+  function renderFlag(countryCode, fallbackEmoji = '', size = 'normal') {
+    const code = (countryCode || 'BR').toLowerCase().trim();
+    if (/^[a-z]{2}$/.test(code)) {
+      const isLarge = size === 'large';
+      const isSmall = size === 'small';
+      const sizeClass = isLarge ? 'large' : (isSmall ? 'small' : '');
+      const width = isLarge ? 56 : (isSmall ? 22 : 28);
+      const height = isLarge ? 40 : (isSmall ? 15 : 20);
+
+      return `<img src="https://flagcdn.com/w80/${code}.png" 
+                   alt="${code.toUpperCase()}" 
+                   class="country-flag-img ${sizeClass}" 
+                   width="${width}" 
+                   height="${height}"
+                   loading="lazy" 
+                   onerror="this.onerror=null; this.replaceWith('${fallbackEmoji || '🌐'}');">`;
+    }
+    return `<span class="flag-emoji">${fallbackEmoji || '🌐'}</span>`;
+  }
+
   // Animação de contagem numérica
   function animateValue(obj, start, end, duration) {
     if (!obj) return;
@@ -169,7 +190,7 @@
   function renderDashboard(data) {
     const total = data.totalVisits || 1;
     const countries = data.countries || [];
-    const top = data.topCountry || (countries.length > 0 ? countries[0] : { name: 'Brasil', flag: '🇧🇷', percentage: 100, count: total });
+    const top = data.topCountry || (countries.length > 0 ? countries[0] : { code: 'BR', name: 'Brasil', flag: '🇧🇷', percentage: 100, count: total });
 
     // 1. Métricas Principais
     if (elements.totalVisits) {
@@ -186,7 +207,7 @@
       elements.topCountryName.textContent = top.name || 'Brasil';
     }
     if (elements.topCountryFlag) {
-      elements.topCountryFlag.textContent = top.flag || '🇧🇷';
+      elements.topCountryFlag.innerHTML = renderFlag(top.code, top.flag, 'small');
     }
     if (elements.topCountryPercent) {
       elements.topCountryPercent.textContent = `${top.percentage || 100}% dos acessos`;
@@ -195,7 +216,7 @@
     // 2. Banner de destaque do país líder
     if (elements.topCountryCard) {
       elements.topCountryCard.innerHTML = `
-        <div class="top-banner-icon">${top.flag || '🇧🇷'}</div>
+        <div class="top-banner-icon">${renderFlag(top.code, top.flag, 'large')}</div>
         <div class="top-banner-info">
           <h3>${top.name || 'Brasil'} lidera a comunidade!</h3>
           <p>Com <strong>${(top.count || 1).toLocaleString('pt-BR')} conexões</strong> (${top.percentage || 100}% de todo o tráfego), o patriotismo domina o Lula Simulator!</p>
@@ -253,7 +274,7 @@
             ${rankBadge}
           </div>
           <div class="country-flag-col">
-            <span class="country-flag">${country.flag}</span>
+            <span class="country-flag">${renderFlag(country.code, country.flag)}</span>
           </div>
           <div class="country-info-col">
             <div class="country-name-header">
@@ -429,7 +450,7 @@
       html += `
         <div class="feed-item">
           <div class="feed-pulse-indicator"></div>
-          <div class="feed-flag">${visit.flag || '🇧🇷'}</div>
+          <div class="feed-flag">${renderFlag(visit.country, visit.flag)}</div>
           <div class="feed-details">
             <div class="feed-location">
               ${visit.city || 'Desconhecida'}, <strong>${visit.countryName || 'Brasil'}</strong>
@@ -465,7 +486,7 @@
     const parts = [];
 
     if (filterState.selectedCountryCode) {
-      parts.push(`País: <strong>${filterState.selectedCountryFlag || ''} ${filterState.selectedCountryName || filterState.selectedCountryCode}</strong>`);
+      parts.push(`País: ${renderFlag(filterState.selectedCountryCode, filterState.selectedCountryFlag, 'small')} <strong>${filterState.selectedCountryName || filterState.selectedCountryCode}</strong>`);
     }
 
     if (filterState.period !== 'all') {
