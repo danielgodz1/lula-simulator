@@ -1467,18 +1467,18 @@
       });
     }
 
-    // CURVA DE VELOCIDADE GRADUAL E CALIBRADA
-    // 0 a 500 pts: 1.0x -> 3.0x linear suave (conforme solicitado)
-    // 500 a 1500 pts: 3.0x -> 4.5x linear
-    // Acima de 1500 pts: fixa em 4.5x
+    // CURVA DE DIFICULDADE & VELOCIDADE PROGRESSIVA:
+    // 0 a 1000 pts: 1.0x -> 3.0x linear suave (atinge 3.0x próximo a 1000 pontos)
+    // 1000 a 5000 pts: 3.0x -> 5.0x linear (escala progressivamente até 5.0x nos 5000 pontos)
+    // Acima de 5000 pts: 5.0x constante
     function getBaseScoreSpeedMultiplier(currentScore) {
       if (currentScore <= 0) return 1.0;
-      if (currentScore <= 500) {
-        return 1.0 + (currentScore / 500) * 2.0;
-      } else if (currentScore <= 1500) {
-        return 3.0 + ((currentScore - 500) / 1000) * 1.5;
+      if (currentScore <= 1000) {
+        return 1.0 + (currentScore / 1000) * 2.0;
+      } else if (currentScore <= 5000) {
+        return 3.0 + ((currentScore - 1000) / 4000) * 2.0;
       } else {
-        return 4.5;
+        return 5.0;
       }
     }
 
@@ -1547,7 +1547,7 @@
         nikolasTripleTimer -= dt;
       }
 
-      // Velocidade calculada com base na curva gradual 1.0x -> 3.0x aos 500 pts
+      // Velocidade calculada com base na curva gradual 1.0x -> 3.0x aos 1000 pts e 5.0x aos 5000 pts
       const speedMult = getEffectiveSpeedMultiplier();
       const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
 
@@ -1587,9 +1587,14 @@
             showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA!', false);
           }
 
-          // AVISO AO ATINGIR 500 PONTOS (3.0x VELOCIDADE)
-          if (score >= 500 && (score - pointsEarned) < 500) {
-            showBannerAlert('⚡ 500 PONTOS: VELOCIDADE 3.0x ATINGIDA!', false);
+          // AVISO AO ATINGIR 1000 PONTOS (3.0x VELOCIDADE)
+          if (score >= 1000 && (score - pointsEarned) < 1000) {
+            showBannerAlert('⚡ 1000 PONTOS: DIFICULDADE 3.0x ATINGIDA!', false);
+          }
+
+          // AVISO AO ATINGIR 5000 PONTOS (5.0x VELOCIDADE MÁXIMA)
+          if (score >= 5000 && (score - pointsEarned) < 5000) {
+            showBannerAlert('🏆 5000 PONTOS: DIFICULDADE MÁXIMA 5.0x LENDÁRIA!', false);
           }
 
           if (gameState.isTurboAllowed) {
