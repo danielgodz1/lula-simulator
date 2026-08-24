@@ -15,7 +15,9 @@ SPRITES = {
 OUTPUT_DIR = r'c:\Users\Daniel\lula-simulator\img\characters'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-def remove_background(img_path, out_path):
+FLIP_HORIZONTAL = {'lula', 'nikolas'}
+
+def remove_background(img_path, out_path, flip=False):
     img = Image.open(img_path).convert("RGBA")
     datas = img.getdata()
     
@@ -37,6 +39,9 @@ def remove_background(img_path, out_path):
             
     img.putdata(new_data)
     
+    if flip:
+        img = ImageOps.mirror(img)
+    
     # Auto-crop to content bounding box
     bbox = img.getbbox()
     if bbox:
@@ -46,19 +51,19 @@ def remove_background(img_path, out_path):
         crop_box = (max(0, bbox[0] - pad), max(0, bbox[1] - pad), min(w, bbox[2] + pad), min(h, bbox[3] + pad))
         img = img.crop(crop_box)
         
-    # Resize to crisp web standard size (e.g. height 240px with proportional width)
+    # Resize to crisp web standard size (e.g. height 220px with proportional width)
     target_height = 220
     ratio = target_height / float(img.height)
     target_width = int(img.width * ratio)
     img = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
     
     img.save(out_path, "PNG", optimize=True)
-    print(f"Processed: {out_path} ({target_width}x{target_height})")
+    print(f"Processed: {out_path} ({target_width}x{target_height}, flip={flip})")
 
 for name, path in SPRITES.items():
     if os.path.exists(path):
         out = os.path.join(OUTPUT_DIR, f"{name}_fly.png")
-        remove_background(path, out)
+        remove_background(path, out, flip=(name in FLIP_HORIZONTAL))
     else:
         print(f"File not found: {path}")
 

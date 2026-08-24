@@ -579,48 +579,63 @@ export class UIManager {
     if (this.startOverlay) this.startOverlay.style.display = 'none';
   }
 
-  // MENSAGENS HILÁRIAS DE MORTE POR TIPO DE OBSTÁCULO
+  // MENSAGENS HILÁRIAS E ROTATIVAS DE MORTE POR TIPO DE OBSTÁCULO
   getFunnyDeathMessage(obstacle) {
     const type = obstacle ? obstacle.type : 'general';
 
     const messages = {
       clt: [
-        "Você não aguentou a escala 6x1 e foi de CLT!",
-        "O RH te pegou no corredor! Agora vai ter que bater ponto às 7h da manhã!",
-        "Adeus férias infinitas de PJ, você foi contratado com carteira assinada!",
-        "Não conseguiu fugir do desconto do INSS na folha de pagamento!"
+        "A CLT te pegou! 8 horas diárias, escala 6x1 e sem pejotização! 📑",
+        "O RH te pegou no corredor! Agora vai ter que bater ponto biométrico às 07:00! ⏰",
+        "Adeus dividendos e férias ilimitadas de PJ: você foi contratado com carteira assinada! 💼",
+        "Não conseguiu fugir do desconto do INSS e do FGTS retido na folha! 💸",
+        "Homologado no sindicato! O pesadelo do Faria Limer virou realidade! ⚖️",
+        "O fiscal do trabalho flagrou você correndo sem EPI e assinou sua carteira na hora! 👷‍♂️",
+        "Contrato PJ rescindido! Agora você tem direito a vale-transporte e vale-coxinha! 🚌",
+        "Tomou advertência por faltar no plantão de sábado da firma! 📋"
       ],
       bolsafamilia: [
-        "Seu Bolsa Família foi aprovado, agora você não precisa mais correr!",
-        "Caiu no pente fino do Cadastro Único da Caixa Econômica!",
-        "Tentou sacar o benefício e ficou preso na fila da agência!",
-        "O dinheiro do Bolsa Família caiu na conta e você parou pra comemorar!"
+        "Seu Bolsa Família foi aprovado, agora você não precisa mais correr atrás de investidor! 💳",
+        "Caiu no pente fino do Cadastro Único da Caixa Econômica Federal! 🏛️",
+        "Tentou sacar o benefício na lotérica e ficou 3 horas na fila do sol quente! ☀️",
+        "O dinheiro do Bolsa Família caiu na conta e você foi direto pro churrasco de picanha! 🥩",
+        "CadÚnico bloqueado por excesso de faturamento no jogo do tigrinho! 🐯",
+        "Perdeu a pesagem obrigatória no posto de saúde e o benefício congelou! ⚖️"
       ],
       auxilio: [
-        "Seu Auxílio Brasil foi liberado! O empresário virou beneficiário!",
-        "Tentou cadastrar o CPF no app do Caixa Tem e deu erro no servidor!",
-        "O benefício foi aprovado com sucesso, hora de descansar!"
+        "Seu Auxílio Brasil foi liberado! O grande empresário virou beneficiário assistencial! 💳",
+        "Tentou cadastrar o CPF no app do Caixa Tem e o servidor travou com 2 milhões na fila! 📱",
+        "O benefício foi creditado com sucesso: hora de fechar a startup e descansar na rede! 🌴",
+        "Auditoria do TCU detectou que você comprou criptomoeda com o dinheiro do Auxílio! 📈",
+        "O Caixa Tem mandou esperar sua vez na fila virtual até o ano que vem! ⏳"
       ],
       train: [
-        "O Expresso Central do Brasil não espera empresário atrasado!",
-        "Tentou surfar no teto do trem da Central e o guarda te pegou!",
-        "O ramal Japeri passou por cima dos seus lucros empresariais!",
-        "Ficou preso na catraca do metrô sem saldo no Riocard!"
+        "O Expresso Central do Brasil não espera empresário atrasado! 🚆",
+        "Tentou surfar no teto do trem da Central e o maquinista buzinou na sua orelha! 🚇",
+        "O ramal Japeri passou por cima dos seus pitches de investimento! 🚈",
+        "Ficou preso na catraca do metrô da Estação Sé às 18h de uma sexta-feira chuvosa! 🌧️",
+        "Problema na via da Linha 9 Esmeralda encerrou sua corrida sem previsão de retorno! 🛤️",
+        "Vagão lotado te arremessou pra fora na estação Brás! 🚂"
       ],
       truck: [
-        "Levou uma fechada do caminhão de carga pesada na subida do morro!",
-        "O caminhão de frete da favela passou por cima da sua maleta de dinheiro!",
-        "Tentou ultrapassar o caminhão na curva fechada e perdeu o controle!"
+        "Levou uma fechada cinematográfica do caminhão de botijão de gás subindo o morro! 🚚",
+        "O caminhão de frete da favela passou por cima da sua maleta de notas de 100! 💵",
+        "Tentou ultrapassar o caminhão de melancia na curva fechada e rodou na pista! 🍉",
+        "Ficou preso atrás do caminhão de lixo tocando funk no talo! 🚛",
+        "Carga tombada na pista: a maleta empresarial voou longe! 📦"
       ],
       varal: [
-        "Ficou preso no gato de luz da comunidade da favela!",
-        "Levou uma rasteira do lençol do varal da vizinha!",
-        "Tropeçou no fio clandestino e caiu direto na laje!"
+        "Ficou enroscado no gato de luz clandestino da comunidade! ⚡",
+        "Levou uma rasteira épica do lençol estampado do varal da Dona Neide! 🩲",
+        "Tropeçou no cabo coaxial de TV a cabo pirata e caiu direto na laje! 📡",
+        "O pregador de roupa voou no seu olho enquanto fugia do leão do IR! 🧺"
       ],
       general: [
-        "O sistema te alcançou na velocidade da luz!",
-        "Você tropeçou na ladeira da favela e perdeu a maleta!",
-        "A burocracia brasileira foi mais rápida que o seu terno!"
+        "O sistema tributário te alcançou na velocidade da luz! ⚡",
+        "Você tropeçou na ladeira da favela e a maleta de dinheiro abriu no ar! 💸",
+        "A burocracia brasileira foi 10x mais rápida que o seu terno importado! 👔",
+        "DARF vencida sem pagar! A Receita Federal confiscou suas milhas aéreas! 🦁",
+        "A mentalidade quântica falhou na hora de desviar do obstáculo de concreto! 🧠"
       ]
     };
 

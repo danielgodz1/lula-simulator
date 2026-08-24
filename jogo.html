@@ -332,12 +332,12 @@
     }
 
     .go-char-picker-btn img {
-      width: 32px;
-      height: 22px;
-      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
       border: 1.5px solid #ffd700;
-      object-fit: contain;
-      background: rgba(0, 0, 0, 0.5);
+      object-fit: cover;
+      background: #000;
     }
 
     .go-diff-toggles {
@@ -669,23 +669,20 @@
     }
 
     .char-avatar {
-      width: 68px;
-      height: 48px;
-      border-radius: 10px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
       margin: 0 auto 4px;
       border: 2px solid var(--amarelo-brasil);
       overflow: hidden;
-      background: rgba(0, 0, 0, 0.6);
+      background: #000;
       box-shadow: 0 3px 8px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .char-avatar img {
-      width: 95%;
-      height: 95%;
-      object-fit: contain;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     @media (max-width: 900px) {
@@ -858,8 +855,8 @@
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
-          <div style="width:62px; height:42px; border-radius:10px; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;">
-            <img id="equippedCharImg" src="img/characters/lula_fly.png" alt="Personagem Selecionado" style="width:95%; height:95%; object-fit:contain;">
+          <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
+            <img id="equippedCharImg" src="img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
             <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
@@ -1035,8 +1032,8 @@
     let pendingCharSelect = activeCharacter;
 
     const gameState = {
-      HITBOX_WIDTH_RATIO: 0.082,
-      HITBOX_HEIGHT_RATIO: 0.042,
+      HITBOX_WIDTH_RATIO: 0.062,
+      HITBOX_HEIGHT_RATIO: 0.032,
       GAP_RATIO: 0.42,
       SPEED_MULT: 1.0,
       EXTRA_SCORE_PER_PIPE: 1,
@@ -1059,11 +1056,11 @@
       const img = document.getElementById('equippedCharImg');
       const name = document.getElementById('equippedCharName');
       const skill = document.getElementById('equippedCharSkill');
-      if (img) img.src = activeCharacter.flySprite || activeCharacter.sprite;
+      if (img) img.src = activeCharacter.sprite;
       if (name) name.textContent = activeCharacter.name;
       if (skill) skill.textContent = activeCharacter.skillName;
 
-      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.flySprite || activeCharacter.sprite;
+      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.sprite;
       if (goEquippedCharName) goEquippedCharName.textContent = activeCharacter.name;
     }
 
@@ -1228,7 +1225,7 @@
         
         card.innerHTML = `
           <div class="char-avatar" style="border-color:${char.auraColor}">
-            <img src="${char.flySprite || char.sprite}" alt="${char.name}">
+            <img src="${char.sprite}" alt="${char.name}">
           </div>
           <div style="font-weight:700; font-size:11.5px; color:#fff; margin-bottom:1px;">${char.name}</div>
           <div style="font-size:9.5px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600; line-height:1.2;">
@@ -1952,9 +1949,9 @@
         ctx.textAlign = 'left';
       }
 
-      // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA
-      const charWidth = H * 0.125;
-      const charHeight = charWidth * 0.56;
+      // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA (TAMANHO ÁGIL & PROPORCIONAL)
+      const charWidth = H * 0.092;
+      const charHeight = charWidth * 0.55;
       
       ctx.save();
       ctx.imageSmoothingEnabled = true;
@@ -2113,15 +2110,62 @@
     async function showGameOverScreen() {
       if (!gameOverModal) return;
       
-      const funnyDeathMessages = [
-        "Companheiro, bateu no cano e a Receita Federal confiscou a picanha!",
-        "Ficou preso no pedalinho de Atibaia!",
-        "A inflação subiu mais rápido do que as asas do presidente!",
-        "Tentou dar uma pedalada fiscal e bateu de cabeça na tubulação!",
-        "Caiu na fiscalização da alfândega e foi multado!",
-        "O imposto sobre o cano verde pesou mais que a gravidade!"
-      ];
-      const randMsg = funnyDeathMessages[Math.floor(Math.random() * funnyDeathMessages.length)];
+      const characterDeathQuotes = {
+        lula: [
+          "Companheiro, bateu no cano e a Receita Federal confiscou a picanha! 🥩",
+          "Ficou preso no pedalinho de Atibaia! 🚣‍♂️",
+          "A inflação subiu mais rápido do que as asas do presidente! 📈",
+          "Tentou dar uma pedalada fiscal e bateu de cabeça na tubulação! 🚲",
+          "O imposto sobre o cano verde pesou mais que a gravidade! 💸",
+          "Não soube estocar vento e colidiu com o cano superior! 🌪️",
+          "Perdeu o 10º dedo na quina afiada do cano! 🖐️"
+        ],
+        bolsonaro: [
+          "E daí? Não sou encanador! Bateu no cano verde e caiu! 🇧🇷",
+          "Tomou uma canelada do cano do STF! ⚖️",
+          "Tentou dar uma motociata aérea e furou o pneu no cano! 🏍️",
+          "Cloroquina não cura colisão de 60 FPS! 💊",
+          "Talkei? A gravidade é comunista e puxou pra baixo! 🗣️",
+          "Faltou histórico de atleta para desviar dessa tubulação! 🏃‍♂️"
+        ],
+        dilma: [
+          "Tentou saudar a mandioca e abraçou o cano de esgoto! 🥔",
+          "Estocou vento demais e perdeu a sustentação aerodinâmica! 💨",
+          "Nem quem passar nem quem bater vai ganhar: todo mundo perdeu! 📉",
+          "Atrás de uma criança tem um cano, que é um cachorro oculto! 🐕",
+          "Meta atingida? Dobramos a meta e colidimos em dobro! 🎯"
+        ],
+        marcal: [
+          "Faltou destravar o código quântico dos canos de PVC! 🧠",
+          "O mindset 3X bateu a 300 km/h na parede de concreto! 🚀💥",
+          "Subiu a montanha sem equipamento e o cano cobrou a mentoria! 🏔️",
+          "Tentou colocar o motor de helicóptero no Flappy e capotou! 🚁",
+          "Essa colisão foi apenas um aprendizado de 20 milhões de reais! 💵"
+        ],
+        moraes: [
+          "Mandado de prisão revogado pelo cano supremo! ⚖️",
+          "Determinou o bloqueio do cano em 24h sob pena de multa diária! 🔨",
+          "A careca reluzente ofuscou a visão dos canos! ✨",
+          "Intimação não entregue: o cano se recusou a abrir o espaço aéreo! 📜",
+          "Inquérito das fake news aberto contra a gravidade terrestre! 🏛️"
+        ],
+        nikolas: [
+          "Gravou stories reclamando do cano e esqueceu de bater as asas! 📱",
+          "O algoritmo do TikTok cancelou a sustentação do voo! ⚡",
+          "Perdeu a linha no plenário e trombou direto no cano! 🎙️",
+          "Fez discurso inflamado mas a física newtoniana não perdoou! 🏛️",
+          "Foi enquadrado pela bancada dos canos de esgoto! 📢"
+        ],
+        janja: [
+          "Taxa de 92% na importação da picanha desbalanceou o voo! 💳",
+          "Tentou comprar um cano no exterior e pagou o dobro de imposto! 🛍️",
+          "Caiu a conexão do festival do G20 e o voo foi cancelado! 🎤",
+          "O vestido de grife pesou na aerodinâmica da capa! 👗"
+        ]
+      };
+
+      const charQuotes = characterDeathQuotes[activeCharacter.id] || characterDeathQuotes.lula;
+      const randMsg = charQuotes[Math.floor(Math.random() * charQuotes.length)];
       
       document.getElementById('goMemeText').textContent = `"${randMsg}"`;
       document.getElementById('goCurrentScoreVal').textContent = score.toString();

@@ -15,8 +15,8 @@ export const CHARACTERS = [
     skillDesc: 'Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.',
     auraColor: '#ffdf00',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.082;
-      state.HITBOX_HEIGHT_RATIO = 0.042;
+      state.HITBOX_WIDTH_RATIO = 0.062;
+      state.HITBOX_HEIGHT_RATIO = 0.032;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -38,8 +38,8 @@ export const CHARACTERS = [
     skillDesc: 'Curtidas e corações bônus aparecem no trajeto concedendo +2 pontos adicionais.',
     auraColor: '#ec4899',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.085;
-      state.HITBOX_HEIGHT_RATIO = 0.044;
+      state.HITBOX_WIDTH_RATIO = 0.064;
+      state.HITBOX_HEIGHT_RATIO = 0.033;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -61,8 +61,8 @@ export const CHARACTERS = [
     skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.082;
-      state.HITBOX_HEIGHT_RATIO = 0.042;
+      state.HITBOX_WIDTH_RATIO = 0.062;
+      state.HITBOX_HEIGHT_RATIO = 0.032;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.15;
       state.EXTRA_SCORE_PER_PIPE = 2;
@@ -84,8 +84,8 @@ export const CHARACTERS = [
     skillDesc: 'Possui 1 Escudo Protetor por partida. Quebra o 1º cano sem morrer!',
     auraColor: '#a855f7',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.085;
-      state.HITBOX_HEIGHT_RATIO = 0.045;
+      state.HITBOX_WIDTH_RATIO = 0.064;
+      state.HITBOX_HEIGHT_RATIO = 0.034;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -108,8 +108,8 @@ export const CHARACTERS = [
     skillDesc: 'A cada 4 canos perfeitos sem bater, ativa 4s de super velocidade e ímã de picanha!',
     auraColor: '#22c55e',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.085;
-      state.HITBOX_HEIGHT_RATIO = 0.045;
+      state.HITBOX_WIDTH_RATIO = 0.064;
+      state.HITBOX_HEIGHT_RATIO = 0.034;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -132,8 +132,8 @@ export const CHARACTERS = [
     skillDesc: 'Chuva de mandiocas e aipins nos canos! Acúmulo de picanhas padrão e voo suave.',
     auraColor: '#ef4444',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.084;
-      state.HITBOX_HEIGHT_RATIO = 0.043;
+      state.HITBOX_WIDTH_RATIO = 0.063;
+      state.HITBOX_HEIGHT_RATIO = 0.033;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -155,8 +155,8 @@ export const CHARACTERS = [
     skillDesc: 'Velocidade 1.35x maior, triplica os pontos obtidos (3X) e solta chuva de notas e dólares!',
     auraColor: '#0ea5e9',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.086;
-      state.HITBOX_HEIGHT_RATIO = 0.045;
+      state.HITBOX_WIDTH_RATIO = 0.065;
+      state.HITBOX_HEIGHT_RATIO = 0.034;
       state.GAP_RATIO = 0.40;
       state.SPEED_MULT = 1.35;
       state.EXTRA_SCORE_PER_PIPE = 3;
