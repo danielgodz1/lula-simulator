@@ -792,7 +792,8 @@
 
     function updateBadgesUI() {
       const user = auth.getCurrentUser();
-      const totalPicanhas = Math.max(CharacterInventory.getTotalPicanhas(), user?.totalPicanhas || 0);
+      const currentPicanhas = Math.max(CharacterInventory.getTotalPicanhas(), user?.totalPicanhas || 0);
+      const lifetimePicanhas = Math.max(CharacterInventory.getLifetimePicanhas(), user?.lifetimePicanhas || currentPicanhas);
       const flappyBest = Math.max(parseInt(localStorage.getItem('lula_best') || '0', 10), user?.flappyScore || 0);
       const runnerBest = Math.max(parseInt(localStorage.getItem('run_best') || '0', 10), user?.runnerScore || 0);
       const dilmaBest = Math.max(CharacterInventory.getDilmaBest(), user?.dilmaScore || 0);
@@ -803,7 +804,7 @@
       const flapEl = document.getElementById('statsFlappyRecord');
       const runEl = document.getElementById('statsRunnerRecord');
       if (nameEl) nameEl.textContent = user ? user.username : (localStorage.getItem('lula_player') || 'Visitante');
-      if (picEl) picEl.textContent = `${totalPicanhas} 🥩`;
+      if (picEl) picEl.textContent = `${currentPicanhas} 🥩 (Histórico: ${lifetimePicanhas})`;
       if (flapEl) flapEl.textContent = `${flappyBest} pts`;
       if (runEl) runEl.textContent = `${runnerBest} km`;
 
@@ -818,9 +819,12 @@
         let percent = 0;
         let isUnlocked = false;
 
+        // Se o jogador acumulou 3.000 Picanhas Históricas, libera TUDO automaticamente!
+        const isMasterUnlocked = lifetimePicanhas >= 3000;
+
         if (b.id === 'nikolas') {
           const isNikolasDirectUnlocked = CharacterInventory.isUnlocked('nikolas');
-          isUnlocked = isNikolasDirectUnlocked || (flappyBest >= 100 && runnerBest >= 300);
+          isUnlocked = isMasterUnlocked || isNikolasDirectUnlocked || (flappyBest >= 100 && runnerBest >= 300);
 
           if (isUnlocked) {
             percent = 100;
@@ -833,33 +837,33 @@
           }
         } else if (b.id === 'marcal') {
           const isMarcalDirectUnlocked = CharacterInventory.isUnlocked('marcal');
-          const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma') || totalPicanhas >= 100;
-          isUnlocked = isMarcalDirectUnlocked || (isDilmaUnlocked && dilmaBest >= 200);
+          const isDilmaUnlocked = CharacterInventory.isUnlocked('dilma') || lifetimePicanhas >= 100;
+          isUnlocked = isMasterUnlocked || isMarcalDirectUnlocked || (isDilmaUnlocked && dilmaBest >= 200);
 
           if (isUnlocked) {
             percent = 100;
             if (text) text.textContent = `✨ DESBLOQUEADO (${dilmaBest}/200 pts com a Dilma)`;
           } else if (!isDilmaUnlocked) {
-            percent = Math.min(50, Math.round((totalPicanhas / 100) * 50));
-            if (text) text.textContent = `Passo 1: Liberar Dilma (${totalPicanhas}/100 🥩)`;
+            percent = Math.min(50, Math.round((lifetimePicanhas / 100) * 50));
+            if (text) text.textContent = `Passo 1: Liberar Dilma (${lifetimePicanhas}/100 🥩)`;
           } else {
             percent = 50 + Math.min(50, Math.round((dilmaBest / 200) * 50));
             if (text) text.textContent = `Passo 2: Fazer 200 pts com a Dilma (${dilmaBest}/200 pts)`;
           }
         } else if (b.id === 'badge50') {
-          percent = Math.min(100, Math.round((totalPicanhas / 50) * 100));
-          isUnlocked = totalPicanhas >= 50 || flappyBest >= 50;
-          if (text) text.textContent = `${totalPicanhas} / 50 Picanhas (${percent}%)`;
+          percent = Math.min(100, Math.round((lifetimePicanhas / 50) * 100));
+          isUnlocked = isMasterUnlocked || lifetimePicanhas >= 50 || flappyBest >= 50;
+          if (text) text.textContent = `${lifetimePicanhas} / 50 Picanhas Históricas (${percent}%)`;
         } else if (b.id === 'badge500') {
-          percent = Math.min(100, Math.round((totalPicanhas / 500) * 100));
-          isUnlocked = totalPicanhas >= 500 || flappyBest >= 500;
-          if (text) text.textContent = `${totalPicanhas} / 500 Picanhas (${percent}%)`;
+          percent = Math.min(100, Math.round((lifetimePicanhas / 500) * 100));
+          isUnlocked = isMasterUnlocked || lifetimePicanhas >= 500 || flappyBest >= 500;
+          if (text) text.textContent = `${lifetimePicanhas} / 500 Picanhas Históricas (${percent}%)`;
         } else {
           // Personagens individuais ou medalhas de honra
           const charUnlocked = CharacterInventory.isUnlocked(b.id);
-          percent = Math.min(100, Math.round((totalPicanhas / b.target) * 100));
-          isUnlocked = charUnlocked || totalPicanhas >= b.target;
-          if (text) text.textContent = `${totalPicanhas} / ${b.target} Picanhas (${percent}%)`;
+          percent = Math.min(100, Math.round((lifetimePicanhas / b.target) * 100));
+          isUnlocked = isMasterUnlocked || charUnlocked || lifetimePicanhas >= b.target;
+          if (text) text.textContent = `${lifetimePicanhas} / ${b.target} Picanhas Históricas (${percent}%)`;
         }
 
         if (isUnlocked) {

@@ -30,6 +30,7 @@ export default async function handler(req, res) {
       runnerScore = 0,
       dilmaScore = 0,
       totalPicanhas = 0,
+      lifetimePicanhas = 0,
       runnerCoins = 0,
       unlockedCharacters = [],
       unlockedSkins = [],
@@ -58,6 +59,7 @@ export default async function handler(req, res) {
       const localRunner = Math.max(0, parseInt(runnerScore || 0, 10));
       const localDilma = Math.max(0, parseInt(dilmaScore || 0, 10));
       const localPicanhas = Math.max(0, parseInt(totalPicanhas || 0, 10));
+      const localLifetimePicanhas = Math.max(localPicanhas, parseInt(lifetimePicanhas || 0, 10));
       const localCoins = Math.max(0, parseInt(runnerCoins || 0, 10));
       const localPrestige = Math.max(0, parseInt(prestigeLevel || 0, 10));
 
@@ -65,6 +67,7 @@ export default async function handler(req, res) {
       const cloudRunner = Math.max(0, parseInt(existingData.runnerScore || 0, 10));
       const cloudDilma = Math.max(0, parseInt(existingData.dilmaScore || 0, 10));
       const cloudPicanhas = Math.max(0, parseInt(existingData.totalPicanhas || 0, 10));
+      const cloudLifetimePicanhas = Math.max(0, parseInt(existingData.lifetimePicanhas || existingData.totalPicanhas || 0, 10));
       const cloudCoins = Math.max(0, parseInt(existingData.runnerCoins || 0, 10));
       const cloudPrestige = Math.max(0, parseInt(existingData.prestigeLevel || 0, 10));
 
@@ -73,6 +76,7 @@ export default async function handler(req, res) {
       const mergedRunner = Math.max(localRunner, cloudRunner);
       const mergedDilma = Math.max(localDilma, cloudDilma);
       const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas);
+      const mergedLifetimePicanhas = Math.max(localLifetimePicanhas, cloudLifetimePicanhas);
       const mergedCoins = Math.max(localCoins, cloudCoins);
       const mergedPrestige = Math.max(localPrestige, cloudPrestige);
 
@@ -84,6 +88,11 @@ export default async function handler(req, res) {
       // Se dilmaScore >= 200, garante desbloqueio do Pablo Marçal
       if (mergedDilma >= 200) {
         mergedUnlockedSet.add('marcal');
+      }
+
+      // Regra dos 3000: se histórico de picanhas >= 3000, libera todos os personagens
+      if (mergedLifetimePicanhas >= 3000) {
+        ['lula', 'janja', 'nikolas', 'moraes', 'bolsonaro', 'dilma', 'marcal'].forEach(c => mergedUnlockedSet.add(c));
       }
       const mergedUnlocked = Array.from(mergedUnlockedSet);
 
@@ -108,6 +117,7 @@ export default async function handler(req, res) {
         runnerScore: mergedRunner,
         dilmaScore: mergedDilma,
         totalPicanhas: mergedPicanhas,
+        lifetimePicanhas: mergedLifetimePicanhas,
         runnerCoins: mergedCoins,
         unlockedCharacters: mergedUnlocked,
         unlockedSkins: mergedSkins,

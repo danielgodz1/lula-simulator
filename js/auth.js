@@ -434,6 +434,7 @@ class AuthManager {
     const localUnlocked = Array.from(localUnlockedSet);
 
     const localPrestige = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
+    const localLifetimePicanhas = Math.max(localPicanhas, parseInt(localStorage.getItem('flappy_lifetime_accumulated_picanhas') || '0', 10));
     let localSkins = [];
     let localEquippedSkins = {};
     try {
@@ -452,6 +453,7 @@ class AuthManager {
           runnerScore: Math.max(localRunner, this.currentUser.runnerScore || 0),
           dilmaScore: Math.max(localDilma, this.currentUser.dilmaScore || 0),
           totalPicanhas: Math.max(localPicanhas, this.currentUser.totalPicanhas || 0),
+          lifetimePicanhas: Math.max(localLifetimePicanhas, this.currentUser.lifetimePicanhas || 0),
           runnerCoins: Math.max(localRunnerCoins, this.currentUser.runnerCoins || 0),
           unlockedCharacters: localUnlocked,
           unlockedSkins: localSkins.length > 0 ? localSkins : (this.currentUser.unlockedSkins || []),
@@ -1067,6 +1069,14 @@ class AuthManager {
       const finalPicanhas = Math.max(cur, user.totalPicanhas);
       localStorage.setItem(TOTAL_PICANHAS_KEY, finalPicanhas.toString());
       user.totalPicanhas = finalPicanhas;
+    }
+    if (user.lifetimePicanhas !== undefined || user.totalPicanhas !== undefined) {
+      const curLifetime = parseInt(localStorage.getItem('flappy_lifetime_accumulated_picanhas') || '0', 10);
+      const curTotal = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+      const incoming = user.lifetimePicanhas || user.totalPicanhas || 0;
+      const finalLifetime = Math.max(curLifetime, curTotal, incoming);
+      localStorage.setItem('flappy_lifetime_accumulated_picanhas', finalLifetime.toString());
+      user.lifetimePicanhas = finalLifetime;
     }
     if (user.dilmaScore !== undefined) {
       const cur = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);

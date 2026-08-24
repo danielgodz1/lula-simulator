@@ -169,11 +169,28 @@ export const CHARACTERS = [
 
 const SELECTED_CHAR_KEY = 'flappy_selected_character_id';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
+const LIFETIME_PICANHAS_KEY = 'flappy_lifetime_accumulated_picanhas';
 const DILMA_BEST_SCORE_KEY = 'flappy_dilma_record_score';
 
 export class CharacterInventory {
   static getTotalPicanhas() {
     return parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
+  }
+
+  static getLifetimePicanhas() {
+    const stored = parseInt(localStorage.getItem(LIFETIME_PICANHAS_KEY) || '0', 10);
+    const current = this.getTotalPicanhas();
+    let userLifetime = 0;
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u) userLifetime = parseInt(u.lifetimePicanhas || u.totalPicanhas || 0, 10);
+      }
+    } catch(e) {}
+    const val = Math.max(stored, current, userLifetime);
+    localStorage.setItem(LIFETIME_PICANHAS_KEY, val.toString());
+    return val;
   }
 
   static setTotalPicanhas(amount) {
@@ -202,16 +219,32 @@ export class CharacterInventory {
     const current = this.getTotalPicanhas();
     const updated = current + amount;
     localStorage.setItem(TOTAL_PICANHAS_KEY, updated.toString());
+
+    const lifetime = this.getLifetimePicanhas() + amount;
+    localStorage.setItem(LIFETIME_PICANHAS_KEY, lifetime.toString());
+
     try {
       const rawUser = localStorage.getItem('lula_current_user_v2');
       if (rawUser) {
         const u = JSON.parse(rawUser);
         if (u) {
           u.totalPicanhas = updated;
+          u.lifetimePicanhas = Math.max(u.lifetimePicanhas || 0, lifetime);
           localStorage.setItem('lula_current_user_v2', JSON.stringify(u));
         }
       }
     } catch(e) {}
+
+    // Verifica se atingiu marcas de desbloqueio permanente
+    CHARACTERS.forEach(c => {
+      if (c.requiredPicanhas > 0 && lifetime >= c.requiredPicanhas) {
+        this.recordUnlockedCharacter(c.id);
+      }
+    });
+    if (lifetime >= 3000) {
+      CHARACTERS.forEach(c => this.recordUnlockedCharacter(c.id));
+    }
+
     return updated;
   }
 
@@ -347,6 +380,13 @@ export class CharacterInventory {
       }
     } catch (e) {}
 
+    // REGRA DE OURO DOS 3000: Ao atingir 3000 Picanhas Históricas, libera TODOS os personagens permanentemente!
+    const lifetimePicanhas = this.getLifetimePicanhas();
+    if (lifetimePicanhas >= 3000) {
+      this.recordUnlockedCharacter(char.id);
+      return true;
+    }
+
     // 2. REQUISITO DO NIKOLAS FERREIRA: 100 pts no Flappy Lula E 300 km no Empresário 3D
     if (char.id === 'nikolas') {
       const flappyBest = Math.max(
@@ -375,8 +415,9 @@ export class CharacterInventory {
       return meetsMarcalReq;
     }
 
-    // 4. PERSONAGENS POR PICANHAS ACUMULADAS (Janja, Moraes, Bolsonaro, Dilma)
-    const hasPicanhas = this.getTotalPicanhas() >= char.requiredPicanhas;
+    // 4. PERSONAGENS POR PICANHAS HISTÓRICAS ACUMULADAS (Janja, Moraes, Bolsonaro, Dilma)
+    // Usa o histórico vitalício que nunca diminui ao gastar na loja!
+    const hasPicanhas = lifetimePicanhas >= char.requiredPicanhas;
     if (hasPicanhas && char.requiredPicanhas > 0) {
       this.recordUnlockedCharacter(char.id);
     }
