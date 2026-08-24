@@ -362,6 +362,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html" class="active">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -369,7 +370,10 @@
       <li><a href="feedback.html">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <!-- ÁREA DO JOGO 3D COM FUNDO RIO FAVELA -->
@@ -528,9 +532,11 @@
     import { auth } from './js/auth.js';
     import { AdsManager } from './js/ads-manager.js';
     import { gameAudio } from './js/game/audio.js';
+    import { social } from './js/social-manager.js';
 
-    // Renderiza badge do perfil no cabeçalho
+    // Renderiza badge do perfil no cabeçalho e sino
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
     // Menu Mobile Toggle
     const navToggle = document.getElementById('navToggle');

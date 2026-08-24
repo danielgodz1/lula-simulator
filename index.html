@@ -405,6 +405,7 @@
       <li><a href="index.html" class="active">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -412,7 +413,10 @@
       <li><a href="feedback.html">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <!-- HERO SECTION -->
@@ -438,11 +442,8 @@
           <a href="correr.html" class="btn-secondary">
             🏃 JOGAR EMPRESÁRIO 3D
           </a>
-          <a href="visitantes.html" class="btn-secondary" style="border-color: #00e676; color: #00e676;">
-            🌍 VER VISITANTES
-          </a>
-          <a href="conquistas.html" class="btn-secondary" style="border-color: #38bdf8; color: #38bdf8;">
-            🏅 VER CONQUISTAS
+          <a href="social.html" class="btn-secondary" style="border-color: #ef4444; color: #ef4444;">
+            👥 AMIGOS & DUELOS
           </a>
           <a href="ranking.html" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">
             🏆 VER RANKING
@@ -461,6 +462,22 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- FEED DE ATIVIDADE AO VIVO (PÚBLICO) -->
+  <section style="max-width: 1040px; margin: -10px auto 30px; padding: 0 16px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 10px #22c55e;"></span>
+        <span style="font-family: 'Bangers', cursive; font-size: 20px; color: var(--amarelo-brasil); letter-spacing: 1px;">
+          ⚡ ATIVIDADE AO VIVO DA COMUNIDADE
+        </span>
+      </div>
+      <a href="social.html" style="color: #38bdf8; font-size: 12px; font-weight: 700; text-decoration: none;">
+        Ver Duelos & Amigos ➜
+      </a>
+    </div>
+    <div id="publicActivityFeedContainer"></div>
   </section>
 
   <!-- RANKING NACIONAL AO VIVO -->
@@ -484,6 +501,9 @@
       </button>
       <button id="homeTabAccumulated" class="tab-btn">
         🥩 Total Acumulado
+      </button>
+      <button id="homeTabInvictos" class="tab-btn" style="border-color: rgba(239,68,68,0.4);">
+        🔥 Invictos (Win Streak)
       </button>
     </div>
 
@@ -612,11 +632,18 @@
   <script src="js/tracker.js"></script>
   <script type="module">
     import { auth, DEFAULT_AVATAR_SVG } from './js/auth.js';
-    import { getTopScores } from './js/firebase-config.js';
+    import { getTopScores, firebaseConfig } from './js/firebase-config.js';
     import { escapeHTML } from './js/security.js';
     import { AdsManager } from './js/ads-manager.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
+
+    // Feed de Atividades Ao Vivo (Público)
+    social.getPublicFeed().then(activities => {
+      social.renderActivityFeed(document.getElementById('publicActivityFeedContainer'), activities);
+    });
 
     const btnNavToggle = document.getElementById('btnNavToggle');
     const navLinksList = document.getElementById('navLinksList');
@@ -636,10 +663,12 @@
     const tabFlappy = document.getElementById('homeTabFlappy');
     const tabRunner = document.getElementById('homeTabRunner');
     const tabAccumulated = document.getElementById('homeTabAccumulated');
+    const tabInvictos = document.getElementById('homeTabInvictos');
 
     tabFlappy?.addEventListener('click', () => switchHomeTab('flappy', 'general'));
     tabRunner?.addEventListener('click', () => switchHomeTab('runner', 'general'));
     tabAccumulated?.addEventListener('click', () => switchHomeTab('flappy', 'accumulated'));
+    tabInvictos?.addEventListener('click', () => switchHomeTab('invictos', 'general'));
 
     function switchHomeTab(tab, period) {
       homeCurrentTab = tab;
@@ -648,6 +677,7 @@
       if (tabFlappy) tabFlappy.className = `tab-btn ${tab === 'flappy' && period === 'general' ? 'active' : ''}`;
       if (tabRunner) tabRunner.className = `tab-btn ${tab === 'runner' ? 'active' : ''}`;
       if (tabAccumulated) tabAccumulated.className = `tab-btn ${period === 'accumulated' ? 'active' : ''}`;
+      if (tabInvictos) tabInvictos.className = `tab-btn ${tab === 'invictos' ? 'active' : ''}`;
 
       loadHomeRanking();
     }
@@ -658,15 +688,38 @@
       container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Carregando placar... 🇧🇷</div>';
 
       try {
-        const scores = await getTopScores(homeCurrentTab, 10, false, homeCurrentPeriod);
-        if (!scores || scores.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Nenhum recorde registrado ainda. Seja o primeiro a jogar! 🚀</div>';
-          return;
+        let scores = [];
+        let unit = '🥩';
+
+        if (homeCurrentTab === 'invictos') {
+          unit = 'Vitórias 🔥';
+          // Consulta jogadores com maior winStreak
+          const snap = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2?pageSize=30`);
+          if (snap.ok) {
+            const data = await snap.json();
+            const docs = data.documents || [];
+            scores = docs.map(d => {
+              const f = d.fields || {};
+              return {
+                player: f.username?.stringValue || 'Jogador',
+                score: parseInt(f.winStreak?.integerValue || '0', 10),
+                avatar: f.avatar?.stringValue || '',
+                countryFlag: '🇧🇷',
+                prestigeLevel: parseInt(f.prestigeLevel?.integerValue || '0', 10)
+              };
+            }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+          }
+        } else {
+          scores = await getTopScores(homeCurrentTab, 10, false, homeCurrentPeriod);
+          unit = homeCurrentPeriod === 'accumulated'
+            ? (homeCurrentTab === 'runner' ? '💰' : '🥩')
+            : (homeCurrentTab === 'runner' ? 'km' : '🥩');
         }
 
-        const unit = homeCurrentPeriod === 'accumulated'
-          ? (homeCurrentTab === 'runner' ? '💰' : '🥩')
-          : (homeCurrentTab === 'runner' ? 'km' : '🥩');
+        if (!scores || scores.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Nenhum recorde registrado ainda nesta categoria. Seja o primeiro! 🚀</div>';
+          return;
+        }
 
         container.innerHTML = '';
         scores.slice(0, 10).forEach((item, index) => {

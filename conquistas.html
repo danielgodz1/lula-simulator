@@ -321,6 +321,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html" class="active">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -328,7 +329,10 @@
       <li><a href="feedback.html">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <!-- CABEÇALHO DA PÁGINA -->
@@ -638,8 +642,10 @@
   <script type="module">
     import { auth } from './js/auth.js';
     import { CharacterInventory } from './js/game/characters.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
     // Lista de Badges e Configurações
     const badges = [

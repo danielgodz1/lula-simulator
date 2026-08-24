@@ -306,8 +306,10 @@
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Abrir Menu">☰</button>
     <ul class="nav-links" id="navLinksList">
+      <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html" class="active">🏆 Ranking</a></li>
@@ -315,13 +317,16 @@
       <li><a href="visitantes.html">📊 Tráfego</a></li>
       <li><a href="contato.html">✉️ Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <div class="page">
     <div class="page-header">
       <h1>🏆 RANKING NACIONAL</h1>
-      <p>Confira a classificação dos jogadores em tempo real nos modos Geral e Semanal!</p>
+      <p>Confira a classificação dos jogadores em tempo real nos modos Geral, Semanal e Invictos!</p>
     </div>
 
     <!-- ABAS FLAPPY vs RUNNER 3D -->
@@ -330,11 +335,12 @@
       <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (KM)</button>
     </div>
 
-    <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO -->
-    <div class="period-buttons">
+    <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO vs INVICTOS -->
+    <div class="period-buttons" style="flex-wrap: wrap;">
       <button class="period-btn active" id="periodGeneral">🌟 Recorde Geral</button>
       <button class="period-btn" id="periodWeekly">📅 Recorde Semanal</button>
       <button class="period-btn" id="periodAccumulated">💰 Total Acumulado</button>
+      <button class="period-btn" id="periodInvictos" style="border-color: rgba(239, 68, 68, 0.4);">🔥 Invictos (Win Streak)</button>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -358,11 +364,13 @@
   </div>
 
   <script type="module">
-    import { getTopScores } from './js/firebase-config.js';
+    import { getTopScores, firebaseConfig } from './js/firebase-config.js';
     import { auth, DEFAULT_AVATAR_SVG } from './js/auth.js';
     import { escapeHTML } from './js/security.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
     let currentTab = 'flappy';
     let currentPeriod = 'general';
@@ -373,6 +381,7 @@
     document.getElementById('periodGeneral').onclick = () => switchPeriod('general');
     document.getElementById('periodWeekly').onclick = () => switchPeriod('weekly');
     document.getElementById('periodAccumulated').onclick = () => switchPeriod('accumulated');
+    document.getElementById('periodInvictos').onclick = () => switchPeriod('invictos');
 
     function switchTab(tab) {
       currentTab = tab;
@@ -387,6 +396,7 @@
       document.getElementById('periodGeneral').className = `period-btn ${period === 'general' ? 'active' : ''}`;
       document.getElementById('periodWeekly').className = `period-btn ${period === 'weekly' ? 'active' : ''}`;
       document.getElementById('periodAccumulated').className = `period-btn ${period === 'accumulated' ? 'active' : ''}`;
+      document.getElementById('periodInvictos').className = `period-btn ${period === 'invictos' ? 'active' : ''}`;
       document.getElementById('searchRankingInput').value = '';
       loadRankingData();
     }
@@ -394,11 +404,35 @@
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');
       const totalBadge = document.getElementById('totalPlayersBadge');
-      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : (currentPeriod === 'accumulated' ? 'acumulado' : 'geral');
+      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : (currentPeriod === 'accumulated' ? 'acumulado' : (currentPeriod === 'invictos' ? 'de invictos' : 'geral'));
       container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando placar ${periodLabel}... 🇧🇷</div>`;
 
-      // Busca todos os jogadores pelo documento consolidado (com cache TTL e filtro de período)
-      allCurrentScores = await getTopScores(currentTab, 300, force, currentPeriod);
+      if (currentPeriod === 'invictos') {
+        try {
+          const snap = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2?pageSize=50`);
+          if (snap.ok) {
+            const data = await snap.json();
+            const docs = data.documents || [];
+            allCurrentScores = docs.map(d => {
+              const f = d.fields || {};
+              return {
+                player: f.username?.stringValue || 'Jogador',
+                score: parseInt(f.winStreak?.integerValue || '0', 10),
+                bestWinStreak: parseInt(f.bestWinStreak?.integerValue || '0', 10),
+                avatar: f.avatar?.stringValue || '',
+                country: 'BR',
+                countryName: 'Brasil',
+                prestigeLevel: parseInt(f.prestigeLevel?.integerValue || '0', 10)
+              };
+            }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
+          }
+        } catch(e) {
+          allCurrentScores = [];
+        }
+      } else {
+        // Busca todos os jogadores pelo documento consolidado (com cache TTL e filtro de período)
+        allCurrentScores = await getTopScores(currentTab, 300, force, currentPeriod);
+      }
 
       // Fallback da conta atual caso banco esteja vazio ou jogador ainda não esteja no ranking
       const u = auth.getCurrentUser();
@@ -489,6 +523,14 @@
           prestigeHtml = `<span style="font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(255,215,0,0.18); border:1px solid #ffd700; color:#ffd700;" title="Nível de Prestígio ${prestigeLvl}">⭐ P.${prestigeLvl}</span>`;
         }
 
+        const isSelf = curUser && curUser.username && (item.player || '').toLowerCase() === curUser.username.toLowerCase();
+        const actionButtons = !isSelf && curUser ? `
+          <div style="display: flex; gap: 4px; margin-top: 4px;">
+            <button class="btn-quick-duel" style="background:#ef4444; border:none; border-radius:6px; padding:2px 8px; color:#fff; font-size:10px; font-weight:800; cursor:pointer;" title="Desafiar para Duelo">⚔️ Desafiar</button>
+            <button class="btn-quick-friend" style="background:#0284c7; border:none; border-radius:6px; padding:2px 8px; color:#fff; font-size:10px; font-weight:800; cursor:pointer;" title="Adicionar Amigo">➕ Amigo</button>
+          </div>
+        ` : '';
+
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
           <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
@@ -502,9 +544,23 @@
               <span style="font-size: 13px;" title="${safeCountryName}">${safeFlag}</span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
             </div>
+            ${actionButtons}
           </div>
           <div class="score-val">${safeScore.toLocaleString('pt-BR')} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
+
+        row.querySelector('.btn-quick-duel')?.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const r = await social.createDuel(item.player, currentTab === 'runner' ? 'runner' : 'flappy');
+          alert(r.message || r.error);
+        });
+
+        row.querySelector('.btn-quick-friend')?.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const r = await social.sendFriendRequest(item.player);
+          alert(r.message || r.error);
+        });
+
         container.appendChild(row);
       });
     }

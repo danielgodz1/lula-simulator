@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Central Social & Duelos 👥⚔️ — Lula Simulator</title>
+  <meta name="description" content="Adicione amigos, dispute duelos assíncronos valendo Invictos e acompanhe o Torneio Semanal no Lula Simulator!">
+  <link rel="canonical" href="https://lulasimulator.com.br/social.html">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/ads.css">
+
+  <style>
+    :root {
+      --verde-brasil: #009c3b;
+      --amarelo-brasil: #ffdf00;
+      --azul-brasil: #002776;
+      --verde-neon: #00e676;
+      --dark-bg: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.92);
+      --border-color: rgba(255, 223, 0, 0.25);
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--dark-bg);
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(0, 156, 59, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(0, 39, 118, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(255, 223, 0, 0.06) 0%, transparent 60%);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 90px 16px 60px;
+      width: 100%;
+      flex: 1;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .page-header h1 {
+      font-family: 'Bangers', cursive;
+      font-size: clamp(32px, 6vw, 54px);
+      letter-spacing: 2px;
+      color: var(--amarelo-brasil);
+      text-shadow: 2px 2px 0 #000, 0 0 24px rgba(255,223,0,0.4);
+      margin-bottom: 6px;
+    }
+
+    .page-header p {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* ABAS */
+    .social-tabs {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .social-tab-btn {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      font-family: 'Bangers', cursive;
+      font-size: 20px;
+      padding: 10px 24px;
+      border-radius: 14px;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .social-tab-btn:hover {
+      background: rgba(255, 223, 0, 0.12);
+      border-color: var(--amarelo-brasil);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .social-tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 39, 118, 0.95), rgba(2, 132, 199, 0.9));
+      border-color: var(--amarelo-brasil);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(0, 39, 118, 0.6), 0 4px 12px rgba(0,0,0,0.4);
+      transform: translateY(-2px);
+    }
+
+    .social-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 20px;
+      padding: 26px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      backdrop-filter: blur(14px);
+      margin-bottom: 24px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1.5px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      padding: 12px 18px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--amarelo-brasil);
+      box-shadow: 0 0 12px rgba(255,223,0,0.35);
+      background: rgba(0, 0, 0, 0.6);
+    }
+
+    .user-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .user-item {
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .user-item:hover {
+      border-color: var(--amarelo-brasil);
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--amarelo-brasil);
+      object-fit: cover;
+      background: #0f172a;
+      flex-shrink: 0;
+    }
+
+    .duel-card {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1.5px solid rgba(239, 68, 68, 0.4);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .duel-card.completed {
+      border-color: rgba(34, 197, 94, 0.4);
+      background: rgba(16, 185, 129, 0.05);
+    }
+
+    /* Chaveamento do Torneio */
+    .bracket-container {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 10px 0 20px;
+    }
+
+    .bracket-round {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      gap: 16px;
+    }
+
+    .bracket-match {
+      background: #1e293b;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .bracket-player {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .bracket-player.winner {
+      background: rgba(0, 230, 118, 0.18);
+      color: var(--verde-neon);
+    }
+
+    .bracket-player:last-child {
+      border-bottom: none;
+    }
+
+    /* MODAL POPUP */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-box {
+      background: #0f172a;
+      border: 2px solid var(--amarelo-brasil);
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 0 40px rgba(255,223,0,0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <nav>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
+    <ul class="nav-links" id="navLinksList">
+      <li><a href="index.html">Início</a></li>
+      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html" class="active">👥 Social & Duelos</a></li>
+      <li><a href="loja.html">🛍️ Loja de Skins</a></li>
+      <li><a href="conquistas.html">🏅 Conquistas</a></li>
+      <li><a href="ranking.html">🏆 Ranking</a></li>
+      <li><a href="visitantes.html">🌍 Visitantes</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
+    </ul>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="page-header">
+      <h1>CENTRAL SOCIAL & DUELOS 🇧🇷</h1>
+      <p>
+        Adicione amigos da comunidade, dispute duelos assíncronos valendo sequências de vitórias (Win Streaks) e dispute o Torneio Semanal da Copa Brasília!
+      </p>
+    </div>
+
+    <!-- ABAS PRINCIPAIS -->
+    <div class="social-tabs">
+      <button class="social-tab-btn active" id="tabBtnFriends">👥 AMIGOS & BUSCA</button>
+      <button class="social-tab-btn" id="tabBtnDuels">⚔️ MEUS DUELOS</button>
+      <button class="social-tab-btn" id="tabBtnTournament">🏆 TORNEIO SEMANAL</button>
+    </div>
+
+    <!-- SEÇÃO 1: AMIGOS & BUSCA -->
+    <div id="sectionFriends" class="social-card">
+      <h2 style="font-family: 'Bangers', cursive; color: var(--amarelo-brasil); font-size: 24px; margin-bottom: 14px;">
+        🔍 ENCONTRAR JOGADORES
+      </h2>
+      <div class="search-box">
+        <input type="text" id="inputSearchUser" class="search-input" placeholder="Digite o nome do jogador (ex: Lula, Capitão, Xandão...)" autocomplete="off">
+        <button id="btnSearchUsers" class="btn-primary" style="padding: 0 24px; font-size: 15px;">BUSCAR</button>
+      </div>
+
+      <div id="searchResultsArea" style="margin-bottom: 24px; display: none;">
+        <h3 style="font-size: 13px; color: #94a3b8; text-transform: uppercase; margin-bottom: 10px; font-weight: 800;">Resultados da Busca</h3>
+        <div id="searchResultsList" class="user-list"></div>
+      </div>
+
+      <!-- Pedidos Pendentes -->
+      <div id="pendingRequestsArea" style="margin-bottom: 24px; display: none;">
+        <h3 style="font-size: 16px; color: var(--amarelo-brasil); font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 10px;">
+          📬 SOLICITAÇÕES DE AMIZADE RECEBIDAS
+        </h3>
+        <div id="pendingRequestsList" class="user-list"></div>
+      </div>
+
+      <!-- Lista de Amigos -->
+      <h3 style="font-size: 16px; color: #38bdf8; font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 14px;">
+        ⭐ MEUS AMIGOS CONECTADOS (<span id="friendsCountSpan">0</span>)
+      </h3>
+      <div id="friendsList" class="user-list">
+        <div style="text-align: center; padding: 30px; color: #64748b; font-size: 14px; grid-column: 1/-1;">
+          Carregando seus amigos... ⏳
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: DUELOS ASSÍNCRONOS -->
+    <div id="sectionDuels" class="social-card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h2 style="font-family: 'Bangers', cursive; color: #ef4444; font-size: 26px; margin: 0;">
+            ⚔️ CENTRAL DE DUELOS ASSÍNCRONOS
+          </h2>
+          <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">
+            Desafie qualquer jogador: seu recorde é travado e o adversário tem 48h para superar a marca!
+          </p>
+        </div>
+        <button id="btnNewDuelAction" class="btn-primary" style="background: #ef4444; border-color: #991b1b; padding: 10px 18px; font-size: 14px;">
+          ➕ NOVO DESAFIO
+        </button>
+      </div>
+
+      <!-- Duelos Pendentes -->
+      <h3 style="font-size: 15px; color: var(--amarelo-brasil); font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 12px;">
+        ⏳ DUELOS EM ANDAMENTO
+      </h3>
+      <div id="pendingDuelsList" style="margin-bottom: 24px;">
+        <div style="text-align: center; padding: 25px; color: #64748b; font-size: 13px;">Carregando duelos...</div>
+      </div>
+
+      <!-- Duelos Concluídos -->
+      <h3 style="font-size: 15px; color: var(--verde-neon); font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 12px;">
+        📜 HISTÓRICO DE DUELOS RECENTES
+      </h3>
+      <div id="completedDuelsList">
+        <div style="text-align: center; padding: 25px; color: #64748b; font-size: 13px;">Carregando histórico...</div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: TORNEIO SEMANAL -->
+    <div id="sectionTournament" class="social-card" style="display: none;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <h2 id="tourneyTitle" style="font-family: 'Bangers', cursive; color: var(--amarelo-brasil); font-size: 32px; margin: 0;">
+          🏆 COPA BRASÍLIA · TORNEIO SEMANAL
+        </h2>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">
+          Os 8 melhores colocados da semana competem em chaveamento eliminatório direto (Quartas, Semis e Final)!
+        </p>
+      </div>
+
+      <div class="bracket-container" id="bracketArea">
+        <div style="text-align: center; padding: 40px; color: #64748b; width: 100%;">Montando chaveamento oficial... ⏳</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL DE CRIAR DUELO -->
+  <div id="createDuelModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h3 style="font-family: 'Bangers', cursive; color: #ef4444; font-size: 24px; margin-bottom: 12px;">
+        ⚔️ DESAFIAR JOGADOR
+      </h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Seu recorde atual será travado como meta. O adversário terá 48h para superar sua pontuação!
+      </p>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">
+          Nome do Adversário
+        </label>
+        <input type="text" id="inputDuelTargetUser" class="search-input" style="width: 100%;" placeholder="Digite o username exato...">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;">
+          Modalidade do Duelo
+        </label>
+        <select id="selectDuelGame" class="search-input" style="width: 100%; background: #1e293b; color: #fff; cursor: pointer;">
+          <option value="flappy">🐦 Flappy Lula (Picanhas)</option>
+          <option value="runner">🏃 Empresário 3D (Distância km)</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="btnCancelDuelModal" class="btn-secondary" style="padding: 10px 16px; font-size: 13px;">Cancelar</button>
+        <button id="btnConfirmDuelModal" class="btn-primary" style="background: #ef4444; border-color: #991b1b; padding: 10px 20px; font-size: 14px;">
+          ⚔️ ENVIAR DESAFIO
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: auto;">
+    <p>🇧🇷 <strong>Lula Simulator</strong> — Central Social & Duelos · 2026</p>
+  </footer>
+
+  <script type="module">
+    import { auth } from './js/auth.js';
+    import { social } from './js/social-manager.js';
+    import { escapeHTML } from './js/security.js';
+
+    auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
+
+    const DEFAULT_AVATAR_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23002776'/%3E%3Cpath d='M50 48a16 16 0 1 0 0-32 16 16 0 0 0 0 32zm0 8c-18 0-34 10-38 26 5 8 15 14 38 14s33-6 38-14c-4-16-20-26-38-26z' fill='%23ffdf00'/%3E%3C/svg%3E";
+
+    // Navegação entre Abas
+    const tabFriends = document.getElementById('tabBtnFriends');
+    const tabDuels = document.getElementById('tabBtnDuels');
+    const tabTourney = document.getElementById('tabBtnTournament');
+
+    const secFriends = document.getElementById('sectionFriends');
+    const secDuels = document.getElementById('sectionDuels');
+    const secTourney = document.getElementById('sectionTournament');
+
+    function switchTab(target) {
+      [tabFriends, tabDuels, tabTourney].forEach(b => b.classList.remove('active'));
+      [secFriends, secDuels, secTourney].forEach(s => s.style.display = 'none');
+
+      if (target === 'friends') {
+        tabFriends.classList.add('active');
+        secFriends.style.display = 'block';
+        loadFriendsTab();
+      } else if (target === 'duels') {
+        tabDuels.classList.add('active');
+        secDuels.style.display = 'block';
+        loadDuelsTab();
+      } else if (target === 'tournament') {
+        tabTourney.classList.add('active');
+        secTourney.style.display = 'block';
+        loadTournamentTab();
+      }
+    }
+
+    tabFriends.onclick = () => switchTab('friends');
+    tabDuels.onclick = () => switchTab('duels');
+    tabTourney.onclick = () => switchTab('tournament');
+
+    // 1. CARREGAR ABA DE AMIGOS
+    async function loadFriendsTab() {
+      const data = await social.getFriendsList() || { friends: [], pendingReceived: [], pendingSent: [] };
+      const friends = data.friends || [];
+      const pendingReceived = data.pendingReceived || [];
+
+      const listEl = document.getElementById('friendsList');
+      const countEl = document.getElementById('friendsCountSpan');
+      const pendingArea = document.getElementById('pendingRequestsArea');
+      const pendingList = document.getElementById('pendingRequestsList');
+
+      countEl.textContent = friends.length;
+
+      // Pedidos Pendentes Recebidos
+      if (pendingReceived.length > 0) {
+        pendingArea.style.display = 'block';
+        pendingList.innerHTML = '';
+        pendingReceived.forEach(req => {
+          const item = document.createElement('div');
+          item.className = 'user-item';
+          item.style.borderColor = 'rgba(255, 223, 0, 0.4)';
+          item.innerHTML = `
+            <img src="${DEFAULT_AVATAR_SVG}" class="user-avatar" alt="Avatar">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; font-size: 14px; color: #fff;">${escapeHTML(req.username)}</div>
+              <div style="font-size: 11px; color: #94a3b8;">Deseja ser seu amigo!</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-accept" style="background:#22c55e; border:none; border-radius:8px; padding:6px 12px; color:#000; font-weight:800; font-size:11px; cursor:pointer;">ACEITAR</button>
+              <button class="btn-reject" style="background:#ef4444; border:none; border-radius:8px; padding:6px 10px; color:#fff; font-weight:800; font-size:11px; cursor:pointer;">RECUSAR</button>
+            </div>
+          `;
+          item.querySelector('.btn-accept').onclick = async () => {
+            const r = await social.acceptFriendRequest(req.username);
+            alert(r.message || r.error);
+            loadFriendsTab();
+          };
+          item.querySelector('.btn-reject').onclick = async () => {
+            const r = await social.rejectFriendRequest(req.username);
+            alert(r.message || r.error);
+            loadFriendsTab();
+          };
+          pendingList.appendChild(item);
+        });
+      } else {
+        pendingArea.style.display = 'none';
+      }
+
+      // Amigos Conectados
+      if (friends.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align: center; padding: 30px; color: #64748b; font-size: 13px; grid-column: 1/-1;">
+            Você ainda não adicionou nenhum amigo. Digite o nome de um jogador acima para começar! 🚀
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = '';
+        friends.forEach(f => {
+          const item = document.createElement('div');
+          item.className = 'user-item';
+          item.innerHTML = `
+            <img src="${DEFAULT_AVATAR_SVG}" class="user-avatar" alt="Avatar">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; font-size: 14px; color: #fff; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(f.username)}</div>
+              <div style="font-size: 11px; color: #22c55e; font-weight: 700;">Amigo Conectado ⭐</div>
+            </div>
+            <button class="btn-challenge-friend" style="background:#ef4444; border:none; border-radius:8px; padding:6px 12px; color:#fff; font-weight:800; font-size:11px; cursor:pointer;">
+              ⚔️ DESAFIAR
+            </button>
+          `;
+          item.querySelector('.btn-challenge-friend').onclick = () => {
+            openDuelModal(f.username);
+          };
+          listEl.appendChild(item);
+        });
+      }
+    }
+
+    // Busca de Jogadores
+    const btnSearch = document.getElementById('btnSearchUsers');
+    const inputSearch = document.getElementById('inputSearchUser');
+    const searchArea = document.getElementById('searchResultsArea');
+    const searchList = document.getElementById('searchResultsList');
+
+    btnSearch.onclick = async () => {
+      const q = inputSearch.value.trim();
+      if (!q) return;
+      const res = await social.searchUsers(q);
+      searchArea.style.display = 'block';
+      searchList.innerHTML = '';
+
+      if (res.length === 0) {
+        searchList.innerHTML = `<div style="padding: 14px; color: #94a3b8; font-size: 13px; grid-column: 1/-1;">Nenhum jogador encontrado com "${escapeHTML(q)}".</div>`;
+        return;
+      }
+
+      res.forEach(u => {
+        const item = document.createElement('div');
+        item.className = 'user-item';
+        item.innerHTML = `
+          <img src="${u.avatar || DEFAULT_AVATAR_SVG}" class="user-avatar" alt="Avatar">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 800; font-size: 13px; color: #fff; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(u.username)}</div>
+            <div style="font-size: 11px; color: #94a3b8;">${u.flappyScore || 0} 🥩 · Streak: 🔥 ${u.winStreak || 0}</div>
+          </div>
+          <button class="btn-add-friend" style="background:#0284c7; border:none; border-radius:8px; padding:6px 10px; color:#fff; cursor:pointer; font-weight:800; font-size:11px;">
+            ➕ ADICIONAR
+          </button>
+        `;
+        item.querySelector('.btn-add-friend').onclick = async () => {
+          const r = await social.sendFriendRequest(u.username);
+          alert(r.message || r.error);
+        };
+        searchList.appendChild(item);
+      });
+    };
+
+    // 2. CARREGAR ABA DE DUELOS
+    async function loadDuelsTab() {
+      const duelsData = await social.getUserDuels();
+      const pList = document.getElementById('pendingDuelsList');
+      const cList = document.getElementById('completedDuelsList');
+
+      // Pendentes
+      if (duelsData.pendingDuels.length === 0) {
+        pList.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhum duelo pendente no momento. ⚔️</div>`;
+      } else {
+        pList.innerHTML = '';
+        duelsData.pendingDuels.forEach(d => {
+          const card = document.createElement('div');
+          card.className = 'duel-card';
+          card.innerHTML = `
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#fff;">
+                ⚔️ ${escapeHTML(d.challengerName)} vs ${escapeHTML(d.challengedName)}
+              </div>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                Recorde Travado: <span style="color:var(--amarelo-brasil); font-weight:700;">${d.challengerScore} pts</span> (${d.game})
+              </div>
+            </div>
+            ${d.isChallenged ? `
+              <button class="btn-play-duel" style="background:var(--verde-neon); color:#000; border:none; border-radius:10px; padding:8px 14px; font-weight:800; cursor:pointer;">
+                JOGAR AGORA 🎮
+              </button>
+            ` : `
+              <span style="font-size:11px; color:#f59e0b; font-weight:700;">Aguardando oponente...</span>
+            `}
+          `;
+          card.querySelector('.btn-play-duel')?.addEventListener('click', () => {
+            window.location.href = d.game === 'runner' ? `correr.html?duel=${d.id}` : `jogo.html?duel=${d.id}`;
+          });
+          pList.appendChild(card);
+        });
+      }
+
+      // Concluídos
+      if (duelsData.completedDuels.length === 0) {
+        cList.innerHTML = `<div style="text-align: center; padding: 20px; color: #64748b; font-size: 13px;">Nenhum duelo concluído recentemente.</div>`;
+      } else {
+        cList.innerHTML = '';
+        duelsData.completedDuels.forEach(d => {
+          const card = document.createElement('div');
+          card.className = 'duel-card completed';
+          const isWinner = d.winnerId === auth.getCurrentUser()?.username?.toLowerCase()?.replace(/[^a-z0-9_]/g, '_');
+          card.innerHTML = `
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#fff;">
+                ${escapeHTML(d.challengerName)} (${d.challengerScore}) vs ${escapeHTML(d.challengedName)} (${d.challengedScore})
+              </div>
+              <div style="font-size:11px; color:#94a3b8; margin-top:2px;">
+                Vencedor: <span style="color:var(--verde-neon); font-weight:700;">${escapeHTML(d.winnerId)}</span>
+              </div>
+            </div>
+            <span style="font-size:12px; font-weight:900; color:${isWinner ? 'var(--verde-neon)' : '#ef4444'};">
+              ${isWinner ? '🏆 VITÓRIA' : '💔 DERROTA'}
+            </span>
+          `;
+          cList.appendChild(card);
+        });
+      }
+    }
+
+    // 3. CARREGAR TORNEIO SEMANAL
+    async function loadTournamentTab() {
+      const tourney = await social.getWeeklyTournament();
+      const bArea = document.getElementById('bracketArea');
+      if (!tourney) {
+        bArea.innerHTML = `<div style="text-align:center; padding:30px; color:#ef4444;">Erro ao carregar o chaveamento da semana.</div>`;
+        return;
+      }
+
+      document.getElementById('tourneyTitle').textContent = `🏆 ${tourney.name.toUpperCase()}`;
+
+      bArea.innerHTML = `
+        <!-- Quartas -->
+        <div class="bracket-round">
+          <div style="font-family:'Bangers',cursive; color:#94a3b8; font-size:16px; text-align:center;">QUARTAS DE FINAL</div>
+          ${tourney.quarters.map(m => `
+            <div class="bracket-match">
+              <div class="bracket-player ${m.winner?.player === m.p1?.player ? 'winner' : ''}">
+                <span>${escapeHTML(m.p1?.player || 'TBD')}</span>
+                <span>${m.p1?.score || 0} pts</span>
+              </div>
+              <div class="bracket-player ${m.winner?.player === m.p2?.player ? 'winner' : ''}">
+                <span>${escapeHTML(m.p2?.player || 'TBD')}</span>
+                <span>${m.p2?.score || 0} pts</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Semis -->
+        <div class="bracket-round">
+          <div style="font-family:'Bangers',cursive; color:#94a3b8; font-size:16px; text-align:center;">SEMIFINAIS</div>
+          ${tourney.semis.map(m => `
+            <div class="bracket-match">
+              <div class="bracket-player ${m.winner?.player === m.p1?.player ? 'winner' : ''}">
+                <span>${escapeHTML(m.p1?.player || 'TBD')}</span>
+                <span>${m.p1?.score || 0} pts</span>
+              </div>
+              <div class="bracket-player ${m.winner?.player === m.p2?.player ? 'winner' : ''}">
+                <span>${escapeHTML(m.p2?.player || 'TBD')}</span>
+                <span>${m.p2?.score || 0} pts</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Final -->
+        <div class="bracket-round">
+          <div style="font-family:'Bangers',cursive; color:var(--amarelo-brasil); font-size:16px; text-align:center;">GRANDE FINAL 👑</div>
+          <div class="bracket-match" style="border-color:var(--amarelo-brasil); box-shadow:0 0 20px rgba(255,223,0,0.3);">
+            <div class="bracket-player ${tourney.final?.champion?.player === tourney.final?.p1?.player ? 'winner' : ''}">
+              <span>${escapeHTML(tourney.final?.p1?.player || 'TBD')}</span>
+              <span>${tourney.final?.p1?.score || 0} pts</span>
+            </div>
+            <div class="bracket-player ${tourney.final?.champion?.player === tourney.final?.p2?.player ? 'winner' : ''}">
+              <span>${escapeHTML(tourney.final?.p2?.player || 'TBD')}</span>
+              <span>${tourney.final?.p2?.score || 0} pts</span>
+            </div>
+          </div>
+          <div style="text-align:center; padding:10px; background:rgba(255,223,0,0.1); border-radius:10px; border:1px solid var(--amarelo-brasil); margin-top:8px;">
+            <div style="font-size:10px; color:var(--amarelo-brasil); font-weight:800;">CAMPEÃO DA SEMANA:</div>
+            <div style="font-size:16px; font-weight:900; color:#fff; font-family:'Bangers',cursive;">👑 ${escapeHTML(tourney.final?.champion?.player || 'EM DISPUTA')}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Modal de Novo Duelo
+    const duelModal = document.getElementById('createDuelModal');
+    const inputDuelTarget = document.getElementById('inputDuelTargetUser');
+    const selectDuelGame = document.getElementById('selectDuelGame');
+
+    function openDuelModal(targetName = '') {
+      inputDuelTarget.value = targetName;
+      duelModal.style.display = 'flex';
+    }
+
+    document.getElementById('btnNewDuelAction').onclick = () => openDuelModal();
+    document.getElementById('btnCancelDuelModal').onclick = () => { duelModal.style.display = 'none'; };
+
+    document.getElementById('btnConfirmDuelModal').onclick = async () => {
+      const target = inputDuelTarget.value.trim();
+      const game = selectDuelGame.value;
+      if (!target) return alert('Informe o nome do oponente!');
+
+      const r = await social.createDuel(target, game);
+      alert(r.message || r.error);
+      if (r.success) {
+        duelModal.style.display = 'none';
+        loadDuelsTab();
+      }
+    };
+
+    // Inicialização da aba padrão
+    loadFriendsTab();
+  </script>
+  <script src="js/tracker.js"></script>
+</body>
+</html>

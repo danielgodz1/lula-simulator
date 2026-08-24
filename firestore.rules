@@ -45,8 +45,8 @@ service cloud.firestore {
     function isValidUserData() {
       let d = request.resource.data;
       return d.keys().hasOnly([
-        'username', 'hasPassword', 'totalPicanhas', 'runnerCoins', 'dilmaScore',
-        'flappyScore', 'runnerScore', 'equippedBadge', 'selectedChar',
+        'username', 'hasPassword', 'totalPicanhas', 'lifetimePicanhas', 'runnerCoins', 'dilmaScore',
+        'flappyScore', 'runnerScore', 'winStreak', 'bestWinStreak', 'equippedBadge', 'selectedChar',
         'unlockedCharacters', 'unlockedSkins', 'equippedSkins', 'prestigeLevel',
         'loginStreak', 'lastLoginDate', 'dailyMissions', 'avatar', 'lastSync', 'updatedAt', 'createdAt'
       ])
@@ -56,10 +56,13 @@ service cloud.firestore {
       && isSafeUsername(d.username, 2, 30)
       && (!('hasPassword' in d) || d.hasPassword is bool)
       && (!('totalPicanhas' in d) || (d.totalPicanhas is int && d.totalPicanhas >= 0 && d.totalPicanhas <= 1000000))
+      && (!('lifetimePicanhas' in d) || (d.lifetimePicanhas is int && d.lifetimePicanhas >= 0 && d.lifetimePicanhas <= 5000000))
       && (!('runnerCoins' in d) || (d.runnerCoins is int && d.runnerCoins >= 0 && d.runnerCoins <= 1000000))
       && (!('dilmaScore' in d) || (d.dilmaScore is int && d.dilmaScore >= 0 && d.dilmaScore <= 50000))
       && (!('flappyScore' in d) || (d.flappyScore is int && d.flappyScore >= 0 && d.flappyScore <= 50000))
       && (!('runnerScore' in d) || (d.runnerScore is int && d.runnerScore >= 0 && d.runnerScore <= 50000))
+      && (!('winStreak' in d) || (d.winStreak is int && d.winStreak >= 0 && d.winStreak <= 1000))
+      && (!('bestWinStreak' in d) || (d.bestWinStreak is int && d.bestWinStreak >= 0 && d.bestWinStreak <= 1000))
       && (!('prestigeLevel' in d) || (d.prestigeLevel is int && d.prestigeLevel >= 0 && d.prestigeLevel <= 1000))
       && (!('loginStreak' in d) || (d.loginStreak is int && d.loginStreak >= 0 && d.loginStreak <= 365))
       && (!('lastLoginDate' in d) || (d.lastLoginDate is string && d.lastLoginDate.size() <= 25))
@@ -168,6 +171,41 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly(['totalVisits', 'countries', 'recentVisits', 'updatedAt'])
       );
       allow delete: if isAdmin();
+    }
+
+    // 9. Amizades (Gerenciamento seguro via API / Admin)
+    match /lula_friendships/{friendshipId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 10. Duelos Assíncronos (Leitura pública; Escrita segura via API / Admin)
+    match /lula_duels/{duelId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 11. Feed de Atividade Público (Leitura pública para todos os visitantes)
+    match /lula_activity_feed/{feedId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 12. Sino de Notificações In-App (Acesso seguro via API / Admin)
+    match /lula_notifications/{notifId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 13. Torneios Semanais com Chaveamento (Leitura pública; Escrita via API / Admin)
+    match /lula_tournaments/{tourneyId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 14. Telemetria de Mortes para Balanceamento (Criação permitida; Leitura restrita ao Admin)
+    match /lula_debug_deaths/{deathId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

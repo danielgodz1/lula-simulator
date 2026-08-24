@@ -12,5 +12,11 @@
       "destination": "https://www.lulasimulator.com.br/:path*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    { "source": "/api/activity", "destination": "/api/social?endpoint=activity" },
+    { "source": "/api/notifications", "destination": "/api/social?endpoint=notifications" },
+    { "source": "/api/tournaments", "destination": "/api/social?endpoint=tournaments" },
+    { "source": "/api/telemetry", "destination": "/api/social?endpoint=telemetry" }
   ]
 }

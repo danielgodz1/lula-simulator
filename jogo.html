@@ -810,6 +810,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -817,7 +818,10 @@
       <li><a href="feedback.html">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <!-- ÁREA DO JOGO FLAPPY LULA -->
@@ -1029,8 +1033,19 @@
     import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from './js/game/skins.js';
     import { escapeHTML } from './js/security.js';
     import { AdsManager } from './js/ads-manager.js';
+    import { ghostRecorder } from './js/ghost-recorder.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
+
+    // Aviso de Duelo Ativo (caso URL contenha ?duel=XYZ)
+    const activeDuelId = new URLSearchParams(window.location.search).get('duel');
+    if (activeDuelId) {
+      setTimeout(() => {
+        showBannerAlert('⚔️ DUELO ATIVO! Jogue e supere o recorde para vencer!', true);
+      }, 1000);
+    }
     if (!auth.getCurrentUser()) {
       auth.mountAuthModal(() => auth.renderProfileBadge('nav'));
     }
@@ -1467,19 +1482,14 @@
       });
     }
 
-    // CURVA DE DIFICULDADE & VELOCIDADE PROGRESSIVA:
-    // 0 a 1000 pts: 1.0x -> 3.0x linear suave (atinge 3.0x próximo a 1000 pontos)
-    // 1000 a 5000 pts: 3.0x -> 5.0x linear (escala progressivamente até 5.0x nos 5000 pontos)
-    // Acima de 5000 pts: 5.0x constante
+    // CURVA CONTÍNUA SUAVE DE VELOCIDADE (0 a 3000 pts: 1.0x -> ~2.0x aos 1000 pts -> 5.0x aos 3000 pts)
     function getBaseScoreSpeedMultiplier(currentScore) {
       if (currentScore <= 0) return 1.0;
-      if (currentScore <= 1000) {
-        return 1.0 + (currentScore / 1000) * 2.0;
-      } else if (currentScore <= 5000) {
-        return 3.0 + ((currentScore - 1000) / 4000) * 2.0;
-      } else {
-        return 5.0;
-      }
+      if (currentScore >= 3000) return 5.0;
+      // u varia suavemente de 0 a 1 entre 0 e 3000 pontos
+      const u = currentScore / 3000;
+      // Interpolação suave contínua sem degraus: aos 1000 pts (u = 0.333), f(u) = 1.0 + 4.0*(0.333^1.25) = 2.01x; aos 3000 pts (u = 1.0), f(u) = 5.0x.
+      return 1.0 + 4.0 * Math.pow(u, 1.25);
     }
 
     // MULTIPLICADOR EFETIVO COM EVENTO LULA DESACELERADOR DE TEMPO (-3x)
@@ -1499,17 +1509,39 @@
       return Math.max(1.0, baseMult - reduction);
     }
 
-    function spawnPipe() {
+    let lastPipeTopH = -1;
+
+    function spawnPipe(customSpawnX = null) {
       const GH = H * GH_RATIO;
       const usableH = H - GH;
-      const GAP = Math.max(140, Math.min(usableH * 0.44, H * (gameState.GAP_RATIO || 0.42)));
-      const minTopH = 50;
-      const maxTopH = usableH - GAP - 50;
-      const topH = Math.max(minTopH, minTopH + Math.random() * Math.max(10, maxTopH - minTopH));
+      const GAP = Math.max(150, Math.min(usableH * 0.46, H * (gameState.GAP_RATIO || 0.44)));
+      
+      // Margens de segurança confortáveis no teto e no chão (elimina canos colados no teto ou chão)
+      const minTopH = Math.max(60, usableH * 0.12);
+      const maxTopH = usableH - GAP - Math.max(60, usableH * 0.12);
+
+      let topH;
+      if (lastPipeTopH <= 0 || pipes.length === 0) {
+        // Primeiro cano: altura central suave
+        topH = minTopH + (maxTopH - minTopH) * (0.35 + Math.random() * 0.3);
+      } else {
+        // Canos subsequentes: variação vertical suave e progressiva (máx 26% da tela), garantindo trajetória 100% jogável
+        const maxStep = Math.min(115, usableH * 0.26);
+        const step = (Math.random() * 2 - 1) * maxStep;
+        topH = Math.max(minTopH, Math.min(maxTopH, lastPipeTopH + step));
+      }
+      lastPipeTopH = topH;
+
       const botY = topH + GAP;
       const PW = W * PW_RATIO;
 
-      const spawnX = W + 20;
+      const speedMult = getEffectiveSpeedMultiplier();
+      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
+
+      // Piso de tempo de reação: spawn dinâmico para garantir pelo menos ~0.95s de tempo de visão antes de cruzar o personagem
+      const minSafeDistance = Math.max(W * 0.72, currentSpeed * 60 * 0.95);
+      const spawnX = customSpawnX !== null ? customSpawnX : Math.max(W + 20, lula.x + minSafeDistance);
+
       pipes.push({ x: spawnX, topH, botY, scored: false });
 
       if (gameState.spawnExtraLikes && Math.random() > 0.45) {
@@ -1528,7 +1560,7 @@
       lulaSpawnTimer += dt;
       if (lulaSpawnTimer >= 38.0 && floatingLulaIcons.length === 0) {
         lulaSpawnTimer = 0;
-        const GAP = H * (gameState.GAP_RATIO || 0.42);
+        const GAP = H * (gameState.GAP_RATIO || 0.44);
         const GH = H * GH_RATIO;
         floatingLulaIcons.push({
           x: W + 60,
@@ -1547,13 +1579,13 @@
         nikolasTripleTimer -= dt;
       }
 
-      // Velocidade calculada com base na curva gradual 1.0x -> 3.0x aos 1000 pts e 5.0x aos 5000 pts
+      // Velocidade calculada com base na curva contínua suave 1.0x -> ~2.0x aos 1000 pts -> 5.0x aos 3000 pts
       const speedMult = getEffectiveSpeedMultiplier();
       const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
 
-      // Espaçamento clássico de Flappy Bird por distância (elimina sobreposição de canos)
+      // Espaçamento dinâmico proporcional à velocidade garantindo tempo de reação entre canos >= 0.92s
       const PW = W * PW_RATIO;
-      const minPipeSpacing = Math.max(220, Math.round(W * 0.54));
+      const minPipeSpacing = Math.max(240, Math.round(currentSpeed * 60 * 0.92));
 
       if (pipes.length === 0) {
         spawnPipe();
@@ -2158,6 +2190,11 @@
         ctx.textAlign = 'left';
       }
 
+      // RENDERIZAÇÃO DO GHOST DO RECORDE PESSOAL (SILHUETA TRANSLÚCIDA DO MELHOR VOO)
+      if (state === STATE.PLAYING) {
+        ghostRecorder.drawGhost(ctx, W, H, sessionPlayTime, characterFlySprites[activeCharacter.id] || characterSprites[activeCharacter.id]);
+      }
+
       // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA (TAMANHO ÁGIL & PROPORCIONAL)
       const charWidth = H * 0.092;
       const charHeight = charWidth * 0.55;
@@ -2322,6 +2359,7 @@
     function step(dt) {
       if (state === STATE.PLAYING) {
         sessionPlayTime += dt;
+        ghostRecorder.recordFrame(lula.y / H);
         if (sessionPlayTime >= 30 && !hasAlerted30s) {
           hasAlerted30s = true;
           showBannerAlert('⚡ 30s DE JOGO: RITMO AUMENTANDO LEVEMENTE!', false);
@@ -2371,6 +2409,31 @@
         screenShake = 18; // Ativa tremedeira intensa da tela
         lula.vy = -3.5; // Salto de impacto ao colidir antes de despencar no chão
         try { sounds.playHit(); } catch(e){}
+
+        ghostRecorder.finishSession(score, activeCharacter.id);
+
+        // Telemetria silenciosa de mortes para calibração
+        try {
+          fetch('/api/telemetry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: auth.getCurrentUser()?.username || 'Anônimo',
+              score,
+              speedMult: getEffectiveSpeedMultiplier(),
+              characterId: activeCharacter.id,
+              playTime: sessionPlayTime
+            })
+          }).catch(() => {});
+        } catch(e) {}
+
+        // Resolução de Duelo Ativo caso haja ?duel=XYZ na URL
+        const duelParam = new URLSearchParams(window.location.search).get('duel');
+        if (duelParam && score > 0) {
+          social.respondDuel(duelParam, score).then(res => {
+            if (res.message) showBannerAlert(res.message, false);
+          }).catch(() => {});
+        }
 
         // Se jogou com a Dilma, registra pontuação para desbloquear o Pablo Marçal (200 pts)
         if (activeCharacter.id === 'dilma') {
@@ -2560,6 +2623,8 @@
         state = STATE.PLAYING;
         startScoreSession('flappy');
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
+        lastPipeTopH = -1;
+        ghostRecorder.startSession();
         hasPlayedBesta = false;
         sessionPlayTime = 0;
         hasAlerted30s = false;
@@ -2589,6 +2654,8 @@
       state = STATE.PLAYING;
       startScoreSession('flappy');
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
+      lastPipeTopH = -1;
+      ghostRecorder.startSession();
       hasPlayedBesta = false;
       sessionPlayTime = 0;
       hasAlerted30s = false;

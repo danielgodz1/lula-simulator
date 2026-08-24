@@ -183,9 +183,21 @@ export default async function handler(req, res) {
         } catch (e) {
           console.warn('Aviso: falha ao atualizar ranking acumulado:', e);
         }
-      };
-
       await updateAccumulatedLeaderboards();
+
+      // Registra evento no Feed de Atividades caso haja novo recorde significativo
+      const oldFlappy = existingData.flappyScore || 0;
+      if (mergedFlappy >= 50 && mergedFlappy > oldFlappy) {
+        db.collection('lula_activity_feed').add({
+          username: cleanName,
+          avatar: finalAvatar,
+          eventType: 'new_record',
+          title: 'Novo Recorde Pessoal! 🚀',
+          desc: `${cleanName} acaba de cravar ${mergedFlappy} pontos no Flappy Lula!`,
+          value: mergedFlappy,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {});
+      }
 
       return res.status(200).json({
         success: true,

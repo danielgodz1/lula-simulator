@@ -591,8 +591,10 @@
     </a>
     <button class="nav-toggle-btn" id="navToggle" aria-label="Abrir Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
+      <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html" class="active">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -600,7 +602,10 @@
       <li><a href="visitantes.html">📊 Tráfego</a></li>
       <li><a href="contato.html">✉️ Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <div class="page-container">
@@ -698,8 +703,10 @@
   <script type="module">
     import { auth } from './js/auth.js';
     import { SKIN_PRICING_TABLE, isSkinUnlocked, getEquippedSkin } from './js/game/skins.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
     let activeFilter = 'all';
 

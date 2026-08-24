@@ -176,6 +176,7 @@
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
       <li><a href="correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="social.html">👥 Social & Duelos</a></li>
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
@@ -183,7 +184,10 @@
       <li><a href="feedback.html" class="active">⭐ Feedbacks</a></li>
       <li><a href="contato.html">📬 Contato</a></li>
     </ul>
-    <div class="nav-right-group" id="profileBadgeContainer"></div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div id="notifBellHeaderContainer"></div>
+      <div class="nav-right-group" id="profileBadgeContainer"></div>
+    </div>
   </nav>
 
   <div class="page">
@@ -243,8 +247,10 @@
     import { sendFeedback, getFeedbacks } from './js/firebase-config.js';
     import { auth } from './js/auth.js';
     import { escapeHTML } from './js/security.js';
+    import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
+    social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
     const curUser = auth.getCurrentUser();
     document.getElementById('fbName').value = curUser ? curUser.username : (localStorage.getItem('lula_player') || '');
 

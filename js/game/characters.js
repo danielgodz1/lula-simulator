@@ -84,9 +84,9 @@ export const CHARACTERS = [
     skillDesc: 'Possui 1 Escudo Protetor por partida. Quebra o 1º cano sem morrer!',
     auraColor: '#a855f7',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.064;
-      state.HITBOX_HEIGHT_RATIO = 0.034;
-      state.GAP_RATIO = 0.42;
+      state.HITBOX_WIDTH_RATIO = 0.062;
+      state.HITBOX_HEIGHT_RATIO = 0.032;
+      state.GAP_RATIO = 0.44;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
@@ -110,7 +110,7 @@ export const CHARACTERS = [
     modifier: (state) => {
       state.HITBOX_WIDTH_RATIO = 0.064;
       state.HITBOX_HEIGHT_RATIO = 0.034;
-      state.GAP_RATIO = 0.42;
+      state.GAP_RATIO = 0.43;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
@@ -134,7 +134,7 @@ export const CHARACTERS = [
     modifier: (state) => {
       state.HITBOX_WIDTH_RATIO = 0.063;
       state.HITBOX_HEIGHT_RATIO = 0.033;
-      state.GAP_RATIO = 0.42;
+      state.GAP_RATIO = 0.43;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
@@ -147,18 +147,18 @@ export const CHARACTERS = [
     name: 'Pablo Marçal',
     nickname: 'O Homem do Código',
     title: 'Pablo Marçal — Mindset Quântico',
-    desc: 'Requer liberar a Dilma e conquistar 200 pontos jogando com a Dilma! Velocidade acelerada, 3X pontos e chuva de dinheiro!',
+    desc: 'Requer liberar a Dilma e conquistar 200 pontos jogando com a Dilma! Velocidade ágil, 3X pontos e chuva de dinheiro!',
     sprite: 'img/marcal.png',
     flySprite: 'img/characters/marcal_fly.png',
     requiredPicanhas: 0, // Desbloqueio especial por missão da Dilma
     skillName: '💵 Mindset 3X & Chuva de Grana',
-    skillDesc: 'Velocidade 1.35x maior, triplica os pontos obtidos (3X) e solta chuva de notas e dólares!',
+    skillDesc: 'Ritmo acelerado, triplica os pontos obtidos (3X por cano) e solta chuva de notas e dólares!',
     auraColor: '#0ea5e9',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.065;
-      state.HITBOX_HEIGHT_RATIO = 0.034;
-      state.GAP_RATIO = 0.40;
-      state.SPEED_MULT = 1.35;
+      state.HITBOX_WIDTH_RATIO = 0.062;
+      state.HITBOX_HEIGHT_RATIO = 0.032;
+      state.GAP_RATIO = 0.43;
+      state.SPEED_MULT = 1.15;
       state.EXTRA_SCORE_PER_PIPE = 3;
       state.spawnExtraLikes = false;
       state.hasShield = false;
