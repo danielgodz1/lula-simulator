@@ -494,17 +494,36 @@
 
     // 1. CARREGAR ABA DE AMIGOS
     async function loadFriendsTab() {
-      const data = await social.getFriendsList(true) || { friends: [], pendingReceived: [], pendingSent: [] };
-      const friends = data.friends || [];
-      const pendingReceived = data.pendingReceived || data.pendingIncoming || [];
-      const pendingSent = data.pendingSent || data.pendingOutgoing || [];
-
       const listEl = document.getElementById('friendsList');
       const countEl = document.getElementById('friendsCountSpan');
       const pReceivedArea = document.getElementById('pendingReceivedArea');
       const pReceivedList = document.getElementById('pendingReceivedList');
       const pSentArea = document.getElementById('pendingSentArea');
       const pSentList = document.getElementById('pendingSentList');
+
+      const currentUser = auth.getCurrentUser();
+      if (!currentUser) {
+        countEl.textContent = '0';
+        pReceivedArea.style.display = 'none';
+        pSentArea.style.display = 'none';
+        listEl.innerHTML = `
+          <div style="text-align: center; padding: 35px 20px; background: rgba(0,39,118,0.2); border: 1.5px dashed var(--amarelo-brasil); border-radius: 14px; grid-column: 1/-1;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔐</div>
+            <div style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px;">Conecte sua conta para interagir com amigos</div>
+            <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; max-width: 480px; margin-left: auto; margin-right: auto;">Faça login com seu username para enviar pedidos de amizade, receber notificações e disputar duelos!</div>
+            <button id="btnOpenLoginSocial" class="btn-primary" style="padding: 10px 22px; font-size: 14px;">ENTRAR / CRIAR CONTA</button>
+          </div>
+        `;
+        document.getElementById('btnOpenLoginSocial')?.addEventListener('click', () => {
+          auth.openAuthModal();
+        });
+        return;
+      }
+
+      const data = await social.getFriendsList(true) || { friends: [], pendingReceived: [], pendingSent: [] };
+      const friends = data.friends || [];
+      const pendingReceived = data.pendingReceived || data.pendingIncoming || [];
+      const pendingSent = data.pendingSent || data.pendingOutgoing || [];
 
       countEl.textContent = friends.length;
 

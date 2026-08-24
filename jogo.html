@@ -1526,14 +1526,34 @@
       const maxTopH = usableH - GAP - Math.max(45, usableH * 0.09);
 
       let topH;
+      const range = maxTopH - minTopH;
       if (lastPipeTopH <= 0 || pipes.length === 0) {
         // Primeiro cano: altura centralizada
-        topH = minTopH + (maxTopH - minTopH) * (0.35 + Math.random() * 0.3);
+        topH = minTopH + range * (0.35 + Math.random() * 0.3);
       } else {
-        // Canos subsequentes: variação vertical desafiadora
-        const maxStep = Math.min(135, usableH * 0.30);
-        const step = (Math.random() * 2 - 1) * maxStep;
-        topH = Math.max(minTopH, Math.min(maxTopH, lastPipeTopH + step));
+        // Variação vertical ampla e desafiadora (canos bem altos, médios e baixos)
+        const highZone = 0.08 + Math.random() * 0.22; // Zona Alta (próxima ao teto/nuvens)
+        const midZone = 0.38 + Math.random() * 0.22;  // Zona Média
+        const lowZone = 0.70 + Math.random() * 0.24;  // Zona Baixa (próxima ao chão/cidade)
+
+        const prevRatio = (lastPipeTopH - minTopH) / Math.max(1, range);
+        let chosenRatio;
+        if (prevRatio > 0.55) {
+          // Se o anterior estava baixo, sobe para o alto ou meio
+          chosenRatio = Math.random() > 0.35 ? highZone : midZone;
+        } else if (prevRatio < 0.40) {
+          // Se o anterior estava alto, desce para o baixo ou meio
+          chosenRatio = Math.random() > 0.35 ? lowZone : midZone;
+        } else {
+          // Se estava no meio, oscila com força para cima ou para baixo
+          chosenRatio = Math.random() > 0.5 ? highZone : lowZone;
+        }
+
+        const candidateTopH = minTopH + range * chosenRatio;
+        const maxStep = usableH * 0.58;
+        const diff = candidateTopH - lastPipeTopH;
+        const clampedDiff = Math.max(-maxStep, Math.min(maxStep, diff));
+        topH = Math.max(minTopH, Math.min(maxTopH, lastPipeTopH + clampedDiff));
       }
       lastPipeTopH = topH;
 

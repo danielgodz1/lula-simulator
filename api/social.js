@@ -122,8 +122,7 @@ export default async function handler(req, res) {
       try {
         const snap = await db.collection('lula_notifications')
           .where('userId', '==', normUser)
-          .orderBy('createdAt', 'desc')
-          .limit(20)
+          .limit(40)
           .get();
 
         const notifications = [];
@@ -144,8 +143,11 @@ export default async function handler(req, res) {
           });
         });
 
-        return res.status(200).json({ success: true, unreadCount, notifications });
+        notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        return res.status(200).json({ success: true, unreadCount, notifications: notifications.slice(0, 20) });
       } catch (err) {
+        console.error('Erro ao buscar notificações:', err);
         return res.status(500).json({ success: false, error: 'Erro ao buscar notificações.' });
       }
     }
