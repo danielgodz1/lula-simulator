@@ -1482,14 +1482,18 @@
       });
     }
 
-    // CURVA CONTÍNUA SUAVE DE VELOCIDADE (0 a 3000 pts: 1.0x -> ~2.0x aos 1000 pts -> 5.0x aos 3000 pts)
+    // CURVA DE DIFICULDADE & VELOCIDADE (1.0x -> 3.0x aos 1000 pts -> 5.0x aos 5000 pts)
     function getBaseScoreSpeedMultiplier(currentScore) {
       if (currentScore <= 0) return 1.0;
-      if (currentScore >= 3000) return 5.0;
-      // u varia suavemente de 0 a 1 entre 0 e 3000 pontos
-      const u = currentScore / 3000;
-      // Interpolação suave contínua sem degraus: aos 1000 pts (u = 0.333), f(u) = 1.0 + 4.0*(0.333^1.25) = 2.01x; aos 3000 pts (u = 1.0), f(u) = 5.0x.
-      return 1.0 + 4.0 * Math.pow(u, 1.25);
+      if (currentScore < 1000) {
+        // Aceleração ágil e desafiadora de 1.0x até 3.0x aos 1000 pontos
+        const u = currentScore / 1000;
+        return 1.0 + 2.0 * Math.pow(u, 0.95);
+      }
+      if (currentScore >= 5000) return 5.0;
+      // Progressão de 3.0x a 5.0x entre 1000 e 5000 pontos
+      const u2 = (currentScore - 1000) / 4000;
+      return 3.0 + 2.0 * u2;
     }
 
     // MULTIPLICADOR EFETIVO COM EVENTO LULA DESACELERADOR DE TEMPO (-3x)
@@ -1514,19 +1518,20 @@
     function spawnPipe(customSpawnX = null) {
       const GH = H * GH_RATIO;
       const usableH = H - GH;
-      const GAP = Math.max(150, Math.min(usableH * 0.46, H * (gameState.GAP_RATIO || 0.44)));
+      // Gap desafiador e clássico
+      const GAP = Math.max(134, Math.min(usableH * 0.36, H * (gameState.GAP_RATIO || 0.35)));
       
-      // Margens de segurança confortáveis no teto e no chão (elimina canos colados no teto ou chão)
-      const minTopH = Math.max(60, usableH * 0.12);
-      const maxTopH = usableH - GAP - Math.max(60, usableH * 0.12);
+      // Margens confortáveis no teto e no chão
+      const minTopH = Math.max(50, usableH * 0.10);
+      const maxTopH = usableH - GAP - Math.max(50, usableH * 0.10);
 
       let topH;
       if (lastPipeTopH <= 0 || pipes.length === 0) {
-        // Primeiro cano: altura central suave
+        // Primeiro cano: altura centralizada
         topH = minTopH + (maxTopH - minTopH) * (0.35 + Math.random() * 0.3);
       } else {
-        // Canos subsequentes: variação vertical suave e progressiva (máx 26% da tela), garantindo trajetória 100% jogável
-        const maxStep = Math.min(115, usableH * 0.26);
+        // Canos subsequentes: variação vertical desafiadora
+        const maxStep = Math.min(135, usableH * 0.30);
         const step = (Math.random() * 2 - 1) * maxStep;
         topH = Math.max(minTopH, Math.min(maxTopH, lastPipeTopH + step));
       }
@@ -1535,12 +1540,8 @@
       const botY = topH + GAP;
       const PW = W * PW_RATIO;
 
-      const speedMult = getEffectiveSpeedMultiplier();
-      const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
-
-      // Piso de tempo de reação: spawn dinâmico para garantir pelo menos ~0.95s de tempo de visão antes de cruzar o personagem
-      const minSafeDistance = Math.max(W * 0.72, currentSpeed * 60 * 0.95);
-      const spawnX = customSpawnX !== null ? customSpawnX : Math.max(W + 20, lula.x + minSafeDistance);
+      // Spawn sempre bem à direita fora da tela
+      const spawnX = customSpawnX !== null ? customSpawnX : (W + 40);
 
       pipes.push({ x: spawnX, topH, botY, scored: false });
 
@@ -1560,7 +1561,7 @@
       lulaSpawnTimer += dt;
       if (lulaSpawnTimer >= 38.0 && floatingLulaIcons.length === 0) {
         lulaSpawnTimer = 0;
-        const GAP = H * (gameState.GAP_RATIO || 0.44);
+        const GAP = H * (gameState.GAP_RATIO || 0.35);
         const GH = H * GH_RATIO;
         floatingLulaIcons.push({
           x: W + 60,
@@ -1579,19 +1580,19 @@
         nikolasTripleTimer -= dt;
       }
 
-      // Velocidade calculada com base na curva contínua suave 1.0x -> ~2.0x aos 1000 pts -> 5.0x aos 3000 pts
+      // Velocidade calculada com base na curva 1.0x -> 3.0x aos 1000 pts -> 5.0x aos 5000 pts
       const speedMult = getEffectiveSpeedMultiplier();
       const currentSpeed = (gameState.isTurboActive ? BASE_PIPE_SPEED * 1.4 : BASE_PIPE_SPEED * gameState.SPEED_MULT) * speedMult;
 
-      // Espaçamento dinâmico proporcional à velocidade garantindo tempo de reação entre canos >= 0.92s
+      // Espaçamento clássico amplo entre os canos (bem separados e mais longe uns dos outros)
       const PW = W * PW_RATIO;
-      const minPipeSpacing = Math.max(240, Math.round(currentSpeed * 60 * 0.92));
+      const pipeSpacing = Math.max(300, Math.round(W * 0.60));
 
       if (pipes.length === 0) {
         spawnPipe();
       } else {
         const lastPipe = pipes[pipes.length - 1];
-        if ((W + 20) - lastPipe.x >= minPipeSpacing) {
+        if ((W + 40) - lastPipe.x >= pipeSpacing) {
           spawnPipe();
         }
       }
