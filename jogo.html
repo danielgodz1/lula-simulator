@@ -1079,14 +1079,19 @@
       if (isFs) {
         // Preserva a proporção arcade de retrato para NUNCA distorcer em tela cheia de PCs ultra-wide
         H = window.innerHeight;
-        W = Math.min(window.innerWidth - 20, Math.round(H * 0.68));
+        W = Math.min(window.innerWidth - 20, Math.round(H * 0.58));
       } else if (isMobile) {
         W = Math.min(window.innerWidth - 10, 480);
-        H = Math.max(360, Math.min(window.innerHeight - 56, 680));
+        H = Math.max(400, Math.min(window.innerHeight - 56, 800));
       } else {
-        const maxH = Math.min(window.innerHeight - 80, 660);
-        H = Math.max(maxH, 420);
-        W = Math.round(H * 0.70);
+        // Desktop / Computador: tela expandida para cima aproveitando a altura total como Flappy Bird clássico
+        const availableH = window.innerHeight - 68; // Desconta navbar (52px) e margens
+        H = Math.max(560, Math.min(availableH, 1020));
+        // Proporção Flappy Bird arcade (~0.58) para visão vertical ampla e voo fluido
+        W = Math.min(Math.round(H * 0.58), window.innerWidth - 340);
+        if (W < 440 && window.innerWidth > 650) {
+          W = Math.min(480, window.innerWidth - 40);
+        }
       }
 
       // Resolução Retina HD máxima (2.0x a 3.0x) para máxima nitidez em telas de PC e celulares
@@ -1094,12 +1099,19 @@
       dpr = Math.min(dpr, 3.0);
       
       // Proporção ideal e reduzida do personagem conforme solicitado (não fica gigante)
-      LR_RATIO = isMobile ? 0.036 : 0.040;
+      LR_RATIO = isMobile ? 0.036 : 0.038;
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
+
+      // Ajuste dinâmico suave da física para o tamanho maior da tela
+      const scaleH = H / 640;
+      const scaleW = W / 440;
+      GRAVITY = 0.35 * Math.sqrt(scaleH);
+      JUMP_POWER = -7.8 * Math.sqrt(scaleH);
+      BASE_PIPE_SPEED = 2.2 * Math.sqrt(scaleW);
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
