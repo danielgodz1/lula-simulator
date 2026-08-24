@@ -1033,7 +1033,6 @@
     import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from './js/game/skins.js';
     import { escapeHTML } from './js/security.js';
     import { AdsManager } from './js/ads-manager.js';
-    import { ghostRecorder } from './js/ghost-recorder.js';
     import { social } from './js/social-manager.js';
 
     auth.renderProfileBadge('nav');
@@ -2211,11 +2210,6 @@
         ctx.textAlign = 'left';
       }
 
-      // RENDERIZAÇÃO DO GHOST DO RECORDE PESSOAL (SILHUETA TRANSLÚCIDA DO MELHOR VOO)
-      if (state === STATE.PLAYING) {
-        ghostRecorder.drawGhost(ctx, W, H, sessionPlayTime, characterFlySprites[activeCharacter.id] || characterSprites[activeCharacter.id]);
-      }
-
       // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA (TAMANHO ÁGIL & PROPORCIONAL)
       const charWidth = H * 0.092;
       const charHeight = charWidth * 0.55;
@@ -2380,7 +2374,6 @@
     function step(dt) {
       if (state === STATE.PLAYING) {
         sessionPlayTime += dt;
-        ghostRecorder.recordFrame(lula.y / H);
         if (sessionPlayTime >= 30 && !hasAlerted30s) {
           hasAlerted30s = true;
           showBannerAlert('⚡ 30s DE JOGO: RITMO AUMENTANDO LEVEMENTE!', false);
@@ -2430,8 +2423,6 @@
         screenShake = 18; // Ativa tremedeira intensa da tela
         lula.vy = -3.5; // Salto de impacto ao colidir antes de despencar no chão
         try { sounds.playHit(); } catch(e){}
-
-        ghostRecorder.finishSession(score, activeCharacter.id);
 
         // Telemetria silenciosa de mortes para calibração
         try {
@@ -2645,7 +2636,6 @@
         startScoreSession('flappy');
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         lastPipeTopH = -1;
-        ghostRecorder.startSession();
         hasPlayedBesta = false;
         sessionPlayTime = 0;
         hasAlerted30s = false;
@@ -2676,7 +2666,6 @@
       startScoreSession('flappy');
       pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
       lastPipeTopH = -1;
-      ghostRecorder.startSession();
       hasPlayedBesta = false;
       sessionPlayTime = 0;
       hasAlerted30s = false;
