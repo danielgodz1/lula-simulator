@@ -162,9 +162,14 @@ export default async function handler(req, res) {
     }
   }
 
-  // 2. POST: Registra uma nova visita detectando o país
+  // 2. POST: Registra uma nova visita detectando o país com validação de dispositivo único
   if (req.method === 'POST') {
     try {
+      const { deviceId, isNewDevice } = req.body || {};
+      const cleanDeviceId = (deviceId && typeof deviceId === 'string')
+        ? deviceId.replace(/[^a-zA-Z0-9_\-]/g, '').slice(0, 64)
+        : null;
+
       // Detecção de País e Cidade via Headers da Vercel / Cloudflare
       let countryCode = (
         req.headers['x-vercel-ip-country'] ||
@@ -196,6 +201,68 @@ export default async function handler(req, res) {
 
       const countryName = COUNTRY_NAMES[countryCode] || countryCode;
       const flag = getFlagEmoji(countryCode);
+
+      const alreadyRegisteredResponse = {
+        success: true,
+        alreadyRegistered: true,
+        country: countryCode,
+        countryName,
+        flag,
+        city
+      };
+
+      // 1. Se o dispositivo já foi computado pelo cliente, não contabiliza novamente
+      if (isNewDevice === false) {
+        return res.status(200).json(alreadyRegisteredResponse);
+      }
+
+      // 2. Verificação no Firebase Admin SDK de dispositivo único existente
+      if (hasAdminCreds && db && cleanDeviceId) {
+        try {
+          const devRef = db.collection('lula_devices_v2').doc(cleanDeviceId);
+          const devSnap = await devRef.get();
+
+          if (devSnap.exists) {
+            // Computador/Celular já conhecido! Não duplica a contagem
+            return res.status(200).json(alreadyRegisteredResponse);
+          }
+
+          // Registra o novo dispositivo único
+          await devRef.set({
+            firstSeen: new Date().toISOString(),
+            country: countryCode,
+            city
+          });
+        } catch (devErr) {
+          console.warn('⚠️ Falha ao consultar lula_devices_v2 no Firestore Admin:', devErr.message);
+        }
+      }
+
+      // 3. Verificação no Fallback REST de dispositivo único existente
+      if (!hasAdminCreds && cleanDeviceId) {
+        try {
+          const devDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_devices_v2/${cleanDeviceId}`;
+          const devCheckRes = await fetch(devDocUrl);
+          if (devCheckRes.ok) {
+            return res.status(200).json(alreadyRegisteredResponse);
+          }
+
+          await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_devices_v2?documentId=${cleanDeviceId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fields: {
+                firstSeen: { timestampValue: new Date().toISOString() },
+                country: { stringValue: countryCode },
+                city: { stringValue: city }
+              }
+            })
+          });
+        } catch (restDevErr) {
+          console.warn('⚠️ Falha ao registrar dispositivo no fallback REST:', restDevErr.message);
+        }
+      }
+
       const visitRecord = {
         country: countryCode,
         countryName,
