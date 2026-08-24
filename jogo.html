@@ -1481,18 +1481,18 @@
       });
     }
 
-    // CURVA DE DIFICULDADE & VELOCIDADE (1.0x -> 3.0x aos 1000 pts -> 5.0x aos 5000 pts)
+    // CURVA DE DIFICULDADE & VELOCIDADE (1.0x -> 2.0x aos 1000 pts -> 5.0x aos 5000 pts)
     function getBaseScoreSpeedMultiplier(currentScore) {
       if (currentScore <= 0) return 1.0;
       if (currentScore < 1000) {
-        // Aceleração ágil e desafiadora de 1.0x até 3.0x aos 1000 pontos
+        // Progressão equilibrada atingindo 2.0x apenas próximo aos 1000 pontos
         const u = currentScore / 1000;
-        return 1.0 + 2.0 * Math.pow(u, 0.95);
+        return 1.0 + 1.0 * Math.pow(u, 1.15);
       }
       if (currentScore >= 5000) return 5.0;
-      // Progressão de 3.0x a 5.0x entre 1000 e 5000 pontos
+      // Dificuldade acelerada após os 1000 pontos, escalando de 2.0x a 5.0x
       const u2 = (currentScore - 1000) / 4000;
-      return 3.0 + 2.0 * u2;
+      return 2.0 + 3.0 * Math.pow(u2, 0.95);
     }
 
     // MULTIPLICADOR EFETIVO COM EVENTO LULA DESACELERADOR DE TEMPO (-3x)
@@ -1639,9 +1639,14 @@
             showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA!', false);
           }
 
-          // AVISO AO ATINGIR 1000 PONTOS (3.0x VELOCIDADE)
+          // AVISO AO ATINGIR 1000 PONTOS (2.0x VELOCIDADE)
           if (score >= 1000 && (score - pointsEarned) < 1000) {
-            showBannerAlert('⚡ 1000 PONTOS: DIFICULDADE 3.0x ATINGIDA!', false);
+            showBannerAlert('⚡ 1000 PONTOS: DIFICULDADE 2.0x ATINGIDA!', false);
+          }
+
+          // AVISO AO ATINGIR 3000 PONTOS (3.5x VELOCIDADE)
+          if (score >= 3000 && (score - pointsEarned) < 3000) {
+            showBannerAlert('⚡ 3000 PONTOS: RITMO INTENSO 3.5x!', false);
           }
 
           // AVISO AO ATINGIR 5000 PONTOS (5.0x VELOCIDADE MÁXIMA)
