@@ -1064,6 +1064,12 @@
 
     let dpr = 1;
     let LR_RATIO = 0.040;
+    let GRAVITY = 0.35;
+    let JUMP_POWER = -7.8;
+    let BASE_PIPE_SPEED = 2.2;
+    let PW_RATIO = 0.145;
+    let GH_RATIO = 0.16;
+    let SPAWN_FREQ = 120;
 
     function isFullscreenActive() {
       return !!(document.fullscreenElement || document.webkitFullscreenElement);
@@ -1131,13 +1137,6 @@
 
     const lulaIconImg = new Image();
     lulaIconImg.src = 'img/lula.png';
-
-    let GRAVITY    = 0.35;
-    let JUMP_POWER = -7.8;
-    let BASE_PIPE_SPEED = 2.2;
-    let PW_RATIO   = 0.145;
-    let GH_RATIO   = 0.16;
-    let SPAWN_FREQ = 120;
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
