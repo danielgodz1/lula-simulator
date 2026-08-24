@@ -2244,11 +2244,14 @@
       lastFrameTime = currentTime;
       accumulatedTime += elapsed;
 
-      // Executa lógica travada exatamente a 60 FPS em qualquer monitor (60Hz, 120Hz, 144Hz, 200Hz, 240Hz, etc.)
-      while (accumulatedTime >= FRAME_DURATION) {
+      // Executa física fluida a 60 FPS nativo com salvaguarda anti-queda de quadros
+      let steps = 0;
+      while (accumulatedTime >= FRAME_DURATION && steps < 4) {
         step(FRAME_DURATION / 1000);
         accumulatedTime -= FRAME_DURATION;
+        steps++;
       }
+      if (accumulatedTime >= FRAME_DURATION) accumulatedTime = 0;
 
       draw();
       requestAnimationFrame(loop);

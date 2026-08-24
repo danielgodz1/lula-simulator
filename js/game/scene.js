@@ -176,25 +176,23 @@ export class GameScene {
     this.camera.position.set(0, 4.4, 7.2);
     this.camera.lookAt(0, 1.6, -14);
 
-    // 3. Renderizador WebGL com Resolução Adaptativa Inteligente
+    // 3. Renderizador WebGL com Otimização de Alta Performance para Mobile (Ex: Galaxy A26)
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
-    const cores = navigator.hardwareConcurrency || 4;
-    const memory = navigator.deviceMemory || 4;
-    // Flagships como S23 Ultra possuem 8 cores e alta capacidade de GPU
-    const isHighEndDevice = (!isMobile) || (cores >= 8 || memory >= 6);
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: isHighEndDevice,
+      antialias: !isMobile, // Desativa MSAA em celulares para poupar fillrate de GPUs intermediárias
       alpha: false,
       powerPreference: 'high-performance',
-      precision: isHighEndDevice ? 'highp' : 'mediump'
+      precision: isMobile ? 'mediump' : 'highp',
+      stencil: false,
+      depth: true
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    // Resolução Adaptativa: Inicia com alta fidelidade em celulares potentes e escala dinamicamente
-    this.maxPixelRatio = isMobile ? (isHighEndDevice ? Math.min(window.devicePixelRatio || 1, 2.0) : 1.35) : Math.min(window.devicePixelRatio || 1, 2.0);
-    this.minPixelRatio = 1.0;
-    this.currentPixelRatio = isMobile ? (isHighEndDevice ? Math.min(window.devicePixelRatio || 1, 1.75) : 1.10) : Math.min(window.devicePixelRatio || 1, 1.75);
+    // Resolução Adaptativa Fluida: 1.0x em celulares médios e escala dinamicamente
+    this.maxPixelRatio = isMobile ? 1.20 : Math.min(window.devicePixelRatio || 1, 2.0);
+    this.minPixelRatio = 0.85;
+    this.currentPixelRatio = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.75);
     this.renderer.setPixelRatio(this.currentPixelRatio);
 
     this.perfCheckTimer = 0;
@@ -207,9 +205,9 @@ export class GameScene {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
-    // Sombras Otimizadas
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = isHighEndDevice ? THREE.PCFSoftShadowMap : THREE.BasicShadowMap;
+    // Sombras Otimizadas (Desativadas em mobile para garantir 60 FPS cravados)
+    this.renderer.shadowMap.enabled = !isMobile;
+    this.renderer.shadowMap.type = THREE.BasicShadowMap;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);

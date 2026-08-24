@@ -93,8 +93,13 @@
     }
 
     nav {
-      height: 54px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 52px;
       padding: 0 14px;
+      z-index: 9999 !important;
     }
 
     .game-wrapper {
@@ -525,13 +530,21 @@
     // Menu Mobile Toggle
     const navToggle = document.getElementById('navToggle');
     const navLinksList = document.getElementById('navLinksList');
-    navToggle?.addEventListener('click', (e) => {
+    const handleNavToggle = (e) => {
+      e.preventDefault();
       e.stopPropagation();
       navLinksList?.classList.toggle('open');
-    });
+    };
+    navToggle?.addEventListener('click', handleNavToggle);
+    navToggle?.addEventListener('touchend', handleNavToggle);
 
     // Fecha o menu ao clicar fora ou em algum link e interrompe os áudios
     document.addEventListener('click', (e) => {
+      if (!e.target.closest('nav')) {
+        navLinksList?.classList.remove('open');
+      }
+    });
+    document.addEventListener('touchend', (e) => {
       if (!e.target.closest('nav')) {
         navLinksList?.classList.remove('open');
       }

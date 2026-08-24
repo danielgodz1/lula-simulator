@@ -65,32 +65,50 @@
       font-size: 15px;
     }
 
-    .player-section {
-      display: flex;
-      gap: 12px;
+    .ranking-medal-tag {
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      background: rgba(22, 27, 38, 0.8);
-      border: 1.5px solid var(--amarelo-brasil);
-      border-radius: 16px;
-      padding: 12px 18px;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      vertical-align: middle;
     }
-
-    .player-section input {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 8px 14px;
-      color: #ffffff;
-      font-size: 15px;
-      outline: none;
-      min-width: 220px;
+    .ranking-medal-tag.medal-bolsonaro {
+      background: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #ca8a04 100%);
+      color: #000;
+      border: 1px solid #ffd700;
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.5);
     }
-
-    .player-section input:focus {
-      border-color: var(--verde-neon);
+    .mini-medal-img {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .ranking-medal-tag.medal-picanha {
+      background: linear-gradient(135deg, #fed7aa, #f97316);
+      color: #431407;
+      border: 1px solid #ea580c;
+    }
+    .ranking-medal-tag.medal-stf {
+      background: linear-gradient(135deg, #e9d5ff, #a855f7);
+      color: #3b0764;
+      border: 1px solid #9333ea;
+    }
+    .ranking-medal-tag.medal-marcal {
+      background: linear-gradient(135deg, #bae6fd, #0284c7);
+      color: #082f49;
+      border: 1px solid #0284c7;
+    }
+    .ranking-medal-tag.medal-dilma {
+      background: linear-gradient(135deg, #fecaca, #ef4444);
+      color: #450a0a;
+      border: 1px solid #dc2626;
     }
 
     .tab-buttons {
@@ -265,13 +283,6 @@
       <p>Confira a lista completa de todos os jogadores classificados com foto de perfil!</p>
     </div>
 
-    <!-- SEÇÃO DO APELIDO DO JOGADOR -->
-    <div class="player-section">
-      <label style="font-weight: 700; color: var(--amarelo-brasil); font-size:14px;">🎮 Seu Apelido:</label>
-      <input type="text" id="playerNameInput" placeholder="Ex: Empresário_BR" maxlength="25">
-      <button class="btn-primary" style="font-size: 15px; padding: 7px 18px;" id="btnSaveName">Salvar</button>
-    </div>
-
     <!-- ABAS FLAPPY vs RUNNER 3D -->
     <div class="tab-buttons">
       <button class="tab-btn active" id="tabFlappy">🐦 Flappy Lula (Picanhas)</button>
@@ -307,45 +318,6 @@
 
     let currentTab = 'flappy';
     let allCurrentScores = [];
-
-    const cur = auth.getCurrentUser();
-    if (cur && cur.username) {
-      document.getElementById('playerNameInput').value = cur.username;
-    } else {
-      const savedName = localStorage.getItem('lula_player');
-      if (savedName) document.getElementById('playerNameInput').value = savedName;
-    }
-
-    document.getElementById('btnSaveName').onclick = async function() {
-      const input = document.getElementById('playerNameInput');
-      const name = (input.value || '').trim();
-      if (!name || name.length < 2) {
-        alert('Por favor digite um apelido válido!');
-        return;
-      }
-      const btn = document.getElementById('btnSaveName');
-      btn.textContent = 'Salvando... ⏳';
-      btn.disabled = true;
-
-      try {
-        const res = await auth.playWithChosenName(name);
-        btn.textContent = 'Salvar';
-        btn.disabled = false;
-
-        if (!res.success) {
-          alert(res.error || 'Erro ao carregar apelido.');
-          return;
-        }
-
-        auth.renderProfileBadge('nav');
-        alert(`Apelido "${res.user?.username || name}" carregado e sincronizado com a nuvem! 🚀`);
-        loadRankingData(true);
-      } catch (err) {
-        btn.textContent = 'Salvar';
-        btn.disabled = false;
-        alert('Erro ao sincronizar nome.');
-      }
-    };
 
     document.getElementById('tabFlappy').onclick = () => switchTab('flappy');
     document.getElementById('tabRunner').onclick = () => switchTab('runner');
@@ -424,11 +396,29 @@
         const effectiveAvatar = (isCurPlayer && curUser.avatar) ? curUser.avatar : item.avatar;
         const avatarUrl = effectiveAvatar && effectiveAvatar.length > 5 ? effectiveAvatar : DEFAULT_AVATAR_SVG;
 
+        // Medalha / Selo Especial Equipado
+        const equippedMedal = (isCurPlayer ? localStorage.getItem('lula_equipped_medal') : '') || item.equippedMedal || (rankIdx === 0 ? 'medal_bolsonaro' : (rankIdx === 1 ? 'medal_picanha' : (rankIdx === 2 ? 'medal_stf' : '')));
+        let medalHtml = '';
+        if (equippedMedal === 'medal_bolsonaro') {
+          medalHtml = `<span class="ranking-medal-tag medal-bolsonaro" title="Medalha Imbrochável (Clube Bolsonaro)"><img src="img/conquistas/medalha_bolsonaro.png" class="mini-medal-img" alt="Medalha Imbrochável"> 🎖️ Imbrochável</span>`;
+        } else if (equippedMedal === 'medal_picanha') {
+          medalHtml = `<span class="ranking-medal-tag medal-picanha" title="Picanha de Ouro Presidencial">🥩 Picanha Ouro</span>`;
+        } else if (equippedMedal === 'medal_stf') {
+          medalHtml = `<span class="ranking-medal-tag medal-stf" title="Habeas Corpus Supremo">⚖️ STF</span>`;
+        } else if (equippedMedal === 'medal_marcal') {
+          medalHtml = `<span class="ranking-medal-tag medal-marcal" title="Código Quântico do Mindset">🚀 Mindset 3X</span>`;
+        } else if (equippedMedal === 'medal_dilma') {
+          medalHtml = `<span class="ranking-medal-tag medal-dilma" title="Estocador de Vento Oficial">🌪️ Vento</span>`;
+        }
+
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
           <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
-          <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-            <div style="font-weight:700; font-size:15px; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</div>
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+            <div style="font-weight:700; font-size:15px; color:#fff; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safePlayer}</span>
+              ${medalHtml}
+            </div>
             <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted);">
               <span style="font-size: 13px;" title="${safeCountryName}">${safeFlag}</span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
