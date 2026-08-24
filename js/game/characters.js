@@ -9,12 +9,14 @@ export const CHARACTERS = [
     title: 'Lula da Silva — O Presidente',
     desc: 'Terno presidencial, carisma popular e voo macio distribuindo picanha para o povo.',
     sprite: 'img/lula.png',
+    flySprite: 'img/characters/lula_fly.png',
     requiredPicanhas: 0, // Sempre liberado
     skillName: '🕊️ Voo Tolerante & Picanha',
     skillDesc: 'Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.',
     auraColor: '#ffdf00',
     modifier: (state) => {
-      state.HITBOX_R = 0.024;
+      state.HITBOX_WIDTH_RATIO = 0.082;
+      state.HITBOX_HEIGHT_RATIO = 0.042;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -30,12 +32,14 @@ export const CHARACTERS = [
     title: 'Janja da Silva — A Primeira-Dama',
     desc: 'Óculos modernos, visual vibrante e presença marcante com chuva de corações bônus.',
     sprite: 'img/janja.png',
+    flySprite: 'img/characters/janja_fly.png',
     requiredPicanhas: 25,
     skillName: '💖 Chuva de Curtidas (+2 pts)',
     skillDesc: 'Curtidas e corações bônus aparecem no trajeto concedendo +2 pontos adicionais.',
     auraColor: '#ec4899',
     modifier: (state) => {
-      state.HITBOX_R = 0.026;
+      state.HITBOX_WIDTH_RATIO = 0.085;
+      state.HITBOX_HEIGHT_RATIO = 0.044;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -51,12 +55,14 @@ export const CHARACTERS = [
     title: 'Nikolas Ferreira — O Deputado Viral',
     desc: 'Microfone em punho e gravata verde-amarela. Velocidade turbo com dobro de picanhas!',
     sprite: 'img/nikolas.png',
+    flySprite: 'img/characters/nikolas_fly.png',
     requiredPicanhas: 60,
     skillName: '⚡ Ritmo Acelerado (2x Picanhas)',
     skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
     modifier: (state) => {
-      state.HITBOX_R = 0.024;
+      state.HITBOX_WIDTH_RATIO = 0.082;
+      state.HITBOX_HEIGHT_RATIO = 0.042;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.15;
       state.EXTRA_SCORE_PER_PIPE = 2;
@@ -72,12 +78,14 @@ export const CHARACTERS = [
     title: 'Alexandre de Moraes — Xandão',
     desc: 'Toga da Suprema Corte e martelo da justiça. Possui escudo blindado contra colisões.',
     sprite: 'img/moraes.png',
+    flySprite: 'img/characters/moraes_fly.png',
     requiredPicanhas: 120,
     skillName: '🛡️ Mandado Blindado (Escudo)',
     skillDesc: 'Possui 1 Escudo Protetor por partida. Quebra o 1º cano sem morrer!',
     auraColor: '#a855f7',
     modifier: (state) => {
-      state.HITBOX_R = 0.026;
+      state.HITBOX_WIDTH_RATIO = 0.085;
+      state.HITBOX_HEIGHT_RATIO = 0.045;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -94,12 +102,14 @@ export const CHARACTERS = [
     title: 'Jair Bolsonaro — O Capitão',
     desc: 'Faixa presidencial e pose clássica. Acumule 4 canos perfeitos para ativar o Modo Turbo!',
     sprite: 'img/bolsonaro.png',
+    flySprite: 'img/characters/bolsonaro_fly.png',
     requiredPicanhas: 200,
     skillName: '🚀 Modo Turbo Patriota',
     skillDesc: 'A cada 4 canos perfeitos sem bater, ativa 4s de super velocidade e ímã de picanha!',
     auraColor: '#22c55e',
     modifier: (state) => {
-      state.HITBOX_R = 0.026;
+      state.HITBOX_WIDTH_RATIO = 0.085;
+      state.HITBOX_HEIGHT_RATIO = 0.045;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -116,12 +126,14 @@ export const CHARACTERS = [
     title: 'Dilma Rousseff — A Estocadora',
     desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas (pontua picanhas normalmente)!',
     sprite: 'img/dilma.png',
+    flySprite: 'img/characters/dilma_fly.png',
     requiredPicanhas: 100, // Liberada com 100 picanhas
     skillName: '🥔 Saudação à Mandioca',
     skillDesc: 'Chuva de mandiocas e aipins nos canos! Acúmulo de picanhas padrão e voo suave.',
     auraColor: '#ef4444',
     modifier: (state) => {
-      state.HITBOX_R = 0.025;
+      state.HITBOX_WIDTH_RATIO = 0.084;
+      state.HITBOX_HEIGHT_RATIO = 0.043;
       state.GAP_RATIO = 0.42;
       state.SPEED_MULT = 1.0;
       state.EXTRA_SCORE_PER_PIPE = 1;
@@ -137,12 +149,14 @@ export const CHARACTERS = [
     title: 'Pablo Marçal — Mindset Quântico',
     desc: 'Requer liberar a Dilma e conquistar 200 pontos jogando com a Dilma! Velocidade acelerada, 3X pontos e chuva de dinheiro!',
     sprite: 'img/marcal.png',
+    flySprite: 'img/characters/marcal_fly.png',
     requiredPicanhas: 0, // Desbloqueio especial por missão da Dilma
     skillName: '💵 Mindset 3X & Chuva de Grana',
     skillDesc: 'Velocidade 1.35x maior, triplica os pontos obtidos (3X) e solta chuva de notas e dólares!',
     auraColor: '#0ea5e9',
     modifier: (state) => {
-      state.HITBOX_R = 0.027;
+      state.HITBOX_WIDTH_RATIO = 0.086;
+      state.HITBOX_HEIGHT_RATIO = 0.045;
       state.GAP_RATIO = 0.40;
       state.SPEED_MULT = 1.35;
       state.EXTRA_SCORE_PER_PIPE = 3;

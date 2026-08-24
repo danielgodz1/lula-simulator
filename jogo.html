@@ -332,11 +332,12 @@
     }
 
     .go-char-picker-btn img {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
+      width: 32px;
+      height: 22px;
+      border-radius: 6px;
       border: 1.5px solid #ffd700;
-      object-fit: cover;
+      object-fit: contain;
+      background: rgba(0, 0, 0, 0.5);
     }
 
     .go-diff-toggles {
@@ -668,20 +669,23 @@
     }
 
     .char-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
+      width: 68px;
+      height: 48px;
+      border-radius: 10px;
       margin: 0 auto 4px;
       border: 2px solid var(--amarelo-brasil);
       overflow: hidden;
-      background: #000;
+      background: rgba(0, 0, 0, 0.6);
       box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .char-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 95%;
+      height: 95%;
+      object-fit: contain;
     }
 
     @media (max-width: 900px) {
@@ -854,8 +858,8 @@
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
-          <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
-            <img id="equippedCharImg" src="img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
+          <div style="width:62px; height:42px; border-radius:10px; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center;">
+            <img id="equippedCharImg" src="img/characters/lula_fly.png" alt="Personagem Selecionado" style="width:95%; height:95%; object-fit:contain;">
           </div>
           <div style="flex:1;">
             <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
@@ -1031,7 +1035,8 @@
     let pendingCharSelect = activeCharacter;
 
     const gameState = {
-      HITBOX_R: 0.020,
+      HITBOX_WIDTH_RATIO: 0.082,
+      HITBOX_HEIGHT_RATIO: 0.042,
       GAP_RATIO: 0.42,
       SPEED_MULT: 1.0,
       EXTRA_SCORE_PER_PIPE: 1,
@@ -1054,11 +1059,11 @@
       const img = document.getElementById('equippedCharImg');
       const name = document.getElementById('equippedCharName');
       const skill = document.getElementById('equippedCharSkill');
-      if (img) img.src = activeCharacter.sprite;
+      if (img) img.src = activeCharacter.flySprite || activeCharacter.sprite;
       if (name) name.textContent = activeCharacter.name;
       if (skill) skill.textContent = activeCharacter.skillName;
 
-      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.sprite;
+      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.flySprite || activeCharacter.sprite;
       if (goEquippedCharName) goEquippedCharName.textContent = activeCharacter.name;
     }
 
@@ -1127,12 +1132,17 @@
 
     let { W, H } = calcSize();
 
-    // SPRITES DOS PERSONAGENS
+    // SPRITES DOS PERSONAGENS (VOO SUPER-HERÓI E AVATAR)
     const characterSprites = {};
+    const characterFlySprites = {};
     CHARACTERS.forEach(char => {
       const img = new Image();
       img.src = char.sprite;
       characterSprites[char.id] = img;
+
+      const flyImg = new Image();
+      flyImg.src = char.flySprite || char.sprite;
+      characterFlySprites[char.id] = flyImg;
     });
 
     const lulaIconImg = new Image();
@@ -1218,7 +1228,7 @@
         
         card.innerHTML = `
           <div class="char-avatar" style="border-color:${char.auraColor}">
-            <img src="${char.sprite}" alt="${char.name}">
+            <img src="${char.flySprite || char.sprite}" alt="${char.name}">
           </div>
           <div style="font-weight:700; font-size:11.5px; color:#fff; margin-bottom:1px;">${char.name}</div>
           <div style="font-size:9.5px; color:${unlocked ? 'var(--verde-neon)' : 'var(--text-muted)'}; font-weight:600; line-height:1.2;">
@@ -1530,15 +1540,24 @@
     }
 
     function checkCollision() {
-      const R = H * gameState.HITBOX_R;
+      const hw = (H * (gameState.HITBOX_WIDTH_RATIO || 0.082)) * 0.5;
+      const hh = (H * (gameState.HITBOX_HEIGHT_RATIO || 0.042)) * 0.5;
       const GH = H * GH_RATIO;
-      if (lula.y - R <= 0 || lula.y + R >= H - GH) return true;
+
+      // Colisão com Teto e Chão
+      if (lula.y - hh <= 0 || lula.y + hh >= H - GH) return true;
+
+      // Hitbox em cápsula/caixa horizontal com margens generosas para a ponta da capa
+      const charLeft = lula.x - hw + 6;
+      const charRight = lula.x + hw - 4;
+      const charTop = lula.y - hh + 3;
+      const charBottom = lula.y + hh - 3;
 
       const PW = W * PW_RATIO;
       for (let i = 0; i < pipes.length; i++) {
         const p = pipes[i];
-        if (lula.x + R > p.x && lula.x - R < p.x + PW) {
-          if (lula.y - R < p.topH || lula.y + R > p.botY) {
+        if (charRight > p.x && charLeft < p.x + PW) {
+          if (charTop < p.topH || charBottom > p.botY) {
             if (gameState.hasShield && gameState.shieldCharges > 0) {
               gameState.shieldCharges--;
               pipes.splice(i, 1);
@@ -1933,38 +1952,56 @@
         ctx.textAlign = 'left';
       }
 
-      // RENDERIZAÇÃO ULTRA-NÍTIDA DO PERSONAGEM EQUIPADO
-      const R = H * LR_RATIO;
+      // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA
+      const charWidth = H * 0.125;
+      const charHeight = charWidth * 0.56;
+      
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      // Borda / Aura vibrante em alta definição
-      ctx.beginPath(); ctx.arc(0, 0, R + 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = isPrisonMode ? '#dc2626' : (activeCharacter.auraColor || '#ffdf00');
-      ctx.fill();
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-
+      // Efeito de Escudo do Moraes
       if (gameState.hasShield && gameState.shieldCharges > 0) {
+        ctx.save();
         ctx.strokeStyle = '#a855f7';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath(); ctx.arc(0, 0, R + 6.5, 0, Math.PI * 2); ctx.stroke();
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#a855f7';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, charWidth * 0.55, charHeight * 0.85, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
-      const spriteImg = characterSprites[activeCharacter.id];
-      if (spriteImg && spriteImg.complete) {
+      // Trilha de velocidade / turbo
+      if (gameState.isTurboActive) {
         ctx.save();
-        ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.clip();
-        ctx.drawImage(spriteImg, -R, -R, R * 2, R * 2);
+        ctx.strokeStyle = 'rgba(255, 223, 0, 0.6)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(-charWidth * 0.55, -6);
+        ctx.lineTo(-charWidth * 0.95, -6);
+        ctx.moveTo(-charWidth * 0.55, 6);
+        ctx.lineTo(-charWidth * 0.85, 6);
+        ctx.stroke();
         ctx.restore();
-      } else {
-        ctx.font = `${R * 1.2}px serif`;
-        ctx.fillText('👨‍🦳', -R / 2, R / 2);
       }
+
+      const flySprite = characterFlySprites[activeCharacter.id];
+      if (flySprite && flySprite.complete && flySprite.naturalWidth > 0) {
+        ctx.drawImage(flySprite, -charWidth * 0.52, -charHeight * 0.5, charWidth, charHeight);
+      } else {
+        const spriteImg = characterSprites[activeCharacter.id];
+        if (spriteImg && spriteImg.complete) {
+          ctx.drawImage(spriteImg, -charWidth * 0.5, -charHeight * 0.5, charWidth, charHeight);
+        } else {
+          ctx.font = `${charHeight}px serif`;
+          ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
+        }
+      }
+
       ctx.restore();
     }
 
