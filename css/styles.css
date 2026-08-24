@@ -2,21 +2,27 @@
    LULA SIMULATOR — SISTEMA GLOBAL DE ESTILOS & DESIGN SYSTEM
    ========================================================================== */
 
-/* 1. VARIÁVEIS DE CORES & TEMA */
+/* 1. VARIÁVEIS DE CORES & TEMA CÓSMICO */
 :root {
-  --bg-dark: #080914;
-  --bg-card: rgba(22, 27, 38, 0.95);
+  --bg-dark: #070c18;
+  --bg-cosmic-1: #182848;
+  --bg-cosmic-2: #101d36;
+  --bg-cosmic-3: #070c18;
+  --bg-card: rgba(16, 25, 46, 0.82);
   --verde-brasil: #009c3b;
   --verde-neon: #00e676;
+  --verde-glow: rgba(0, 230, 118, 0.55);
   --amarelo-brasil: #ffdf00;
+  --amarelo-glow: rgba(255, 223, 0, 0.35);
   --azul-brasil: #002776;
+  --azul-glow: rgba(56, 189, 248, 0.4);
   --vermelho-alert: #ef4444;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-card: rgba(255, 223, 0, 0.25);
+  --border-card: rgba(255, 255, 255, 0.08);
 }
 
-/* 2. RESET GLOBAL */
+/* 2. RESET GLOBAL & FUNDO CÓSMICO COM ESTRELAS CINTILANTES */
 * {
   margin: 0;
   padding: 0;
@@ -24,10 +30,14 @@
   -webkit-tap-highlight-color: transparent !important;
 }
 
-html, body {
+html {
+  background-color: var(--bg-dark);
+}
+
+body {
   width: 100%;
   min-height: 100vh;
-  background-color: var(--bg-dark);
+  background: radial-gradient(ellipse at 50% 18%, #182a4d 0%, #0f1c35 42%, #060a14 100%) fixed !important;
   color: var(--text-main);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
@@ -36,6 +46,73 @@ html, body {
   -moz-user-select: none;
   -ms-user-select: none;
   touch-action: pan-y;
+  position: relative;
+}
+
+/* Camada 1: Estrelas Pequenas e Médias Cintilantes */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(1.5px 1.5px at 12% 14%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 28% 36%, rgba(255, 255, 255, 0.85) 100%, transparent),
+    radial-gradient(2px 2px at 44% 12%, rgba(255, 223, 0, 0.9) 100%, transparent),
+    radial-gradient(1px 1px at 62% 28%, rgba(255, 255, 255, 0.75) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 80% 18%, #ffffff 100%, transparent),
+    radial-gradient(2px 2px at 90% 42%, rgba(0, 230, 118, 0.85) 100%, transparent),
+    radial-gradient(1px 1px at 15% 68%, rgba(255, 255, 255, 0.65) 100%, transparent),
+    radial-gradient(2px 2px at 34% 78%, rgba(255, 255, 255, 0.95) 100%, transparent),
+    radial-gradient(1px 1px at 52% 62%, rgba(255, 255, 255, 0.75) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 72% 84%, rgba(255, 223, 0, 0.85) 100%, transparent),
+    radial-gradient(1px 1px at 86% 74%, rgba(255, 255, 255, 0.85) 100%, transparent),
+    radial-gradient(2px 2px at 95% 92%, rgba(56, 189, 248, 0.9) 100%, transparent),
+    radial-gradient(1px 1px at 6% 94%, rgba(255, 255, 255, 0.75) 100%, transparent);
+  background-size: 100vw 100vh;
+  animation: cosmicTwinkleSlow 7s ease-in-out infinite alternate;
+}
+
+/* Camada 2: Estrelas Cintilantes com Brilho Suave e Ritmo Alternado */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(1.5px 1.5px at 20% 24%, rgba(255, 255, 255, 0.95) 100%, transparent),
+    radial-gradient(2px 2px at 38% 48%, rgba(255, 255, 255, 0.9) 100%, transparent),
+    radial-gradient(1px 1px at 55% 22%, rgba(255, 255, 255, 0.75) 100%, transparent),
+    radial-gradient(2px 2px at 70% 50%, rgba(255, 223, 0, 0.95) 100%, transparent),
+    radial-gradient(1px 1px at 84% 32%, rgba(255, 255, 255, 0.7) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 10% 78%, rgba(0, 230, 118, 0.9) 100%, transparent),
+    radial-gradient(1px 1px at 26% 90%, rgba(255, 255, 255, 0.8) 100%, transparent),
+    radial-gradient(2px 2px at 48% 92%, rgba(56, 189, 248, 0.9) 100%, transparent),
+    radial-gradient(1px 1px at 64% 72%, rgba(255, 255, 255, 0.7) 100%, transparent),
+    radial-gradient(1.5px 1.5px at 78% 62%, rgba(255, 255, 255, 0.95) 100%, transparent),
+    radial-gradient(2px 2px at 93% 16%, rgba(255, 223, 0, 0.9) 100%, transparent);
+  background-size: 100vw 100vh;
+  animation: cosmicTwinkleMedium 10s ease-in-out infinite alternate;
+}
+
+@keyframes cosmicTwinkleSlow {
+  0% { opacity: 0.35; transform: scale(0.98); }
+  50% { opacity: 0.98; transform: scale(1.01); }
+  100% { opacity: 0.40; transform: scale(0.99); }
+}
+
+@keyframes cosmicTwinkleMedium {
+  0% { opacity: 0.90; transform: scale(1.01); }
+  50% { opacity: 0.30; transform: scale(0.98); }
+  100% { opacity: 0.95; transform: scale(1.0); }
 }
 
 /* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA */
@@ -45,15 +122,16 @@ nav {
   left: 0;
   width: 100%;
   z-index: 100;
-  background: rgba(8, 9, 20, 0.96);
-  backdrop-filter: blur(14px);
-  border-bottom: 2px solid var(--amarelo-brasil);
+  background: rgba(8, 14, 28, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(255, 223, 0, 0.4);
   padding: 0 20px;
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 223, 0, 0.15);
   user-select: none;
   -webkit-user-select: none;
 }
@@ -275,30 +353,34 @@ nav {
   }
 }
 
-/* 4. BOTÕES REUTILIZÁVEIS */
+/* 4. BOTÕES REUTILIZÁVEIS ULTRA-ARREDONDADOS COM BRILHO NEON */
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, var(--verde-brasil) 0%, var(--verde-neon) 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #00c853 0%, #00e676 50%, #69f0ae 100%);
+  color: #042410;
   font-family: 'Bangers', cursive;
   font-size: 22px;
   letter-spacing: 1.5px;
-  padding: 14px 32px;
-  border-radius: 12px;
+  padding: 14px 36px;
+  border-radius: 999px;
   text-decoration: none;
   border: none;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(0, 156, 59, 0.4);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 30px rgba(0, 230, 118, 0.55), 0 8px 25px rgba(0, 0, 0, 0.5);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 230, 118, 0.6);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 45px rgba(0, 230, 118, 0.85), 0 12px 32px rgba(0, 0, 0, 0.6);
+  color: #000;
 }
 
 .btn-secondary {
@@ -306,31 +388,54 @@ nav {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: rgba(255, 223, 0, 0.12);
+  background: rgba(14, 22, 40, 0.85);
   color: var(--amarelo-brasil);
   font-family: 'Bangers', cursive;
   font-size: 22px;
   letter-spacing: 1.5px;
-  padding: 14px 32px;
-  border-radius: 12px;
+  padding: 14px 36px;
+  border-radius: 999px;
   text-decoration: none;
   border: 2px solid var(--amarelo-brasil);
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(255, 223, 0, 0.25);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 25px rgba(255, 223, 0, 0.28), 0 6px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 223, 0, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(255, 223, 0, 0.45);
+  background: rgba(255, 223, 0, 0.18);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 0 40px rgba(255, 223, 0, 0.6), 0 10px 28px rgba(0, 0, 0, 0.5);
+  border-color: #fff275;
+}
+
+/* CARDS GLOBAIS COM VIDRO CÓSMICO E BORDAS ILUMINADAS */
+.card {
+  background: rgba(16, 25, 46, 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 223, 0, 0.35);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.65), 0 0 25px rgba(255, 223, 0, 0.18);
 }
 
 .btn-preset-avatar:hover {
   transform: scale(1.15);
   border-color: var(--amarelo-brasil, #ffd700) !important;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
 }
 
 /* 5. ANIMAÇÕES GLOBAIS */
