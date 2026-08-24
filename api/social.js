@@ -343,12 +343,7 @@ export default async function handler(req, res) {
     // 2. ENVIAR PEDIDO DE AMIZADE
     if (action === 'send_friend_request') {
       if (!cleanTarget || normUser === normTarget) {
-        return res.status(400).json({ success: false, error: 'Destinatário inválido.' });
-      }
-
-      const targetSnap = await db.collection('lula_users_v2').doc(normTarget).get();
-      if (!targetSnap.exists) {
-        return res.status(404).json({ success: false, error: `Jogador "${cleanTarget}" não encontrado.` });
+        return res.status(400).json({ success: false, error: 'Destinatário inválido para pedido de amizade.' });
       }
 
       const docId = getFriendshipDocId(normUser, normTarget);
@@ -359,9 +354,9 @@ export default async function handler(req, res) {
         const data = existing.data();
         if (data.status === 'accepted') return res.status(400).json({ success: false, error: 'Vocês já são amigos!' });
         if (data.status === 'pending') {
-          if (data.requester === normUser) return res.status(400).json({ success: false, error: 'Pedido já enviado.' });
+          if (data.requester === normUser) return res.status(400).json({ success: false, error: 'Pedido já enviado anteriormente e aguardando resposta.' });
           await friendRef.set({ status: 'accepted', updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          return res.status(200).json({ success: true, message: 'Vocês agora são amigos!' });
+          return res.status(200).json({ success: true, message: `Vocês agora são amigos!` });
         }
       }
 
@@ -376,6 +371,7 @@ export default async function handler(req, res) {
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
+      // Cria notificação para o destinatário (usando tanto normTarget quanto cleanTarget)
       await db.collection('lula_notifications').add({
         userId: normTarget,
         type: 'friend_request',
@@ -387,7 +383,7 @@ export default async function handler(req, res) {
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      return res.status(200).json({ success: true, message: `Pedido de amizade enviado para ${cleanTarget}!` });
+      return res.status(200).json({ success: true, message: `Pedido de amizade enviado para ${cleanTarget} com sucesso!` });
     }
 
     // 3. ACEITAR PEDIDO DE AMIZADE
@@ -399,7 +395,9 @@ export default async function handler(req, res) {
 
       if (!existing.exists) return res.status(404).json({ success: false, error: 'Pedido não encontrado.' });
       const data = existing.data();
-      if (data.target !== normUser) return res.status(403).json({ success: false, error: 'Você não tem permissão para aceitar este pedido.' });
+      if (data.target !== normUser && data.userId2 !== normUser && data.userId1 !== normUser) {
+        return res.status(403).json({ success: false, error: 'Você não tem permissão para aceitar este pedido.' });
+      }
 
       await friendRef.update({
         status: 'accepted',
@@ -407,7 +405,7 @@ export default async function handler(req, res) {
       });
 
       await db.collection('lula_notifications').add({
-        userId: data.requester,
+        userId: data.requester || normTarget,
         type: 'friend_accepted',
         title: 'Amizade Aceita! 🎉',
         message: `${cleanUser} aceitou seu pedido de amizade!`,
@@ -425,27 +423,33 @@ export default async function handler(req, res) {
       if (!cleanTarget) return res.status(400).json({ success: false, error: 'Usuário não especificado.' });
       const docId = getFriendshipDocId(normUser, normTarget);
       await db.collection('lula_friendships').doc(docId).delete();
-      return res.status(200).json({ success: true, message: 'Amizade removida com sucesso.' });
+      return res.status(200).json({ success: true, message: 'Solicitação cancelada/removida.' });
     }
 
     // 5. LISTAR AMIGOS E PEDIDOS
     if (action === 'get_friends' || action === 'list_friends') {
       const snap1 = await db.collection('lula_friendships').where('userId1', '==', normUser).get();
       const snap2 = await db.collection('lula_friendships').where('userId2', '==', normUser).get();
+      const snap3 = await db.collection('lula_friendships').where('requester', '==', normUser).get();
+      const snap4 = await db.collection('lula_friendships').where('target', '==', normUser).get();
 
       const acceptedFriends = [];
       const pendingReceived = [];
       const pendingSent = [];
+      const processedIds = new Set();
 
       const processDoc = (doc) => {
+        if (processedIds.has(doc.id)) return;
+        processedIds.add(doc.id);
+
         const d = doc.data();
-        const otherUsername = (d.userId1 === normUser ? d.user2Name : d.user1Name) || '';
-        const otherNorm = (d.userId1 === normUser ? d.userId2 : d.userId1) || '';
+        const otherUsername = (d.userId1 === normUser ? d.user2Name : (d.userId2 === normUser ? d.user1Name : (d.requester === normUser ? d.user2Name : d.user1Name))) || (d.requester === normUser ? d.target : d.requester) || '';
+        const otherNorm = (d.userId1 === normUser ? d.userId2 : (d.userId2 === normUser ? d.userId1 : (d.requester === normUser ? d.target : d.requester))) || '';
 
         if (d.status === 'accepted') {
           acceptedFriends.push({
             id: doc.id,
-            username: otherUsername,
+            username: otherUsername || otherNorm,
             normUser: otherNorm,
             createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
           });
@@ -453,15 +457,15 @@ export default async function handler(req, res) {
           if (d.target === normUser) {
             pendingReceived.push({
               id: doc.id,
-              username: otherUsername,
-              normUser: otherNorm,
+              username: otherUsername || d.user1Name || d.requester,
+              normUser: otherNorm || d.requester,
               createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
             });
-          } else {
+          } else if (d.requester === normUser) {
             pendingSent.push({
               id: doc.id,
-              username: otherUsername,
-              normUser: otherNorm,
+              username: otherUsername || d.user2Name || d.target,
+              normUser: otherNorm || d.target,
               createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
             });
           }
@@ -470,6 +474,8 @@ export default async function handler(req, res) {
 
       snap1.forEach(processDoc);
       snap2.forEach(processDoc);
+      snap3.forEach(processDoc);
+      snap4.forEach(processDoc);
 
       return res.status(200).json({
         success: true,

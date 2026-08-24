@@ -24,7 +24,7 @@ class SocialManager {
       if (auth.getCurrentUser() && document.visibilityState === 'visible') {
         this.fetchNotifications().catch(() => {});
       }
-    }, 60000);
+    }, 10000);
   }
 
   // =========================================================================
@@ -38,12 +38,12 @@ class SocialManager {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'search_users',
-          username: user?.username || 'Visitante',
+          username: user ? user.username : '',
           query
         })
       });
       const data = await res.json();
-      return data.success ? data.users : [];
+      return data.success ? (data.users || []) : [];
     } catch(e) {
       return [];
     }
@@ -63,7 +63,12 @@ class SocialManager {
           targetUser
         })
       });
-      return await res.json();
+      const data = await res.json();
+      if (data.success) {
+        this.cachedFriends = null;
+        this.fetchNotifications().catch(() => {});
+      }
+      return data;
     } catch(e) {
       return { success: false, error: 'Erro de conexão ao enviar solicitação.' };
     }

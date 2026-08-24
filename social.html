@@ -316,11 +316,16 @@
     <!-- SEÇÃO 1: AMIGOS & BUSCA -->
     <div id="sectionFriends" class="social-card">
       <h2 style="font-family: 'Bangers', cursive; color: var(--amarelo-brasil); font-size: 24px; margin-bottom: 14px;">
-        🔍 ENCONTRAR JOGADORES
+        🔍 ADICIONAR E ENCONTRAR AMIGOS
       </h2>
       <div class="search-box">
-        <input type="text" id="inputSearchUser" class="search-input" placeholder="Digite o nome do jogador (ex: Lula, Capitão, Xandão...)" autocomplete="off">
-        <button id="btnSearchUsers" class="btn-primary" style="padding: 0 24px; font-size: 15px;">BUSCAR</button>
+        <input type="text" id="inputSearchUser" class="search-input" placeholder="Digite o username do amigo (ex: Daniel, Capitão, Lula...)" autocomplete="off">
+        <button id="btnAddDirectUser" class="btn-primary" style="padding: 0 18px; font-size: 14px; background: #0284c7; border-color: #0369a1;" title="Enviar solicitação direta para este nome">
+          ➕ ADICIONAR
+        </button>
+        <button id="btnSearchUsers" class="btn-secondary" style="padding: 0 16px; font-size: 14px;" title="Buscar jogadores">
+          🔍 BUSCAR
+        </button>
       </div>
 
       <div id="searchResultsArea" style="margin-bottom: 24px; display: none;">
@@ -328,12 +333,20 @@
         <div id="searchResultsList" class="user-list"></div>
       </div>
 
-      <!-- Pedidos Pendentes -->
-      <div id="pendingRequestsArea" style="margin-bottom: 24px; display: none;">
+      <!-- Pedidos Recebidos -->
+      <div id="pendingReceivedArea" style="margin-bottom: 24px; display: none;">
         <h3 style="font-size: 16px; color: var(--amarelo-brasil); font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 10px;">
           📬 SOLICITAÇÕES DE AMIZADE RECEBIDAS
         </h3>
-        <div id="pendingRequestsList" class="user-list"></div>
+        <div id="pendingReceivedList" class="user-list"></div>
+      </div>
+
+      <!-- Pedidos Enviados -->
+      <div id="pendingSentArea" style="margin-bottom: 24px; display: none;">
+        <h3 style="font-size: 16px; color: #94a3b8; font-family: 'Bangers', cursive; letter-spacing: 1px; margin-bottom: 10px;">
+          📤 SOLICITAÇÕES ENVIADAS (AGUARDANDO CONFIRMAÇÃO)
+        </h3>
+        <div id="pendingSentList" class="user-list"></div>
       </div>
 
       <!-- Lista de Amigos -->
@@ -481,21 +494,24 @@
 
     // 1. CARREGAR ABA DE AMIGOS
     async function loadFriendsTab() {
-      const data = await social.getFriendsList() || { friends: [], pendingReceived: [], pendingSent: [] };
+      const data = await social.getFriendsList(true) || { friends: [], pendingReceived: [], pendingSent: [] };
       const friends = data.friends || [];
-      const pendingReceived = data.pendingReceived || [];
+      const pendingReceived = data.pendingReceived || data.pendingIncoming || [];
+      const pendingSent = data.pendingSent || data.pendingOutgoing || [];
 
       const listEl = document.getElementById('friendsList');
       const countEl = document.getElementById('friendsCountSpan');
-      const pendingArea = document.getElementById('pendingRequestsArea');
-      const pendingList = document.getElementById('pendingRequestsList');
+      const pReceivedArea = document.getElementById('pendingReceivedArea');
+      const pReceivedList = document.getElementById('pendingReceivedList');
+      const pSentArea = document.getElementById('pendingSentArea');
+      const pSentList = document.getElementById('pendingSentList');
 
       countEl.textContent = friends.length;
 
-      // Pedidos Pendentes Recebidos
+      // 1.1. Pedidos Recebidos
       if (pendingReceived.length > 0) {
-        pendingArea.style.display = 'block';
-        pendingList.innerHTML = '';
+        pReceivedArea.style.display = 'block';
+        pReceivedList.innerHTML = '';
         pendingReceived.forEach(req => {
           const item = document.createElement('div');
           item.className = 'user-item';
@@ -521,13 +537,42 @@
             alert(r.message || r.error);
             loadFriendsTab();
           };
-          pendingList.appendChild(item);
+          pReceivedList.appendChild(item);
         });
       } else {
-        pendingArea.style.display = 'none';
+        pReceivedArea.style.display = 'none';
       }
 
-      // Amigos Conectados
+      // 1.2. Pedidos Enviados (Aguardando resposta)
+      if (pendingSent.length > 0) {
+        pSentArea.style.display = 'block';
+        pSentList.innerHTML = '';
+        pendingSent.forEach(req => {
+          const item = document.createElement('div');
+          item.className = 'user-item';
+          item.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+          item.innerHTML = `
+            <img src="${DEFAULT_AVATAR_SVG}" class="user-avatar" alt="Avatar">
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 800; font-size: 14px; color: #fff;">${escapeHTML(req.username)}</div>
+              <div style="font-size: 11px; color: #f59e0b; font-weight: 600;">⏳ Pedido enviado (aguardando confirmação)</div>
+            </div>
+            <button class="btn-cancel-req" style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; border-radius:8px; padding:6px 10px; color:#f87171; font-weight:800; font-size:11px; cursor:pointer;">
+              CANCELAR
+            </button>
+          `;
+          item.querySelector('.btn-cancel-req').onclick = async () => {
+            const r = await social.rejectFriendRequest(req.username);
+            alert(r.message || r.error);
+            loadFriendsTab();
+          };
+          pSentList.appendChild(item);
+        });
+      } else {
+        pSentArea.style.display = 'none';
+      }
+
+      // 1.3. Amigos Conectados
       if (friends.length === 0) {
         listEl.innerHTML = `
           <div style="text-align: center; padding: 30px; color: #64748b; font-size: 13px; grid-column: 1/-1;">
@@ -557,11 +602,22 @@
       }
     }
 
-    // Busca de Jogadores
+    // Busca e Adição Direta de Jogadores
     const btnSearch = document.getElementById('btnSearchUsers');
+    const btnAddDirect = document.getElementById('btnAddDirectUser');
     const inputSearch = document.getElementById('inputSearchUser');
     const searchArea = document.getElementById('searchResultsArea');
     const searchList = document.getElementById('searchResultsList');
+
+    btnAddDirect.onclick = async () => {
+      const target = inputSearch.value.trim();
+      if (!target) return alert('Digite o username do amigo para enviar solicitação!');
+      const r = await social.sendFriendRequest(target);
+      alert(r.message || r.error);
+      inputSearch.value = '';
+      searchArea.style.display = 'none';
+      loadFriendsTab();
+    };
 
     btnSearch.onclick = async () => {
       const q = inputSearch.value.trim();
@@ -571,7 +627,21 @@
       searchList.innerHTML = '';
 
       if (res.length === 0) {
-        searchList.innerHTML = `<div style="padding: 14px; color: #94a3b8; font-size: 13px; grid-column: 1/-1;">Nenhum jogador encontrado com "${escapeHTML(q)}".</div>`;
+        searchList.innerHTML = `
+          <div style="padding: 14px; color: #94a3b8; font-size: 13px; grid-column: 1/-1; display:flex; justify-content:space-between; align-items:center;">
+            <span>Nenhum jogador encontrado com "${escapeHTML(q)}".</span>
+            <button id="btnSearchAddDirect" style="background:#0284c7; border:none; border-radius:8px; padding:6px 12px; color:#fff; cursor:pointer; font-weight:800; font-size:11px;">
+              ➕ ENVIAR PEDIDO DIRETO
+            </button>
+          </div>
+        `;
+        document.getElementById('btnSearchAddDirect')?.addEventListener('click', async () => {
+          const r = await social.sendFriendRequest(q);
+          alert(r.message || r.error);
+          inputSearch.value = '';
+          searchArea.style.display = 'none';
+          loadFriendsTab();
+        });
         return;
       }
 
@@ -591,6 +661,7 @@
         item.querySelector('.btn-add-friend').onclick = async () => {
           const r = await social.sendFriendRequest(u.username);
           alert(r.message || r.error);
+          loadFriendsTab();
         };
         searchList.appendChild(item);
       });
