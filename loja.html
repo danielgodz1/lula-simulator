@@ -889,6 +889,12 @@
     updateBalanceHUD();
     renderMissions();
     renderSkins();
+
+    auth.syncFromCloud().then(() => {
+      updateBalanceHUD();
+      renderMissions();
+      renderSkins();
+    }).catch(() => {});
   </script>
   <script src="js/tracker.js"></script>
 

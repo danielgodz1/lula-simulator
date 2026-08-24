@@ -113,9 +113,13 @@ export default async function handler(req, res) {
         unlockedSkins: mergedSkins,
         equippedSkins: mergedEquippedSkins,
         prestigeLevel: mergedPrestige,
-        loginStreak: Math.max(1, parseInt(loginStreak || existingData.loginStreak || 1, 10)),
+        loginStreak: (loginStreak && parseInt(loginStreak, 10) > 0)
+          ? Math.max(parseInt(loginStreak, 10), existingData.loginStreak || 1)
+          : (existingData.loginStreak || 1),
         lastLoginDate: lastLoginDate || existingData.lastLoginDate || '',
-        dailyMissions: (dailyMissions && typeof dailyMissions === 'object') ? dailyMissions : (existingData.dailyMissions || {}),
+        dailyMissions: (dailyMissions && typeof dailyMissions === 'object' && Object.keys(dailyMissions).length > 0)
+          ? dailyMissions
+          : (existingData.dailyMissions || {}),
         avatar: finalAvatar,
         lastSync: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()

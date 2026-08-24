@@ -259,7 +259,14 @@ export default async function handler(req, res) {
               runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
               dilmaScore: parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10),
               runnerCoins: parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10),
-              avatar: doc.fields?.avatar?.stringValue || ''
+              avatar: doc.fields?.avatar?.stringValue || '',
+              unlockedCharacters: doc.fields?.unlockedCharacters?.arrayValue?.values?.map(v => v.stringValue).filter(Boolean) || ['lula'],
+              unlockedSkins: doc.fields?.unlockedSkins?.arrayValue?.values?.map(v => v.stringValue).filter(Boolean) || [],
+              equippedSkins: {},
+              prestigeLevel: parseInt(doc.fields?.prestigeLevel?.integerValue || '0', 10),
+              loginStreak: parseInt(doc.fields?.loginStreak?.integerValue || '1', 10),
+              lastLoginDate: doc.fields?.lastLoginDate?.stringValue || '',
+              dailyMissions: {}
             };
           }
         } catch (e) {}
@@ -489,7 +496,13 @@ export default async function handler(req, res) {
             dilmaScore: userData?.dilmaScore || 0,
             runnerCoins: userData?.runnerCoins || 0,
             avatar: userData?.avatar || '',
-            unlockedCharacters: Array.isArray(userData?.unlockedCharacters) ? userData.unlockedCharacters : []
+            unlockedCharacters: Array.isArray(userData?.unlockedCharacters) && userData.unlockedCharacters.length > 0 ? userData.unlockedCharacters : ['lula'],
+            unlockedSkins: Array.isArray(userData?.unlockedSkins) ? userData.unlockedSkins : [],
+            equippedSkins: (userData?.equippedSkins && typeof userData?.equippedSkins === 'object') ? userData.equippedSkins : {},
+            prestigeLevel: userData?.prestigeLevel || 0,
+            loginStreak: userData?.loginStreak || 1,
+            lastLoginDate: userData?.lastLoginDate || '',
+            dailyMissions: userData?.dailyMissions || {}
           }
         });
       } catch (err) {

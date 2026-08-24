@@ -500,7 +500,9 @@ class AuthManager {
         body: JSON.stringify({
           username: user.username,
           skinId,
-          action: 'buy'
+          action: 'buy',
+          totalPicanhas: parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10),
+          runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10)
         })
       });
 
@@ -1048,26 +1050,57 @@ class AuthManager {
 
     if (user.flappyScore !== undefined) {
       const cur = parseInt(localStorage.getItem('lula_best') || '0', 10);
-      localStorage.setItem('lula_best', Math.max(cur, user.flappyScore).toString());
+      const finalFlappy = Math.max(cur, user.flappyScore);
+      localStorage.setItem('lula_best', finalFlappy.toString());
+      user.flappyScore = finalFlappy;
     }
     if (user.runnerScore !== undefined) {
       const cur = parseInt(localStorage.getItem('run_best') || '0', 10);
-      localStorage.setItem('run_best', Math.max(cur, user.runnerScore).toString());
+      const finalRunner = Math.max(cur, user.runnerScore);
+      localStorage.setItem('run_best', finalRunner.toString());
+      user.runnerScore = finalRunner;
     }
     if (user.totalPicanhas !== undefined) {
       const cur = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
       const finalPicanhas = Math.max(cur, user.totalPicanhas);
       localStorage.setItem(TOTAL_PICANHAS_KEY, finalPicanhas.toString());
+      user.totalPicanhas = finalPicanhas;
     }
     if (user.dilmaScore !== undefined) {
       const cur = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
       const finalDilma = Math.max(cur, user.dilmaScore);
       localStorage.setItem('flappy_dilma_record_score', finalDilma.toString());
+      user.dilmaScore = finalDilma;
     }
     if (user.runnerCoins !== undefined) {
       const cur = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
       const finalCoins = Math.max(cur, user.runnerCoins);
       localStorage.setItem('runner_total_coins', finalCoins.toString());
+      user.runnerCoins = finalCoins;
+    }
+    if (user.prestigeLevel !== undefined) {
+      const curPrestige = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
+      const finalPrestige = Math.max(curPrestige, user.prestigeLevel || 0);
+      localStorage.setItem('lula_prestige_level', finalPrestige.toString());
+      user.prestigeLevel = finalPrestige;
+    }
+    if (user.loginStreak !== undefined && user.loginStreak > 0) {
+      localStorage.setItem('lula_login_streak', user.loginStreak.toString());
+    }
+    if (user.lastLoginDate) {
+      localStorage.setItem('lula_last_login_date', user.lastLoginDate);
+    }
+    if (Array.isArray(user.unlockedSkins)) {
+      const localSkins = JSON.parse(localStorage.getItem('lula_unlocked_skins') || '[]');
+      const mergedSkins = Array.from(new Set([...localSkins, ...user.unlockedSkins]));
+      localStorage.setItem('lula_unlocked_skins', JSON.stringify(mergedSkins));
+      user.unlockedSkins = mergedSkins;
+    }
+    if (user.equippedSkins && typeof user.equippedSkins === 'object') {
+      const localEquipped = JSON.parse(localStorage.getItem('lula_equipped_skins') || '{}');
+      const mergedEquipped = { ...localEquipped, ...user.equippedSkins };
+      localStorage.setItem('lula_equipped_skins', JSON.stringify(mergedEquipped));
+      user.equippedSkins = mergedEquipped;
     }
 
     if (Array.isArray(user.unlockedCharacters) && user.unlockedCharacters.length > 0) {
@@ -1093,6 +1126,12 @@ class AuthManager {
     this.currentUser = null;
     localStorage.removeItem(CURRENT_USER_KEY);
     localStorage.removeItem('lula_player');
+    localStorage.removeItem('lula_unlocked_skins');
+    localStorage.removeItem('lula_equipped_skins');
+    localStorage.removeItem('lula_prestige_level');
+    localStorage.removeItem('lula_login_streak');
+    localStorage.removeItem('lula_last_login_date');
+    this.renderProfileBadge();
   }
 
   updateUserScore(gameType, score) {

@@ -202,6 +202,16 @@ export class CharacterInventory {
     const current = this.getTotalPicanhas();
     const updated = current + amount;
     localStorage.setItem(TOTAL_PICANHAS_KEY, updated.toString());
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u) {
+          u.totalPicanhas = updated;
+          localStorage.setItem('lula_current_user_v2', JSON.stringify(u));
+        }
+      }
+    } catch(e) {}
     return updated;
   }
 
@@ -233,6 +243,7 @@ export class CharacterInventory {
             username: playerName,
             dilmaScore: score,
             totalPicanhas: this.getTotalPicanhas(),
+            runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10),
             avatar: curUser?.avatar || ''
           })
         });
@@ -283,6 +294,7 @@ export class CharacterInventory {
           body: JSON.stringify({
             username: playerName,
             totalPicanhas: total,
+            runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10),
             dilmaScore: dilmaBest,
             avatar: curUser?.avatar || ''
           })
@@ -514,6 +526,16 @@ export class RunnerInventory {
     const current = this.getTotalCoins();
     const updated = current + amount;
     localStorage.setItem(RUNNER_COINS_KEY, updated.toString());
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u) {
+          u.runnerCoins = updated;
+          localStorage.setItem('lula_current_user_v2', JSON.stringify(u));
+        }
+      }
+    } catch(e) {}
     return updated;
   }
 

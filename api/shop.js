@@ -96,8 +96,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Você já possui esta skin desbloqueada.' });
     }
 
-    let totalPicanhas = parseInt(userData.totalPicanhas || 0, 10);
-    let runnerCoins = parseInt(userData.runnerCoins || 0, 10);
+    let localPicanhas = parseInt(req.body.totalPicanhas || 0, 10);
+    let localRunnerCoins = parseInt(req.body.runnerCoins || 0, 10);
+    let totalPicanhas = Math.max(localPicanhas, parseInt(userData.totalPicanhas || 0, 10));
+    let runnerCoins = Math.max(localRunnerCoins, parseInt(userData.runnerCoins || 0, 10));
 
     if (skinConfig.currency === 'picanhas') {
       if (totalPicanhas < skinConfig.price) {
