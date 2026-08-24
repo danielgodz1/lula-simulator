@@ -1518,12 +1518,12 @@
     function spawnPipe(customSpawnX = null) {
       const GH = H * GH_RATIO;
       const usableH = H - GH;
-      // Gap desafiador e clássico
-      const GAP = Math.max(134, Math.min(usableH * 0.36, H * (gameState.GAP_RATIO || 0.35)));
+      // Gap mais justo e preciso para passagem dos personagens
+      const GAP = Math.max(118, Math.min(usableH * 0.30, H * (gameState.GAP_RATIO ? gameState.GAP_RATIO * 0.78 : 0.28)));
       
       // Margens confortáveis no teto e no chão
-      const minTopH = Math.max(50, usableH * 0.10);
-      const maxTopH = usableH - GAP - Math.max(50, usableH * 0.10);
+      const minTopH = Math.max(45, usableH * 0.09);
+      const maxTopH = usableH - GAP - Math.max(45, usableH * 0.09);
 
       let topH;
       if (lastPipeTopH <= 0 || pipes.length === 0) {
