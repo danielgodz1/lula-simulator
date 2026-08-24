@@ -320,15 +320,18 @@ export default async function handler(req, res) {
       const snap = await db.collection('lula_users_v2')
         .where('username', '>=', queryStr)
         .where('username', '<=', queryStr + '\uf8ff')
-        .limit(12)
+        .limit(15)
         .get();
 
       const users = [];
       snap.forEach(doc => {
         const data = doc.data();
-        if (data.username && data.username.toLowerCase() !== normUser) {
+        const uName = data.username || doc.id;
+        // Nunca exibe o próprio usuário que está buscando
+        if (doc.id !== normUser && uName.toLowerCase() !== cleanUser.toLowerCase()) {
           users.push({
-            username: data.username,
+            id: doc.id,
+            username: uName,
             avatar: data.avatar || '',
             flappyScore: data.flappyScore || 0,
             runnerScore: data.runnerScore || 0,
@@ -344,8 +347,8 @@ export default async function handler(req, res) {
 
     // 2. ENVIAR PEDIDO DE AMIZADE
     if (action === 'send_friend_request') {
-      if (!cleanTarget || normUser === normTarget) {
-        return res.status(400).json({ success: false, error: 'Destinatário inválido para pedido de amizade.' });
+      if (!cleanTarget || normUser === normTarget || cleanUser.toLowerCase() === cleanTarget.toLowerCase()) {
+        return res.status(400).json({ success: false, error: 'Você não pode adicionar a si mesmo como amigo.' });
       }
 
       const docId = getFriendshipDocId(normUser, normTarget);
@@ -354,11 +357,30 @@ export default async function handler(req, res) {
 
       if (existing.exists) {
         const data = existing.data();
-        if (data.status === 'accepted') return res.status(400).json({ success: false, error: 'Vocês já são amigos!' });
+        if (data.status === 'accepted') {
+          return res.status(400).json({ success: false, error: `Você e ${cleanTarget} já são amigos conectados!` });
+        }
         if (data.status === 'pending') {
-          if (data.requester === normUser) return res.status(400).json({ success: false, error: 'Pedido já enviado anteriormente e aguardando resposta.' });
-          await friendRef.set({ status: 'accepted', updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          return res.status(200).json({ success: true, message: `Vocês agora são amigos!` });
+          if (data.requester === normUser) {
+            return res.status(400).json({ success: false, error: `Você já enviou um pedido para ${cleanTarget}. Aguarde a confirmação.` });
+          } else {
+            // O outro jogador já tinha enviado pedido para o usuário atual: aceita automaticamente!
+            await friendRef.update({
+              status: 'accepted',
+              acceptedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            await db.collection('lula_notifications').add({
+              userId: normTarget,
+              type: 'friend_accepted',
+              title: 'Amizade Aceita! 🎉',
+              message: `${cleanUser} aceitou seu pedido de amizade!`,
+              fromUser: cleanUser,
+              read: false,
+              link: 'social.html',
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return res.status(200).json({ success: true, message: `${cleanTarget} já havia enviado um pedido para você! Vocês agora são amigos!` });
+          }
         }
       }
 

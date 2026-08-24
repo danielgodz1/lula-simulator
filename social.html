@@ -525,6 +525,10 @@
       const pendingReceived = data.pendingReceived || data.pendingIncoming || [];
       const pendingSent = data.pendingSent || data.pendingOutgoing || [];
 
+      currentFriends = friends;
+      currentPendingSent = pendingSent;
+      currentPendingReceived = pendingReceived;
+
       countEl.textContent = friends.length;
 
       // 1.1. Pedidos Recebidos
@@ -621,6 +625,10 @@
       }
     }
 
+    let currentFriends = [];
+    let currentPendingSent = [];
+    let currentPendingReceived = [];
+
     // Busca e Adição Direta de Jogadores
     const btnSearch = document.getElementById('btnSearchUsers');
     const btnAddDirect = document.getElementById('btnAddDirectUser');
@@ -629,8 +637,21 @@
     const searchList = document.getElementById('searchResultsList');
 
     btnAddDirect.onclick = async () => {
+      const curUser = auth.getCurrentUser();
+      if (!curUser) return auth.openAuthModal();
+
       const target = inputSearch.value.trim();
       if (!target) return alert('Digite o username do amigo para enviar solicitação!');
+      if (target.toLowerCase() === curUser.username.toLowerCase()) {
+        return alert('Você não pode enviar pedido de amizade para você mesmo!');
+      }
+      if (currentFriends.some(f => f.username.toLowerCase() === target.toLowerCase())) {
+        return alert(`Você e ${target} já são amigos conectados!`);
+      }
+      if (currentPendingSent.some(p => p.username.toLowerCase() === target.toLowerCase())) {
+        return alert(`Você já enviou um pedido para ${target}. Aguarde a confirmação!`);
+      }
+
       const r = await social.sendFriendRequest(target);
       alert(r.message || r.error);
       inputSearch.value = '';
@@ -639,13 +660,17 @@
     };
 
     btnSearch.onclick = async () => {
+      const curUser = auth.getCurrentUser();
       const q = inputSearch.value.trim();
       if (!q) return;
       const res = await social.searchUsers(q);
       searchArea.style.display = 'block';
       searchList.innerHTML = '';
 
-      if (res.length === 0) {
+      // Filtra o próprio usuário da busca
+      const validResults = res.filter(u => !curUser || u.username.toLowerCase() !== curUser.username.toLowerCase());
+
+      if (validResults.length === 0) {
         searchList.innerHTML = `
           <div style="padding: 14px; color: #94a3b8; font-size: 13px; grid-column: 1/-1; display:flex; justify-content:space-between; align-items:center;">
             <span>Nenhum jogador encontrado com "${escapeHTML(q)}".</span>
@@ -655,6 +680,8 @@
           </div>
         `;
         document.getElementById('btnSearchAddDirect')?.addEventListener('click', async () => {
+          if (!curUser) return auth.openAuthModal();
+          if (q.toLowerCase() === curUser.username.toLowerCase()) return alert('Você não pode adicionar a si mesmo!');
           const r = await social.sendFriendRequest(q);
           alert(r.message || r.error);
           inputSearch.value = '';
@@ -664,7 +691,22 @@
         return;
       }
 
-      res.forEach(u => {
+      validResults.forEach(u => {
+        const isAlreadyFriend = currentFriends.some(f => f.username.toLowerCase() === u.username.toLowerCase());
+        const isPendingSent = currentPendingSent.some(p => p.username.toLowerCase() === u.username.toLowerCase());
+        const isPendingRecv = currentPendingReceived.some(p => p.username.toLowerCase() === u.username.toLowerCase());
+
+        let actionButtonHtml = '';
+        if (isAlreadyFriend) {
+          actionButtonHtml = `<span style="background:rgba(34,197,94,0.15); border:1px solid #22c55e; border-radius:8px; padding:6px 10px; color:#22c55e; font-weight:800; font-size:11px;">⭐ JÁ É AMIGO</span>`;
+        } else if (isPendingSent) {
+          actionButtonHtml = `<span style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; border-radius:8px; padding:6px 10px; color:#f59e0b; font-weight:800; font-size:11px;">⏳ PEDIDO ENVIADO</span>`;
+        } else if (isPendingRecv) {
+          actionButtonHtml = `<button class="btn-accept-search" style="background:#22c55e; border:none; border-radius:8px; padding:6px 10px; color:#000; font-weight:800; font-size:11px; cursor:pointer;">ACEITAR PEDIDO</button>`;
+        } else {
+          actionButtonHtml = `<button class="btn-add-friend" style="background:#0284c7; border:none; border-radius:8px; padding:6px 10px; color:#fff; cursor:pointer; font-weight:800; font-size:11px;">➕ ADICIONAR</button>`;
+        }
+
         const item = document.createElement('div');
         item.className = 'user-item';
         item.innerHTML = `
@@ -673,15 +715,22 @@
             <div style="font-weight: 800; font-size: 13px; color: #fff; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(u.username)}</div>
             <div style="font-size: 11px; color: #94a3b8;">${u.flappyScore || 0} 🥩 · Streak: 🔥 ${u.winStreak || 0}</div>
           </div>
-          <button class="btn-add-friend" style="background:#0284c7; border:none; border-radius:8px; padding:6px 10px; color:#fff; cursor:pointer; font-weight:800; font-size:11px;">
-            ➕ ADICIONAR
-          </button>
+          ${actionButtonHtml}
         `;
-        item.querySelector('.btn-add-friend').onclick = async () => {
+
+        item.querySelector('.btn-add-friend')?.addEventListener('click', async () => {
+          if (!curUser) return auth.openAuthModal();
           const r = await social.sendFriendRequest(u.username);
           alert(r.message || r.error);
           loadFriendsTab();
-        };
+        });
+
+        item.querySelector('.btn-accept-search')?.addEventListener('click', async () => {
+          const r = await social.acceptFriendRequest(u.username);
+          alert(r.message || r.error);
+          loadFriendsTab();
+        });
+
         searchList.appendChild(item);
       });
     };

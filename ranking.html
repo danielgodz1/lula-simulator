@@ -523,14 +523,6 @@
           prestigeHtml = `<span style="font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(255,215,0,0.18); border:1px solid #ffd700; color:#ffd700;" title="Nível de Prestígio ${prestigeLvl}">⭐ P.${prestigeLvl}</span>`;
         }
 
-        const isSelf = curUser && curUser.username && (item.player || '').toLowerCase() === curUser.username.toLowerCase();
-        const actionButtons = !isSelf && curUser ? `
-          <div style="display: flex; gap: 4px; margin-top: 4px;">
-            <button class="btn-quick-duel" style="background:#ef4444; border:none; border-radius:6px; padding:2px 8px; color:#fff; font-size:10px; font-weight:800; cursor:pointer;" title="Desafiar para Duelo">⚔️ Desafiar</button>
-            <button class="btn-quick-friend" style="background:#0284c7; border:none; border-radius:6px; padding:2px 8px; color:#fff; font-size:10px; font-weight:800; cursor:pointer;" title="Adicionar Amigo">➕ Amigo</button>
-          </div>
-        ` : '';
-
         row.innerHTML = `
           <div><span class="rank-badge ${rankClass}">${badge}</span></div>
           <div><img class="ranking-avatar" src="${avatarUrl}" onerror="this.src='${DEFAULT_AVATAR_SVG}'" alt="${safePlayer}" loading="lazy" width="38" height="38"></div>
@@ -544,22 +536,9 @@
               <span style="font-size: 13px;" title="${safeCountryName}">${safeFlag}</span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
             </div>
-            ${actionButtons}
           </div>
           <div class="score-val">${safeScore.toLocaleString('pt-BR')} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
-
-        row.querySelector('.btn-quick-duel')?.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const r = await social.createDuel(item.player, currentTab === 'runner' ? 'runner' : 'flappy');
-          alert(r.message || r.error);
-        });
-
-        row.querySelector('.btn-quick-friend')?.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const r = await social.sendFriendRequest(item.player);
-          alert(r.message || r.error);
-        });
 
         container.appendChild(row);
       });
