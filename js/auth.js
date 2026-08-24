@@ -516,10 +516,12 @@ class AuthManager {
             user.runnerCoins = data.runnerCoins;
           }
           user.unlockedSkins = data.unlockedSkins || [];
-          user.equippedSkins = data.equippedSkins || {};
+          if (data.equippedSkins) {
+            user.equippedSkins = data.equippedSkins;
+            localStorage.setItem('lula_equipped_skins', JSON.stringify(user.equippedSkins));
+          }
           this.setCurrentUser(user);
           localStorage.setItem('lula_unlocked_skins', JSON.stringify(user.unlockedSkins));
-          localStorage.setItem('lula_equipped_skins', JSON.stringify(user.equippedSkins));
           this.renderProfileBadge();
           return { success: true, message: data.message };
         } else {
@@ -536,12 +538,35 @@ class AuthManager {
     const user = this.getCurrentUser();
     if (!user) return { success: false, error: 'Usuário não conectado' };
 
+    const equipped = (user.equippedSkins && typeof user.equippedSkins === 'object') ? { ...user.equippedSkins } : {};
+
+    if (!skinId || skinId === 'default' || skinId === 'padrao') {
+      delete equipped[charId];
+      user.equippedSkins = equipped;
+      this.setCurrentUser(user);
+      localStorage.setItem('lula_equipped_skins', JSON.stringify(equipped));
+
+      try {
+        fetch('/api/shop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: user.username,
+            charId,
+            skinId: 'default',
+            action: 'equip'
+          })
+        }).catch(() => {});
+      } catch(e) {}
+
+      return { success: true, message: 'Skin padrão equipada com sucesso!' };
+    }
+
     const unlocked = Array.isArray(user.unlockedSkins) ? user.unlockedSkins : [];
     if (!unlocked.includes(skinId)) {
       return { success: false, error: 'Skin não desbloqueada.' };
     }
 
-    const equipped = user.equippedSkins || {};
     equipped[charId] = skinId;
     user.equippedSkins = equipped;
     this.setCurrentUser(user);
@@ -553,6 +578,7 @@ class AuthManager {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: user.username,
+          charId,
           skinId,
           action: 'equip'
         })

@@ -12,31 +12,34 @@ export const SKIN_PRICING_TABLE = {
     emoji: '👔',
     badge: 'PRESIDENCIAL',
     glowColor: '#ffd700',
-    capColor: '#eab308'
+    capColor: '#eab308',
+    sprite: 'img/skins/lula_presidencial.png'
   },
   'lula_cyber': {
     id: 'lula_cyber',
     charId: 'lula',
     name: 'Lula Ciborgue 2077',
-    desc: 'Versão do futuro com olho biônico laser vermelho e armadura cibernética de titânio.',
+    desc: 'Versão do futuro com armadura cibernética de titânio e propulsores iônicos.',
     price: 1500,
     currency: 'picanhas',
     emoji: '🤖',
     badge: 'CYBERPUNK',
     glowColor: '#00f0ff',
-    capColor: '#00f0ff'
+    capColor: '#00f0ff',
+    sprite: 'img/skins/lula_cyber.png'
   },
   'lula_praia': {
     id: 'lula_praia',
     charId: 'lula',
     name: 'Lula de Férias na Praia',
-    desc: 'Regata verde e amarela, óculos escuros espelhados e chinelo no pé.',
+    desc: 'Regata azul tropical, óculos escuros espelhados e bermuda de descanso.',
     price: 300,
     currency: 'picanhas',
     emoji: '🏖️',
     badge: 'RELAX',
     glowColor: '#38bdf8',
-    capColor: '#38bdf8'
+    capColor: '#38bdf8',
+    sprite: 'img/skins/lula_praia.png'
   },
 
   // --- BOLSONARO ---
@@ -44,25 +47,27 @@ export const SKIN_PRICING_TABLE = {
     id: 'bolsonaro_moto',
     charId: 'bolsonaro',
     name: 'Capitão Motociclista',
-    desc: 'Jaqueta de couro preta de motociclista, capacete aberto e óculos aviador.',
+    desc: 'Jaqueta de couro preta de motociclista, capacete aberto e óculos escuros.',
     price: 800,
     currency: 'picanhas',
     emoji: '🏍️',
     badge: 'MOTOCIATA',
     glowColor: '#f97316',
-    capColor: '#f97316'
+    capColor: '#f97316',
+    sprite: 'img/skins/bolsonaro_moto.png'
   },
   'bolsonaro_patriota': {
     id: 'bolsonaro_patriota',
     charId: 'bolsonaro',
     name: 'Patriota Dourado Lendário',
-    desc: 'Armadura patriótica reluzente verde e amarela com manto estelar.',
+    desc: 'Armadura patriótica reluzente verde e amarela com manto dourado reluzente.',
     price: 1800,
     currency: 'picanhas',
     emoji: '🔰',
     badge: 'LENDÁRIO',
     glowColor: '#22c55e',
-    capColor: '#eab308'
+    capColor: '#eab308',
+    sprite: 'img/skins/bolsonaro_patriota.png'
   },
 
   // --- NIKOLAS ---
@@ -76,7 +81,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🎧',
     badge: 'STREAMER',
     glowColor: '#a855f7',
-    capColor: '#a855f7'
+    capColor: '#a855f7',
+    sprite: 'img/skins/nikolas_gamer.png'
   },
   'nikolas_chupetinha': {
     id: 'nikolas_chupetinha',
@@ -88,7 +94,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '👱‍♀️',
     badge: 'MEME VIZINHO',
     glowColor: '#ec4899',
-    capColor: '#ec4899'
+    capColor: '#ec4899',
+    sprite: 'img/skins/nikolas_chupetinha.png'
   },
 
   // --- JANJA ---
@@ -102,7 +109,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '💃',
     badge: 'ALTA COSTURA',
     glowColor: '#f43f5e',
-    capColor: '#f43f5e'
+    capColor: '#f43f5e',
+    sprite: 'img/skins/janja_gala.png'
   },
   'janja_neon': {
     id: 'janja_neon',
@@ -114,7 +122,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '✨',
     badge: 'FASHION NEON',
     glowColor: '#06b6d4',
-    capColor: '#06b6d4'
+    capColor: '#06b6d4',
+    sprite: 'img/skins/janja_neon.png'
   },
 
   // --- MORAES (XANDÃO) ---
@@ -128,7 +137,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '⚖️',
     badge: 'SUPREMO',
     glowColor: '#ffd700',
-    capColor: '#ffd700'
+    capColor: '#ffd700',
+    sprite: 'img/skins/moraes_gold.png'
   },
   'moraes_cosmico': {
     id: 'moraes_cosmico',
@@ -140,7 +150,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🌌',
     badge: 'CÓSMICO',
     glowColor: '#6366f1',
-    capColor: '#6366f1'
+    capColor: '#6366f1',
+    sprite: 'img/skins/moraes_cosmico.png'
   },
 
   // --- DILMA ---
@@ -154,7 +165,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🥔',
     badge: 'MANDIOCÓSMICA',
     glowColor: '#eab308',
-    capColor: '#eab308'
+    capColor: '#eab308',
+    sprite: 'img/skins/dilma_mandioca_gold.png'
   },
   'dilma_vento': {
     id: 'dilma_vento',
@@ -166,7 +178,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🌪️',
     badge: 'ESTOCADORA',
     glowColor: '#14b8a6',
-    capColor: '#14b8a6'
+    capColor: '#14b8a6',
+    sprite: 'img/skins/dilma_vento.png'
   },
 
   // --- PABLO MARÇAL ---
@@ -180,7 +193,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '💳',
     badge: 'BLACK CARD',
     glowColor: '#1e293b',
-    capColor: '#ffd700'
+    capColor: '#ffd700',
+    sprite: 'img/skins/marcal_black.png'
   },
   'marcal_quantico': {
     id: 'marcal_quantico',
@@ -192,7 +206,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🔮',
     badge: 'QUÂNTICO 3X',
     glowColor: '#3b82f6',
-    capColor: '#60a5fa'
+    capColor: '#60a5fa',
+    sprite: 'img/skins/marcal_quantico.png'
   },
 
   // --- EMPRESÁRIO 3D ---
@@ -206,7 +221,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🛴',
     badge: 'FARIA LIMA',
     glowColor: '#0ea5e9',
-    capColor: '#0ea5e9'
+    capColor: '#0ea5e9',
+    sprite: 'img/skins/empresario_faria_lima.png'
   },
   'empresario_cyberpunk': {
     id: 'empresario_cyberpunk',
@@ -218,7 +234,8 @@ export const SKIN_PRICING_TABLE = {
     emoji: '🏙️',
     badge: 'CYBER CEO',
     glowColor: '#10b981',
-    capColor: '#10b981'
+    capColor: '#10b981',
+    sprite: 'img/skins/empresario_cyberpunk.png'
   }
 };
 

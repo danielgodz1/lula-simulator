@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/ads.css">
 
   <style>
@@ -797,8 +798,11 @@
           <div class="skin-badge-tag" style="border-color:${skin.glowColor}; color:${skin.glowColor};">
             ${skin.badge}
           </div>
-          <div class="skin-preview-box" style="border: 2px solid ${skin.glowColor}; color:${skin.glowColor}; box-shadow: 0 0 20px ${skin.glowColor}33;">
-            ${skin.emoji}
+          <div class="skin-preview-box" style="border: 2px solid ${skin.glowColor}; color:${skin.glowColor}; box-shadow: 0 0 20px ${skin.glowColor}33; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${skin.sprite 
+              ? `<img src="${skin.sprite}" alt="${skin.name}" style="max-width:80px; max-height:80px; object-fit:contain;" onerror="this.outerHTML='<span style=\\'font-size:36px;\\'>${skin.emoji}</span>'">`
+              : `<span style="font-size:36px;">${skin.emoji}</span>`
+            }
           </div>
           <div class="skin-name">${skin.name}</div>
           <div class="skin-char-name">Personagem: ${skin.charId.toUpperCase()}</div>
@@ -809,7 +813,10 @@
                    🛒 COMPRAR (${skin.price} ${unit})
                  </button>`
               : (isEquipped 
-                  ? `<button class="btn-equipped-active">✅ EQUIPADA</button>`
+                  ? `<div style="display:flex; gap:6px; width:100%;">
+                       <button class="btn-equipped-active" style="flex:1;">✅ EQUIPADA</button>
+                       <button class="btn-unequip-skin" data-char="${skin.charId}" style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#f87171; border-radius:10px; padding:8px 10px; font-weight:700; font-size:11px; cursor:pointer;" title="Voltar ao visual padrão">🔄 PADRÃO</button>
+                     </div>`
                   : `<button class="btn-equip-skin" data-id="${skin.id}" data-char="${skin.charId}">
                        ⚡ EQUIPAR SKIN
                      </button>`
@@ -834,6 +841,14 @@
 
         card.querySelector('.btn-equip-skin')?.addEventListener('click', async () => {
           const res = await auth.equipSkin(skin.charId, skin.id);
+          if (res.success) {
+            updateBalanceHUD();
+            renderSkins();
+          }
+        });
+
+        card.querySelector('.btn-unequip-skin')?.addEventListener('click', async () => {
+          const res = await auth.equipSkin(skin.charId, 'default');
           if (res.success) {
             updateBalanceHUD();
             renderSkins();

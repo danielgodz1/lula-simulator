@@ -906,10 +906,19 @@
         <div class="modal-body-scrollable">
           <div class="char-grid" id="charactersGrid"></div>
 
-          <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:6px 10px; text-align:left;">
+          <div id="charDetailBox" style="background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:8px 10px; text-align:left;">
             <div id="detailCharTitle" style="font-weight:700; font-size:13px; color:var(--amarelo-brasil);">Lula da Silva</div>
             <div id="detailCharSkill" style="font-size:10.5px; color:var(--verde-neon); font-weight:600; margin:1px 0;">Habilidade: Voo Tolerante & Picanha</div>
-            <div id="detailCharDesc" style="font-size:10.5px; color:var(--text-muted); line-height:1.3;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
+            <div id="detailCharDesc" style="font-size:10.5px; color:var(--text-muted); line-height:1.3; margin-bottom:6px;">Hitbox menor e mais generosa. Voo suave e tolerante a colisões leves.</div>
+
+            <!-- SELETOR DE SKINS COSMÉTICAS DO PERSONAGEM -->
+            <div id="detailSkinsContainer" style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1);">
+              <div style="font-size:10px; font-weight:700; color:var(--amarelo-brasil); text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between;">
+                <span>🎨 Visual / Skin</span>
+                <a href="loja.html" style="color:var(--verde-neon); text-decoration:none; font-size:10px;">🛍️ Abrir Loja</a>
+              </div>
+              <div id="charSkinsList" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
+            </div>
           </div>
         </div>
 
@@ -1017,7 +1026,7 @@
     import { sounds } from './js/audio.js';
     import { auth } from './js/auth.js';
     import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
-    import { SKIN_PRICING_TABLE, getEquippedSkin } from './js/game/skins.js';
+    import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from './js/game/skins.js';
     import { escapeHTML } from './js/security.js';
     import { AdsManager } from './js/ads-manager.js';
 
@@ -1048,6 +1057,31 @@
     const goEquippedCharImg = document.getElementById('goEquippedCharImg');
     const goEquippedCharName = document.getElementById('goEquippedCharName');
 
+    // PRÉ-CARREGAMENTO DE SPRITES DE PERSONAGENS E SKINS
+    const characterSprites = {};
+    const characterFlySprites = {};
+    CHARACTERS.forEach(char => {
+      if (char.sprite) {
+        const img = new Image();
+        img.src = char.sprite;
+        characterSprites[char.id] = img;
+      }
+      if (char.flySprite) {
+        const img = new Image();
+        img.src = char.flySprite;
+        characterFlySprites[char.id] = img;
+      }
+    });
+
+    const skinFlySprites = {};
+    Object.values(SKIN_PRICING_TABLE).forEach(skin => {
+      if (skin.sprite) {
+        const img = new Image();
+        img.src = skin.sprite;
+        skinFlySprites[skin.id] = img;
+      }
+    });
+
     let activeCharacter = CharacterInventory.getSelectedCharacter();
     let pendingCharSelect = activeCharacter;
 
@@ -1073,15 +1107,21 @@
     }
 
     function updateEquippedHUD() {
+      const curUser = auth.getCurrentUser();
+      const equippedSkin = getEquippedSkin(curUser, activeCharacter.id);
       const img = document.getElementById('equippedCharImg');
       const name = document.getElementById('equippedCharName');
       const skill = document.getElementById('equippedCharSkill');
-      if (img) img.src = activeCharacter.sprite;
-      if (name) name.textContent = activeCharacter.name;
+      
+      const displayImg = (equippedSkin && equippedSkin.sprite) ? equippedSkin.sprite : activeCharacter.sprite;
+      const displayName = equippedSkin ? `${activeCharacter.name} [${equippedSkin.name}]` : activeCharacter.name;
+
+      if (img) img.src = displayImg;
+      if (name) name.textContent = displayName;
       if (skill) skill.textContent = activeCharacter.skillName;
 
-      if (goEquippedCharImg) goEquippedCharImg.src = activeCharacter.sprite;
-      if (goEquippedCharName) goEquippedCharName.textContent = activeCharacter.name;
+      if (goEquippedCharImg) goEquippedCharImg.src = displayImg;
+      if (goEquippedCharName) goEquippedCharName.textContent = displayName;
     }
 
     let dpr = 1;
@@ -1148,19 +1188,6 @@
     }
 
     let { W, H } = calcSize();
-
-    // SPRITES DOS PERSONAGENS (VOO SUPER-HERÓI E AVATAR)
-    const characterSprites = {};
-    const characterFlySprites = {};
-    CHARACTERS.forEach(char => {
-      const img = new Image();
-      img.src = char.sprite;
-      characterSprites[char.id] = img;
-
-      const flyImg = new Image();
-      flyImg.src = char.flySprite || char.sprite;
-      characterFlySprites[char.id] = flyImg;
-    });
 
     const lulaIconImg = new Image();
     lulaIconImg.src = 'img/lula.png';
@@ -1283,6 +1310,79 @@
       document.getElementById('detailCharTitle').textContent = `${char.name} (${char.nickname})`;
       document.getElementById('detailCharSkill').textContent = `Habilidade: ${char.skillName}`;
       document.getElementById('detailCharDesc').textContent = char.desc;
+
+      const skinsList = document.getElementById('charSkinsList');
+      if (!skinsList) return;
+      skinsList.innerHTML = '';
+
+      const user = auth.getCurrentUser();
+      const equipped = (user && user.equippedSkins && typeof user.equippedSkins === 'object') ? user.equippedSkins[char.id] : null;
+      const isDefaultEquipped = !equipped || equipped === 'default';
+
+      // 1. Opção: Visual Padrão (Original)
+      const defaultBtn = document.createElement('button');
+      defaultBtn.className = `skin-chip-btn ${isDefaultEquipped ? 'active' : ''}`;
+      defaultBtn.style.cssText = `
+        background: ${isDefaultEquipped ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255,255,255,0.08)'};
+        border: 1.5px solid ${isDefaultEquipped ? 'var(--verde-neon)' : 'rgba(255,255,255,0.2)'};
+        color: ${isDefaultEquipped ? '#fff' : 'var(--text-muted)'};
+        border-radius: 6px;
+        padding: 4px 8px;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      `;
+      defaultBtn.innerHTML = `<span>👤 Padrão</span> ${isDefaultEquipped ? '✓' : ''}`;
+      defaultBtn.onclick = async (e) => {
+        e.stopPropagation();
+        await auth.equipSkin(char.id, 'default');
+        updateCharDetailBox(char);
+        updateEquippedHUD();
+      };
+      skinsList.appendChild(defaultBtn);
+
+      // 2. Skins Cosméticas do Personagem
+      const charSkins = getSkinsForCharacter(char.id);
+      charSkins.forEach(skin => {
+        const unlocked = isSkinUnlocked(user, skin.id);
+        const isCurrentEquipped = equipped === skin.id;
+
+        const skinBtn = document.createElement('button');
+        skinBtn.style.cssText = `
+          background: ${isCurrentEquipped ? skin.glowColor + '33' : unlocked ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.3)'};
+          border: 1.5px solid ${isCurrentEquipped ? skin.glowColor : unlocked ? 'rgba(255,255,255,0.25)' : 'rgba(100,100,100,0.3)'};
+          color: ${isCurrentEquipped ? '#fff' : unlocked ? '#e2e8f0' : '#64748b'};
+          border-radius: 6px;
+          padding: 4px 8px;
+          font-size: 10px;
+          font-weight: 700;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        `;
+        skinBtn.innerHTML = `
+          <span>${skin.emoji} ${skin.name}</span>
+          ${isCurrentEquipped ? '✓' : (!unlocked ? '🔒' : '')}
+        `;
+
+        skinBtn.onclick = async (e) => {
+          e.stopPropagation();
+          if (unlocked) {
+            await auth.equipSkin(char.id, skin.id);
+            updateCharDetailBox(char);
+            updateEquippedHUD();
+          } else {
+            if (confirm(`A skin "${skin.name}" está bloqueada! Deseja abrir a Loja de Skins para desbloqueá-la?`)) {
+              window.location.href = 'loja.html';
+            }
+          }
+        };
+        skinsList.appendChild(skinBtn);
+      });
     }
 
     let wasGameOverOpenBeforeCharModal = false;
@@ -2065,8 +2165,9 @@
 
       // DETECTA SKIN COSMÉTICA EQUIPADA DO PERSONAGEM
       const curUser = auth.getCurrentUser();
-      const equippedSkinId = getEquippedSkin(curUser, activeCharacter.id);
-      const skinDef = SKIN_PRICING_TABLE[equippedSkinId];
+      const equippedSkin = getEquippedSkin(curUser, activeCharacter.id);
+      const skinDef = equippedSkin;
+      const equippedSkinId = equippedSkin ? equippedSkin.id : null;
       let capeStartColor = '#ef4444';
       let capeMidColor = '#dc2626';
       let capeEndColor = '#991b1b';
@@ -2163,17 +2264,19 @@
         ctx.restore();
       }
 
+      const skinSprite = (equippedSkin && skinFlySprites[equippedSkin.id]) ? skinFlySprites[equippedSkin.id] : null;
       const flySprite = characterFlySprites[activeCharacter.id];
-      if (flySprite && flySprite.complete && flySprite.naturalWidth > 0) {
+      const baseSprite = characterSprites[activeCharacter.id];
+
+      if (skinSprite && skinSprite.complete && skinSprite.naturalWidth > 0) {
+        ctx.drawImage(skinSprite, -charWidth * 0.52, -charHeight * 0.5, charWidth, charHeight);
+      } else if (flySprite && flySprite.complete && flySprite.naturalWidth > 0) {
         ctx.drawImage(flySprite, -charWidth * 0.52, -charHeight * 0.5, charWidth, charHeight);
+      } else if (baseSprite && baseSprite.complete && baseSprite.naturalWidth > 0) {
+        ctx.drawImage(baseSprite, -charWidth * 0.5, -charHeight * 0.5, charWidth, charHeight);
       } else {
-        const spriteImg = characterSprites[activeCharacter.id];
-        if (spriteImg && spriteImg.complete) {
-          ctx.drawImage(spriteImg, -charWidth * 0.5, -charHeight * 0.5, charWidth, charHeight);
-        } else {
-          ctx.font = `${charHeight}px serif`;
-          ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
-        }
+        ctx.font = `${charHeight}px serif`;
+        ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
       }
 
       // ANIMAÇÃO DE ATORDOAMENTO NA CABEÇA QUANDO MORTO (ATORDOADO / DIZZY COM ESTRELAS E AURÉOLA)

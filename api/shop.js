@@ -54,8 +54,26 @@ export default async function handler(req, res) {
     const unlockedSkins = Array.isArray(userData.unlockedSkins) ? userData.unlockedSkins : [];
     const equippedSkins = (userData.equippedSkins && typeof userData.equippedSkins === 'object') ? userData.equippedSkins : {};
 
-    // Ação 1: Apenas EQUIPAR skin já desbloqueada
-    if (action === 'equip') {
+    // Ação 1: EQUIPAR / DESEQUIPAR skin
+    if (action === 'equip' || action === 'unequip') {
+      if (skinId === 'default' || skinId === 'padrao' || action === 'unequip') {
+        const targetChar = req.body.charId || (skinConfig ? skinConfig.charId : null);
+        if (targetChar) {
+          delete equippedSkins[targetChar];
+        }
+        await userRef.set({
+          equippedSkins,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Skin padrão equipada!',
+          equippedSkins,
+          unlockedSkins
+        });
+      }
+
       if (!unlockedSkins.includes(skinId)) {
         return res.status(400).json({ success: false, error: 'Você ainda não possui esta skin.' });
       }
@@ -73,7 +91,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Ação 2: COMPRAR skin
+    // Ação 2: COMPRAR skin (APENAS DESBLOQUEIA, NÃO EQUIPA AUTOMATICAMENTE)
     if (unlockedSkins.includes(skinId)) {
       return res.status(400).json({ success: false, error: 'Você já possui esta skin desbloqueada.' });
     }
@@ -100,19 +118,17 @@ export default async function handler(req, res) {
     }
 
     unlockedSkins.push(skinId);
-    equippedSkins[skinConfig.charId] = skinId;
 
     await userRef.set({
       totalPicanhas,
       runnerCoins,
       unlockedSkins,
-      equippedSkins,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
 
     return res.status(200).json({
       success: true,
-      message: 'Skin desbloqueada e equipada com sucesso!',
+      message: 'Skin desbloqueada com sucesso! Selecione "Equipar" para utilizá-la.',
       totalPicanhas,
       runnerCoins,
       unlockedSkins,
