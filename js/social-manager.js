@@ -2,6 +2,10 @@
 import { auth, DEFAULT_AVATAR_SVG } from './auth.js';
 import { escapeHTML } from './security.js';
 
+function isEnglishContext() {
+  return typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+}
+
 class SocialManager {
   constructor() {
     this.unreadNotifications = 0;
@@ -383,7 +387,7 @@ class SocialManager {
     if (!notifs || notifs.length === 0) {
       listEl.innerHTML = `
         <div style="text-align: center; padding: 25px 10px; color: #64748b; font-size: 12px;">
-          Nenhuma notificação nova no momento. 📭
+          ${isEnglishContext() ? 'No new notifications at the moment. 📭' : 'Nenhuma notificação nova no momento. 📭'}
         </div>
       `;
       return;
@@ -435,7 +439,7 @@ class SocialManager {
     if (!activities || activities.length === 0) {
       containerEl.innerHTML = `
         <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">
-          Aguardando novos recordes e duelos da comunidade... ⚡
+          ${isEnglishContext() ? 'Waiting for new community records and duels... ⚡' : 'Aguardando novos recordes e duelos da comunidade... ⚡'}
         </div>
       `;
       return;
@@ -483,7 +487,7 @@ class SocialManager {
               ${escapeHTML(act.username)}
             </span>
             <span style="font-size: 10px; color: ${isDuel ? '#ef4444' : 'var(--verde-neon)'}; font-weight: 800;">
-              ${isDuel ? '⚔️ DUELO' : '⭐ RECORDE'}
+              ${isDuel ? (isEnglishContext() ? '⚔️ DUEL' : '⚔️ DUELO') : (isEnglishContext() ? '⭐ RECORD' : '⭐ RECORDE')}
             </span>
           </div>
           <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
@@ -541,7 +545,7 @@ class SocialManager {
     };
 
     return {
-      name: 'Copa Brasília · Edição Semanal Oficial',
+      name: isEnglishContext() ? 'Brasília Cup · Official Weekly Tournament' : 'Copa Brasília · Edição Semanal Oficial',
       status: 'active',
       participants: defaultRoster,
       quarters,

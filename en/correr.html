@@ -411,51 +411,51 @@
         <span id="coinsDisplay" style="color: #ffd700;">💰 0</span>
       </div>
       <div class="hud-box" style="border-color: #3b82f6;">
-        <label>Velocidade</label>
+        <label>Speed</label>
         <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
       </div>
-      <button id="btnOpenCharSelect" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#fef08a; font-size:15px; font-weight:bold; font-family:'Bangers',cursive;" title="Selecionar Personagem">
-        🎭 PERSONAGENS
+      <button id="btnOpenCharSelect" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#fef08a; font-size:15px; font-weight:bold; font-family:'Bangers',cursive;" title="Select 3D Character">
+        🎭 CHARACTERS
       </button>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Som">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Sound">
         🔊
       </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:16px;" title="Tela Cheia">
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:16px;" title="Fullscreen">
         ⛶
       </button>
     </div>
 
     <!-- CONTROLES MOBILE / TOUCH -->
     <div id="mobileControls">
-      <div class="mob-btn" id="btnLeft" title="Esquerda">◀</div>
-      <div class="mob-btn" id="btnJump" title="Pular">▲</div>
-      <div class="mob-btn" id="btnSlide" title="Deslizar">▼</div>
-      <div class="mob-btn" id="btnRight" title="Direita">▶</div>
+      <div class="mob-btn" id="btnLeft" title="Left">◀</div>
+      <div class="mob-btn" id="btnJump" title="Jump">▲</div>
+      <div class="mob-btn" id="btnSlide" title="Slide">▼</div>
+      <div class="mob-btn" id="btnRight" title="Right">▶</div>
     </div>
 
     <!-- OVERLAY INICIAL PARA ATIVAR SOM -->
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
         <h1 style="font-family:'Bangers',cursive; font-size:38px; color:var(--amarelo-brasil); margin-bottom:8px;">
-          🏃 EMPRESÁRIO NA FAVELA 3D
+          🏃 3D ENDLESS RUNNER
         </h1>
         <p style="color:var(--text-main); font-size:14px; margin-bottom:12px; line-height:1.5;">
-          Corra pelos trilhos da <strong>Favela do Rio</strong> desviando da <strong>CLT 44h</strong>, <strong>Bolsa Família</strong>, <strong>Auxílio Brasil</strong> e <strong>Trens de Metrô</strong> em 3D real!
+          Run along the tracks of Rio dodging welfare bills, work overload contracts, and oncoming Subway Trains in real 3D!
         </p>
         <div style="background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:12px; margin-bottom:16px; font-size:12px; color:var(--text-muted); text-align:left;">
-          🎮 <strong>Como Jogar (Subway Surfers):</strong><br>
-          • <strong>← → / A D / Swipe:</strong> Mudar de Faixa (Agilidade Dinâmica)<br>
-          • <strong>↑ / W / Espaço / Swipe Cima:</strong> Pular Barreiras<br>
-          • <strong>↓ / S / Swipe Baixo:</strong> Deslizar / Slide por baixo de Varais<br>
-          • ⚡ <strong>Velocidade Acelerada:</strong> Aumenta gradativamente até 10.0x!<br>
-          • 💰 <strong>Colete Moedas e Picanhas</strong> para liberar novos personagens!
+          🎮 <strong>How to Play (Subway Surfers Style):</strong><br>
+          • <strong>← → / A D / Swipe:</strong> Switch Lanes (Dynamic Agility)<br>
+          • <strong>↑ / W / Space / Swipe Up:</strong> Jump Obstacles<br>
+          • <strong>↓ / S / Swipe Down:</strong> Slide Under Clotheslines & Barriers<br>
+          • ⚡ <strong>Dynamic Speed:</strong> Gradually accelerates up to 10.0x!<br>
+          • 💰 <strong>Collect Coins and Steaks</strong> to unlock new characters!
         </div>
         <div style="display:flex; flex-direction:column; gap:10px;">
           <button class="btn-primary" id="btnStartGame" style="font-size:20px; padding:12px 28px; width:100%;">
-            🔊 TOQUE PARA INICIAR A CORRIDA!
+            🔊 TAP TO START RUNNING!
           </button>
           <button class="btn-secondary" id="btnOpenCharSelectStart" style="font-size:16px; padding:10px 20px; width:100%; border-color:#eab308; color:#fef08a; font-family:'Bangers',cursive; letter-spacing:1px;">
-            🎭 ESCOLHER PERSONAGEM (LULA / BOLSONARO)
+            🎭 CHOOSE CHARACTER (LULA / BOLSONARO)
           </button>
         </div>
       </div>
@@ -465,13 +465,13 @@
     <div class="modal-overlay" id="charSelectModal" style="display:none; z-index:1300;">
       <div class="modal-card" style="max-width: 680px; border-color: var(--amarelo-brasil); box-shadow: 0 0 60px rgba(255, 223, 0, 0.4); padding: 20px 24px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-          <div class="modal-title" style="color:var(--amarelo-brasil); margin-bottom:0; font-size:30px;">🎭 PERSONAGENS 3D</div>
+          <div class="modal-title" style="color:var(--amarelo-brasil); margin-bottom:0; font-size:30px;">🎭 3D CHARACTERS</div>
           <button id="btnCloseCharSelect" style="background:none; border:none; color:#f87171; font-size:26px; cursor:pointer; font-weight:bold; padding:4px 8px;">✖</button>
         </div>
 
         <div style="background:rgba(0,0,0,0.5); padding:8px 14px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:13px; color:var(--text-muted);">Saldo de Moedas Acumuladas:</span>
-          <span id="charModalCoinBalance" style="font-family:'Bangers',cursive; font-size:22px; color:#ffd700;">💰 0 MOEDAS</span>
+          <span style="font-size:13px; color:var(--text-muted);">Accumulated Coins Balance:</span>
+          <span id="charModalCoinBalance" style="font-family:'Bangers',cursive; font-size:22px; color:#ffd700;">💰 0 COINS</span>
         </div>
 
         <!-- VIEWPORT DE PREVIEW 3D DO PERSONAGEM (AMPLIADO COM ILUMINAÇÃO DE ESTÚDIO) -->
@@ -480,18 +480,18 @@
           
           <div style="position:absolute; bottom:10px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:flex-end; pointer-events:none;">
             <div style="background:rgba(0,0,0,0.75); padding:6px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.2); backdrop-filter:blur(4px);">
-              <div id="previewCharName" style="font-family:'Bangers',cursive; font-size:22px; color:#facc15; letter-spacing:1px; line-height:1.1;">EMPRESÁRIO</div>
-              <div id="previewCharDesc" style="font-size:12px; color:#cbd5e1;">Personagem Inicial Padrão</div>
+              <div id="previewCharName" style="font-family:'Bangers',cursive; font-size:22px; color:#facc15; letter-spacing:1px; line-height:1.1;">BUSINESSMAN</div>
+              <div id="previewCharDesc" style="font-size:12px; color:#cbd5e1;">Default Starting Character</div>
             </div>
             <div style="background:rgba(0,0,0,0.75); padding:6px 10px; border-radius:8px; font-size:12px; color:#fef08a; border:1px solid rgba(255,223,0,0.3); backdrop-filter:blur(4px);">
-              🔄 Arraste para girar 360°
+              🔄 Drag to rotate 360°
             </div>
           </div>
         </div>
 
         <!-- BOTÃO DIRETO: JOGAR COM ESTE PERSONAGEM -->
         <button id="btnPlayWithSelectedChar" class="btn-primary" style="width:100%; font-size:18px; padding:12px 16px; margin-bottom:14px; letter-spacing:1px;">
-          🚀 JOGAR COM O EMPRESÁRIO
+          🚀 PLAY WITH THIS CHARACTER
         </button>
 
         <!-- GRID DE CARDS DOS PERSONAGENS -->
@@ -504,16 +504,16 @@
     <!-- MODAL DE GAME OVER 3D -->
     <div class="modal-overlay" id="gameOverModal" style="display:none;">
       <div class="modal-card">
-        <div class="modal-title">CAPTURADO!</div>
-        <div class="modal-subtitle" id="goTitle">OBSTÁCULO</div>
-        <div class="modal-message" id="goMessage">Você foi pego pelo sistema!</div>
-        <div class="modal-dist" id="goDistance">0 KM PERCORRIDOS</div>
+        <div class="modal-title">GAME OVER!</div>
+        <div class="modal-subtitle" id="goTitle">OBSTACLE</div>
+        <div class="modal-message" id="goMessage">You were caught by the obstacle!</div>
+        <div class="modal-dist" id="goDistance">0 KM TRAVELED</div>
         <div style="display:flex; gap:10px; margin-top:12px;">
           <button class="btn-primary" id="btnRestart" style="flex:1.4; font-size:18px; padding:12px 14px;">
-            🔄 REINICIAR CORRIDA 3D
+            🔄 PLAY AGAIN
           </button>
           <a href="index.html" class="btn-secondary" style="flex:1; font-size:16px; padding:12px 10px; display:flex; align-items:center; justify-content:center; text-decoration:none; border-radius:12px;">
-            🏠 INÍCIO
+            🏠 HOME
           </a>
         </div>
         <div style="margin-top:10px;">

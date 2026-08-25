@@ -345,8 +345,8 @@
 
   <!-- CABEÇALHO DA PÁGINA -->
   <header class="page-header">
-    <h1>🏅 BADGES & CONQUISTAS DO GAME</h1>
-    <p>Colete picanhas no Flappy Lula e escape das armadilhas da CLT no Empresário 3D para desbloquear selos históricos e raros da política brasileira!</p>
+    <h1>🏅 ACHIEVEMENTS & EXCLUSIVE BADGES</h1>
+    <p>Collect steaks in Flappy Lula and dodge corporate obstacles in 3D Runner to unlock historic and legendary political badges!</p>
   </header>
 
   <div class="conquistas-container">
@@ -354,25 +354,25 @@
     <!-- PAINEL DE STATUS DO JOGADOR CONECTADO -->
     <div class="player-stats-card">
       <div class="stat-item">
-        <span class="stat-label">Jogador</span>
+        <span class="stat-label">Player</span>
         <span class="stat-value" id="statsPlayerName">Visitante</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">🥩 Total de Picanhas</span>
+        <span class="stat-label">🥩 Total Steaks</span>
         <span class="stat-value green" id="statsTotalPicanhas">0 🥩</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">🐦 Recorde Flappy</span>
+        <span class="stat-label">🐦 Flappy Best</span>
         <span class="stat-value" id="statsFlappyRecord">0 pts</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">🏃 Recorde Empresário</span>
+        <span class="stat-label">🏃 3D Runner Best</span>
         <span class="stat-value blue" id="statsRunnerRecord">0 km</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">🏆 Badges Liberadas</span>
+        <span class="stat-label">🏆 Badges Unlocked</span>
         <span class="stat-value green" id="statsUnlockedBadges">0 / 8</span>
-        <button id="btnSyncCloud" style="background:rgba(255,223,0,0.15); border:1.5px solid var(--amarelo-brasil); color:var(--amarelo-brasil); border-radius:10px; padding:4px 10px; font-size:11px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-top:6px; transition:all 0.2s;" title="Sincronizar com o banco de dados">🔄 Sincronizar</button>
+        <button id="btnSyncCloud" style="background:rgba(255,223,0,0.15); border:1.5px solid var(--amarelo-brasil); color:var(--amarelo-brasil); border-radius:10px; padding:4px 10px; font-size:11px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:4px; margin-top:6px; transition:all 0.2s;" title="Sync with cloud database">🔄 Sync Cloud</button>
       </div>
     </div>
 
@@ -382,7 +382,7 @@
     <!-- BOTÃO SMARTLINK DE RECOMPENSA PICANHAS BÔNUS -->
     <div style="display: flex; justify-content: center; margin: 10px auto 24px;">
       <button id="btnRewardConquistas" class="btn-rewarded-smartlink" style="font-size: 14px; padding: 10px 22px; border-radius: 12px;">
-        🎁 GANHAR +10 PICANHAS BÔNUS (PARCEIRO)
+        🎁 GET +10 BONUS STEAKS (SPONSOR)
       </button>
     </div>
 
@@ -751,10 +751,10 @@
         fillId: 'fillNikolas',
         textId: 'textNikolas',
         target: 100,
-        title: 'Nikolas Ferreira — O Deputado Viral',
-        req: '⚡ 100 pts no Flappy + 300 km no 3D',
+        title: 'Nikolas Ferreira — The Viral Deputy',
+        req: '⚡ 100 pts Flappy + 300 km 3D',
         img: 'img/nikolas.png',
-        desc: 'Nikolas Ferreira em velocidade máxima no comício! Cada cano ultrapassado rende o dobro de picanhas no placar (2x Pontos).'
+        desc: 'Nikolas Ferreira at maximum rally speed! Each pipe passed grants 2x steaks on the scoreboard (2x Points).'
       },
       {
         id: 'moraes',
@@ -762,10 +762,10 @@
         fillId: 'fillMoraes',
         textId: 'textMoraes',
         target: 120,
-        title: 'Alexandre de Moraes — Xandão do STF',
-        req: '🛡️ 120 Picanhas Acumuladas',
+        title: 'Alexandre de Moraes — Supreme Xandão',
+        req: '🛡️ 120 Accumulated Steaks',
         img: 'img/moraes.png',
-        desc: 'Xandão e a toga inquebrável. Possui um escudo protetor que salva o jogador da primeira batida violenta em um cano!'
+        desc: 'Xandão and his unbreakable robe. Grants a protective shield saving the player from the first violent pipe collision!'
       },
       {
         id: 'bolsonaro',
@@ -773,10 +773,10 @@
         fillId: 'fillBolsonaro',
         textId: 'textBolsonaro',
         target: 200,
-        title: 'Jair Bolsonaro — O Capitão Patriota',
-        req: '🚀 200 Picanhas Acumuladas',
+        title: 'Jair Bolsonaro — The Captain',
+        req: '🚀 200 Accumulated Steaks',
         img: 'img/bolsonaro.png',
-        desc: 'Jair Bolsonaro com a faixa e pose clássica. Ao engatar 4 canos seguidos, ativa 4 segundos de super velocidade e ímã de picanha!'
+        desc: 'Jair Bolsonaro with the classic presidential sash. Clearing 4 pipes in a row triggers 4 seconds of super speed and steak magnet!'
       },
       {
         id: 'dilma',
@@ -784,10 +784,10 @@
         fillId: 'fillDilma',
         textId: 'textDilma',
         target: 100,
-        title: 'Dilma Rousseff — A Estocadora de Vento',
-        req: '🥔 100 Picanhas Acumuladas',
+        title: 'Dilma Rousseff — Cosmic Wind Stocker',
+        req: '🥔 100 Accumulated Steaks',
         img: 'img/dilma.png',
-        desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas pelo cenário (acumula picanhas normalmente)!'
+        desc: 'Cosmic energy and lighter gravity! Golden crops rain across the scenery while accumulating steaks normally!'
       },
       {
         id: 'marcal',
@@ -795,10 +795,10 @@
         fillId: 'fillMarcal',
         textId: 'textMarcal',
         target: 900,
-        title: 'Pablo Marçal — O Homem do Código',
-        req: '💵 Liberar Nikolas + Fazer 900 pts jogando com ele',
+        title: 'Pablo Marçal — The Code Master',
+        req: '💵 Unlock Nikolas + Score 900 pts with him',
         img: 'img/marcal.png',
-        desc: 'Mindset quântico e velocidade turbo: triplica todos os pontos obtidos (3X) e solta chuva de notas de dinheiro pelo ar!'
+        desc: 'Quantum mindset and turbo speed: triples all points earned (3X) and releases rain of banknotes through the air!'
       }
     ];
 
@@ -818,7 +818,7 @@
       const flapEl = document.getElementById('statsFlappyRecord');
       const runEl = document.getElementById('statsRunnerRecord');
       if (nameEl) nameEl.textContent = user ? user.username : (localStorage.getItem('lula_player') || 'Visitante');
-      if (picEl) picEl.textContent = `${currentPicanhas} 🥩 (Histórico: ${lifetimePicanhas})`;
+      if (picEl) picEl.textContent = `${currentPicanhas} 🥩 (Lifetime: ${lifetimePicanhas})`;
       if (flapEl) flapEl.textContent = `${flappyBest} pts`;
       if (runEl) runEl.textContent = `${runnerBest} km`;
 
@@ -833,7 +833,7 @@
         let percent = 0;
         let isUnlocked = false;
 
-        // Se o jogador acumulou 3.000 Picanhas Históricas, libera TUDO automaticamente!
+        // Se o jogador acumulou 3.000 Lifetime Steaks, libera TUDO automaticamente!
         const isMasterUnlocked = lifetimePicanhas >= 3000;
 
         if (b.id === 'nikolas') {
@@ -856,13 +856,13 @@
 
           if (isUnlocked) {
             percent = 100;
-            if (text) text.textContent = `✨ DESBLOQUEADO (${nikolasBest}/900 pts com Nikolas)`;
+            if (text) text.textContent = `✨ UNLOCKED (${nikolasBest}/900 pts w/ Nikolas)`;
           } else if (!isNikolasUnlocked) {
             percent = Math.min(50, Math.round(((flappyBest + runnerBest) / 600) * 50));
-            if (text) text.textContent = `Passo 1: Liberar Nikolas (300 pts Flappy + 300 km 3D)`;
+            if (text) text.textContent = `Step 1: Unlock Nikolas (300 pts Flappy + 300 km 3D)`;
           } else {
             percent = 50 + Math.min(50, Math.round((nikolasBest / 900) * 50));
-            if (text) text.textContent = `Passo 2: Fazer 900 pts com Nikolas (${nikolasBest}/900 pts)`;
+            if (text) text.textContent = `Step 2: Score 900 pts w/ Nikolas (${nikolasBest}/900 pts)`;
           }
         } else if (b.id === 'badge50') {
           percent = Math.min(100, Math.round((lifetimePicanhas / 50) * 100));
@@ -921,7 +921,7 @@
       currentSelectedBadge = badge;
       modalImg.src = badge.img;
       modalTitle.textContent = badge.title;
-      modalReq.textContent = isUnlocked ? `✓ DESBLOQUEADO (${badge.req})` : `🔒 BLOQUEADO (${badge.req})`;
+      modalReq.textContent = isUnlocked ? `✓ UNLOCKED (${badge.req})` : `🔒 LOCKED (${badge.req})`;
       modalReq.style.color = isUnlocked ? 'var(--verde-neon)' : '#f87171';
       modalDesc.textContent = badge.desc;
 
@@ -930,10 +930,10 @@
           btnEquip.style.display = 'inline-flex';
           const equipped = localStorage.getItem('lula_equipped_medal');
           if (equipped === badge.id) {
-            btnEquip.textContent = '✓ EQUIPADO NO RANKING';
+            btnEquip.textContent = '✓ EQUIPPED ON LEADERBOARD';
             btnEquip.style.background = '#22c55e';
           } else {
-            btnEquip.textContent = '🎖️ EQUIPAR NO RANKING';
+            btnEquip.textContent = '🎖️ EQUIP ON LEADERBOARD';
             btnEquip.style.background = 'var(--gradiente-brasil)';
           }
         } else {
@@ -949,7 +949,7 @@
       localStorage.setItem('lula_equipped_medal', currentSelectedBadge.id);
       btnEquip.textContent = '✓ EQUIPADO NO RANKING';
       btnEquip.style.background = '#22c55e';
-      alert(`🎉 ${currentSelectedBadge.title} equipada com sucesso! O selo aparecerá ao lado do seu nome no Ranking Nacional! 🚀`);
+      alert(`🎉 ${currentSelectedBadge.title} equipped successfully! The badge will appear beside your name on the Global Leaderboard! 🚀`);
     });
 
     btnClose?.addEventListener('click', () => { if (modal) modal.style.display = 'none'; });
@@ -962,7 +962,7 @@
       document.getElementById('btnRewardConquistas')?.addEventListener('click', (e) => {
         e.stopPropagation();
         m.AdsManager.openRewardedLink((bonus) => {
-          alert(`🎁 Recompensa coletada! +${bonus} picanhas adicionadas à sua conta!`);
+          alert(`🎁 Reward claimed! +${bonus} bonus steaks added to your account!`);
           updateBadgesUI();
         });
       });

@@ -6,6 +6,10 @@ const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
 
+function isEnglishContext() {
+  return typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+}
+
 // Avatar padrão elegante em SVG Data URL (Zero requisições de rede, 100% offline-ready)
 export const DEFAULT_AVATAR_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231e293b'/%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23ffdf00' stroke-width='3'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2394a3b8'/%3E%3Cpath d='M20 86c0-16.5 13.5-30 30-30s30 13.5 30 30' fill='%2394a3b8'/%3E%3C/svg%3E";
 
@@ -167,10 +171,10 @@ class AuthManager {
         animation: popIn 0.25s ease-out;
       ">
         <div style="font-family: 'Bangers', cursive; font-size: 22px; color: var(--amarelo-brasil, #ffd700); letter-spacing: 1px; text-align: center;">
-          ✂️ AJUSTAR & ENQUADRAR FOTO
+          ${isEnglishContext() ? '✂️ ADJUST & CROP PHOTO' : '✂️ AJUSTAR & ENQUADRAR FOTO'}
         </div>
         <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.3;">
-          Arraste a imagem para posicionar e use o slider para dar zoom no rosto!
+          ${isEnglishContext() ? 'Drag to position and use slider to zoom in!' : 'Arraste a imagem para posicionar e use o slider para dar zoom no rosto!'}
         </p>
 
         <!-- VIEWPORT DE RECORTE COM CANVAS -->
@@ -191,7 +195,7 @@ class AuthManager {
             Cancelar
           </button>
           <button id="btnConfirmCrop" class="btn-primary" style="flex: 1.4; padding: 10px; font-size: 14px; letter-spacing: 0.5px;">
-            SALVAR FOTO ✂️
+            ${isEnglishContext() ? 'SAVE PHOTO ✂️' : 'SALVAR FOTO ✂️'}
           </button>
         </div>
       </div>
@@ -733,10 +737,10 @@ class AuthManager {
       ">
         <div style="font-size: 40px; margin-bottom: 6px;">🔥</div>
         <div style="font-family: 'Bangers', cursive; font-size: 26px; color: #00e676; letter-spacing: 1px;">
-          STREAK DIÁRIO: DIA ${streak}!
+          ${isEnglishContext() ? `DAILY STREAK: DAY ${streak}!` : `STREAK DIÁRIO: DIA ${streak}!`}
         </div>
         <p style="color: #94a3b8; font-size: 13px; margin: 6px 0 16px;">
-          Você entrou no jogo em dias consecutivos e resgatou sua recompensa diária!
+          ${isEnglishContext() ? 'You logged in on consecutive days and claimed your daily bonus!' : 'Você entrou no jogo em dias consecutivos e resgatou sua recompensa diária!'}
         </p>
 
         <div style="display: flex; gap: 6px; margin-bottom: 20px; justify-content: space-between;">
@@ -744,14 +748,14 @@ class AuthManager {
         </div>
 
         <div style="background: rgba(255, 223, 0, 0.12); border: 1px solid #ffd700; border-radius: 12px; padding: 12px; margin-bottom: 18px;">
-          <div style="font-size: 12px; color: #ffd700; font-weight: 700;">BÔNUS COLETADO HOJE:</div>
+          <div style="font-size: 12px; color: #ffd700; font-weight: 700;">${isEnglishContext() ? 'BONUS CLAIMED TODAY:' : 'BÔNUS COLETADO HOJE:'}</div>
           <div style="font-size: 22px; font-weight: 900; color: #fff; margin-top: 2px;">
-            +${currentReward.picanhas} 🥩 PICANHAS ${currentReward.coins > 0 ? `+${currentReward.coins} 💰` : ''}
+            +${currentReward.picanhas} ${isEnglishContext() ? '🥩 STEAKS' : '🥩 PICANHAS'} ${currentReward.coins > 0 ? (isEnglishContext() ? `+${currentReward.coins} 💰 COINS` : `+${currentReward.coins} 💰 MOEDAS`) : ''}
           </div>
         </div>
 
         <button id="btnCloseStreakModal" class="btn-primary" style="width: 100%; padding: 12px; font-size: 16px; background: #00e676; color: #000; font-weight: 800; border-radius: 12px; cursor: pointer; border: none;">
-          CONTINUAR JOGANDO 🇧🇷
+          ${isEnglishContext() ? 'CONTINUE PLAYING 🚀' : 'CONTINUAR JOGANDO 🇧🇷'}
         </button>
       </div>
     `;
@@ -1238,22 +1242,22 @@ class AuthManager {
         ">✕</button>
 
         <h2 style="font-family: 'Bangers', cursive; font-size: 26px; letter-spacing: 1px; margin: 0 0 4px 0; color: var(--amarelo-brasil, #ffd700); text-align: center;">
-          ${isUserLoggedIn ? '🇧🇷 PERFIL DO JOGADOR' : '🇧🇷 ACESSO / IDENTIFICAÇÃO'}
+          ${isUserLoggedIn ? (isEnglishContext() ? '🐦 PLAYER PROFILE' : '🇧🇷 PERFIL DO JOGADOR') : (isEnglishContext() ? '🐦 SIGN IN / PLAYER ACCESS' : '🇧🇷 ACESSO / IDENTIFICAÇÃO')}
         </h2>
         <p style="font-size: 13px; color: #94a3b8; text-align: center; margin: 0 0 16px 0;">
-          ${isUserLoggedIn ? 'Gerencie sua foto de perfil, recordes e sincronização na nuvem.' : 'Escolha seu nome público ou proteja sua conta com senha!'}
+          ${isUserLoggedIn ? (isEnglishContext() ? 'Manage your profile avatar, high scores, and cloud synchronization.' : 'Gerencie sua foto de perfil, recordes e sincronização na nuvem.') : (isEnglishContext() ? 'Choose your public username or protect your account with a password!' : 'Escolha seu nome público ou proteja sua conta com senha!')}
         </p>
 
         <!-- TABS DE NAVEGAÇÃO DO MODAL -->
         <div style="display: flex; gap: 6px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
           ${isUserLoggedIn ? `
-            <button id="tabProfile" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Meu Perfil</button>
-            <button id="tabSync" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">☁️ Sincronizar</button>
-            <button id="tabSwitchAcc" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔄 Trocar Conta</button>
+            <button id="tabProfile" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '👤 My Profile' : '👤 Meu Perfil'}</button>
+            <button id="tabSync" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '☁️ Cloud Sync' : '☁️ Sincronizar'}</button>
+            <button id="tabSwitchAcc" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '🔄 Switch Account' : '🔄 Trocar Conta'}</button>
           ` : `
-            <button id="tabChosenName" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">👤 Jogar sem Senha</button>
-            <button id="tabRegister" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔒 Criar Conta</button>
-            <button id="tabLogin" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">🔑 Entrar</button>
+            <button id="tabChosenName" class="auth-tab active" style="flex:1; padding:8px; border-radius:8px; border:none; background:var(--azul-bandeira, #1e3a8a); color:#fff; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '👤 Play as Guest' : '👤 Jogar sem Senha'}</button>
+            <button id="tabRegister" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '🔒 Create Account' : '🔒 Criar Conta'}</button>
+            <button id="tabLogin" class="auth-tab" style="flex:1; padding:8px; border-radius:8px; border:none; background:transparent; color:#94a3b8; font-weight:700; cursor:pointer; font-size:12px;">${isEnglishContext() ? '🔑 Sign In' : '🔑 Entrar'}</button>
           `}
         </div>
 
@@ -1281,7 +1285,7 @@ class AuthManager {
                   👤 ${escapeHTML(user.username)}
                 </div>
                 <div style="font-size: 12px; color: ${user.hasPassword ? '#86efac' : '#94a3b8'};">
-                  ${user.hasPassword ? '🔒 Conta Protegida por Senha' : '👤 Nome Público de Jogador'}
+                  ${user.hasPassword ? (isEnglishContext() ? '🔒 Password-Protected Account' : '🔒 Conta Protegida por Senha') : (isEnglishContext() ? '👤 Public Guest Player' : '👤 Nome Público de Jogador')}
                 </div>
               </div>
             </div>
@@ -1289,7 +1293,7 @@ class AuthManager {
             <!-- PRESETS DE AVATAR RÁPIDO -->
             <div style="margin-bottom: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px;">
               <div style="font-size: 11px; color: #cbd5e1; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                🎨 Escolher Avatar do Jogo ou Enviar Foto:
+                ${isEnglishContext() ? '🎨 Choose Avatar or Upload Custom Photo:' : '🎨 Escolher Avatar do Jogo ou Enviar Foto:'}
               </div>
               <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
                 ${PRESET_AVATARS.map(p => `
@@ -1312,32 +1316,32 @@ class AuthManager {
             <!-- ESTATÍSTICAS E STATUS DOS PERSONAGENS -->
             <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,223,0,0.2); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
               <div style="font-size: 12px; font-weight: 700; color: var(--amarelo-brasil, #ffd700); margin-bottom: 8px;">
-                📊 Estatísticas & Desbloqueios da Conta:
+                ${isEnglishContext() ? '📊 Account Stats & Character Unlocks:' : '📊 Estatísticas & Desbloqueios da Conta:'}
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
-                <div>🥩 Picanhas: <b style="color: #fff;">${totalPicanhas}</b></div>
-                <div>💰 Moedas 3D: <b style="color: #fff;">${runnerCoins}</b></div>
-                <div>🐦 Flappy Recorde: <b style="color: var(--verde-neon);">${flappyBest} pts</b></div>
-                <div>🏃 Runner Recorde: <b style="color: var(--verde-neon);">${runnerBest} km</b></div>
+                <div>${isEnglishContext() ? '🥩 Steaks:' : '🥩 Picanhas:'} <b style="color: #fff;">${totalPicanhas}</b></div>
+                <div>${isEnglishContext() ? '💰 3D Coins:' : '💰 Moedas 3D:'} <b style="color: #fff;">${runnerCoins}</b></div>
+                <div>${isEnglishContext() ? '🐦 Flappy Best:' : '🐦 Flappy Recorde:'} <b style="color: var(--verde-neon);">${flappyBest} pts</b></div>
+                <div>${isEnglishContext() ? '🏃 3D Runner Best:' : '🏃 Runner Recorde:'} <b style="color: var(--verde-neon);">${runnerBest} km</b></div>
               </div>
               <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span>⚡ Nikolas Ferreira:</span>
                   <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isNikolasUnlocked ? 'background: rgba(6,182,212,0.2); color: #06b6d4; border: 1px solid #0891b2;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
-                    ${isNikolasUnlocked ? '✨ Desbloqueado' : '🔒 300 pts Flappy + 300 km 3D'}
+                    ${isNikolasUnlocked ? (isEnglishContext() ? '✨ Unlocked' : '✨ Desbloqueado') : '🔒 300 pts Flappy + 300 km 3D'}
                   </span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span>🚀 Pablo Marçal (${nikolasBest}/900 pts Nikolas):</span>
                   <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isMarcalUnlocked ? 'background: rgba(14,165,233,0.2); color: #38bdf8; border: 1px solid #0284c7;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
-                    ${isMarcalUnlocked ? '✨ Desbloqueado' : '🔒 900 pts c/ Nikolas'}
+                    ${isMarcalUnlocked ? (isEnglishContext() ? '✨ Unlocked' : '✨ Desbloqueado') : (isEnglishContext() ? '🔒 900 pts w/ Nikolas' : '🔒 900 pts c/ Nikolas')}
                   </span>
                 </div>
               </div>
             </div>
 
             <button id="btnProfileSyncNow" class="btn-primary" style="width: 100%; padding: 10px; font-size: 14px; letter-spacing: 0.5px; margin-bottom: 8px;">
-              🔄 SINCRONIZAR DADOS COM A NUVEM
+              ${isEnglishContext() ? '🔄 SYNC DATA WITH CLOUD' : '🔄 SINCRONIZAR DADOS COM A NUVEM'}
             </button>
           </div>
 
@@ -1345,13 +1349,13 @@ class AuthManager {
           <div id="panelSync" class="auth-form-panel" style="display: none;">
             <div style="text-align: center; padding: 10px 0 16px;">
               <div style="font-size: 38px; margin-bottom: 8px;">☁️</div>
-              <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px;">Sincronização Multi-Dispositivos</div>
+              <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px;">${isEnglishContext() ? 'Multi-Device Cloud Sync' : 'Sincronização Multi-Dispositivos'}</div>
               <p style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-                Se você desbloqueou o Pablo Marçal, acumulou picanhas ou bateu recordes no celular ou no PC, clique abaixo para fundir e salvar tudo na nuvem!
+                ${isEnglishContext() ? 'If you unlocked characters, accumulated steaks, or set records across devices, tap below to merge and sync to the cloud!' : 'Se você desbloqueou o Pablo Marçal, acumulou picanhas ou bateu recordes no celular ou no PC, clique abaixo para fundir e salvar tudo na nuvem!'}
               </p>
             </div>
             <button id="btnExplicitSyncAction" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px; letter-spacing: 0.5px; margin-bottom: 10px;">
-              🔄 SINCRONIZAR AGORA 🚀
+              ${isEnglishContext() ? '🔄 SYNC NOW 🚀' : '🔄 SINCRONIZAR AGORA 🚀'}
             </button>
             <div id="syncReportDetails" style="font-size: 11px; color: #cbd5e1; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 8px; display: none;"></div>
           </div>
@@ -1360,51 +1364,51 @@ class AuthManager {
         <!-- FORM: JOGAR SEM SENHA -->
         <div id="formChosenName" class="auth-form-panel" style="${isUserLoggedIn ? 'display:none;' : ''}">
           <div style="margin-bottom: 14px;">
-            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Seu Nome no Placar:</label>
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">${isEnglishContext() ? 'Your Leaderboard Name:' : 'Seu Nome no Placar:'}</label>
             <input type="text" id="inputChosenName" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Ex: Lula_Gamer_BR" style="
               width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitChosenName" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px;">SALVAR E JOGAR 🚀</button>
+          <button id="btnSubmitChosenName" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px;">${isEnglishContext() ? 'SAVE & PLAY 🚀' : 'SALVAR E JOGAR 🚀'}</button>
         </div>
 
         <!-- FORM: CRIAR CONTA COM SENHA -->
         <div id="formRegister" class="auth-form-panel" style="display: none;">
           <div style="margin-bottom: 12px;">
-            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Nome de Jogador:</label>
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">${isEnglishContext() ? 'Player Username:' : 'Nome de Jogador:'}</label>
             <input type="text" id="inputRegUser" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Ex: Empresario_Ouro" style="
               width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
           <div style="margin-bottom: 14px;">
-            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Palavra-Chave / Senha:</label>
-            <input type="password" id="inputRegPass" maxlength="40" placeholder="Digite uma senha simples" style="
+            <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">${isEnglishContext() ? 'Password / Passphrase:' : 'Palavra-Chave / Senha:'}</label>
+            <input type="password" id="inputRegPass" maxlength="40" placeholder="${isEnglishContext() ? 'Enter a simple password' : 'Digite uma senha simples'}" style="
               width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitRegister" class="btn-secondary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ffd700, #f59e0b); color: #000; border: none;">CRIAR CONTA PROTEGIDA 🔒</button>
+          <button id="btnSubmitRegister" class="btn-secondary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #ffd700, #f59e0b); color: #000; border: none;">${isEnglishContext() ? 'CREATE PROTECTED ACCOUNT 🔒' : 'CRIAR CONTA PROTEGIDA 🔒'}</button>
         </div>
 
         <!-- FORM: ENTRAR -->
         <div id="formLogin" class="auth-form-panel" style="display: none;">
           <div style="margin-bottom: 12px;">
             <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Nome de Jogador:</label>
-            <input type="text" id="inputLoginUser" maxlength="25" value="${escapeHTML(currentName)}" placeholder="Seu nome cadastrado" style="
+            <input type="text" id="inputLoginUser" maxlength="25" value="${escapeHTML(currentName)}" placeholder="${isEnglishContext() ? 'Your registered username' : 'Seu nome cadastrado'}" style="
               width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
           <div style="margin-bottom: 14px;">
             <label style="font-size: 12px; color: #cbd5e1; display: block; margin-bottom: 4px;">Palavra-Chave / Senha:</label>
-            <input type="password" id="inputLoginPass" maxlength="40" placeholder="Sua senha" style="
+            <input type="password" id="inputLoginPass" maxlength="40" placeholder="${isEnglishContext() ? 'Your password' : 'Sua senha'}" style="
               width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
               background: rgba(255,255,255,0.05); color: #fff; font-size: 14px; box-sizing: border-box;
             ">
           </div>
-          <button id="btnSubmitLogin" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #38bdf8, #2563eb); border: none;">ENTRAR NA CONTA 🔑</button>
+          <button id="btnSubmitLogin" class="btn-primary" style="width: 100%; padding: 12px; font-size: 14px; background: linear-gradient(135deg, #38bdf8, #2563eb); border: none;">${isEnglishContext() ? 'SIGN IN 🔑' : 'ENTRAR NA CONTA 🔑'}</button>
         </div>
 
         <!-- MENSAGEM DE STATUS/ERRO -->
@@ -1694,8 +1698,8 @@ class AuthManager {
               </div>
             </div>
             <div class="mobile-user-buttons">
-              <button id="btnMobileEditProfile" class="btn-user-action btn-user-change">👤 Ver Perfil & Foto</button>
-              <button id="btnMobileLogoutAcc" class="btn-user-action btn-user-logout">🚪 Sair</button>
+              <button id="btnMobileEditProfile" class="btn-user-action btn-user-change">${isEnglishContext() ? '👤 View Profile & Avatar' : '👤 Ver Perfil & Foto'}</button>
+              <button id="btnMobileLogoutAcc" class="btn-user-action btn-user-logout">${isEnglishContext() ? '🚪 Sign Out' : '🚪 Sair'}</button>
             </div>
           </div>
         `;
@@ -1716,7 +1720,7 @@ class AuthManager {
         mobileCard.innerHTML = `
           <div class="mobile-user-card-content" style="padding: 10px 6px;">
             <button id="btnMobileLoginAcc" class="btn-primary" style="width:100%; font-size:15px; padding:10px 14px; letter-spacing:0.5px;">
-              🔑 ENTRAR / ESCOLHER NICK
+              ${isEnglishContext() ? '🔑 SIGN IN / GUEST' : '🔑 ENTRAR / ESCOLHER NICK'}
             </button>
           </div>
         `;
@@ -1744,7 +1748,7 @@ class AuthManager {
         <button id="btnLogoutProfile" title="Trocar ou Sair da Conta" style="
           background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
           color: #fff; border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight:700; transition:all 0.2s; white-space:nowrap;
-        ">Sair</button>
+        ">${isEnglishContext() ? 'Sign Out' : 'Sair'}</button>
       `;
       document.getElementById('btnDesktopProfileTrigger').onclick = (e) => {
         e.stopPropagation();
@@ -1763,7 +1767,7 @@ class AuthManager {
           background: rgba(255,223,0,0.18); border: 1.5px solid var(--amarelo-brasil);
           color: var(--amarelo-brasil); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 800;
           box-shadow: 0 0 12px rgba(255,223,0,0.2); transition: all 0.2s; white-space:nowrap;
-        ">🔑 Entrar / Mudar Nome</button>
+        ">${isEnglishContext() ? '🔑 Sign In / Profile' : '🔑 Entrar / Mudar Nome'}</button>
       `;
       document.getElementById('btnLoginProfile').onclick = (e) => {
         e.stopPropagation();

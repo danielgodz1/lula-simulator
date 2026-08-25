@@ -844,7 +844,8 @@
 
         // Eventos
         card.querySelector('.btn-buy-skin')?.addEventListener('click', async () => {
-          if (confirm(`Deseja comprar a skin "${skin.name}" por ${skin.price} ${unit}?`)) {
+          const skinDisplayName = skin.name_en || skin.name;
+          if (confirm(`Do you want to purchase the "${skinDisplayName}" skin for ${skin.price} ${unit}?`)) {
             const res = await auth.buySkin(skin.id);
             if (res.success) {
               alert(res.message);
@@ -888,7 +889,7 @@
 
     // Prestígio
     document.getElementById('btnActivatePrestige')?.addEventListener('click', async () => {
-      if (confirm('Atenção: Ao prestigiar, seu saldo de Picanhas será resetado para 0, e você receberá uma Insígnia Permanente de Prestígio exibida no Ranking Nacional e no Perfil! Deseja continuar?')) {
+      if (confirm('Attention: Activating prestige will reset your current Steaks to 0, granting you a permanent Prestige Badge displayed on the Global Leaderboard and Profile! Proceed?')) {
         const res = await auth.applyPrestige();
         if (res.success) {
           alert(res.message);
