@@ -1649,6 +1649,11 @@
             pointsEarned *= 3; // Picanha Tripla do Nikolas durante a lentidão!
           }
 
+          // NO CENÁRIO PRETO (MODO CADEIA/PRISÃO): QUALQUER PERSONAGEM GANHA ESTRITAMENTE APENAS 1 PONTO
+          if (isPrisonMode) {
+            pointsEarned = 1;
+          }
+
           score += pointsEarned;
           CharacterInventory.addPicanhas(pointsEarned);
 
@@ -1724,8 +1729,9 @@
         lk.x -= currentSpeed;
         if (!lk.collected && Math.hypot(lula.x - lk.x, lula.y - lk.y) < 30) {
           lk.collected = true;
-          score += 2;
-          CharacterInventory.addPicanhas(2);
+          const likePts = isPrisonMode ? 1 : 2;
+          score += likePts;
+          CharacterInventory.addPicanhas(likePts);
           if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
           try { sounds.playJump(); } catch(e){}
         }
