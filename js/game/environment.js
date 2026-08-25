@@ -23,6 +23,15 @@ export class Environment {
     this.unitMeterBoxGeo = new THREE.BoxGeometry(0.35, 0.50, 0.18);
     this.unitClothGeo = new THREE.PlaneGeometry(0.48, 0.65);
 
+    // Geometrias Unitárias dos Postes e Iluminação Pública (InstancedMesh)
+    this.unitPoleGeo = new THREE.CylinderGeometry(0.20, 0.24, 10.5, 8);
+    this.unitCrossGeo = new THREE.BoxGeometry(2.4, 0.16, 0.16);
+    this.unitInsulatorGeo = new THREE.CylinderGeometry(0.06, 0.08, 0.25, 6);
+    this.unitArmGeo = new THREE.BoxGeometry(1.6, 0.08, 0.08);
+    this.unitLampGeo = new THREE.SphereGeometry(0.32, 6, 6);
+    this.unitTransfGeo = new THREE.CylinderGeometry(0.55, 0.50, 1.4, 10);
+    this.unitDumpsterGeo = new THREE.BoxGeometry(1.8, 1.1, 2.8);
+
     // Geometrias de Cabos Pré-calculadas
     this.prebuiltCableGeos = this.createPrebuiltCableGeometries();
 
@@ -595,52 +604,50 @@ export class Environment {
   }
 
   buildStreetPropsAndPowerLines(segment) {
+    const poleConfigs = [];
+    const crossConfigs = [];
+    const insulatorConfigs = [];
+    const armConfigs = [];
+    const lampConfigs = [];
+    const transfConfigs = [];
+    const dumpsterConfigs = [];
+
     [-7.8, 7.8].forEach((px, sideIdx) => {
       const isLeft = sideIdx === 0;
 
       for (let pz = -SEGMENT_LENGTH / 2 + 14; pz < SEGMENT_LENGTH / 2; pz += 28) {
         // 1. Poste de Concreto Cilíndrico
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.24, 10.5, 8), this.sharedMaterials.concretePole);
-        pole.position.set(px, 5.25, pz);
-        segment.add(pole);
+        poleConfigs.push({ x: px, y: 5.25, z: pz });
 
         // 2. Cruzeta Superior com 3 Isoladores
-        const cross = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.16), this.sharedMaterials.railTie);
-        cross.position.set(px + (isLeft ? 0.7 : -0.7), 9.6, pz);
-        segment.add(cross);
+        crossConfigs.push({ x: px + (isLeft ? 0.7 : -0.7), y: 9.6, z: pz });
 
         [-0.9, 0.0, 0.9].forEach(ix => {
-          const ins = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.25, 6), this.sharedMaterials.insulatorBrown);
-          ins.position.set(px + (isLeft ? 0.7 : -0.7) + ix, 9.8, pz);
-          segment.add(ins);
+          insulatorConfigs.push({ x: px + (isLeft ? 0.7 : -0.7) + ix, y: 9.8, z: pz });
         });
 
         // 3. Luminária Pública
-        const arm = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 0.08), this.sharedMaterials.concretePole);
-        arm.position.set(px + (isLeft ? 1.0 : -1.0), 9.0, pz);
-        arm.rotation.z = isLeft ? -0.15 : 0.15;
-        segment.add(arm);
+        armConfigs.push({
+          x: px + (isLeft ? 1.0 : -1.0),
+          y: 9.0,
+          z: pz,
+          rotZ: isLeft ? -0.15 : 0.15
+        });
 
-        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.32, 6, 6), this.sharedMaterials.streetLampMat);
-        lamp.position.set(px + (isLeft ? 1.7 : -1.7), 8.8, pz);
-        segment.add(lamp);
+        lampConfigs.push({ x: px + (isLeft ? 1.7 : -1.7), y: 8.8, z: pz });
 
         // 4. Transformador
         if (pz > -10 && pz < 20) {
-          const transf = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.50, 1.4, 10), this.sharedMaterials.transformerMat);
-          transf.position.set(px + (isLeft ? -0.55 : 0.55), 7.8, pz);
-          segment.add(transf);
+          transfConfigs.push({ x: px + (isLeft ? -0.55 : 0.55), y: 7.8, z: pz });
         }
 
         // 5. Caçamba
         if (Math.random() > 0.55) {
-          const dumpster = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.1, 2.8), this.sharedMaterials.dumpster);
-          dumpster.position.set(px + (isLeft ? -1.5 : 1.5), 0.55, pz + 6);
-          segment.add(dumpster);
+          dumpsterConfigs.push({ x: px + (isLeft ? -1.5 : 1.5), y: 0.55, z: pz + 6 });
         }
       }
 
-      // 6. Fios Elétricos Suspensos (Reutiliza Geometrias Pré-compiladas sem Memory Leak)
+      // 6. Fios Elétricos Suspensos (Reutiliza Geometrias Pré-compiladas)
       const xOffsets = isLeft ? [0.2, 0.7, 1.2, -0.2, 0.0] : [-0.2, -0.7, -1.2, 0.2, 0.0];
       for (let i = 0; i < this.prebuiltCableGeos.length; i++) {
         const cable = new THREE.Mesh(this.prebuiltCableGeos[i], this.sharedMaterials.cableBlack);
@@ -648,6 +655,113 @@ export class Environment {
         segment.add(cable);
       }
     });
+
+    const dummy = new THREE.Object3D();
+
+    // 1. Postes Instanciados
+    if (poleConfigs.length > 0) {
+      const poleInst = new THREE.InstancedMesh(this.unitPoleGeo, this.sharedMaterials.concretePole, poleConfigs.length);
+      for (let i = 0; i < poleConfigs.length; i++) {
+        const c = poleConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        poleInst.setMatrixAt(i, dummy.matrix);
+      }
+      poleInst.instanceMatrix.needsUpdate = true;
+      segment.add(poleInst);
+    }
+
+    // 2. Cruzetas Instanciadas
+    if (crossConfigs.length > 0) {
+      const crossInst = new THREE.InstancedMesh(this.unitCrossGeo, this.sharedMaterials.railTie, crossConfigs.length);
+      for (let i = 0; i < crossConfigs.length; i++) {
+        const c = crossConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        crossInst.setMatrixAt(i, dummy.matrix);
+      }
+      crossInst.instanceMatrix.needsUpdate = true;
+      segment.add(crossInst);
+    }
+
+    // 3. Isoladores Instanciados
+    if (insulatorConfigs.length > 0) {
+      const insInst = new THREE.InstancedMesh(this.unitInsulatorGeo, this.sharedMaterials.insulatorBrown, insulatorConfigs.length);
+      for (let i = 0; i < insulatorConfigs.length; i++) {
+        const c = insulatorConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        insInst.setMatrixAt(i, dummy.matrix);
+      }
+      insInst.instanceMatrix.needsUpdate = true;
+      segment.add(insInst);
+    }
+
+    // 4. Braços de Luminária Instanciados
+    if (armConfigs.length > 0) {
+      const armInst = new THREE.InstancedMesh(this.unitArmGeo, this.sharedMaterials.concretePole, armConfigs.length);
+      for (let i = 0; i < armConfigs.length; i++) {
+        const c = armConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, c.rotZ || 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        armInst.setMatrixAt(i, dummy.matrix);
+      }
+      armInst.instanceMatrix.needsUpdate = true;
+      segment.add(armInst);
+    }
+
+    // 5. Lâmpadas Instanciadas
+    if (lampConfigs.length > 0) {
+      const lampInst = new THREE.InstancedMesh(this.unitLampGeo, this.sharedMaterials.streetLampMat, lampConfigs.length);
+      for (let i = 0; i < lampConfigs.length; i++) {
+        const c = lampConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        lampInst.setMatrixAt(i, dummy.matrix);
+      }
+      lampInst.instanceMatrix.needsUpdate = true;
+      segment.add(lampInst);
+    }
+
+    // 6. Transformadores Instanciados
+    if (transfConfigs.length > 0) {
+      const transfInst = new THREE.InstancedMesh(this.unitTransfGeo, this.sharedMaterials.transformerMat, transfConfigs.length);
+      for (let i = 0; i < transfConfigs.length; i++) {
+        const c = transfConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        transfInst.setMatrixAt(i, dummy.matrix);
+      }
+      transfInst.instanceMatrix.needsUpdate = true;
+      segment.add(transfInst);
+    }
+
+    // 7. Caçambas Instanciadas
+    if (dumpsterConfigs.length > 0) {
+      const dumpInst = new THREE.InstancedMesh(this.unitDumpsterGeo, this.sharedMaterials.dumpster, dumpsterConfigs.length);
+      for (let i = 0; i < dumpsterConfigs.length; i++) {
+        const c = dumpsterConfigs[i];
+        dummy.position.set(c.x, c.y, c.z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.scale.set(1, 1, 1);
+        dummy.updateMatrix();
+        dumpInst.setMatrixAt(i, dummy.matrix);
+      }
+      dumpInst.instanceMatrix.needsUpdate = true;
+      segment.add(dumpInst);
+    }
   }
 
   update(speed, dt, onRecycleSegment) {
