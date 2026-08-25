@@ -47,10 +47,16 @@ export const AD_CONFIG = {
   },
 
   SKYSCRAPER_160x600: {
-    key: 'ed07225cb34a228aede2dbebc0ca00ef',
+    key_pt: 'ed07225cb34a228aede2dbebc0ca00ef',
+    key_en: '9db44be4da462195584f4bccadc3f1ae',
     width: 160,
-    height: 600,
-    scriptUrl: 'https://grannyreproof.com/ed07225cb34a228aede2dbebc0ca00ef/invoke.js'
+    height: 600
+  },
+  MEDIUM_RECTANGLE_300x250: {
+    key: '427c59b47a5d07234398bf7f25100c26',
+    width: 300,
+    height: 250,
+    scriptUrl: 'https://grannyreproof.com/427c59b47a5d07234398bf7f25100c26/invoke.js'
   },
   BANNER_320x50: {
     key: '66d34c9bfbb1a19bb44210de393265f9',
@@ -104,7 +110,7 @@ class AdsManagerService {
   /**
    * Registra um slot de anúncio na página
    * @param {string} containerId - ID do elemento HTML container
-   * @param {'160x600' | '320x50'} formatType - Tipo do banner
+   * @param {'160x600' | '300x250' | '320x50'} formatType - Tipo do banner
    */
   registerSlot(containerId, formatType) {
     const el = document.getElementById(containerId);
@@ -128,16 +134,20 @@ class AdsManagerService {
     const slot = this.registeredSlots.get(containerId);
     if (!slot || !slot.element) return;
 
-    const config = slot.formatType === '160x600' 
-      ? AD_CONFIG.SKYSCRAPER_160x600 
-      : AD_CONFIG.BANNER_320x50;
+    let width = 320;
+    let height = 50;
+    if (slot.formatType === '160x600') {
+      width = 160; height = 600;
+    } else if (slot.formatType === '300x250') {
+      width = 300; height = 250;
+    }
 
     // Remove iframes anteriores para evitar vazamento de memória
     slot.element.innerHTML = '';
 
     const iframe = document.createElement('iframe');
-    iframe.style.width = `${config.width}px`;
-    iframe.style.height = `${config.height}px`;
+    iframe.style.width = `${width}px`;
+    iframe.style.height = `${height}px`;
     iframe.style.border = 'none';
     iframe.style.overflow = 'hidden';
     iframe.style.display = 'block';
@@ -149,8 +159,11 @@ class AdsManagerService {
     // Permissões completas para o script de anúncios carregar sem bloqueio do navegador
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
 
+    const isEn = window.location.hostname.includes('flappylula.com') || window.location.pathname.startsWith('/en/');
+    const langParam = isEn ? '&lang=en' : '&lang=pt';
+
     // Carrega o documento dedicado via src (com timestamp para cache-busting suave no auto-refresh)
-    iframe.src = `/ad-frame.html?format=${slot.formatType}&v=${Date.now()}`;
+    iframe.src = `/ad-frame.html?format=${slot.formatType}${langParam}&v=${Date.now()}`;
 
     slot.element.appendChild(iframe);
     slot.lastRender = Date.now();

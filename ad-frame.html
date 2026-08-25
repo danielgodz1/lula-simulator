@@ -59,13 +59,32 @@
       try {
         const params = new URLSearchParams(window.location.search);
         const format = params.get('format') || '320x50';
+        const isEn = params.get('lang') === 'en' || window.location.hostname.includes('flappylula.com');
 
         const CONFIGS = {
-          '160x600': {
+          '160x600_en': {
+            key: '9db44be4da462195584f4bccadc3f1ae',
+            width: 160,
+            height: 600,
+            scriptUrl: 'https://grannyreproof.com/9db44be4da462195584f4bccadc3f1ae/invoke.js'
+          },
+          '160x600_pt': {
             key: 'ed07225cb34a228aede2dbebc0ca00ef',
             width: 160,
             height: 600,
             scriptUrl: 'https://grannyreproof.com/ed07225cb34a228aede2dbebc0ca00ef/invoke.js'
+          },
+          '300x250_en': {
+            key: '427c59b47a5d07234398bf7f25100c26',
+            width: 300,
+            height: 250,
+            scriptUrl: 'https://grannyreproof.com/427c59b47a5d07234398bf7f25100c26/invoke.js'
+          },
+          '300x250_pt': {
+            key: '427c59b47a5d07234398bf7f25100c26',
+            width: 300,
+            height: 250,
+            scriptUrl: 'https://grannyreproof.com/427c59b47a5d07234398bf7f25100c26/invoke.js'
           },
           '320x50': {
             key: '66d34c9bfbb1a19bb44210de393265f9',
@@ -75,7 +94,11 @@
           }
         };
 
-        const cfg = CONFIGS[format] || CONFIGS['320x50'];
+        let configKey = '320x50';
+        if (format === '160x600') configKey = isEn ? '160x600_en' : '160x600_pt';
+        else if (format === '300x250') configKey = isEn ? '300x250_en' : '300x250_pt';
+
+        const cfg = CONFIGS[configKey] || CONFIGS['320x50'];
 
         window.atOptions = {
           'key': cfg.key,
