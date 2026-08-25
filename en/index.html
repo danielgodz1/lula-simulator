@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#080914">
   <link rel="canonical" href="https://flappylula.com/">
 
-  <!-- Hreflang Multi-Language (PT-BR / EN) -->
+  <!-- Hreflang Multi-Idioma (PT-BR / EN) -->
   <link rel="alternate" hreflang="pt-BR" href="https://lulasimulator.com.br/" />
   <link rel="alternate" hreflang="en" href="https://flappylula.com/" />
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/" />
@@ -25,20 +25,20 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://flappylula.com/">
   <meta property="og:title" content="Flappy Lula - The Brazilian Political Meme Game">
-  <meta property="og:description" content="Fly through obstacles in this hilarious Brazilian political satire game. Survive Brazil's wildest political scenario! Free browser game, no download needed.">
-  <meta property="og:image" content="https://flappylula.com/img/flappy_lula_hero.jpg">
-  <meta property="og:image:alt" content="Flappy Lula - Brazilian Political Meme Game">
+  <meta property="og:description" content="Fly through obstacles in this hilarious Brazilian political satire game. Free browser game, no download needed.">
+  <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+  <meta property="og:image:alt" content="Flappy Lula - Jogo Meme das Eleições 2026">
   <meta property="og:site_name" content="Flappy Lula Simulator">
   <meta property="og:locale" content="en_US">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://flappylula.com/">
-  <meta name="twitter:title" content="Flappy Lula - The Brazilian Political Meme Game">
-  <meta name="twitter:description" content="Fly through obstacles in this hilarious Brazilian political satire game. Free browser game!">
-  <meta name="twitter:image" content="https://flappylula.com/img/flappy_lula_hero.jpg">
+  <meta name="twitter:url" content="https://lulasimulator.com.br/">
+  <meta name="twitter:title" content="Flappy Lula - O Jogo Meme das Eleições 2026">
+  <meta name="twitter:description" content="Voe pelos obstáculos neste jogo satírico do Flappy Lula. Sobreviva ao cenário político brasileiro! Jogue grátis no navegador!">
+  <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
-  <!-- Language Switcher & Banner Script -->
+  <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
 
   <!-- Schema.org / JSON-LD Structured Data -->
@@ -46,16 +46,16 @@
   {
     "@context": "https://schema.org",
     "@type": "VideoGame",
-    "name": "Flappy Lula",
-    "alternateName": ["Lula Simulator", "Flappy Lula Game", "Brazilian President Meme Game"],
-    "url": "https://flappylula.com/",
-    "description": "Hilarious satirical Brazilian arcade and 3D runner game. Fly as Lula, dodge obstacles, collect steaks, and escape taxes in the favelas.",
-    "genre": ["Arcade", "Runner", "Satire", "Browser Game"],
+    "name": "Lula Simulator",
+    "alternateName": ["Jogo do Lula", "Simulador do Lula", "Flappy Lula", "Lula Game"],
+    "url": "https://lulasimulator.com.br/",
+    "description": "Simulador arcade e 3D satírico brasileiro onde você joga como o Lula coletando picanhas, desviando de canos e fugindo da CLT nos morros.",
+    "genre": ["Arcade", "Runner", "Satire", "Casual Game"],
     "playMode": "SinglePlayer",
     "inLanguage": "en",
     "applicationCategory": "Game",
     "operatingSystem": "Any (Web Browser)",
-    "image": "https://flappylula.com/img/flappy_lula_hero.jpg",
+    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
     "author": {
       "@type": "Person",
       "name": "Daniel dos Santos"
@@ -63,12 +63,12 @@
     "offers": {
       "@type": "Offer",
       "price": "0",
-      "priceCurrency": "USD"
+      "priceCurrency": "BRL"
     }
   }
   </script>
 
-  <!-- Favicons -->
+  <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
@@ -80,10 +80,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
-  <!-- Global Styles -->
+  <!-- Estilos Globais -->
   <link rel="stylesheet" href="/css/styles.css">
 
   <style>
+    /* Estilos específicos da Landing Page */
     .hero {
       min-height: 100vh;
       display: flex;
@@ -159,6 +160,7 @@
       gap: 16px;
     }
 
+    /* Preview visual com a imagem oficial */
     .hero-character {
       display: flex;
       align-items: center;
@@ -212,6 +214,7 @@
       white-space: nowrap;
     }
 
+    /* ESTILOS DA SEÇÃO DE RANKING NA HOME */
     .tab-btn {
       padding: 10px 18px;
       border-radius: 12px;
@@ -402,21 +405,21 @@
 </head>
 <body>
 
-  <!-- TOP NAVIGATION BAR -->
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">🐦 FLAPPY LULA</a>
-    <button class="nav-toggle-btn" id="navToggle" aria-label="Navigation Menu">☰ Menu</button>
+    <a href="/en/index.html" class="nav-brand">🐦 FLAPPY LULA</a>
+    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
-      <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
-      <li><a href="correr.html">🏃 3D Runner</a></li>
-      <li><a href="social.html">👥 Social & Duels</a></li>
-      <li><a href="loja.html">🛍️ Skin Shop</a></li>
-      <li><a href="conquistas.html">🏅 Achievements</a></li>
-      <li><a href="ranking.html">🏆 Leaderboard</a></li>
-      <li><a href="visitantes.html">🌍 Visitors</a></li>
-      <li><a href="feedback.html">⭐ Feedback</a></li>
-      <li><a href="contato.html">📬 Contact</a></li>
+      <li><a href="/en/index.html" class="active">Home</a></li>
+      <li><a href="/en/jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="/en/correr.html">🏃 3D Runner</a></li>
+      <li><a href="/en/social.html">👥 Social & Duels</a></li>
+      <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
+      <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
+      <li><a href="/en/ranking.html">🏆 Leaderboard</a></li>
+      <li><a href="/en/visitantes.html">🌍 Visitors</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
+      <li><a href="/en/contato.html">📬 Contact</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -441,35 +444,35 @@
           Make the president fly in <strong>Flappy Lula</strong> distributing juicy steaks, collect legendary badges with iconic political characters, or run away from taxes in <strong>3D Runner</strong>!
         </p>
         <div class="btn-group">
-          <a href="jogo.html" class="btn-primary">
+          <a href="/en/jogo.html" class="btn-primary">
             🐦 PLAY FLAPPY LULA
           </a>
-          <a href="correr.html" class="btn-secondary">
+          <a href="/en/correr.html" class="btn-secondary">
             🏃 PLAY 3D RUNNER
           </a>
-          <a href="social.html" class="btn-secondary" style="border-color: #ef4444; color: #ef4444;">
+          <a href="/en/social.html" class="btn-secondary" style="border-color: #ef4444; color: #ef4444;">
             👥 FRIENDS & DUELS
           </a>
-          <a href="ranking.html" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">
+          <a href="/en/ranking.html" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">
             🏆 LEADERBOARD
           </a>
         </div>
 
-        <!-- HERO AD BANNER -->
+        <!-- BANNER DE MONETIZAÇÃO HERO 320x50 (AUTO-REFRESH) -->
         <div id="adBannerHero" class="ad-banner-container-320x50" style="margin-top: 20px; margin-bottom: 0;"></div>
       </div>
 
-      <!-- Hero Poster -->
+      <!-- Poster Oficial Hero -->
       <div class="hero-character">
         <div class="hero-poster-wrapper">
-          <img src="/img/flappy_lula_hero.jpg" alt="Official Flappy Lula Artwork" class="hero-poster-img">
+          <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Oficial" class="hero-poster-img">
           <div class="hero-badge-tag">⭐ OFFICIAL GAME ART ⭐</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- LIVE GLOBAL PODIUM (TOP 3) -->
+  <!-- RANKING NACIONAL AO VIVO (TOP 3) -->
   <section class="home-ranking-section" style="max-width: 900px; margin: 20px auto 40px; padding: 0 20px;">
     <div style="text-align: center; margin-bottom: 20px;">
       <h2 style="font-family: 'Bangers', cursive; font-size: 46px; letter-spacing: 2px; color: var(--amarelo-brasil); margin-bottom: 6px;">
@@ -480,7 +483,7 @@
       </p>
     </div>
 
-    <!-- MODE TABS -->
+    <!-- TABS DE MODOS -->
     <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; flex-wrap: wrap;">
       <button id="homeTabFlappy" class="tab-btn active">
         🐦 Flappy Lula (Steaks)
@@ -490,15 +493,15 @@
       </button>
     </div>
 
-    <!-- RANKING CARD -->
+    <!-- CARD DO RANKING -->
     <div class="card" style="background: #0f172a; border: 2px solid rgba(255, 223, 0, 0.35); border-radius: 20px; padding: 18px; box-shadow: 0 16px 40px rgba(0,0,0,0.8);">
       <div id="homeRankingList" style="display: flex; flex-direction: column; gap: 8px;">
         <div style="text-align: center; padding: 30px; color: var(--text-muted);">
-          Loading leaderboard champions... 🚀
+          Loading leaderboard champions... 🌍
         </div>
       </div>
 
-      <!-- FULL RANKING LINK -->
+      <!-- BOTÃO VER RANKING COMPLETO -->
       <div style="text-align: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1);">
         <a href="ranking.html" class="btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-size: 17px; padding: 12px 28px; text-decoration: none;">
           🏆 VIEW FULL LEADERBOARD (TOP 300) ➜
@@ -544,11 +547,11 @@
       </div>
     </div>
 
-    <!-- FEATURES AD BANNER -->
+    <!-- BANNER DE MONETIZAÇÃO FEATURES 320x50 (AUTO-REFRESH) -->
     <div id="adBannerFeatures" class="ad-banner-container-320x50" style="margin-top: 30px; margin-bottom: 10px;"></div>
   </section>
 
-  <!-- FAQ SECTION -->
+  <!-- SEÇÃO DE PERGUNTAS FREQUENTES & SEO (FAQ) -->
   <section style="max-width: 1100px; margin: 40px auto; padding: 0 24px;">
     <h2 style="font-family: 'Bangers', cursive; font-size: 42px; text-align: center; letter-spacing: 2px; color: var(--amarelo-brasil); margin-bottom: 28px;">
       FREQUENTLY ASKED QUESTIONS (FAQ) ❓
@@ -557,7 +560,7 @@
       <div class="card">
         <h3 style="color: var(--amarelo-brasil); font-size: 18px; margin-bottom: 8px;">🎮 What is Flappy Lula?</h3>
         <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6;">
-          <strong>Flappy Lula</strong> (Lula Simulator) is a 100% free-to-play satirical browser game, featuring the classic <strong>2D Flappy arcade mode</strong> and the intense <strong>3D Businessman endless runner</strong>.
+          <strong>Flappy Lula</strong> is a 100% free-to-play satirical browser game, featuring the classic <strong>2D Flappy arcade mode</strong> and the intense <strong>3D Businessman endless runner</strong>.
         </p>
       </div>
 
@@ -584,7 +587,7 @@
     </div>
   </section>
 
-  <!-- DEVELOPER SECTION -->
+  <!-- SEÇÃO SOBRE O DESENVOLVEDOR & PROJETO SENAI -->
   <section style="max-width: 1100px; margin: 30px auto 40px; padding: 0 24px;">
     <div class="card" style="border: 2px solid var(--amarelo-brasil); background: linear-gradient(135deg, rgba(22, 27, 38, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(255, 223, 0, 0.2);">
       <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap;">
@@ -604,12 +607,12 @@
     </div>
   </section>
 
-  <!-- FOOTER AD BANNER -->
+  <!-- BANNER DE MONETIZAÇÃO ESTÁTICO 320x50 (AUTO-REFRESH ISOLADO) -->
   <div id="adBannerFooter" class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 20px;"></div>
 
-  <!-- FOOTER -->
+  <!-- RODAPÉ -->
   <footer>
-    <p>🇧🇷 <strong>Flappy Lula</strong> — Developed by <strong>Daniel dos Santos</strong> at <strong>SENAI</strong> (AI & Software) · 2026</p>
+    <p>🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026</p>
   </footer>
 
   <script src="/js/tracker.js"></script>
@@ -632,7 +635,9 @@
 
     AdsManager.init();
 
-    // REAL-TIME HOME TOP 3 PODIUM
+    // -------------------------------------------------------------
+    // TOP 3 NACIONAL DA HOME EM TEMPO REAL
+    // -------------------------------------------------------------
     let homeCurrentTab = 'flappy';
 
     const tabFlappy = document.getElementById('homeTabFlappy');
@@ -651,14 +656,14 @@
     async function loadHomeRanking() {
       const container = document.getElementById('homeRankingList');
       if (!container) return;
-      container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Loading champions podium... 🌍</div>';
+      container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Carregando pódio... 🇧🇷</div>';
 
       try {
         const scores = await getTopScores(homeCurrentTab, 3, false, 'general');
         const unit = homeCurrentTab === 'runner' ? 'km' : '🥩';
 
         if (!scores || scores.length === 0) {
-          container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">No records registered yet. Be the first! 🚀</div>';
+          container.innerHTML = '<div style="text-align:center; padding:25px; color:var(--text-muted);">Nenhum recorde registrado ainda. Seja o primeiro! 🚀</div>';
           return;
         }
 
@@ -668,7 +673,7 @@
           const posClass = rank === 1 ? 'top-1' : (rank === 2 ? 'top-2' : 'top-3');
           const medal = rank === 1 ? '🥇' : (rank === 2 ? '🥈' : '🥉');
           const avatarSrc = item.avatar || DEFAULT_AVATAR_SVG;
-          const flag = item.countryFlag || '🌍';
+          const flag = item.countryFlag || '🇧🇷';
           const prestigeBadge = (item.prestigeLevel && item.prestigeLevel > 0)
             ? `<span style="background:rgba(255,215,0,0.15); border:1px solid #ffd700; color:#ffd700; font-size:10px; padding:1px 6px; border-radius:10px; font-weight:800;">⭐ P${item.prestigeLevel}</span>`
             : '';
@@ -682,19 +687,19 @@
               <div style="display:flex; align-items:center; gap:6px; min-width:0;">
                 <span style="font-size:14px;">${flag}</span>
                 <span style="font-weight:700; font-size:14px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                  ${escapeHTML(item.player || 'Anonymous')}
+                  ${escapeHTML(item.player || 'Anônimo')}
                 </span>
                 ${prestigeBadge}
               </div>
             </div>
             <div class="home-rank-score">
-              ${(item.score || 0).toLocaleString('en-US')} ${unit}
+              ${(item.score || 0).toLocaleString('pt-BR')} ${unit}
             </div>
           `;
           container.appendChild(row);
         });
       } catch (err) {
-        container.innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444;">Failed to load podium. Try again shortly.</div>';
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#ef4444;">Falha ao carregar pódio. Tente novamente em instantes.</div>';
       }
     }
 

@@ -4,24 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🛍️ Official Skin Shop & Prestige — Flappy Lula</title>
-  <meta name="description" content="Customize your favorite characters with exclusive cosmetic skins and activate Legendary Prestige in Flappy Lula!">
-  <meta property="og:locale" content="en_US">
+  <meta name="description" content="Customize your favorite characters with exclusive skins and level up your Prestige in Flappy Lula!">
   <link rel="canonical" href="https://flappylula.com/loja.html">
 
   <!-- Hreflang Multi-Idioma (PT-BR / EN) -->
-  <link rel="alternate" hreflang="pt-BR" href="https://lulasimulator.com.br/loja.html" />
+  <link rel="alternate" hreflang="pt-BR" href="https://flappylula.com/loja.html" />
   <link rel="alternate" hreflang="en" href="https://flappylula.com/loja.html" />
-  <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/loja.html" />
+  <link rel="alternate" hreflang="x-default" href="https://flappylula.com/loja.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/ads.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/ads.css">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
 
@@ -594,22 +593,22 @@
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">
+    <a href="/en/index.html" class="nav-brand">
       <span>🇧🇷</span>
       <span>Lula Simulator</span>
     </a>
     <button class="nav-toggle-btn" id="navToggle" aria-label="Abrir Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
-      <li><a href="correr.html">🏃 3D Runner</a></li>
-      <li><a href="social.html">👥 Social & Duels</a></li>
-      <li><a href="loja.html" class="active">🛍️ Skin Shop</a></li>
-      <li><a href="conquistas.html">🏅 Achievements</a></li>
-      <li><a href="ranking.html">🏆 Leaderboard</a></li>
-      <li><a href="feedback.html">⭐ Avaliações</a></li>
-      <li><a href="visitantes.html">📊 Tráfego</a></li>
-      <li><a href="contato.html">✉️ Contato</a></li>
+      <li><a href="/en/index.html">Home</a></li>
+      <li><a href="/en/jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="/en/correr.html">🏃 3D Runner</a></li>
+      <li><a href="/en/social.html">👥 Social & Duels</a></li>
+      <li><a href="/en/loja.html" class="active">🛍️ Skin Shop</a></li>
+      <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
+      <li><a href="/en/ranking.html">🏆 Leaderboard</a></li>
+      <li><a href="/en/feedback.html">⭐ Avaliações</a></li>
+      <li><a href="/en/visitantes.html">📊 Tráfego</a></li>
+      <li><a href="/en/contato.html">✉️ Contato</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -619,7 +618,7 @@
 
   <div class="page-container">
     <div class="page-header">
-      <h1>🛍️ OFFICIAL SKIN SHOP & PRESTIGE</h1>
+      <h1>🛍️ LOJA OFICIAL DE SKINS & PRESTÍGIO</h1>
       <p>Personalize seus personagens com skins cosméticas exclusivas, cumpra missões diárias e evolua seu Nível de Prestígio!</p>
     </div>
 
@@ -710,9 +709,9 @@
   </div>
 
   <script type="module">
-    import { auth } from './js/auth.js';
-    import { SKIN_PRICING_TABLE, isSkinUnlocked, getEquippedSkin } from './js/game/skins.js';
-    import { social } from './js/social-manager.js';
+    import { auth } from '/js/auth.js';
+    import { SKIN_PRICING_TABLE, isSkinUnlocked, getEquippedSkin } from '/js/game/skins.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -912,7 +911,7 @@
       renderSkins();
     }).catch(() => {});
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>

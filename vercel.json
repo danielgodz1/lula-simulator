@@ -11,6 +11,28 @@
       ],
       "destination": "https://www.lulasimulator.com.br/:path*",
       "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(.*flappylula\\.com.*)"
+        }
+      ],
+      "destination": "/en/",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "has": [
+        {
+          "type": "host",
+          "value": "(.*flappylula\\.com.*)"
+        }
+      ],
+      "destination": "/en/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -21,44 +43,19 @@
 
     {
       "source": "/sitemap.xml",
-      "has": [{ "type": "host", "value": "flappylula.com" }],
-      "destination": "/sitemap-en.xml"
-    },
-    {
-      "source": "/sitemap.xml",
-      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "has": [{ "type": "host", "value": "(.*flappylula\\.com.*)" }],
       "destination": "/sitemap-en.xml"
     },
     {
       "source": "/robots.txt",
-      "has": [{ "type": "host", "value": "flappylula.com" }],
-      "destination": "/robots-en.txt"
-    },
-    {
-      "source": "/robots.txt",
-      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "has": [{ "type": "host", "value": "(.*flappylula\\.com.*)" }],
       "destination": "/robots-en.txt"
     },
 
     {
-      "source": "/",
-      "has": [{ "type": "host", "value": "flappylula.com" }],
-      "destination": "/en/index.html"
-    },
-    {
-      "source": "/",
-      "has": [{ "type": "host", "value": "www.flappylula.com" }],
-      "destination": "/en/index.html"
-    },
-    {
-      "source": "/:path((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*).*)",
-      "has": [{ "type": "host", "value": "flappylula.com" }],
-      "destination": "/en/:path"
-    },
-    {
-      "source": "/:path((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*).*)",
-      "has": [{ "type": "host", "value": "www.flappylula.com" }],
-      "destination": "/en/:path"
+      "source": "/:page((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*)[^/]+\\.html)",
+      "has": [{ "type": "host", "value": "(.*flappylula\\.com.*)" }],
+      "destination": "/en/:page"
     }
   ]
 }

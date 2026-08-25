@@ -34,7 +34,7 @@
 
     if (targetLang === 'en') {
       if (isProductionHost) {
-        return `https://${DOMAIN_EN}/${page === 'index.html' ? '' : page}`;
+        return `https://${DOMAIN_EN}/en/${page === 'index.html' ? '' : page}`;
       }
       return `/en/${page === 'index.html' ? 'index.html' : page}`;
     } else {

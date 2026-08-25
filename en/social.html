@@ -5,23 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Social Hub & Duels 👥⚔️ — Flappy Lula</title>
   <meta name="description" content="Add friends, challenge players in asynchronous duels, and compete in the Weekly Tournament!">
-  <meta property="og:locale" content="en_US">
   <link rel="canonical" href="https://flappylula.com/social.html">
 
   <!-- Hreflang Multi-Idioma (PT-BR / EN) -->
-  <link rel="alternate" hreflang="pt-BR" href="https://lulasimulator.com.br/social.html" />
+  <link rel="alternate" hreflang="pt-BR" href="https://flappylula.com/social.html" />
   <link rel="alternate" hreflang="en" href="https://flappylula.com/social.html" />
-  <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/social.html" />
+  <link rel="alternate" hreflang="x-default" href="https://flappylula.com/social.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/ads.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/ads.css">
 
   <style>
     :root {
@@ -287,19 +286,19 @@
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <a href="/en/index.html" class="nav-brand">🐦 FLAPPY LULA</a>
     <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="jogo.html">🐦 Flappy Lula</a></li>
-      <li><a href="correr.html">🏃 3D Runner</a></li>
-      <li><a href="social.html" class="active">👥 Social & Duels</a></li>
-      <li><a href="loja.html">🛍️ Skin Shop</a></li>
-      <li><a href="conquistas.html">🏅 Achievements</a></li>
-      <li><a href="ranking.html">🏆 Leaderboard</a></li>
-      <li><a href="visitantes.html">🌍 Visitors</a></li>
-      <li><a href="feedback.html">⭐ Feedback</a></li>
-      <li><a href="contato.html">📬 Contact</a></li>
+      <li><a href="/en/index.html">Home</a></li>
+      <li><a href="/en/jogo.html">🐦 Flappy Lula</a></li>
+      <li><a href="/en/correr.html">🏃 3D Runner</a></li>
+      <li><a href="/en/social.html" class="active">👥 Social & Duels</a></li>
+      <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
+      <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
+      <li><a href="/en/ranking.html">🏆 Leaderboard</a></li>
+      <li><a href="/en/visitantes.html">🌍 Visitors</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
+      <li><a href="/en/contato.html">📬 Contact</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -460,9 +459,9 @@
   </footer>
 
   <script type="module">
-    import { auth } from './js/auth.js';
-    import { social } from './js/social-manager.js';
-    import { escapeHTML } from './js/security.js';
+    import { auth } from '/js/auth.js';
+    import { social } from '/js/social-manager.js';
+    import { escapeHTML } from '/js/security.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -915,6 +914,6 @@
     // Inicialização da aba padrão
     loadFriendsTab();
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 </body>
 </html>

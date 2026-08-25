@@ -16,7 +16,7 @@
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/jogo.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -67,18 +67,18 @@
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 
   <style>
     html, body {
@@ -824,19 +824,19 @@
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <a href="/en/index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
     <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
-      <li><a href="jogo.html" class="active">🐦 Flappy Lula</a></li>
-      <li><a href="correr.html">🏃 Empresário 3D</a></li>
-      <li><a href="social.html">👥 Social & Duelos</a></li>
-      <li><a href="loja.html">🛍️ Loja de Skins</a></li>
-      <li><a href="conquistas.html">🏅 Conquistas</a></li>
-      <li><a href="ranking.html">🏆 Ranking</a></li>
-      <li><a href="visitantes.html">🌍 Visitantes</a></li>
-      <li><a href="feedback.html">⭐ Feedbacks</a></li>
-      <li><a href="contato.html">📬 Contato</a></li>
+      <li><a href="/en/jogo.html" class="active">🐦 Flappy Lula</a></li>
+      <li><a href="/en/correr.html">🏃 Empresário 3D</a></li>
+      <li><a href="/en/social.html">👥 Social & Duelos</a></li>
+      <li><a href="/en/loja.html">🛍️ Loja de Skins</a></li>
+      <li><a href="/en/conquistas.html">🏅 Conquistas</a></li>
+      <li><a href="/en/ranking.html">🏆 Ranking</a></li>
+      <li><a href="/en/visitantes.html">🌍 Visitantes</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="/en/contato.html">📬 Contato</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -860,7 +860,7 @@
     </div>
 
     <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU/POWERUPS -->
-    <div id="prisonBanner">🚨 13 POINTS: PRISON MODE ACTIVATED!</div>
+    <div id="prisonBanner">🚨 13 PONTOS: MODO CADEIA ATIVADO!</div>
 
     <!-- HUD OVERLAY SUPERIOR COMPACTO (1 ÚNICA LINHA LIMPA) -->
     <div id="hudOverlay">
@@ -899,7 +899,7 @@
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
           <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
-            <img id="equippedCharImg" src="img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
+            <img id="equippedCharImg" src="/img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
             <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
@@ -965,7 +965,7 @@
 
         <div class="go-quick-options">
           <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
-            <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem Equipado">
+            <img id="goEquippedCharImg" src="/img/lula.png" alt="Personagem Equipado">
             <span id="goEquippedCharName">Lula da Silva</span>
             <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Change</span>
           </div>
@@ -992,7 +992,7 @@
 
             <div class="go-lula-meme-box">
               <div class="go-lula-avatar">
-                <img src="img/lula_cry.png" alt="Lula Chorando">
+                <img src="/img/lula_cry.png" alt="Lula Chorando">
               </div>
               <div class="go-meme-text" id="goMemeText">
                 "Comrade, you hit the pipe and taxes took away your steak!"
@@ -1046,14 +1046,14 @@
   </div>
 
   <script type="module">
-    import { savePlayerScore, getTopScores, startScoreSession } from './js/firebase-config.js';
-    import { sounds } from './js/audio.js';
-    import { auth } from './js/auth.js';
-    import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
-    import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from './js/game/skins.js';
-    import { escapeHTML } from './js/security.js';
-    import { AdsManager } from './js/ads-manager.js';
-    import { social } from './js/social-manager.js';
+    import { savePlayerScore, getTopScores, startScoreSession } from '/js/firebase-config.js';
+    import { sounds } from '/js/audio.js';
+    import { auth } from '/js/auth.js';
+    import { CHARACTERS, CharacterInventory } from '/js/game/characters.js';
+    import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from '/js/game/skins.js';
+    import { escapeHTML } from '/js/security.js';
+    import { AdsManager } from '/js/ads-manager.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -1673,22 +1673,22 @@
           if (score >= 100 && !hasPlayedBesta) {
             hasPlayedBesta = true;
             try { sounds.playBestaEnjaulada(); } catch(e){}
-            showBannerAlert('🔥 100 PONTOS: THE MAN IS A MACHINE!', false);
+            showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA!', false);
           }
 
           // AVISO AO ATINGIR 1000 PONTOS (2.0x VELOCIDADE)
           if (score >= 1000 && (score - pointsEarned) < 1000) {
-            showBannerAlert('⚡ 1000 PONTOS: 2.0x DIFFICULTY REACHED!', false);
+            showBannerAlert('⚡ 1000 PONTOS: DIFICULDADE 2.0x ATINGIDA!', false);
           }
 
           // AVISO AO ATINGIR 3000 PONTOS (3.5x VELOCIDADE)
           if (score >= 3000 && (score - pointsEarned) < 3000) {
-            showBannerAlert('⚡ 3000 PONTOS: 3.5x INTENSE TEMPO REACHED!', false);
+            showBannerAlert('⚡ 3000 PONTOS: RITMO INTENSO 3.5x!', false);
           }
 
           // AVISO AO ATINGIR 5000 PONTOS (5.0x VELOCIDADE MÁXIMA)
           if (score >= 5000 && (score - pointsEarned) < 5000) {
-            showBannerAlert('🏆 5000 PONTOS: 5.0x LEGENDARY MAX DIFFICULTY!', false);
+            showBannerAlert('🏆 5000 PONTOS: DIFICULDADE MÁXIMA 5.0x LENDÁRIA!', false);
           }
 
           if (gameState.isTurboAllowed) {
@@ -1708,11 +1708,11 @@
             document.body.classList.add('prison-mode');
             screenShake = 34; // Terremoto forte ao entrar na prisão
             try { sounds.playEarthquakeRumble(); } catch(e){}
-            showBannerAlert(`🚨 ${score} PONTOS: PRISON MODE ACTIVATED! EARTHQUAKE!`, true);
+            showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO! TERREMOTO!`, true);
           } else if (!shouldBePrison && isPrisonMode) {
             isPrisonMode = false;
             document.body.classList.remove('prison-mode');
-            showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! FREEDOM!`, false);
+            showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! LIBERDADE!`, false);
           }
           
           try { sounds.playPicanhaMemeSound(); } catch(e){}
@@ -1730,7 +1730,7 @@
           if (activeCharacter.id === 'nikolas') {
             nikolasTripleTimer = 15.0; // Nikolas mantém bônus de 3x pontos
           }
-          showBannerAlert('🕊️ LULA SLOWED DOWN TIME (-3x)!', false);
+          showBannerAlert('🕊️ LULA DESACELEROU O TEMPO (-3x)!', false);
           try { sounds.playPowerup(); } catch(e){}
         }
       }
@@ -2628,7 +2628,7 @@
         sessionPlayTime += dt;
         if (sessionPlayTime >= 30 && !hasAlerted30s) {
           hasAlerted30s = true;
-          showBannerAlert('⚡ 30s IN GAME: SPEED INCREASING SLIGHTLY!', false);
+          showBannerAlert('⚡ 30s DE JOGO: RITMO AUMENTANDO LEVEMENTE!', false);
         }
       }
 
@@ -3054,7 +3054,7 @@
 
     requestAnimationFrame(loop);
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>
