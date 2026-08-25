@@ -177,14 +177,9 @@ export class ObstacleManager {
 
       switch (pattern) {
         case 0:
-          // 50% Trens e 50% Caminhões
-          const isTruck = Math.random() > 0.5;
-          const isMoving = Math.random() > 0.5;
-          if (isTruck) {
-            this.createTruckObstacle(parent, LANES[chosenLane], localZ, isMoving);
-          } else {
-            this.createSubwayTrain(parent, LANES[chosenLane], localZ, isMoving);
-          }
+          // Trens do Metrô (Metrô Rio, Metrô SP, Expresso Brasil com pintura procedual HD, bogies e rampa)
+          const isMoving = Math.random() > 0.45;
+          this.createSubwayTrain(parent, LANES[chosenLane], localZ, isMoving);
           const safeLane0 = (chosenLane + 1) % 3;
           this.createCoinLine(parent, LANES[safeLane0], localZ - 10, 5);
           break;
@@ -218,17 +213,15 @@ export class ObstacleManager {
     });
   }
 
-  // 1. NOVO OBSTÁCULO: CAMINHÃO 3D GLB (caminhao.glb)
+  // 1. OBSTÁCULO PESADO: CAMINHÃO 3D OU TREM TEXTURIZADO
   createTruckObstacle(parent, laneX, localZ, isMoving = false) {
-    const truck = new THREE.Group();
-    truck.position.set(laneX, 0, localZ);
-
     const truckModel = modelLoader.getModel('caminhao');
 
     if (truckModel) {
+      const truck = new THREE.Group();
+      truck.position.set(laneX, 0, localZ);
+
       const truckPivot = new THREE.Group();
-      // O modelo caminhao.glb tem comprimento no eixo X com cabine em +X.
-      // Rotacionamos em Math.PI / 2 para que a cabine fique voltada para +Z (em direção ao jogador).
       truckModel.rotation.y = Math.PI / 2;
       truckPivot.add(truckModel);
 
@@ -246,60 +239,53 @@ export class ObstacleManager {
       truckPivot.position.set(-center.x * scaleX, -box.min.y * scaleY, -center.z * scaleZ);
 
       truck.add(truckPivot);
-    } else {
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.3 });
-      const cabinMat = new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.6, roughness: 0.3 });
-      const cargo = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.6, 7.5), bodyMat);
-      cargo.position.set(0, 1.6, -1.5);
-      cargo.castShadow = true;
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.8, 3.2), cabinMat);
-      cabin.position.set(0, 1.7, 3.8);
-      cabin.castShadow = true;
-      truck.add(cargo, cabin);
-    }
 
-    // Faróis Frontais Acessos na Cabine do Caminhão (Z = +5.25)
-    [-0.75, 0.75].forEach(hx => {
-      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 12), this.materials.headlight);
-      lamp.rotation.x = Math.PI / 2;
-      lamp.position.set(hx, 1.0, 5.25);
-      truck.add(lamp);
-    });
+      // Faróis Frontais Acessos na Cabine do Caminhão (Z = +5.25)
+      [-0.75, 0.75].forEach(hx => {
+        const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 12), this.materials.headlight);
+        lamp.rotation.x = Math.PI / 2;
+        lamp.position.set(hx, 1.0, 5.25);
+        truck.add(lamp);
+      });
 
-    const beam = new THREE.Mesh(new THREE.ConeGeometry(2.0, 10.0, 8, 1, true), this.materials.headlightBeam);
-    beam.rotation.x = -Math.PI / 2;
-    beam.position.set(0, 1.0, 10.25);
-    truck.add(beam);
+      const beam = new THREE.Mesh(new THREE.ConeGeometry(2.0, 10.0, 8, 1, true), this.materials.headlightBeam);
+      beam.rotation.x = -Math.PI / 2;
+      beam.position.set(0, 1.0, 10.25);
+      truck.add(beam);
 
-    parent.add(truck);
+      parent.add(truck);
 
-    const obstacleObj = {
-      name: 'Caminhão da Favela',
-      type: 'truck',
-      mesh: truck,
-      parent: parent,
-      laneX: laneX,
-      localZ: localZ,
-      isMoving: isMoving,
-      moveSpeed: isMoving ? 13 : 0,
-      hornPlayed: false,
-      passSoundPlayed: false,
-      getAABB() {
-        const pz = parent.position.z + truck.position.z;
-        return {
-          minX: laneX - 1.15,
-          maxX: laneX + 1.15,
-          minY: 0,
-          maxY: 3.2,
-          minZ: pz - 5.25,
-          maxZ: pz + 5.25
-        };
+      const obstacleObj = {
+        name: 'Caminhão da Favela',
+        type: 'truck',
+        mesh: truck,
+        parent: parent,
+        laneX: laneX,
+        localZ: localZ,
+        isMoving: isMoving,
+        moveSpeed: isMoving ? 13 : 0,
+        hornPlayed: false,
+        passSoundPlayed: false,
+        getAABB() {
+          const pz = parent.position.z + truck.position.z;
+          return {
+            minX: laneX - 1.15,
+            maxX: laneX + 1.15,
+            minY: 0,
+            maxY: 3.2,
+            minZ: pz - 5.25,
+            maxZ: pz + 5.25
+          };
+        }
+      };
+
+      this.obstacles.push(obstacleObj);
+      if (isMoving) {
+        this.movingTrains.push(obstacleObj);
       }
-    };
-
-    this.obstacles.push(obstacleObj);
-    if (isMoving) {
-      this.movingTrains.push(obstacleObj);
+    } else {
+      // Se o modelo GLB ainda não terminou de baixar, usa imediatamente o trem 3D procedual texturizado
+      this.createSubwayTrain(parent, laneX, localZ, isMoving);
     }
   }
 

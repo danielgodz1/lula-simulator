@@ -786,17 +786,28 @@
       height: 100dvh !important;
       height: 100vh !important;
       width: 100vw !important;
+      background: #000 !important;
     }
 
-    body.is-fullscreen canvas#gameCanvas {
+    body.is-fullscreen #canvasContainer {
       width: 100vw !important;
       height: 100dvh !important;
       height: 100vh !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    body.is-fullscreen canvas#gameCanvas {
+      width: auto !important;
+      height: auto !important;
       max-width: 100vw !important;
       max-height: 100dvh !important;
       max-height: 100vh !important;
       border: none !important;
       border-radius: 0 !important;
+      object-fit: contain !important;
+      margin: auto !important;
     }
   </style>
 </head>
@@ -1159,41 +1170,65 @@
 
       let W, H;
       if (isFs) {
-        // Preserva a proporção arcade de retrato para NUNCA distorcer em tela cheia de PCs ultra-wide
-        H = window.innerHeight;
-        W = Math.min(window.innerWidth - 20, Math.round(H * 0.70));
+        // Modo Tela Cheia 16:9 em alta resolução para PC e dispositivos widescreen
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+        const targetRatio = 16 / 9; // 1.7778
+
+        if (screenW / screenH >= targetRatio) {
+          // Monitor 16:9 ou Ultra-Wide: preenche altura total e calcula largura 16:9
+          H = screenH;
+          W = Math.round(H * targetRatio);
+        } else {
+          // Monitor vertical ou celular retrato em tela cheia
+          if (isMobile) {
+            W = Math.min(screenW, 480);
+            H = screenH;
+          } else {
+            W = screenW;
+            H = Math.round(W / targetRatio);
+          }
+        }
       } else if (isMobile) {
+        // Celulares e tablets em modo janela
         W = Math.min(window.innerWidth - 10, 480);
         H = Math.max(400, Math.min(window.innerHeight - 56, 800));
       } else {
-        // Desktop / Computador: tela mais ampla e espaçosa estilo Flappy Bird arcade
-        const availableH = window.innerHeight - 68; // Desconta navbar e margens
-        H = Math.max(560, Math.min(availableH, 980));
-        // Largura generosa com proporção ~0.70
-        W = Math.min(Math.round(H * 0.70), window.innerWidth - 60);
-        W = Math.max(500, Math.min(W, 640));
+        // Desktop / Computador em Modo Widescreen 16:9 HD de Alta Resolução
+        const availableH = window.innerHeight - 68; // Desconta navbar
+        const availableW = window.innerWidth - 40;  // Margens confortáveis
+        const targetRatio = 16 / 9;
+
+        let calcH = Math.min(availableH, 720);
+        let calcW = Math.round(calcH * targetRatio);
+        if (calcW > availableW) {
+          calcW = availableW;
+          calcH = Math.round(calcW / targetRatio);
+        }
+        W = Math.max(640, calcW);
+        H = Math.max(360, calcH);
       }
 
       // Resolução Retina HD máxima (2.0x a 3.0x) para máxima nitidez em telas de PC e celulares
       dpr = Math.max(window.devicePixelRatio || 1, 2.0);
       dpr = Math.min(dpr, 3.0);
       
-      // Proporção ideal e reduzida do personagem conforme solicitado (não fica gigante)
-      LR_RATIO = isMobile ? 0.036 : 0.038;
-      PW_RATIO = isMobile ? 0.145 : 0.125;
-      SPAWN_FREQ = isMobile ? 120 : 132;
+      const isWide = (W / H) >= 1.4;
+      LR_RATIO = isMobile ? 0.036 : (isWide ? 0.040 : 0.038);
+      PW_RATIO = isMobile ? 0.145 : (isWide ? 0.075 : 0.125);
+      SPAWN_FREQ = isMobile ? 120 : (isWide ? 140 : 132);
 
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px';
       canvas.style.height = H + 'px';
 
-      // Ajuste dinâmico suave da física para o tamanho maior da tela
+      // Ajuste dinâmico suave da física para o tamanho e proporção da tela
       const scaleH = H / 640;
-      const scaleW = W / 480;
+      const scaleW = W / (isWide ? 1000 : 480);
       GRAVITY = 0.35 * Math.sqrt(scaleH);
       JUMP_POWER = -7.8 * Math.sqrt(scaleH);
-      BASE_PIPE_SPEED = 2.3 * Math.sqrt(scaleW);
+      BASE_PIPE_SPEED = (isWide ? 2.8 : 2.3) * Math.sqrt(scaleW);
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
@@ -2768,6 +2803,30 @@
       if (isFullscreenActive() || e.target === canvas || e.target.closest('.game-wrapper')) {
         onUserTouch(e);
       }
+    });
+
+    window.addEventListener('resize', () => {
+      const res = calcSize();
+      W = res.W;
+      H = res.H;
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      setTimeout(() => {
+        const res = calcSize();
+        W = res.W;
+        H = res.H;
+        if (btnFullscreen) btnFullscreen.textContent = isFullscreenActive() ? '🗗' : '⛶';
+      }, 100);
+    });
+
+    document.addEventListener('webkitfullscreenchange', () => {
+      setTimeout(() => {
+        const res = calcSize();
+        W = res.W;
+        H = res.H;
+        if (btnFullscreen) btnFullscreen.textContent = isFullscreenActive() ? '🗗' : '⛶';
+      }, 100);
     });
 
     // Inicializa anúncios de forma assíncrona pós-carregamento do jogo
