@@ -7,9 +7,9 @@ import { Environment } from './environment.js';
 import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
 import { savePlayerScore, startScoreSession } from '../firebase-config.js';
-import { auth } from '../auth.js';
 import { RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
+import { profiler } from './profiler.js';
 
 export class Game {
   constructor() {
@@ -18,6 +18,8 @@ export class Game {
     this.environment = new Environment(this.sceneManager.scene);
     this.obstacleManager = new ObstacleManager(this.sceneManager.scene);
     this.ui = new UIManager();
+
+    profiler.attach(this.sceneManager.renderer, this.sceneManager.scene);
 
     // Conecta a troca de personagem em tempo real na cena
     this.ui.onCharacterChanged = (charId) => {
@@ -164,6 +166,8 @@ export class Game {
   loop() {
     requestAnimationFrame(() => this.loop());
 
+    profiler.beginFrame();
+
     const dt = Math.min(this.clock.getDelta(), 0.0333);
     const elapsedTime = this.clock.getElapsedTime();
 
@@ -229,7 +233,7 @@ export class Game {
       this.character.update(dt, 0);
     }
 
-    // 7. Atualização da Câmera em 3ª Pessoa e Renderização
+    // 7. Atualização da Câmera em 3ª Pessoa
     this.sceneManager.updateCamera(
       this.character.x,
       this.character.y,
@@ -237,7 +241,14 @@ export class Game {
       dt,
       elapsedTime
     );
+
+    profiler.markUpdateEnd();
+
+    // 8. Renderização WebGL
     this.sceneManager.render();
+
+    profiler.markRenderEnd();
+    profiler.endFrame();
   }
 }
 
