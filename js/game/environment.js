@@ -16,46 +16,38 @@ export class Environment {
     this.unitTankGeo = new THREE.CylinderGeometry(1.15, 1.05, 1.4, 10);
     this.unitWindowGeo = new THREE.PlaneGeometry(1.3, 1.1);
 
-    // Materiais Compartilhados Globais PBR / Otimizados
+    // Materiais Compartilhados Globais de Alta Performance (Lambert / Phong) Estilo Subway Surfers
     this.sharedMaterials = {
-      asphalt: new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, metalness: 0.1 }),
-      gravel: new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.90, metalness: 0.1 }),
-      curb: new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.70, metalness: 0.1 }),
-      yellowStripe: new THREE.MeshBasicMaterial({ color: 0xfacc15 }),
-      railTie: new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.80, metalness: 0.1 }),
-      steelRail: new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 }),
-      concreteWall: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.75, metalness: 0.1 }),
-      graffitiWall: new THREE.MeshStandardMaterial({ map: textureAtlas.atlasTexture, roughness: 0.60, metalness: 0.1 }),
-      waterTank: new THREE.MeshStandardMaterial({ map: textureAtlas.waterTankTexture, color: 0x0284c7, roughness: 0.40, metalness: 0.2 }),
-      concretePole: new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.70, metalness: 0.1 }),
-      dumpster: new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.45, metalness: 0.35 }),
-      rebar: new THREE.MeshStandardMaterial({ color: 0x9a3412, roughness: 0.60, metalness: 0.45 }),
-      antenna: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.30, metalness: 0.85 }),
+      asphalt: new THREE.MeshLambertMaterial({ color: 0x334155 }),
+      gravel: new THREE.MeshLambertMaterial({ color: 0x64748b }),
+      curb: new THREE.MeshLambertMaterial({ color: 0xcbd5e1 }),
+      yellowStripe: new THREE.MeshBasicMaterial({ color: 0xfde047 }),
+      railTie: new THREE.MeshLambertMaterial({ color: 0x78350f }),
+      steelRail: new THREE.MeshPhongMaterial({ color: 0xf8fafc, specular: 0xffffff, shininess: 80 }),
+      concreteWall: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
+      graffitiWall: new THREE.MeshLambertMaterial({ map: textureAtlas.atlasTexture }),
+      waterTank: new THREE.MeshLambertMaterial({ map: textureAtlas.waterTankTexture, color: 0x0284c7 }),
+      concretePole: new THREE.MeshLambertMaterial({ color: 0x64748b }),
+      dumpster: new THREE.MeshLambertMaterial({ color: 0x16a34a }),
+      rebar: new THREE.MeshLambertMaterial({ color: 0xb45309 }),
+      antenna: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
       // Material Base de Casas com Suporte a Instanced Colors
-      houseBase: new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0.05 }),
+      houseBase: new THREE.MeshLambertMaterial(),
       // Janelas Dinâmicas (Acendem em amarelo/âmbar à noite)
-      windowMat: new THREE.MeshStandardMaterial({
-        color: 0x0284c7,
-        emissive: 0xfef08a,
-        emissiveIntensity: 0.85,
-        roughness: 0.2
-      }),
+      windowMat: new THREE.MeshBasicMaterial({ color: 0xfef08a }),
       // Lâmpadas dos Postes
-      streetLampMat: new THREE.MeshStandardMaterial({
-        color: 0xffedd5,
-        emissive: 0xfef08a,
-        emissiveIntensity: 0.95
-      })
+      streetLampMat: new THREE.MeshBasicMaterial({ color: 0xffedd5 })
     };
 
     this.houseColors = [
-      0xb45309, // Tijolo Baiano
-      0xea580c, // Laranja Queimado
-      0xfacc15, // Amarelo Solar
-      0x0284c7, // Azul Piscina
-      0x16a34a, // Verde Bandeira
-      0xdb2777, // Rosa Choque
-      0x78716c  // Reboco Concreto
+      0xf59e0b, // Amarelo Solar Dourado
+      0xea580c, // Laranja Vibrante
+      0x0284c7, // Azul Royal Carioca
+      0x10b981, // Verde Esmeralda Tropical
+      0xec4899, // Rosa Pink Carioca
+      0x8b5cf6, // Roxo Açaí
+      0xf43f5e, // Vermelho Coral
+      0x06b6d4  // Ciano Turquesa
     ];
 
     this.init();

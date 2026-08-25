@@ -22,13 +22,13 @@ export class GameScene {
     this.parallaxFavela = null;
     this.kites = [];
 
-    this.timeOfDay = 0.04; // Começa às 5h da manhã (Alvorecer)
-    this.cycleDuration = 150; // 150 segundos para um ciclo completo de 24h
+    this.timeOfDay = 0.38; // Começa de dia com sol radiante e alta visibilidade (10h da manhã)
+    this.cycleDuration = 180; // 180 segundos para um ciclo suave
 
     // Monitor de Performance
     this.fpsHistory = [];
     this.lastFrameTime = performance.now();
-    this.currentPixelRatio = 1.0;
+    this.currentPixelRatio = Math.min(window.devicePixelRatio || 1, 2.0);
     this.autoScaleAdjusted = false;
 
     this.init();
@@ -57,25 +57,24 @@ export class GameScene {
 
     if (t < 0.15) {
       // 1. Madrugada / Alvorecer (5h - 7h)
-      grad.addColorStop(0.0, '#090d16');
-      grad.addColorStop(0.35, '#1e1b4b');
-      grad.addColorStop(0.65, '#4338ca');
-      grad.addColorStop(0.85, '#f43f5e');
+      grad.addColorStop(0.0, '#1e1b4b');
+      grad.addColorStop(0.35, '#4338ca');
+      grad.addColorStop(0.70, '#f43f5e');
       grad.addColorStop(1.0, '#fed7aa');
     } else if (t < 0.45) {
-      // 2. Manhã Radiante (8h - 11h)
-      grad.addColorStop(0.0, '#1d4ed8');
+      // 2. Manhã Radiante Tropical (8h - 11h) — Cores vivas estilo Subway Surfers
+      grad.addColorStop(0.0, '#0284c7');
       grad.addColorStop(0.35, '#38bdf8');
       grad.addColorStop(0.75, '#7dd3fc');
       grad.addColorStop(1.0, '#bae6fd');
-    } else if (t < 0.65) {
-      // 3. Meio-Dia Tropical (12h - 15h)
+    } else if (t < 0.70) {
+      // 3. Meio-Dia Solar Carioca (12h - 15h)
       grad.addColorStop(0.0, '#0284c7');
       grad.addColorStop(0.40, '#38bdf8');
       grad.addColorStop(0.80, '#bae6fd');
       grad.addColorStop(1.0, '#e0f2fe');
     } else if (t < 0.85) {
-      // 4. Pôr do Sol / Golden Hour (16h - 19h)
+      // 4. Pôr do Sol Dourado (16h - 19h)
       grad.addColorStop(0.0, '#1e1b4b');
       grad.addColorStop(0.30, '#7c2d12');
       grad.addColorStop(0.55, '#ea580c');
@@ -165,55 +164,52 @@ export class GameScene {
   init() {
     if (!this.container) return;
 
-    // 1. Cena com Fog Atmosférico Suave
+    // 1. Cena com Fog Atmosférico Suave de Alta Visibilidade (Longe da Pista)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1e1b4b);
-    this.scene.fog = new THREE.Fog(0x1e1b4b, 70, 260);
+    this.scene.background = new THREE.Color(0x38bdf8);
+    this.scene.fog = new THREE.Fog(0xbae6fd, 130, 380);
 
-    // 2. Câmera em 3ª Pessoa
+    // 2. Câmera em 3ª Pessoa Elevada (Visão Ampla e Clara das 3 Pistas)
     const aspect = this.container.clientWidth / this.container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 800);
-    this.camera.position.set(0, 4.4, 7.2);
-    this.camera.lookAt(0, 1.6, -14);
+    this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 800);
+    this.camera.position.set(0, 4.7, 7.2);
+    this.camera.lookAt(0, 1.4, -18);
 
-    // 3. Renderizador WebGL com Otimização de Alta Performance para Mobile (Ex: Galaxy A26)
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.innerWidth <= 900;
-
+    // 3. Renderizador WebGL em Alta Resolução Retina / HD com Anti-Aliasing (Adequado para S23 Ultra e Todos os Celulares)
     this.renderer = new THREE.WebGLRenderer({
-      antialias: !isMobile, // Desativa MSAA em celulares para poupar fillrate de GPUs intermediárias
+      antialias: true, // Garante bordas 100% lisas e sem serrilhamento
       alpha: false,
       powerPreference: 'high-performance',
-      precision: isMobile ? 'mediump' : 'highp',
+      precision: 'highp', // Garante precisão máxima sem artefatos ou pixelização
       stencil: false,
       depth: true
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    // Resolução Adaptativa Fluida: 1.0x em celulares médios e escala dinamicamente
-    this.maxPixelRatio = isMobile ? 1.20 : Math.min(window.devicePixelRatio || 1, 2.0);
-    this.minPixelRatio = 0.85;
-    this.currentPixelRatio = isMobile ? 1.0 : Math.min(window.devicePixelRatio || 1, 1.75);
+    // Resolução Nativa HD Retina (2.0x max no S23 Ultra e telas de alta densidade)
+    this.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2.0);
+    this.minPixelRatio = 1.20;
+    this.currentPixelRatio = Math.min(window.devicePixelRatio || 1, 2.0);
     this.renderer.setPixelRatio(this.currentPixelRatio);
 
     this.perfCheckTimer = 0;
 
     // Mapeamento de Tons ACES Filmic e Espaço de Cores sRGB
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.toneMappingExposure = 1.20;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
 
-    // Sombras Otimizadas (Desativadas em mobile para garantir 60 FPS cravados)
-    this.renderer.shadowMap.enabled = !isMobile;
-    this.renderer.shadowMap.type = THREE.BasicShadowMap;
+    // Sombras Desativadas no renderizador para 60-120 FPS cravados em qualquer aparelho (usa sombras projetadas estéticas)
+    this.renderer.shadowMap.enabled = false;
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
 
     // 4. Domo de Céu Contínuo Sem Círculos ou Seams (Hemisfério Completo)
-    const skyGeo = new THREE.SphereGeometry(420, isMobile ? 16 : 32, isMobile ? 12 : 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
+    const skyGeo = new THREE.SphereGeometry(420, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
     const skyMat = new THREE.MeshBasicMaterial({
       map: this.createDynamicSkyTexture(),
       side: THREE.BackSide,
@@ -227,32 +223,20 @@ export class GameScene {
     // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Iluminação em Camadas
-    // A. Luz Hemisférica (Céu / Chão)
-    this.hemiLight = new THREE.HemisphereLight(0xffedd5, 0x475569, 0.65);
+    // 6. Iluminação em Camadas Vibrante e Clara
+    // A. Luz Hemisférica (Céu Branco / Chão Suave)
+    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 0.95);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Direcional Principal (Sol / Sombras Otimizadas com Frustum Focalizado)
-    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.25);
-    this.sunLight.position.set(25, 55, 30);
-    this.sunLight.castShadow = true;
-    const shadowRes = isMobile ? 512 : 1024;
-    this.sunLight.shadow.mapSize.width = shadowRes;
-    this.sunLight.shadow.mapSize.height = shadowRes;
-    this.sunLight.shadow.camera.near = 0.5;
-    this.sunLight.shadow.camera.far = isMobile ? 95 : 160;
-    this.sunLight.shadow.camera.left = -16;
-    this.sunLight.shadow.camera.right = 16;
-    this.sunLight.shadow.camera.top = 16;
-    this.sunLight.shadow.camera.bottom = -16;
-    this.sunLight.shadow.bias = -0.0015;
+    // B. Luz Direcional Principal (Sol Radiante Tropical com Alto Contraste)
+    this.sunLight = new THREE.DirectionalLight(0xfffbeb, 1.40);
+    this.sunLight.position.set(28, 60, 35);
     this.scene.add(this.sunLight);
 
-    // C. Luz Secundária de Preenchimento (Fill Light oposta, tom azul suave sem sombra)
-    this.fillLight = new THREE.DirectionalLight(0x93c5fd, 0.35);
-    this.fillLight.position.set(-35, 45, -20);
-    this.fillLight.castShadow = false;
+    // C. Luz Secundária de Preenchimento (Fill Light suave)
+    this.fillLight = new THREE.DirectionalLight(0xbae6fd, 0.45);
+    this.fillLight.position.set(-30, 45, -20);
     this.scene.add(this.fillLight);
 
     // D. Luz Noturna na Pista
