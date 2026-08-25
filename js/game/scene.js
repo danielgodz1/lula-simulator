@@ -186,10 +186,15 @@ export class GameScene {
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    // Resolução Nativa HD Retina (2.0x max no S23 Ultra e telas de alta densidade)
-    this.maxPixelRatio = Math.min(window.devicePixelRatio || 1, 2.0);
-    this.minPixelRatio = 1.20;
-    this.currentPixelRatio = Math.min(window.devicePixelRatio || 1, 2.0);
+    // Resolução Inteligente Calibrada (1.50x no mobile e 1.75x no desktop para nitidez sem aquecer GPU)
+    const isMobile = typeof window !== 'undefined' && (
+      window.innerWidth <= 768 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '')
+    );
+    const dpr = window.devicePixelRatio || 1;
+    this.maxPixelRatio = isMobile ? Math.min(dpr, 1.50) : Math.min(dpr, 1.75);
+    this.minPixelRatio = 1.0;
+    this.currentPixelRatio = this.maxPixelRatio;
     this.renderer.setPixelRatio(this.currentPixelRatio);
 
     this.perfCheckTimer = 0;
@@ -581,6 +586,13 @@ export class GameScene {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+
+    const isMobile = window.innerWidth <= 768 ||
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+    const dpr = window.devicePixelRatio || 1;
+    this.maxPixelRatio = isMobile ? Math.min(dpr, 1.50) : Math.min(dpr, 1.75);
+    this.currentPixelRatio = this.maxPixelRatio;
+    this.renderer.setPixelRatio(this.currentPixelRatio);
   }
 
   render() {
