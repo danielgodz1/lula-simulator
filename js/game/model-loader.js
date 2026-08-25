@@ -11,10 +11,10 @@ class ModelLoaderManager {
     this.isLoaded = false;
 
     this.modelPaths = {
-      empresario: 'js/game/models/empresario.glb',
-      lula: 'js/game/models/lula.glb',
-      bolsonaro: 'js/game/models/bolsonaro.glb',
-      caminhao: 'js/game/models/caminhao.glb'
+      empresario: '/js/game/models/empresario.glb',
+      lula: '/js/game/models/lula.glb',
+      bolsonaro: '/js/game/models/bolsonaro.glb',
+      caminhao: '/js/game/models/caminhao.glb'
     };
   }
 
@@ -48,7 +48,7 @@ class ModelLoaderManager {
       return this.loadingPromises.get(key);
     }
 
-    const path = this.modelPaths[key] || `js/game/models/${key}.glb`;
+    const path = this.modelPaths[key] || `/js/game/models/${key}.glb`;
     const promise = new Promise((resolve) => {
       this.loader.load(
         path,
@@ -72,7 +72,7 @@ class ModelLoaderManager {
         undefined,
         (err) => {
           console.warn(`[ModelLoader] Aviso ao carregar ${key} de ${path}:`, err);
-          const fallbackPath = `3D_MeshyAI/${key === 'casinha' ? 'casinha_favela' : key}.glb`;
+          const fallbackPath = `/3D_MeshyAI/${key === 'casinha' ? 'casinha_favela' : key}.glb`;
           this.loader.load(
             fallbackPath,
             (gltf) => {
