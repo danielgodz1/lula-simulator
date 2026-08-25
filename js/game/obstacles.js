@@ -116,16 +116,40 @@ export class ObstacleManager {
       coinCore: new THREE.CylinderGeometry(0.46, 0.46, 0.08, 20),
       coinRim: new THREE.TorusGeometry(0.46, 0.045, 6, 20),
       particle: new THREE.BoxGeometry(0.09, 0.09, 0.09),
-      train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
-      documentCard: new THREE.PlaneGeometry(2.3, 1.45),
-      socialCard: new THREE.PlaneGeometry(2.3, 1.45)
+      train: new THREE.BoxGeometry(2.4, 3.4, 18.0)
     };
+
+    // Marca geometrias e materiais compartilhados para não serem destruídos
+    Object.values(this.materials).forEach(m => {
+      if (Array.isArray(m)) m.forEach(x => { if (x) x._isShared = true; });
+      else if (m) m._isShared = true;
+    });
+    Object.values(this.geometries).forEach(g => { if (g) g._isShared = true; });
   }
 
   clearSegmentEntities(parent) {
+    const disposeNonShared = (obj) => {
+      if (!obj) return;
+      obj.traverse((child) => {
+        if (child.isMesh) {
+          if (child.geometry && !child.geometry._isShared) {
+            child.geometry.dispose();
+          }
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach(m => { if (m && !m._isShared) m.dispose(); });
+            } else if (!child.material._isShared) {
+              child.material.dispose();
+            }
+          }
+        }
+      });
+    };
+
     this.obstacles = this.obstacles.filter(o => {
       if (o.parent === parent) {
         parent.remove(o.mesh);
+        disposeNonShared(o.mesh);
         return false;
       }
       return true;
@@ -139,6 +163,8 @@ export class ObstacleManager {
         if (!c.isPicanha && this.coinPool.length < 50) {
           c.mesh.visible = false;
           this.coinPool.push(c.mesh);
+        } else if (c.isPicanha) {
+          disposeNonShared(c.mesh);
         }
         return false;
       }
@@ -148,6 +174,7 @@ export class ObstacleManager {
     this.powerups = this.powerups.filter(p => {
       if (p.parent === parent) {
         parent.remove(p.mesh);
+        disposeNonShared(p.mesh);
         return false;
       }
       return true;
@@ -159,6 +186,8 @@ export class ObstacleManager {
         if (this.particlePool.length < 60) {
           p.mesh.visible = false;
           this.particlePool.push(p.mesh);
+        } else {
+          disposeNonShared(p.mesh);
         }
         return false;
       }

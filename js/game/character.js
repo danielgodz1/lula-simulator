@@ -133,19 +133,20 @@ export class Character {
               '#include <begin_vertex>',
               `
               #include <begin_vertex>
-              // Animação Fisiológica das Pernas (Vértices abaixo do quadril)
+
+              // 1. ANIMAÇÃO FISIOLÓGICA DAS PERNAS (Vértices abaixo do quadril)
               if (position.y < 0.04) {
                 float legWeight = clamp((-position.y + 0.04) / 0.92, 0.0, 1.0);
                 float legSide = position.x < 0.0 ? -1.0 : 1.0;
 
-                // 1. Balanço das Pernas na Corrida (Passadas Alternadas Esquerda/Direita)
+                // Balanço das pernas na corrida com flexão natural de joelho
                 float swing = sin(uRunTime + (legSide > 0.0 ? 3.14159 : 0.0)) * uLegSwing * legWeight;
 
-                // 2. Modificação no Pulo: Esticar no ar ou amortecer no pouso
+                // Modificação atlética no pulo
                 if (uJumpProgress > 0.1) {
-                  swing = -0.28 * legWeight;
+                  swing = -0.32 * legWeight;
                 } else if (uJumpProgress < -0.1) {
-                  swing = 0.24 * legWeight;
+                  swing = 0.26 * legWeight;
                 }
 
                 float cosA = cos(swing);
@@ -156,9 +157,59 @@ export class Character {
                 transformed.y = py * cosA - pz * sinA;
                 transformed.z = py * sinA + pz * cosA;
 
-                if (swing < -0.04) {
-                  transformed.y += (-swing) * 0.18 * legWeight;
+                // Elevação do joelho e calcanhar na passada
+                if (swing < -0.02) {
+                  transformed.y += (-swing) * 0.22 * legWeight;
+                  transformed.z += (-swing) * 0.14 * legWeight;
                 }
+              }
+
+              // 2. ANIMAÇÃO ORGÂNICA DOS BRAÇOS & OMBROS (Vértices laterais superiores)
+              if (position.y > 0.08 && abs(position.x) > 0.16) {
+                float armWeight = clamp((abs(position.x) - 0.16) / 0.38, 0.0, 1.0);
+                float armSide = position.x < 0.0 ? -1.0 : 1.0;
+
+                // Balanço dos braços em contra-fase às pernas (braço esquerdo vai à frente com perna direita)
+                float armSwing = sin(uRunTime + (armSide > 0.0 ? 0.0 : 3.14159)) * 0.65 * armWeight;
+
+                if (uJumpProgress > 0.1) {
+                  // Braços levantados no pulo para equilíbrio atlético
+                  armSwing = 0.45 * armWeight;
+                  transformed.y += 0.14 * armWeight;
+                }
+
+                float cosArm = cos(armSwing);
+                float sinArm = sin(armSwing);
+
+                float ay = transformed.y - 0.45;
+                float az = transformed.z;
+                transformed.y = 0.45 + (ay * cosArm - az * sinArm);
+                transformed.z = ay * sinArm + az * cosArm;
+
+                if (armSwing > 0.05) {
+                  transformed.y += armSwing * 0.12 * armWeight;
+                }
+              }
+
+              // 3. MOVIMENTAÇÃO DAS COSTAS, COLUNA E PEITORAL (Tronco Central)
+              if (position.y >= -0.02 && position.y <= 0.95 && abs(position.x) <= 0.24) {
+                float spineWeight = clamp((position.y + 0.02) / 0.85, 0.0, 1.0);
+
+                // Rotação sutil da coluna (torção das costas em ritmo com os passos)
+                float spineTwist = sin(uRunTime) * 0.10 * spineWeight;
+                float cosT = cos(spineTwist);
+                float sinT = sin(spineTwist);
+
+                float tx = transformed.x;
+                float tz = transformed.z;
+                transformed.x = tx * cosT - tz * sinT;
+                transformed.z = tx * sinT + tz * cosT;
+
+                // Inclinação atlética das costas para a frente na corrida
+                transformed.z += 0.08 * spineWeight;
+
+                // Leve respiração e salto vertical do tronco (bobbing)
+                transformed.y += abs(sin(uRunTime)) * 0.05 * spineWeight;
               }
               `
             );

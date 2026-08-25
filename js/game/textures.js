@@ -548,6 +548,86 @@ class TextureAtlasManager {
 
     this.transformerTexture = new THREE.CanvasTexture(transCanvas);
     this.transformerTexture.needsUpdate = true;
+
+    // 6. Porta Residencial Brasileira de Madeira com Almofadas (256x256)
+    const doorCanvas = document.createElement('canvas');
+    doorCanvas.width = 256;
+    doorCanvas.height = 256;
+    const dCtx = doorCanvas.getContext('2d');
+
+    dCtx.fillStyle = '#7c2d12'; // Madeira Nobre
+    dCtx.fillRect(0, 0, 256, 256);
+    dCtx.strokeStyle = '#451a03';
+    dCtx.lineWidth = 10;
+    dCtx.strokeRect(0, 0, 256, 256);
+
+    // Almofadas em relevo
+    const panels = [[24, 20, 208, 96], [24, 136, 208, 100]];
+    panels.forEach(([px, py, pw, ph]) => {
+      dCtx.fillStyle = '#9a3412';
+      dCtx.fillRect(px, py, pw, ph);
+      dCtx.strokeStyle = '#451a03';
+      dCtx.lineWidth = 4;
+      dCtx.strokeRect(px, py, pw, ph);
+    });
+
+    // Maçaneta dourada
+    dCtx.fillStyle = '#facc15';
+    dCtx.beginPath();
+    dCtx.arc(42, 132, 10, 0, Math.PI * 2);
+    dCtx.fill();
+    dCtx.fillStyle = '#713f12';
+    dCtx.fillRect(38, 138, 8, 16);
+
+    this.doorTexture = new THREE.CanvasTexture(doorCanvas);
+    this.doorTexture.needsUpdate = true;
+
+    // 7. Porta Comercial de Enrolar de Aço Ondulado (Boteco / Barbearia) (256x256)
+    const rollerCanvas = document.createElement('canvas');
+    rollerCanvas.width = 256;
+    rollerCanvas.height = 256;
+    const rlCtx = rollerCanvas.getContext('2d');
+
+    rlCtx.fillStyle = '#475569';
+    rlCtx.fillRect(0, 0, 256, 256);
+
+    // Lâminas horizontais de aço galvanizado
+    for (let y = 0; y < 256; y += 14) {
+      rlCtx.fillStyle = (Math.floor(y / 14) % 2 === 0) ? '#64748b' : '#334155';
+      rlCtx.fillRect(0, y, 256, 12);
+      rlCtx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      rlCtx.fillRect(0, y, 256, 2);
+    }
+    // Cadeado central na base
+    rlCtx.fillStyle = '#eab308';
+    rlCtx.fillRect(118, 224, 20, 24);
+
+    this.rollerDoorTexture = new THREE.CanvasTexture(rollerCanvas);
+    this.rollerDoorTexture.needsUpdate = true;
+
+    // 8. Telhado Ondulado de Telha Cerâmica / Fibrocimento (256x256)
+    const roofCanvas = document.createElement('canvas');
+    roofCanvas.width = 256;
+    roofCanvas.height = 256;
+    const rfCtx = roofCanvas.getContext('2d');
+
+    rfCtx.fillStyle = '#9a3412';
+    rfCtx.fillRect(0, 0, 256, 256);
+
+    for (let x = 0; x < 256; x += 16) {
+      const grad = rfCtx.createLinearGradient(x, 0, x + 16, 0);
+      grad.addColorStop(0.0, '#7c2d12');
+      grad.addColorStop(0.5, '#ea580c');
+      grad.addColorStop(1.0, '#451a03');
+      rfCtx.fillStyle = grad;
+      rfCtx.fillRect(x, 0, 16, 256);
+    }
+
+    this.corrugatedRoofTexture = new THREE.CanvasTexture(roofCanvas);
+    this.corrugatedRoofTexture.wrapS = THREE.RepeatWrapping;
+    this.corrugatedRoofTexture.wrapT = THREE.RepeatWrapping;
+    this.corrugatedRoofTexture.repeat.set(3, 3);
+    this.corrugatedRoofTexture.needsUpdate = true;
   }
 
   /**
