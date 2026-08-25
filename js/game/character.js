@@ -73,6 +73,14 @@ export class Character {
     if (this.characterId === charId && this.bodyPivot) return;
     this.characterId = charId;
     this.build();
+
+    if (charId && !modelLoader.hasModel(charId)) {
+      modelLoader.loadModel(charId).then(() => {
+        if (this.characterId === charId) {
+          this.build();
+        }
+      });
+    }
   }
 
   clearMesh() {

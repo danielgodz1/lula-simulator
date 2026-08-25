@@ -13,8 +13,7 @@ class ModelLoaderManager {
     this.modelPaths = {
       empresario: '/js/game/models/empresario.glb',
       lula: '/js/game/models/lula.glb',
-      bolsonaro: '/js/game/models/bolsonaro.glb',
-      caminhao: '/js/game/models/caminhao.glb'
+      bolsonaro: '/js/game/models/bolsonaro.glb'
     };
   }
 
@@ -71,28 +70,8 @@ class ModelLoaderManager {
         },
         undefined,
         (err) => {
-          console.warn(`[ModelLoader] Aviso ao carregar ${key} de ${path}:`, err);
-          const fallbackPath = `/3D_MeshyAI/${key === 'casinha' ? 'casinha_favela' : key}.glb`;
-          this.loader.load(
-            fallbackPath,
-            (gltf) => {
-              const root = gltf.scene;
-              root.traverse((child) => {
-                if (child.isMesh) {
-                  child.castShadow = true;
-                  child.receiveShadow = true;
-                }
-              });
-              this.models.set(key, root);
-              this.notifyListeners(key, root);
-              resolve(root);
-            },
-            undefined,
-            () => {
-              console.warn(`[ModelLoader] Modelo ${key} não disponível localmente; usando fallback procedural.`);
-              resolve(null);
-            }
-          );
+          console.warn(`[ModelLoader] Modelo ${key} não disponível via ${path}. Usando procedural.`);
+          resolve(null);
         }
       );
     });
@@ -101,25 +80,11 @@ class ModelLoaderManager {
     return promise;
   }
 
-  async preloadAll(priorityKey = 'empresario', onProgress) {
-    if (this.isLoaded) return true;
-
-    // Carrega o personagem prioritário primeiro
-    if (priorityKey && this.modelPaths[priorityKey]) {
-      await this.loadModel(priorityKey);
-    }
-
-    const entries = Object.entries(this.modelPaths);
-    let loadedCount = 0;
-    const total = entries.length;
-
-    const promises = entries.map(async ([key]) => {
-      await this.loadModel(key);
-      loadedCount++;
-      if (typeof onProgress === 'function') onProgress(loadedCount / total);
-    });
-
-    await Promise.all(promises);
+  // Carregamento Seletivo: Carrega exclusivamente o personagem equipado no boot
+  async preloadAll(selectedKey = 'empresario', onProgress) {
+    const key = (selectedKey && this.modelPaths[selectedKey]) ? selectedKey : 'empresario';
+    await this.loadModel(key);
+    if (typeof onProgress === 'function') onProgress(1.0);
     this.isLoaded = true;
     return true;
   }
