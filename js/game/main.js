@@ -7,6 +7,7 @@ import { Environment } from './environment.js';
 import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
 import { savePlayerScore, startScoreSession } from '../firebase-config.js';
+import { auth } from '../auth.js';
 import { RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
 import { profiler } from './profiler.js';
