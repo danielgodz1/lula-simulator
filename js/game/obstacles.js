@@ -128,28 +128,9 @@ export class ObstacleManager {
   }
 
   clearSegmentEntities(parent) {
-    const disposeNonShared = (obj) => {
-      if (!obj) return;
-      obj.traverse((child) => {
-        if (child.isMesh) {
-          if (child.geometry && !child.geometry._isShared) {
-            child.geometry.dispose();
-          }
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material.forEach(m => { if (m && !m._isShared) m.dispose(); });
-            } else if (!child.material._isShared) {
-              child.material.dispose();
-            }
-          }
-        }
-      });
-    };
-
     this.obstacles = this.obstacles.filter(o => {
       if (o.parent === parent) {
         parent.remove(o.mesh);
-        disposeNonShared(o.mesh);
         return false;
       }
       return true;
@@ -163,8 +144,6 @@ export class ObstacleManager {
         if (!c.isPicanha && this.coinPool.length < 50) {
           c.mesh.visible = false;
           this.coinPool.push(c.mesh);
-        } else if (c.isPicanha) {
-          disposeNonShared(c.mesh);
         }
         return false;
       }
@@ -174,7 +153,6 @@ export class ObstacleManager {
     this.powerups = this.powerups.filter(p => {
       if (p.parent === parent) {
         parent.remove(p.mesh);
-        disposeNonShared(p.mesh);
         return false;
       }
       return true;
@@ -186,8 +164,6 @@ export class ObstacleManager {
         if (this.particlePool.length < 60) {
           p.mesh.visible = false;
           this.particlePool.push(p.mesh);
-        } else {
-          disposeNonShared(p.mesh);
         }
         return false;
       }
