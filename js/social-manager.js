@@ -120,7 +120,7 @@ class SocialManager {
 
   async getFriendsList(force = false) {
     const user = auth.getCurrentUser();
-    if (!user) return { friends: [], pendingIncoming: [], pendingOutgoing: [] };
+    if (!user) return { friends: [], pendingReceived: [], pendingIncoming: [], pendingSent: [], pendingOutgoing: [] };
 
     if (!force && this.cachedFriends) return this.cachedFriends;
 
@@ -135,16 +135,20 @@ class SocialManager {
       });
       const data = await res.json();
       if (data.success) {
+        const received = data.pendingReceived || data.pendingIncoming || [];
+        const sent = data.pendingSent || data.pendingOutgoing || [];
         this.cachedFriends = {
           friends: data.friends || [],
-          pendingIncoming: data.pendingIncoming || [],
-          pendingOutgoing: data.pendingOutgoing || []
+          pendingReceived: received,
+          pendingIncoming: received,
+          pendingSent: sent,
+          pendingOutgoing: sent
         };
         return this.cachedFriends;
       }
     } catch(e) {}
 
-    return { friends: [], pendingIncoming: [], pendingOutgoing: [] };
+    return { friends: [], pendingReceived: [], pendingIncoming: [], pendingSent: [], pendingOutgoing: [] };
   }
 
   // =========================================================================

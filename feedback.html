@@ -362,8 +362,8 @@
 
       if (validItems.length === 0) {
         validItems.push(
-          { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!', flag: '🇧🇷', countryName: 'Brasil', createdAt: new Date().toISOString() },
-          { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!', flag: '🇧🇷', countryName: 'Brasil', createdAt: new Date().toISOString() }
+          { name: 'EmpresárioLiberto', stars: 5, comment: 'O jogo 3D do empresário correndo da CLT ficou sensacional! Nota 10!', flag: '🇧🇷', country: 'BR', countryName: 'Brasil', createdAt: new Date().toISOString() },
+          { name: 'PicanhaKing_BR', stars: 5, comment: 'Flappy Lula é muito engraçado, dei muita risada com o Lula chorando!', flag: '🇧🇷', country: 'BR', countryName: 'Brasil', createdAt: new Date().toISOString() }
         );
       }
 
@@ -376,16 +376,24 @@
         const safeComment = escapeHTML(rawComment);
         const safeStars = Math.max(1, Math.min(5, parseInt(f.stars || 5, 10)));
         const safeFlag = f.flag || '🇧🇷';
-        const safeCountry = escapeHTML(f.countryName || f.country || 'Brasil');
+        const safeCountry = escapeHTML(f.countryName || (f.country === 'BR' ? 'Brasil' : f.country) || 'Brasil');
+        const rawCountry = (f.country || 'BR').trim().toUpperCase();
+        const countryCode = rawCountry.length === 2 ? rawCountry.toLowerCase() : 'br';
         const formattedDate = formatFeedbackDate(f.createdAt);
 
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <div style="font-weight:700; color:var(--amarelo-brasil); font-size:16px;">👤 ${safeName}</div>
-              <span class="fb-country-badge" title="${safeCountry}">
-                <span>${safeFlag}</span>
-                <span>${safeCountry}</span>
+              <span class="fb-country-badge" title="${safeCountry}" style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:6px; padding:2px 8px; font-size:12px;">
+                <img src="https://flagcdn.com/24x18/${countryCode}.png" 
+                     srcset="https://flagcdn.com/48x36/${countryCode}.png 2x"
+                     width="18" height="13" 
+                     alt="${safeCountry}" 
+                     style="border-radius:2px; object-fit:cover; display:inline-block; vertical-align:middle; box-shadow:0 1px 3px rgba(0,0,0,0.3);"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span style="display:none;">${safeFlag}</span>
+                <span style="font-weight:600; color:#cbd5e1;">${safeCountry}</span>
               </span>
             </div>
             <div style="font-size:15px; letter-spacing:1px;">${'⭐'.repeat(safeStars)}</div>

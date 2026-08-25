@@ -495,6 +495,8 @@
         const safeScore = parseInt(item.score || 0, 10);
         const safeFlag = item.flag || '🇧🇷';
         const safeCountryName = escapeHTML(item.countryName || 'Brasil');
+        const rawCountry = (item.country || 'BR').trim().toUpperCase();
+        const countryCode = rawCountry.length === 2 ? rawCountry.toLowerCase() : 'br';
 
         // Se for o jogador atual e tiver avatar no perfil, garante a exibição
         const isCurPlayer = curUser && curUser.username && (item.player || '').toLowerCase() === curUser.username.toLowerCase();
@@ -532,8 +534,14 @@
               ${prestigeHtml}
               ${medalHtml}
             </div>
-            <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted);">
-              <span style="font-size: 13px;" title="${safeCountryName}">${safeFlag}</span>
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted);">
+              <img src="https://flagcdn.com/20x15/${countryCode}.png" 
+                   srcset="https://flagcdn.com/40x30/${countryCode}.png 2x" 
+                   width="15" height="11" 
+                   alt="${safeCountryName}" 
+                   style="border-radius:2px; object-fit:cover; display:inline-block; vertical-align:middle; box-shadow:0 1px 2px rgba(0,0,0,0.4);"
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+              <span style="display:none;" title="${safeCountryName}">${safeFlag}</span>
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
             </div>
           </div>

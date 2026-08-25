@@ -521,9 +521,9 @@
       }
 
       const data = await social.getFriendsList(true) || { friends: [], pendingReceived: [], pendingSent: [] };
-      const friends = data.friends || [];
-      const pendingReceived = data.pendingReceived || data.pendingIncoming || [];
-      const pendingSent = data.pendingSent || data.pendingOutgoing || [];
+      const friends = (data.friends || []).filter(f => f.username && f.username.toLowerCase() !== currentUser.username.toLowerCase());
+      const pendingReceived = (data.pendingReceived || data.pendingIncoming || []).filter(r => r.username && r.username.toLowerCase() !== currentUser.username.toLowerCase());
+      const pendingSent = (data.pendingSent || data.pendingOutgoing || []).filter(s => s.username && s.username.toLowerCase() !== currentUser.username.toLowerCase());
 
       currentFriends = friends;
       currentPendingSent = pendingSent;
@@ -873,6 +873,11 @@
     const selectDuelGame = document.getElementById('selectDuelGame');
 
     function openDuelModal(targetName = '') {
+      const curUser = auth.getCurrentUser();
+      if (targetName && curUser && targetName.toLowerCase() === curUser.username.toLowerCase()) {
+        alert('Você não pode desafiar a si mesmo para um duelo!');
+        return;
+      }
       inputDuelTarget.value = targetName;
       duelModal.style.display = 'flex';
     }
@@ -881,9 +886,14 @@
     document.getElementById('btnCancelDuelModal').onclick = () => { duelModal.style.display = 'none'; };
 
     document.getElementById('btnConfirmDuelModal').onclick = async () => {
+      const curUser = auth.getCurrentUser();
+      if (!curUser) return auth.openAuthModal();
       const target = inputDuelTarget.value.trim();
       const game = selectDuelGame.value;
       if (!target) return alert('Informe o nome do oponente!');
+      if (target.toLowerCase() === curUser.username.toLowerCase()) {
+        return alert('Você não pode desafiar a si mesmo para um duelo!');
+      }
 
       const r = await social.createDuel(target, game);
       alert(r.message || r.error);

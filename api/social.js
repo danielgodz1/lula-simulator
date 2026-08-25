@@ -1,5 +1,5 @@
 // api/social.js — Gerenciamento Unificado de Recursos Sociais, Amizades, Duelos, Torneio, Notificações e Feed
-import admin, { db } from './_firebaseAdmin.js';
+import admin, { db, hasAdminCredentials } from './_firebaseAdmin.js';
 import { applyCors } from './_cors.js';
 
 export default async function handler(req, res) {
@@ -361,7 +361,8 @@ export default async function handler(req, res) {
           return res.status(400).json({ success: false, error: `Você e ${cleanTarget} já são amigos conectados!` });
         }
         if (data.status === 'pending') {
-          if (data.requester === normUser) {
+          const isSender = data.requester === normUser || (data.requesterName && data.requesterName.toLowerCase() === cleanUser.toLowerCase());
+          if (isSender) {
             return res.status(400).json({ success: false, error: `Você já enviou um pedido para ${cleanTarget}. Aguarde a confirmação.` });
           } else {
             // O outro jogador já tinha enviado pedido para o usuário atual: aceita automaticamente!
@@ -384,18 +385,21 @@ export default async function handler(req, res) {
         }
       }
 
+      const isFirst = normUser < normTarget;
       await friendRef.set({
-        userId1: normUser < normTarget ? normUser : normTarget,
-        userId2: normUser < normTarget ? normTarget : normUser,
-        user1Name: cleanUser,
-        user2Name: cleanTarget,
+        userId1: isFirst ? normUser : normTarget,
+        userId2: isFirst ? normTarget : normUser,
+        user1Name: isFirst ? cleanUser : cleanTarget,
+        user2Name: isFirst ? cleanTarget : cleanUser,
         requester: normUser,
+        requesterName: cleanUser,
         target: normTarget,
+        targetName: cleanTarget,
         status: 'pending',
         createdAt: admin.firestore.FieldValue.serverTimestamp()
-      });
+      }, { merge: true });
 
-      // Cria notificação para o destinatário (usando tanto normTarget quanto cleanTarget)
+      // Cria notificação para o destinatário
       await db.collection('lula_notifications').add({
         userId: normTarget,
         type: 'friend_request',
@@ -413,21 +417,36 @@ export default async function handler(req, res) {
     // 3. ACEITAR PEDIDO DE AMIZADE
     if (action === 'accept_friend_request') {
       if (!cleanTarget) return res.status(400).json({ success: false, error: 'Usuário não especificado.' });
-      const docId = getFriendshipDocId(normUser, normTarget);
-      const friendRef = db.collection('lula_friendships').doc(docId);
-      const existing = await friendRef.get();
+      const docId1 = getFriendshipDocId(normUser, normTarget);
+      const docId2 = getFriendshipDocId(normTarget, normUser);
+      let friendRef = db.collection('lula_friendships').doc(docId1);
+      let existing = await friendRef.get();
+
+      if (!existing.exists) {
+        friendRef = db.collection('lula_friendships').doc(docId2);
+        existing = await friendRef.get();
+      }
+
+      if (!existing.exists) {
+        const qSnap = await db.collection('lula_friendships')
+          .where('requester', '==', normTarget)
+          .where('target', '==', normUser)
+          .limit(1)
+          .get();
+        if (!qSnap.empty) {
+          friendRef = qSnap.docs[0].ref;
+          existing = qSnap.docs[0];
+        }
+      }
 
       if (!existing.exists) return res.status(404).json({ success: false, error: 'Pedido não encontrado.' });
-      const data = existing.data();
-      if (data.target !== normUser && data.userId2 !== normUser && data.userId1 !== normUser) {
-        return res.status(403).json({ success: false, error: 'Você não tem permissão para aceitar este pedido.' });
-      }
 
       await friendRef.update({
         status: 'accepted',
         acceptedAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
+      const data = existing.data() || {};
       await db.collection('lula_notifications').add({
         userId: data.requester || normTarget,
         type: 'friend_accepted',
@@ -445,61 +464,146 @@ export default async function handler(req, res) {
     // 4. RECUSAR / CANCELAR AMIZADE
     if (action === 'reject_friend_request' || action === 'remove_friend') {
       if (!cleanTarget) return res.status(400).json({ success: false, error: 'Usuário não especificado.' });
-      const docId = getFriendshipDocId(normUser, normTarget);
-      await db.collection('lula_friendships').doc(docId).delete();
+      const docId1 = getFriendshipDocId(normUser, normTarget);
+      const docId2 = getFriendshipDocId(normTarget, normUser);
+      await db.collection('lula_friendships').doc(docId1).delete();
+      await db.collection('lula_friendships').doc(docId2).delete();
+
+      try {
+        const qSnap = await db.collection('lula_friendships')
+          .where('userId1', 'in', [normUser, normTarget])
+          .get();
+        const batch = db.batch();
+        qSnap.forEach(d => {
+          const data = d.data() || {};
+          if ((data.userId1 === normUser && data.userId2 === normTarget) ||
+              (data.userId1 === normTarget && data.userId2 === normUser) ||
+              (data.requester === normUser && data.target === normTarget) ||
+              (data.requester === normTarget && data.target === normUser)) {
+            batch.delete(d.ref);
+          }
+        });
+        await batch.commit();
+      } catch(e) {}
+
       return res.status(200).json({ success: true, message: 'Solicitação cancelada/removida.' });
     }
 
-    // 5. LISTAR AMIGOS E PEDIDOS
+    // 5. LISTAR AMIGOS E PEDIDOS (COM PREVENÇÃO TOTAL DE AUTO-AMIZADE)
     if (action === 'get_friends' || action === 'list_friends') {
+      if (!hasAdminCredentials || !db) {
+        return res.status(200).json({
+          success: true,
+          friends: [],
+          pendingReceived: [],
+          pendingIncoming: [],
+          pendingSent: [],
+          pendingOutgoing: []
+        });
+      }
+
       const snap1 = await db.collection('lula_friendships').where('userId1', '==', normUser).get();
       const snap2 = await db.collection('lula_friendships').where('userId2', '==', normUser).get();
       const snap3 = await db.collection('lula_friendships').where('requester', '==', normUser).get();
       const snap4 = await db.collection('lula_friendships').where('target', '==', normUser).get();
 
+      // Compatibilidade retroativa com buscas por cleanUser
+      const snap5 = await db.collection('lula_friendships').where('requester', '==', cleanUser).get();
+      const snap6 = await db.collection('lula_friendships').where('target', '==', cleanUser).get();
+      const snap7 = await db.collection('lula_friendships').where('userId1', '==', cleanUser).get();
+      const snap8 = await db.collection('lula_friendships').where('userId2', '==', cleanUser).get();
+
       const acceptedFriends = [];
       const pendingReceived = [];
       const pendingSent = [];
-      const processedIds = new Set();
+      const processedDocIds = new Set();
+      const seenFriendUsers = new Set();
 
       const processDoc = (doc) => {
-        if (processedIds.has(doc.id)) return;
-        processedIds.add(doc.id);
+        if (processedDocIds.has(doc.id)) return;
+        processedDocIds.add(doc.id);
 
-        const d = doc.data();
-        const otherUsername = (d.userId1 === normUser ? d.user2Name : (d.userId2 === normUser ? d.user1Name : (d.requester === normUser ? d.user2Name : d.user1Name))) || (d.requester === normUser ? d.target : d.requester) || '';
-        const otherNorm = (d.userId1 === normUser ? d.userId2 : (d.userId2 === normUser ? d.userId1 : (d.requester === normUser ? d.target : d.requester))) || '';
+        const d = doc.data() || {};
+
+        // Identifica de forma segura quem é o outro participante
+        const isUser1 = (d.userId1 === normUser || d.userId1 === cleanUser || (d.user1Name && d.user1Name.toLowerCase() === cleanUser.toLowerCase()));
+        const isUser2 = (d.userId2 === normUser || d.userId2 === cleanUser || (d.user2Name && d.user2Name.toLowerCase() === cleanUser.toLowerCase()));
+        const isRequester = (d.requester === normUser || d.requester === cleanUser || (d.requesterName && d.requesterName.toLowerCase() === cleanUser.toLowerCase()));
+        const isTarget = (d.target === normUser || d.target === cleanUser || (d.targetName && d.targetName.toLowerCase() === cleanUser.toLowerCase()));
+
+        let otherUsername = '';
+        let otherNorm = '';
+
+        if (isRequester) {
+          otherUsername = d.targetName || d.user2Name || d.target || d.userId2 || '';
+          otherNorm = (d.target || d.userId2 || otherUsername).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        } else if (isTarget) {
+          otherUsername = d.requesterName || d.user1Name || d.requester || d.userId1 || '';
+          otherNorm = (d.requester || d.userId1 || otherUsername).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        } else if (isUser1) {
+          otherUsername = d.user2Name || d.targetName || d.userId2 || d.target || '';
+          otherNorm = (d.userId2 || d.target || otherUsername).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        } else if (isUser2) {
+          otherUsername = d.user1Name || d.requesterName || d.userId1 || d.requester || '';
+          otherNorm = (d.userId1 || d.requester || otherUsername).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        }
+
+        // Auto-correção caso o nome obtido seja igual ao do próprio usuário solicitante
+        if (!otherUsername || otherUsername.toLowerCase() === cleanUser.toLowerCase() || otherNorm === normUser) {
+          if (d.user1Name && d.user1Name.toLowerCase() !== cleanUser.toLowerCase()) {
+            otherUsername = d.user1Name;
+            otherNorm = (d.userId1 || d.user1Name).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          } else if (d.user2Name && d.user2Name.toLowerCase() !== cleanUser.toLowerCase()) {
+            otherUsername = d.user2Name;
+            otherNorm = (d.userId2 || d.user2Name).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          } else if (d.requesterName && d.requesterName.toLowerCase() !== cleanUser.toLowerCase()) {
+            otherUsername = d.requesterName;
+            otherNorm = (d.requester || d.requesterName).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          } else if (d.targetName && d.targetName.toLowerCase() !== cleanUser.toLowerCase()) {
+            otherUsername = d.targetName;
+            otherNorm = (d.target || d.targetName).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+          }
+        }
+
+        // Se ainda for o próprio usuário, descarta (nunca adiciona a si mesmo)
+        if (!otherUsername || otherUsername.toLowerCase() === cleanUser.toLowerCase() || otherNorm === normUser) {
+          return;
+        }
+
+        const createdAtStr = d.createdAt?.toDate?.()?.toISOString?.() || (typeof d.createdAt === 'string' ? d.createdAt : new Date().toISOString());
 
         if (d.status === 'accepted') {
-          acceptedFriends.push({
-            id: doc.id,
-            username: otherUsername || otherNorm,
-            normUser: otherNorm,
-            createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
-          });
+          if (!seenFriendUsers.has(otherNorm)) {
+            seenFriendUsers.add(otherNorm);
+            acceptedFriends.push({
+              id: doc.id,
+              username: otherUsername,
+              normUser: otherNorm,
+              createdAt: createdAtStr
+            });
+          }
         } else if (d.status === 'pending') {
-          if (d.target === normUser) {
+          if (isTarget) {
             pendingReceived.push({
               id: doc.id,
-              username: otherUsername || d.user1Name || d.requester,
-              normUser: otherNorm || d.requester,
-              createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
+              username: otherUsername,
+              normUser: otherNorm,
+              createdAt: createdAtStr
             });
-          } else if (d.requester === normUser) {
+          } else if (isRequester) {
             pendingSent.push({
               id: doc.id,
-              username: otherUsername || d.user2Name || d.target,
-              normUser: otherNorm || d.target,
-              createdAt: d.createdAt?.toDate?.()?.toISOString?.() || null
+              username: otherUsername,
+              normUser: otherNorm,
+              createdAt: createdAtStr
             });
           }
         }
       };
 
-      snap1.forEach(processDoc);
-      snap2.forEach(processDoc);
-      snap3.forEach(processDoc);
-      snap4.forEach(processDoc);
+      [snap1, snap2, snap3, snap4, snap5, snap6, snap7, snap8].forEach(snap => {
+        if (snap && snap.docs) snap.docs.forEach(processDoc);
+      });
 
       return res.status(200).json({
         success: true,
@@ -513,8 +617,8 @@ export default async function handler(req, res) {
 
     // 6. CRIAR DUELO ASSÍNCRONO
     if (action === 'create_duel') {
-      if (!cleanTarget || normUser === normTarget) {
-        return res.status(400).json({ success: false, error: 'Adversário inválido para duelo.' });
+      if (!cleanTarget || normUser === normTarget || cleanUser.toLowerCase() === cleanTarget.toLowerCase()) {
+        return res.status(400).json({ success: false, error: 'Você não pode desafiar a si mesmo para um duelo!' });
       }
 
       const challengerSnap = await db.collection('lula_users_v2').doc(normUser).get();
