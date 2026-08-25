@@ -92,12 +92,25 @@
     nav.appendChild(link);
   }
 
-  function mountSuggestionBanner() {
-    if (localStorage.getItem(STORAGE_DISMISS_KEY) === 'true') {
-      return;
-    }
+  function isFromBrazil() {
+    try {
+      const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (userLang.includes('pt') || userLang.includes('br')) return true;
+      if (Array.isArray(navigator.languages) && navigator.languages.some(l => l.toLowerCase().includes('pt') || l.toLowerCase().includes('br'))) return true;
 
+      const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
+      const brazilTimezones = ['sao_paulo', 'recife', 'belem', 'fortaleza', 'manaus', 'cuiaba', 'porto_velho', 'boa_vista', 'campo_grande', 'maceio', 'noronha', 'rio_branco', 'santarem', 'araguaina', 'bahia'];
+      if (brazilTimezones.some(b => tz.includes(b))) return true;
+
+      const savedCountry = (localStorage.getItem('lula_country') || '').toUpperCase();
+      if (savedCountry === 'BR' || savedCountry === 'BRAZIL' || savedCountry === 'BRASIL') return true;
+    } catch (e) {}
+    return false;
+  }
+
+  function mountSuggestionBanner() {
     const isEn = isEnglishContext();
+    const fromBrazil = isFromBrazil();
     const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
     const isUserPortuguese = userLang.startsWith('pt');
 
@@ -105,66 +118,82 @@
     let bannerHtml = '';
     let targetUrl = '';
 
-    if (isEn && isUserPortuguese) {
-      // Usuário em flappylula.com (EN) com navegador em Português
+    if (isEn && (fromBrazil || isUserPortuguese)) {
+      // Usuário do Brasil acessando flappylula.com (versão em inglês)
+      // Mostra a notificação em destaque convidando para a versão nacional
       shouldShow = true;
       targetUrl = getTargetUrl('pt');
       bannerHtml = `
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
-          <span>🇧🇷 <b>Prefere jogar em português?</b></span>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
+          <span>🇧🇷 <b>Identificamos que você está no Brasil! Deseja jogar a versão oficial em português?</b></span>
           <a href="${targetUrl}" id="btnAcceptLangSwitch" style="
-            background: #22c55e;
-            color: #0f172a;
-            font-weight: bold;
-            padding: 3px 10px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            font-weight: 800;
+            padding: 4px 14px;
+            border-radius: 8px;
             text-decoration: none;
-            font-size: 11.5px;
-            display: inline-block;
-          ">Jogar em Português</a>
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+            border: 1px solid #4ade80;
+            transition: transform 0.15s ease;
+          ">🎮 Jogar em Português (lulasimulator.com.br)</a>
         </div>
       `;
-    } else if (!isEn && !isUserPortuguese && userLang.length >= 2) {
-      // Usuário em lulasimulator.com.br (PT) com navegador estrangeiro (Inglês/Outro)
+    } else if (!isEn && !fromBrazil && !isUserPortuguese && userLang.length >= 2) {
+      // Usuário internacional em lulasimulator.com.br (PT)
       shouldShow = true;
       targetUrl = getTargetUrl('en');
       bannerHtml = `
-        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
           <span>🇺🇸 <b>Prefer to play in English?</b></span>
           <a href="${targetUrl}" id="btnAcceptLangSwitch" style="
-            background: #38bdf8;
-            color: #0f172a;
-            font-weight: bold;
-            padding: 3px 10px;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #ffffff;
+            font-weight: 800;
+            padding: 4px 14px;
+            border-radius: 8px;
             text-decoration: none;
-            font-size: 11.5px;
-            display: inline-block;
-          ">Play in English</a>
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+            border: 1px solid #7dd3fc;
+            transition: transform 0.15s ease;
+          ">🎮 Play in English (flappylula.com)</a>
         </div>
       `;
     }
 
     if (!shouldShow) return;
 
+    // Se já existe um banner, remove antes de recriar
+    const existing = document.getElementById('langSuggestionBanner');
+    if (existing) existing.remove();
+
     const banner = document.createElement('div');
     banner.id = 'langSuggestionBanner';
     banner.style.cssText = `
-      position: fixed;
+      position: sticky;
       top: 0;
       left: 0;
       width: 100%;
-      background: linear-gradient(90deg, #1e1b4b, #0f172a);
-      border-bottom: 1.5px solid #38bdf8;
+      background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 50%, #1e1b4b 100%);
+      border-bottom: 2px solid #22c55e;
       color: #ffffff;
-      padding: 7px 14px;
-      font-size: 12px;
+      padding: 9px 16px;
+      font-size: 12.5px;
       z-index: 100000;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
       animation: slideDownBanner 0.3s ease-out forwards;
+      box-sizing: border-box;
     `;
 
     const contentDiv = document.createElement('div');
@@ -173,42 +202,43 @@
 
     const closeBtn = document.createElement('button');
     closeBtn.innerHTML = '✕';
-    closeBtn.title = 'Dispensar';
+    closeBtn.title = 'Fechar Notificação';
     closeBtn.style.cssText = `
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #cbd5e1;
+      font-size: 12px;
       cursor: pointer;
-      padding: 4px 8px;
-      margin-left: 8px;
+      margin-left: 12px;
       font-weight: bold;
-      transition: color 0.2s;
+      transition: all 0.2s;
     `;
-    closeBtn.addEventListener('mouseenter', () => closeBtn.style.color = '#ffffff');
-    closeBtn.addEventListener('mouseleave', () => closeBtn.style.color = '#94a3b8');
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = 'rgba(239, 68, 68, 0.3)';
+      closeBtn.style.color = '#fff';
+      closeBtn.style.borderColor = '#ef4444';
+    });
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
+      closeBtn.style.color = '#cbd5e1';
+      closeBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    });
 
     const dismiss = () => {
-      localStorage.setItem(STORAGE_DISMISS_KEY, 'true');
       banner.style.display = 'none';
-      document.body.style.paddingTop = '0px';
     };
 
     closeBtn.addEventListener('click', dismiss);
 
     banner.appendChild(contentDiv);
     banner.appendChild(closeBtn);
-    document.body.appendChild(banner);
-
-    // Ajusta o topo do body caso haja navbar fixa
-    document.body.style.paddingTop = `${banner.offsetHeight}px`;
-
-    const acceptBtn = banner.querySelector('#btnAcceptLangSwitch');
-    if (acceptBtn) {
-      acceptBtn.addEventListener('click', () => {
-        localStorage.setItem(STORAGE_DISMISS_KEY, 'true');
-      });
-    }
+    document.body.insertBefore(banner, document.body.firstChild);
   }
 
   function init() {

@@ -619,7 +619,7 @@
   <div class="page-container">
     <div class="page-header">
       <h1>🛍️ OFFICIAL SKIN SHOP & PRESTIGE</h1>
-      <p>Personalize seus personagens com skins cosméticas exclusivas, cumpra missões diárias e evolua seu Nível de Prestígio!</p>
+      <p>Customize your characters with exclusive cosmetic skins, complete daily missions, and advance your Prestige Level!</p>
     </div>
 
     <!-- CARDS DE SALDO E PRESTÍGIO -->
@@ -627,7 +627,7 @@
       <div class="balance-card">
         <div class="balance-icon" style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444;">🥩</div>
         <div class="balance-info">
-          <h4>Picanhas Acumuladas</h4>
+          <h4>Accumulated Steaks</h4>
           <div class="balance-value" id="displayTotalPicanhas" style="color: #f87171;">0 🥩</div>
         </div>
       </div>
@@ -635,7 +635,7 @@
       <div class="balance-card">
         <div class="balance-icon" style="background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6;">💰</div>
         <div class="balance-info">
-          <h4>Moedas do Corredor</h4>
+          <h4>3D Runner Coins</h4>
           <div class="balance-value" id="displayRunnerCoins" style="color: #60a5fa;">0 💰</div>
         </div>
       </div>
@@ -643,8 +643,8 @@
       <div class="balance-card">
         <div class="balance-icon" style="background: rgba(255, 215, 0, 0.15); border: 1px solid #ffd700;">⭐</div>
         <div class="balance-info">
-          <h4>Nível de Prestígio</h4>
-          <div class="balance-value" id="displayPrestigeLevel" style="color: #ffd700;">Nível 0</div>
+          <h4>Prestige Level</h4>
+          <div class="balance-value" id="displayPrestigeLevel" style="color: #ffd700;">Level 0</div>
         </div>
       </div>
     </div>
@@ -654,14 +654,14 @@
       <div class="prestige-header">
         <div class="prestige-icon">👑</div>
         <div class="prestige-title">
-          <h2>SISTEMA DE PRESTÍGIO LENDÁRIO</h2>
-          <p>Ao atingir 10.000 Picanhas acumuladas, reinicie seu progresso para desbloquear Insígnias de Prestígio exclusivas com estrela brilhante no Ranking Nacional!</p>
+          <h2>LEGENDARY PRESTIGE SYSTEM</h2>
+          <p>Upon reaching 10,000 accumulated Steaks, reset your progress to unlock permanent Prestige Badges displayed beside your name on the Global Leaderboard!</p>
         </div>
       </div>
 
       <div class="prestige-progress-wrapper">
         <div class="prestige-progress-bar" id="prestigeProgressBar"></div>
-        <div class="prestige-progress-text" id="prestigeProgressText">0 / 10.000 🥩 (0%)</div>
+        <div class="prestige-progress-text" id="prestigeProgressText">0 / 10,000 🥩 (0%)</div>
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -716,6 +716,12 @@
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
+    const MISSION_TRANSLATIONS = {
+      m_flappy_games: { title: 'Union Flight', desc: 'Play 3 games in Flappy Lula' },
+      m_flappy_score: { title: 'Presidential BBQ', desc: 'Score 25 points in a single Flappy run' },
+      m_runner_coins: { title: 'Financial District', desc: 'Collect 40 coins in 3D Runner' }
+    };
+
     let activeFilter = 'all';
 
     function updateBalanceHUD() {
@@ -754,13 +760,16 @@
         const pct = Math.min(100, Math.round((m.current / m.target) * 100));
         const isReady = m.current >= m.target && !m.claimed;
         const unit = m.currency === 'picanhas' ? '🥩' : '💰';
+        const trans = MISSION_TRANSLATIONS[m.id] || {};
+        const title = trans.title || m.title;
+        const desc = trans.desc || m.desc;
 
         const card = document.createElement('div');
         card.className = 'mission-card';
         card.innerHTML = `
           <div>
-            <div class="mission-title">${m.title}</div>
-            <div class="mission-desc">${m.desc}</div>
+            <div class="mission-title">${title}</div>
+            <div class="mission-desc">${desc}</div>
             <div class="mission-progress-bar-bg">
               <div class="mission-progress-fill" style="width: ${pct}%;"></div>
             </div>
@@ -771,9 +780,9 @@
           </div>
           <div>
             ${m.claimed 
-              ? '<span style="font-size:12px; font-weight:800; color:var(--verde-neon);">✅ RECOMPENSA COLETADA</span>'
+              ? '<span style="font-size:12px; font-weight:800; color:var(--verde-neon);">✅ REWARD CLAIMED</span>'
               : `<button class="btn-claim-mission" ${!isReady ? 'disabled' : ''} data-id="${m.id}">
-                  ${isReady ? `🎁 RESGATAR (+${m.reward} ${unit})` : 'EM ANDAMENTO'}
+                  ${isReady ? `🎁 CLAIM (+${m.reward} ${unit})` : 'IN PROGRESS'}
                 </button>`
             }
           </div>
