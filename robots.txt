@@ -3,5 +3,5 @@ Allow: /
 Disallow: /api/
 Disallow: /backups/
 
-Sitemap: https://www.lulasimulator.com.br/sitemap.xml
 Sitemap: https://lulasimulator.com.br/sitemap.xml
+Sitemap: https://www.lulasimulator.com.br/sitemap.xml

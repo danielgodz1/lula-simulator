@@ -17,6 +17,48 @@
     { "source": "/api/activity", "destination": "/api/social?endpoint=activity" },
     { "source": "/api/notifications", "destination": "/api/social?endpoint=notifications" },
     { "source": "/api/tournaments", "destination": "/api/social?endpoint=tournaments" },
-    { "source": "/api/telemetry", "destination": "/api/social?endpoint=telemetry" }
+    { "source": "/api/telemetry", "destination": "/api/social?endpoint=telemetry" },
+
+    {
+      "source": "/sitemap.xml",
+      "has": [{ "type": "host", "value": "flappylula.com" }],
+      "destination": "/sitemap-en.xml"
+    },
+    {
+      "source": "/sitemap.xml",
+      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "destination": "/sitemap-en.xml"
+    },
+    {
+      "source": "/robots.txt",
+      "has": [{ "type": "host", "value": "flappylula.com" }],
+      "destination": "/robots-en.txt"
+    },
+    {
+      "source": "/robots.txt",
+      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "destination": "/robots-en.txt"
+    },
+
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "flappylula.com" }],
+      "destination": "/en/index.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "destination": "/en/index.html"
+    },
+    {
+      "source": "/:path((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*).*)",
+      "has": [{ "type": "host", "value": "flappylula.com" }],
+      "destination": "/en/:path"
+    },
+    {
+      "source": "/:path((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*).*)",
+      "has": [{ "type": "host", "value": "www.flappylula.com" }],
+      "destination": "/en/:path"
+    }
   ]
 }

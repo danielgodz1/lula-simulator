@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Flappy Lula — Jogo do Lula 2D Arcade Online | Lula Simulator</title>
-  <meta name="description" content="Jogue Flappy Lula online grátis! Voe entre os canos, colete picanhas, desbloqueie personagens lendários e fuja da prisão no jogo 2D oficial do Lula Simulator.">
+  <title>Flappy Lula — Play 2D Arcade Game Online | Lula Simulator</title>
+  <meta name="description" content="Play Flappy Lula free online in your browser! Fly between pipes, collect steaks, unlock legendary characters, and survive prison mode.">
   <meta name="author" content="Daniel dos Santos">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#080914">
-  <link rel="canonical" href="https://lulasimulator.com.br/jogo.html">
+  <link rel="canonical" href="https://flappylula.com/jogo.html">
 
   <!-- Hreflang Multi-Idioma (PT-BR / EN) -->
   <link rel="alternate" hreflang="pt-BR" href="https://lulasimulator.com.br/jogo.html" />
@@ -23,12 +23,13 @@
 
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://lulasimulator.com.br/jogo.html">
-  <meta property="og:title" content="Flappy Lula — Jogo do Lula 2D Arcade Online">
-  <meta property="og:description" content="Voe com o Lula, desvie de canos, pegue picanhas e dispute o Top 1 do Ranking Nacional!">
+  <meta property="og:url" content="https://flappylula.com/jogo.html">
+  <meta property="og:title" content="Flappy Lula — 2D Arcade Meme Game">
+  <meta property="og:description" content="Fly with Lula, dodge pipes, collect steaks, and compete for Top 1 on the Global Leaderboard!">
+  <meta property="og:locale" content="en_US">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
   <meta property="og:site_name" content="Lula Simulator">
-  <meta property="og:locale" content="pt_BR">
+  
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -48,7 +49,7 @@
     "description": "Modo de jogo arcade 2D do Lula Simulator. Voe entre os canos, colete picanhas, desbloqueie personagens e entre no modo prisão aos 13 pontos.",
     "genre": ["Arcade", "Flappy", "Satire", "Casual Game"],
     "playMode": "SinglePlayer",
-    "inLanguage": "pt-BR",
+    "inLanguage": "en",
     "applicationCategory": "Game",
     "operatingSystem": "Any (Web Browser)",
     "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
@@ -859,28 +860,28 @@
     </div>
 
     <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU/POWERUPS -->
-    <div id="prisonBanner">🚨 13 PONTOS: MODO CADEIA ATIVADO!</div>
+    <div id="prisonBanner">🚨 13 POINTS: PRISON MODE ACTIVATED!</div>
 
     <!-- HUD OVERLAY SUPERIOR COMPACTO (1 ÚNICA LINHA LIMPA) -->
     <div id="hudOverlay">
       <div class="hud-box">
-        <label>Picanhas</label>
+        <label>Steaks</label>
         <span id="scoreDisplayHUD">0 🥩</span>
       </div>
       <div class="hud-box" style="border-color: var(--verde-neon);">
-        <label>Recorde</label>
+        <label>Best</label>
         <span id="bestDisplayHUD" style="color: var(--verde-neon);">0 🥩</span>
       </div>
       <button id="btnCharSelectHUD" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#eab308; color:#eab308; font-size:11px; font-weight:700;" title="Personagens Políticos">
-        🎭 Políticos
+        🎭 Characters
       </button>
       <a href="conquistas.html" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 7px; border-color:#38bdf8; color:#38bdf8; font-size:11px; font-weight:700; text-decoration:none; display:flex; align-items:center;" title="Ver Badges">
         🏅 Badges
       </a>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:13px;" title="Som">
+      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:13px;" title="Sound">
         🔊
       </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:#a855f7; color:#a855f7; font-size:13px;" title="Tela Cheia">
+      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; padding:3px 6px; border-color:#a855f7; color:#a855f7; font-size:13px;" title="Fullscreen">
         ⛶
       </button>
     </div>
@@ -889,10 +890,10 @@
     <div class="start-overlay" id="startOverlay">
       <div class="start-card">
         <h1 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:2px;">
-          🐦 FLAPPY LULA OFICIAL
+          🐦 OFFICIAL FLAPPY LULA
         </h1>
         <p style="color:var(--text-main); font-size:11.5px; margin-bottom:12px; line-height:1.3;">
-          Voe entre os canos, junte picanhas para destravar o <strong>Selo de 50 Picanhas</strong> e o lendário <strong>Trio de 500 Picanhas</strong>!
+          Fly between pipes, collect steaks to unlock the <strong>50 Steaks Badge</strong> and the legendary <strong>500 Steaks Trio</strong>!
         </p>
 
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
@@ -905,12 +906,12 @@
             <div id="equippedCharSkill" style="font-size:10.5px; color:var(--verde-neon); font-weight:600;">🕊️ Voo Tolerante & Picanha</div>
           </div>
           <button id="btnOpenRosterStart" class="btn-primary" style="font-size:11px; padding:6px 10px; background:var(--amarelo-brasil); color:#000; font-weight:700; border-radius:8px;">
-            🎭 TROCAR
+            🎭 CHANGE
           </button>
         </div>
 
         <button class="btn-primary" id="btnStartGameAction" style="font-size:18px; padding:10px 20px; width:100%;">
-          🔊 TOQUE PARA JOGAR!
+          🔊 TAP TO PLAY!
         </button>
       </div>
     </div>
@@ -919,10 +920,10 @@
     <div class="modal-overlay" id="charSelectModal" style="display:none;">
       <div class="modal-card">
         <h2 style="font-family:'Bangers',cursive; font-size:28px; color:var(--amarelo-brasil); margin-bottom:2px;">
-          🎭 PERSONAGENS POLÍTICOS
+          🎭 POLITICAL CHARACTERS
         </h2>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; font-size:11.5px; color:var(--text-muted);">
-          <span>Junte picanhas para liberar figuras históricas!</span>
+          <span>Collect steaks to unlock historical political figures!</span>
           <span style="color:var(--verde-neon); font-weight:700;" id="totalPicanhasBadge">Total: 0 🥩</span>
         </div>
 
@@ -938,7 +939,7 @@
             <div id="detailSkinsContainer" style="margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.1);">
               <div style="font-size:10px; font-weight:700; color:var(--amarelo-brasil); text-transform:uppercase; margin-bottom:4px; display:flex; justify-content:space-between;">
                 <span>🎨 Visual / Skin</span>
-                <a href="loja.html" style="color:var(--verde-neon); text-decoration:none; font-size:10px;">🛍️ Abrir Loja</a>
+                <a href="loja.html" style="color:var(--verde-neon); text-decoration:none; font-size:10px;">🛍️ Open Shop</a>
               </div>
               <div id="charSkinsList" style="display:flex; flex-wrap:wrap; gap:4px;"></div>
             </div>
@@ -947,11 +948,11 @@
 
         <div class="modal-footer-sticky" style="flex-direction:column; gap:6px;">
           <div style="display:flex; gap:6px; width:100%;">
-            <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:13px; padding:8px;">Voltar</button>
-            <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:14px; padding:8px;">✨ EQUIPAR E JOGAR</button>
+            <button id="btnCloseCharModal" class="btn-secondary" style="flex:1; font-size:13px; padding:8px;">Back</button>
+            <button id="btnEquipChar" class="btn-primary" style="flex:1.6; font-size:14px; padding:8px;">✨ EQUIP & PLAY</button>
           </div>
           <button id="btnRewardCharModal" class="btn-rewarded-smartlink" style="width:100%; font-size:12px; padding:6px;">
-            🎁 Ganhar +10 Picanhas Grátis (Patrocinador)
+            🎁 Get +10 Free Steaks (Sponsor)
           </button>
         </div>
       </div>
@@ -966,7 +967,7 @@
           <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
             <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem Equipado">
             <span id="goEquippedCharName">Lula da Silva</span>
-            <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Trocar</span>
+            <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Change</span>
           </div>
         </div>
         
@@ -985,7 +986,7 @@
             </div>
 
             <div class="go-medal-row">
-              <label>MEDALHA</label>
+              <label>MEDAL</label>
               <div class="go-medal-circle" id="goMedalCircle">🥩</div>
             </div>
 
@@ -994,22 +995,22 @@
                 <img src="img/lula_cry.png" alt="Lula Chorando">
               </div>
               <div class="go-meme-text" id="goMemeText">
-                "Companheiro, bateu no cano e a Receita Federal confiscou a picanha!"
+                "Comrade, you hit the pipe and taxes took away your steak!"
               </div>
             </div>
           </div>
 
           <div class="go-right-panel">
             <div class="go-lb-header">
-              🏆 TOP PLACAR NACIONAL
+              🏆 GLOBAL LEADERBOARD
             </div>
             
             <div class="go-lb-list" id="goLeaderboardList">
-              <div style="text-align:center; padding:10px; font-size:9px; color:#64748b;">Carregando placar...</div>
+              <div style="text-align:center; padding:10px; font-size:9px; color:#64748b;">Loading leaderboard...</div>
             </div>
 
             <div class="go-lb-you-row">
-              <span id="goYouName">VOCÊ (Jogador)</span>
+              <span id="goYouName">YOU (Player)</span>
               <span id="goYouScore" style="font-family:'Press Start 2P', cursive;">0 🥩</span>
             </div>
           </div>
@@ -1018,23 +1019,23 @@
 
         <div class="go-buttons-row">
           <button class="btn-pixel-play" id="btnRestartGame">
-            ▶ JOGAR
+            ▶ PLAY AGAIN
           </button>
           <button class="btn-pixel-share" id="btnShareScore">
-            🔗 COPIAR
+            🔗 COPY
           </button>
           <a href="conquistas.html" class="btn-pixel-badges">
             🏅 BADGES
           </a>
           <a href="index.html" class="btn-pixel-home">
-            🏠 INÍCIO
+            🏠 HOME
           </a>
         </div>
 
         <!-- BOTÃO SMARTLINK RECOMPENSA PICANHAS BÔNUS -->
         <div style="display:flex; justify-content:center; margin-top:8px;">
           <button id="btnRewardPicanhasGO" class="btn-rewarded-smartlink">
-            🎁 GANHAR +10 PICANHAS BÔNUS
+            🎁 GET +10 BONUS STEAKS
           </button>
         </div>
 
@@ -1672,22 +1673,22 @@
           if (score >= 100 && !hasPlayedBesta) {
             hasPlayedBesta = true;
             try { sounds.playBestaEnjaulada(); } catch(e){}
-            showBannerAlert('🔥 100 PONTOS: O HOMEM É UMA MÁQUINA!', false);
+            showBannerAlert('🔥 100 PONTOS: THE MAN IS A MACHINE!', false);
           }
 
           // AVISO AO ATINGIR 1000 PONTOS (2.0x VELOCIDADE)
           if (score >= 1000 && (score - pointsEarned) < 1000) {
-            showBannerAlert('⚡ 1000 PONTOS: DIFICULDADE 2.0x ATINGIDA!', false);
+            showBannerAlert('⚡ 1000 PONTOS: 2.0x DIFFICULTY REACHED!', false);
           }
 
           // AVISO AO ATINGIR 3000 PONTOS (3.5x VELOCIDADE)
           if (score >= 3000 && (score - pointsEarned) < 3000) {
-            showBannerAlert('⚡ 3000 PONTOS: RITMO INTENSO 3.5x!', false);
+            showBannerAlert('⚡ 3000 PONTOS: 3.5x INTENSE TEMPO REACHED!', false);
           }
 
           // AVISO AO ATINGIR 5000 PONTOS (5.0x VELOCIDADE MÁXIMA)
           if (score >= 5000 && (score - pointsEarned) < 5000) {
-            showBannerAlert('🏆 5000 PONTOS: DIFICULDADE MÁXIMA 5.0x LENDÁRIA!', false);
+            showBannerAlert('🏆 5000 PONTOS: 5.0x LEGENDARY MAX DIFFICULTY!', false);
           }
 
           if (gameState.isTurboAllowed) {
@@ -1707,11 +1708,11 @@
             document.body.classList.add('prison-mode');
             screenShake = 34; // Terremoto forte ao entrar na prisão
             try { sounds.playEarthquakeRumble(); } catch(e){}
-            showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO! TERREMOTO!`, true);
+            showBannerAlert(`🚨 ${score} PONTOS: PRISON MODE ACTIVATED! EARTHQUAKE!`, true);
           } else if (!shouldBePrison && isPrisonMode) {
             isPrisonMode = false;
             document.body.classList.remove('prison-mode');
-            showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! LIBERDADE!`, false);
+            showBannerAlert(`🕊️ ${score} PONTOS: HABEAS CORPUS! FREEDOM!`, false);
           }
           
           try { sounds.playPicanhaMemeSound(); } catch(e){}
@@ -1729,7 +1730,7 @@
           if (activeCharacter.id === 'nikolas') {
             nikolasTripleTimer = 15.0; // Nikolas mantém bônus de 3x pontos
           }
-          showBannerAlert('🕊️ LULA DESACELEROU O TEMPO (-3x)!', false);
+          showBannerAlert('🕊️ LULA SLOWED DOWN TIME (-3x)!', false);
           try { sounds.playPowerup(); } catch(e){}
         }
       }
@@ -2627,7 +2628,7 @@
         sessionPlayTime += dt;
         if (sessionPlayTime >= 30 && !hasAlerted30s) {
           hasAlerted30s = true;
-          showBannerAlert('⚡ 30s DE JOGO: RITMO AUMENTANDO LEVEMENTE!', false);
+          showBannerAlert('⚡ 30s IN GAME: SPEED INCREASING SLIGHTLY!', false);
         }
       }
 

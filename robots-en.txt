@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /backups/
+
+Sitemap: https://flappylula.com/sitemap.xml
+Sitemap: https://www.flappylula.com/sitemap.xml
