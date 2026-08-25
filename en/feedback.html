@@ -200,26 +200,26 @@
 
   <div class="page">
     <div class="page-header">
-      <h1>⭐ AVALIAÇÕES & FEEDBACKS</h1>
-      <p>O que a comunidade está achando dos jogos? Deixe sua avaliação!</p>
+      <h1>⭐ COMMUNITY REVIEWS & FEEDBACK</h1>
+      <p>What do players think about the game? Leave your review and star rating!</p>
     </div>
 
     <!-- FORMULÁRIO -->
     <div class="card" style="margin-bottom: 40px;">
-      <h2 style="font-family:'Bangers',cursive; font-size:28px; color:var(--amarelo-brasil); margin-bottom:12px;">📝 Deixe seu Feedback</h2>
+      <h2 style="font-family:'Bangers',cursive; font-size:28px; color:var(--amarelo-brasil); margin-bottom:12px;">📝 Leave Your Feedback</h2>
       <p style="color:var(--text-muted); font-size:14px; margin-bottom:20px;">
-        Compartilhe sua opinião sobre o <strong>Flappy Lula</strong> e o <strong>Empresário 3D</strong>!
+        Share your thoughts and suggestions about <strong>Flappy Lula</strong> and <strong>3D Runner</strong>!
       </p>
 
       <div id="statusAlert" style="display:none;" class="status-badge"></div>
       
       <div class="form-group">
-        <label>Seu Nome / Apelido</label>
-        <input type="text" id="fbName" placeholder="Ex: Empresário_BR" maxlength="40">
+        <label>Your Name / Username</label>
+        <input type="text" id="fbName" placeholder="e.g. FlappyMaster_US" maxlength="40">
       </div>
 
       <div class="form-group">
-        <label>Avaliação em Estrelas ⭐</label>
+        <label>Star Rating ⭐</label>
         <div class="stars-row" id="starsRow">
           <button class="star-btn" data-val="1">⭐</button>
           <button class="star-btn" data-val="2">⭐</button>
@@ -230,12 +230,12 @@
       </div>
 
       <div class="form-group">
-        <label>Comentário</label>
-        <textarea id="fbComment" rows="3" placeholder="O que achou do jogo do presidente e do Empresário 3D?"></textarea>
+        <label>Review / Comment</label>
+        <textarea id="fbComment" rows="3" placeholder="What did you think of the game, characters, and modes?"></textarea>
       </div>
 
       <button class="btn-primary" style="width: 100%; font-size: 22px;" id="btnSubmit" onclick="submitFB()">
-        🚀 ENVIAR FEEDBACK
+        🚀 SUBMIT FEEDBACK
       </button>
     </div>
 
@@ -244,9 +244,9 @@
 
     <!-- LISTA DE FEEDBACKS -->
     <div>
-      <h2 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:20px;">💬 Avaliações & Feedbacks da Comunidade</h2>
+      <h2 style="font-family:'Bangers',cursive; font-size:32px; color:var(--amarelo-brasil); margin-bottom:20px;">💬 Player Reviews & Community Feedback</h2>
       <div id="feedbacksList">
-        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Carregando avaliações...</div>
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading community reviews...</div>
       </div>
     </div>
   </div>
@@ -346,7 +346,7 @@
       localFbs.unshift(newFb);
       localStorage.setItem('lula_feedbacks_local', JSON.stringify(localFbs.slice(0, 20)));
 
-      btn.disabled = false; btn.textContent = '🚀 ENVIAR FEEDBACK';
+      btn.disabled = false; btn.textContent = '🚀 SUBMIT FEEDBACK';
       document.getElementById('fbComment').value = '';
       selectedStars = 0;
       starBtns.forEach(b => b.classList.remove('active'));

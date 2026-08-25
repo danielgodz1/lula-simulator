@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ranking Geral & Placar Nacional — Lula Simulator</title>
-  <meta name="description" content="Confira o ranking nacional em tempo real dos melhores jogadores de Flappy Lula e Empresário 3D. Veja quem é o maior pontuador do Brasil!">
+  <title>Global Leaderboard & Hall of Fame — Flappy Lula</title>
+  <meta name="description" content="Check real-time global leaderboards for Flappy Lula and 3D Runner. See who holds the world record score!">
   <meta name="author" content="Daniel dos Santos">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#080914">
@@ -24,8 +24,8 @@
   <!-- Open Graph / Facebook / WhatsApp -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://lulasimulator.com.br/ranking.html">
-  <meta property="og:title" content="Ranking Geral & Placar Nacional — Lula Simulator">
-  <meta property="og:description" content="Confira os recordes e veja quem lidera o ranking de picanhas e distância no Lula Simulator!">
+  <meta property="og:title" content="Global Leaderboard & Hall of Fame — Flappy Lula">
+  <meta property="og:description" content="Check world records and see who leads the global leaderboard in Flappy Lula and 3D Runner!">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
   <meta property="og:site_name" content="Lula Simulator">
   
@@ -34,7 +34,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://lulasimulator.com.br/ranking.html">
   <meta name="twitter:title" content="Ranking Geral & Placar Nacional — Lula Simulator">
-  <meta name="twitter:description" content="Confira o placar oficial e recordes do Lula Simulator!">
+  <meta name="twitter:description" content="Check the official world leaderboard and high scores of Flappy Lula!">
   <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
@@ -310,7 +310,7 @@
   <nav>
     <a href="/en/index.html" class="nav-brand">
       <span>🇧🇷</span>
-      <span>Lula Simulator</span>
+      <span>Flappy Lula</span>
     </a>
     <button class="nav-toggle" id="navToggle" aria-label="Abrir Menu">☰</button>
     <ul class="nav-links" id="navLinksList">
@@ -333,22 +333,22 @@
 
   <div class="page">
     <div class="page-header">
-      <h1>🏆 RANKING NACIONAL</h1>
-      <p>Confira a classificação dos jogadores em tempo real nos modos Geral, Semanal e Invictos!</p>
+      <h1>🏆 GLOBAL LEADERBOARD</h1>
+      <p>Check real-time player rankings across All-Time, Weekly, and Win Streak leaderboards!</p>
     </div>
 
     <!-- ABAS FLAPPY vs RUNNER 3D -->
     <div class="tab-buttons">
       <button class="tab-btn active" id="tabFlappy">🐦 Flappy Lula (Steaks)</button>
-      <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (KM)</button>
+      <button class="tab-btn" id="tabRunner">🏃 3D Runner (km)</button>
     </div>
 
     <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO vs INVICTOS -->
     <div class="period-buttons" style="flex-wrap: wrap;">
-      <button class="period-btn active" id="periodGeneral">🌟 Recorde Geral</button>
-      <button class="period-btn" id="periodWeekly">📅 Recorde Semanal</button>
-      <button class="period-btn" id="periodAccumulated">💰 Total Acumulado</button>
-      <button class="period-btn" id="periodInvictos" style="border-color: rgba(239, 68, 68, 0.4);">🔥 Invictos (Win Streak)</button>
+      <button class="period-btn active" id="periodGeneral">🌟 All-Time Best</button>
+      <button class="period-btn" id="periodWeekly">📅 Weekly Leaderboard</button>
+      <button class="period-btn" id="periodAccumulated">💰 Total Accumulated</button>
+      <button class="period-btn" id="periodInvictos" style="border-color: rgba(239, 68, 68, 0.4);">🔥 Win Streak Champions</button>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -356,14 +356,14 @@
 
     <!-- BARRA DE BUSCA E CONTADOR DE PLAYERES -->
     <div class="search-bar-row">
-      <input type="text" id="searchRankingInput" class="search-input" placeholder="🔍 Buscar jogador (ex: Victor, Duda, Daniel)...">
-      <div id="totalPlayersBadge" class="total-count-badge">Carregando jogadores...</div>
+      <input type="text" id="searchRankingInput" class="search-input" placeholder="🔍 Search player by name (e.g. Victor, Daniel)...">
+      <div id="totalPlayersBadge" class="total-count-badge">Loading champions...</div>
     </div>
 
     <!-- TABELA DE RANKING COM TODOS OS JOGADORES -->
     <div class="ranking-card">
       <div id="rankingList" style="padding: 6px 0;">
-        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Consultando banco de dados seguro... 🇧🇷</div>
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Connecting to global database... 🌍</div>
       </div>
     </div>
 
@@ -412,8 +412,8 @@
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');
       const totalBadge = document.getElementById('totalPlayersBadge');
-      const periodLabel = currentPeriod === 'weekly' ? 'da semana' : (currentPeriod === 'accumulated' ? 'acumulado' : (currentPeriod === 'invictos' ? 'de invictos' : 'geral'));
-      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando placar ${periodLabel}... 🇧🇷</div>`;
+      const periodLabel = currentPeriod === 'weekly' ? 'Weekly' : (currentPeriod === 'accumulated' ? 'Accumulated' : (currentPeriod === 'invictos' ? 'Win Streak' : 'All-Time'));
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Loading ${periodLabel} leaderboard... 🌍</div>`;
 
       if (currentPeriod === 'invictos') {
         try {
@@ -456,8 +456,8 @@
         }
       }
 
-      const countText = allCurrentScores.length === 1 ? '1 Jogador' : `${allCurrentScores.length} Jogadores`;
-      const prefix = currentPeriod === 'weekly' ? 'Semanal' : (currentPeriod === 'accumulated' ? 'Acumulado' : 'Geral');
+      const countText = allCurrentScores.length === 1 ? '1 Player' : `${allCurrentScores.length} Players`;
+      const prefix = currentPeriod === 'weekly' ? 'Weekly' : (currentPeriod === 'accumulated' ? 'Total' : 'All-Time');
       totalBadge.textContent = `${prefix}: ${countText}`;
       renderFilteredScores();
     }
@@ -482,7 +482,7 @@
       if (filtered.length === 0) {
         container.innerHTML = `
           <div style="text-align: center; padding: 36px; color: var(--text-muted); font-size:14px;">
-            ${searchTerm ? `Nenhum jogador encontrado para "${escapeHTML(searchTerm)}"` : 'Nenhum jogador pontuou ainda. Seja o primeiro! 🚀'}
+            ${searchTerm ? `No players found matching "${escapeHTML(searchTerm)}"` : 'No scores registered yet. Be the first! 🚀'}
           </div>
         `;
         return;
@@ -499,7 +499,7 @@
 
         const rankClass = rankIdx === 0 ? 'rank-1' : rankIdx === 1 ? 'rank-2' : rankIdx === 2 ? 'rank-3' : 'rank-other';
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : `${rankIdx + 1}º`;
-        const safePlayer = escapeHTML(item.player || 'Anônimo');
+        const safePlayer = escapeHTML(item.player || 'Anonymous');
         const safeScore = parseInt(item.score || 0, 10);
         const safeFlag = item.flag || '🇧🇷';
         const safeCountryName = escapeHTML(item.countryName || 'Brasil');
@@ -515,22 +515,22 @@
         const equippedMedal = (isCurPlayer ? localStorage.getItem('lula_equipped_medal') : '') || item.equippedMedal || (rankIdx === 0 ? 'medal_bolsonaro' : (rankIdx === 1 ? 'medal_picanha' : (rankIdx === 2 ? 'medal_stf' : '')));
         let medalHtml = '';
         if (equippedMedal === 'medal_bolsonaro') {
-          medalHtml = `<span class="ranking-medal-tag medal-bolsonaro" title="Medalha Imbrochável (Clube Bolsonaro)"><img src="/img/conquistas/medalha_bolsonaro.png" class="mini-medal-img" alt="Medalha Imbrochável"> 🎖️ Imbrochável</span>`;
+          medalHtml = `<span class="ranking-medal-tag medal-bolsonaro" title="Medalha Imbrochável (Clube Bolsonaro)"><img src="/img/conquistas/medalha_bolsonaro.png" class="mini-medal-img" alt="Medalha Imbrochável"> 🎖️ Legend</span>`;
         } else if (equippedMedal === 'medal_picanha') {
-          medalHtml = `<span class="ranking-medal-tag medal-picanha" title="Picanha de Ouro Presidencial">🥩 Picanha Ouro</span>`;
+          medalHtml = `<span class="ranking-medal-tag medal-picanha" title="Picanha de Ouro Presidencial">🥩 Golden Steak</span>`;
         } else if (equippedMedal === 'medal_stf') {
-          medalHtml = `<span class="ranking-medal-tag medal-stf" title="Habeas Corpus Supremo">⚖️ STF</span>`;
+          medalHtml = `<span class="ranking-medal-tag medal-stf" title="Habeas Corpus Supremo">⚖️ Supreme Judge</span>`;
         } else if (equippedMedal === 'medal_marcal') {
           medalHtml = `<span class="ranking-medal-tag medal-marcal" title="Código Quântico do Mindset">🚀 Mindset 3X</span>`;
         } else if (equippedMedal === 'medal_dilma') {
-          medalHtml = `<span class="ranking-medal-tag medal-dilma" title="Estocador de Vento Oficial">🌪️ Vento</span>`;
+          medalHtml = `<span class="ranking-medal-tag medal-dilma" title="Estocador de Vento Oficial">🌪️ Cosmic Wind</span>`;
         }
 
         // Insígnia de Prestígio
         const prestigeLvl = (isCurPlayer && curUser.prestigeLevel) ? curUser.prestigeLevel : (item.prestigeLevel || 0);
         let prestigeHtml = '';
         if (prestigeLvl > 0) {
-          prestigeHtml = `<span style="font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(255,215,0,0.18); border:1px solid #ffd700; color:#ffd700;" title="Nível de Prestígio ${prestigeLvl}">⭐ P.${prestigeLvl}</span>`;
+          prestigeHtml = `<span style="font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px; background:rgba(255,215,0,0.18); border:1px solid #ffd700; color:#ffd700;" title="Prestige Level ${prestigeLvl}">⭐ P.${prestigeLvl}</span>`;
         }
 
         row.innerHTML = `
@@ -553,7 +553,7 @@
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${safeCountryName}</span>
             </div>
           </div>
-          <div class="score-val">${safeScore.toLocaleString('pt-BR')} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
+          <div class="score-val">${safeScore.toLocaleString('en-US')} <small style="font-size:10px; color:var(--text-muted);">${unit}</small></div>
         `;
 
         container.appendChild(row);
