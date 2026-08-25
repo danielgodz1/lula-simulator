@@ -22,12 +22,21 @@ class TextureAtlasManager {
     this.trainRoof = null;
     this.trainRamp = null;
 
+    // Texturas Realistas da Favela Brasileira e Infraestrutura
+    this.brickRedTexture = null;
+    this.concreteSlabTexture = null;
+    this.rebarTexture = null;
+    this.facadeWindowTexture = null;
+    this.transformerTexture = null;
+    this.cableTexture = null;
+
     this.init();
   }
 
   init() {
     this.createUnifiedAtlas();
     this.createSpecialTextures();
+    this.createBrazilianFavelaTextures();
     this.createMorroParallaxTexture();
     this.createGoldCoinTexture();
     this.createSoftShadowTexture();
@@ -365,6 +374,180 @@ class TextureAtlasManager {
     auxCtx.font = '900 38px Bangers, sans-serif';
     auxCtx.fillText('BENEFÍCIO APROVADO!', 45, 250);
     this.auxilioTexture = new THREE.CanvasTexture(auxCanvas);
+  }
+
+  /**
+   * Texturas Realistas Brasileiras: Tijolo Baiano, Concreto de Laje, Vergalhões de Espera e Transformadores
+   */
+  createBrazilianFavelaTextures() {
+    // 1. Tijolo Baiano Cerâmico Furado com Ranhuras (512x512)
+    const brickCanvas = document.createElement('canvas');
+    brickCanvas.width = 512;
+    brickCanvas.height = 512;
+    const bCtx = brickCanvas.getContext('2d');
+
+    // Fundo de argamassa cinza
+    bCtx.fillStyle = '#64748b';
+    bCtx.fillRect(0, 0, 512, 512);
+
+    const rows = 16;
+    const rowH = 512 / rows;
+    const brickW = 64;
+
+    for (let r = 0; r < rows; r++) {
+      const y = r * rowH;
+      const offset = (r % 2) * (brickW / 2);
+
+      for (let x = -brickW; x < 512 + brickW; x += brickW) {
+        const bx = x + offset;
+        const by = y + 2;
+        const bw = brickW - 4;
+        const bh = rowH - 4;
+
+        // Variação de tons cerâmicos brasileiros (terracota / laranja queimado)
+        const toneVar = ((r * 7 + x * 13) % 5);
+        const brickColors = ['#c2410c', '#ea580c', '#9a3412', '#b45309', '#d97706'];
+        bCtx.fillStyle = brickColors[toneVar];
+        bCtx.fillRect(bx, by, bw, bh);
+
+        // Ranhuras horizontais do tijolo baiano
+        bCtx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        bCtx.fillRect(bx, by + bh * 0.33, bw, 2);
+        bCtx.fillRect(bx, by + bh * 0.66, bw, 2);
+
+        // Furos decorativos visíveis na textura
+        bCtx.fillStyle = 'rgba(67, 20, 7, 0.45)';
+        bCtx.fillRect(bx + 4, by + 4, bw - 8, 3);
+        bCtx.fillRect(bx + 4, by + bh - 7, bw - 8, 3);
+      }
+    }
+
+    this.brickRedTexture = new THREE.CanvasTexture(brickCanvas);
+    this.brickRedTexture.wrapS = THREE.RepeatWrapping;
+    this.brickRedTexture.wrapT = THREE.RepeatWrapping;
+    this.brickRedTexture.repeat.set(2, 2);
+    this.brickRedTexture.needsUpdate = true;
+
+    // 2. Concreto de Laje com Marcas de Fôrma de Madeira (256x256)
+    const slabCanvas = document.createElement('canvas');
+    slabCanvas.width = 256;
+    slabCanvas.height = 256;
+    const sCtx = slabCanvas.getContext('2d');
+
+    sCtx.fillStyle = '#94a3b8';
+    sCtx.fillRect(0, 0, 256, 256);
+
+    // Linhas de tábua de fôrma
+    sCtx.fillStyle = '#64748b';
+    for (let y = 0; y < 256; y += 32) {
+      sCtx.fillRect(0, y, 256, 2);
+    }
+    // Grãos de brita e areia
+    for (let i = 0; i < 120; i++) {
+      const gx = (i * 37) % 256;
+      const gy = (i * 59) % 256;
+      sCtx.fillStyle = (i % 2 === 0) ? 'rgba(51, 65, 85, 0.35)' : 'rgba(241, 245, 249, 0.4)';
+      sCtx.fillRect(gx, gy, 3, 3);
+    }
+
+    this.concreteSlabTexture = new THREE.CanvasTexture(slabCanvas);
+    this.concreteSlabTexture.wrapS = THREE.RepeatWrapping;
+    this.concreteSlabTexture.wrapT = THREE.RepeatWrapping;
+    this.concreteSlabTexture.needsUpdate = true;
+
+    // 3. Vergalhão de Aço Nervurado / Ferro de Construção (128x128)
+    const rebarCanvas = document.createElement('canvas');
+    rebarCanvas.width = 128;
+    rebarCanvas.height = 128;
+    const rCtx = rebarCanvas.getContext('2d');
+
+    rCtx.fillStyle = '#9a3412';
+    rCtx.fillRect(0, 0, 128, 128);
+    rCtx.strokeStyle = '#451a03';
+    rCtx.lineWidth = 4;
+
+    for (let y = -20; y < 150; y += 12) {
+      rCtx.beginPath();
+      rCtx.moveTo(0, y);
+      rCtx.lineTo(128, y + 16);
+      rCtx.stroke();
+    }
+
+    this.rebarTexture = new THREE.CanvasTexture(rebarCanvas);
+    this.rebarTexture.wrapS = THREE.RepeatWrapping;
+    this.rebarTexture.wrapT = THREE.RepeatWrapping;
+    this.rebarTexture.needsUpdate = true;
+
+    // 4. Janela Residencial com Venezianas e Reflexo (256x256)
+    const winCanvas = document.createElement('canvas');
+    winCanvas.width = 256;
+    winCanvas.height = 256;
+    const wCtx = winCanvas.getContext('2d');
+
+    // Moldura de alumínio
+    wCtx.fillStyle = '#334155';
+    wCtx.fillRect(0, 0, 256, 256);
+    wCtx.fillStyle = '#0f172a';
+    wCtx.fillRect(8, 8, 240, 240);
+
+    // Folha esquerda: Vidro com reflexo
+    const vGrad = wCtx.createLinearGradient(12, 12, 120, 244);
+    vGrad.addColorStop(0.0, '#38bdf8');
+    vGrad.addColorStop(0.4, '#0284c7');
+    vGrad.addColorStop(1.0, '#0369a1');
+    wCtx.fillStyle = vGrad;
+    wCtx.fillRect(12, 12, 110, 232);
+
+    // Reflexo de luz na diagonal
+    wCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    wCtx.beginPath();
+    wCtx.moveTo(12, 12);
+    wCtx.lineTo(65, 12);
+    wCtx.lineTo(12, 65);
+    wCtx.fill();
+
+    // Folha direita: Venezianas de alumínio / ventilação
+    wCtx.fillStyle = '#475569';
+    wCtx.fillRect(130, 12, 114, 232);
+    wCtx.fillStyle = '#1e293b';
+    for (let vy = 20; vy < 240; vy += 14) {
+      wCtx.fillRect(134, vy, 106, 6);
+    }
+
+    this.facadeWindowTexture = new THREE.CanvasTexture(winCanvas);
+    this.facadeWindowTexture.needsUpdate = true;
+
+    // 5. Transformador Elétrico de Poste (256x256)
+    const transCanvas = document.createElement('canvas');
+    transCanvas.width = 256;
+    transCanvas.height = 256;
+    const trCtx = transCanvas.getContext('2d');
+
+    trCtx.fillStyle = '#64748b';
+    trCtx.fillRect(0, 0, 256, 256);
+
+    // Aletas de resfriamento verticais
+    trCtx.fillStyle = '#334155';
+    for (let x = 16; x < 240; x += 18) {
+      trCtx.fillRect(x, 20, 8, 216);
+    }
+
+    // Placa de advertência amarela
+    trCtx.fillStyle = '#facc15';
+    trCtx.fillRect(78, 90, 100, 65);
+    trCtx.strokeStyle = '#000000';
+    trCtx.lineWidth = 4;
+    trCtx.strokeRect(78, 90, 100, 65);
+
+    trCtx.fillStyle = '#000000';
+    trCtx.font = 'bold 16px sans-serif';
+    trCtx.textAlign = 'center';
+    trCtx.fillText('PERIGO', 128, 115);
+    trCtx.font = '900 13px sans-serif';
+    trCtx.fillText('ALTA TENSÃO', 128, 138);
+
+    this.transformerTexture = new THREE.CanvasTexture(transCanvas);
+    this.transformerTexture.needsUpdate = true;
   }
 
   /**

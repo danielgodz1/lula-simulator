@@ -172,10 +172,22 @@ export class Game {
     this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay);
 
     if (this.state === this.STATE.PLAYING) {
-      // 2. Aceleração e Distância
+      // 2. Aceleração e Distância Progressiva e Suave
       this.distance += this.speed * dt;
       if (this.speed < this.maxSpeed) {
-        this.speed += 0.85 * dt;
+        // Curva de velocidade calibrada: ritmo inicial suave e aumento gradual
+        const currentRatio = this.speed / this.baseSpeed;
+        let accel = 0.20;
+        if (currentRatio < 2.0) {
+          accel = 0.14; // 1.0x a 2.0x (ritmo inicial agradável e acessível)
+        } else if (currentRatio < 3.5) {
+          accel = 0.20; // 2.0x a 3.5x (progressão equilibrada)
+        } else if (currentRatio < 5.0) {
+          accel = 0.26; // 3.5x a 5.0x (desafio intermediário que leva tempo para atingir)
+        } else {
+          accel = 0.32; // Acima de 5.0x (endgame de alta velocidade)
+        }
+        this.speed += accel * dt;
       }
 
       // 3. Timers de Power-up

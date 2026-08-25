@@ -223,23 +223,23 @@ export class GameScene {
     // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Iluminação em Camadas Vibrante e Clara
-    // A. Luz Hemisférica (Céu Branco / Chão Suave)
-    this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 0.95);
+    // 6. Iluminação Solar em Camadas de Alto Realismo (Sol Carioca Tropical)
+    // A. Luz Hemisférica (Céu Azul Claro / Reflexo Terroso de Solo)
+    this.hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x78716c, 0.88);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Direcional Principal (Sol Radiante Tropical com Alto Contraste)
-    this.sunLight = new THREE.DirectionalLight(0xfffbeb, 1.40);
-    this.sunLight.position.set(28, 60, 35);
+    // B. Luz Solar Direcional Principal (Ângulo de 45º para Sombras Longas e Volume 3D)
+    this.sunLight = new THREE.DirectionalLight(0xfffdf0, 1.55);
+    this.sunLight.position.set(32, 65, 30);
     this.scene.add(this.sunLight);
 
-    // C. Luz Secundária de Preenchimento (Fill Light suave)
-    this.fillLight = new THREE.DirectionalLight(0xbae6fd, 0.45);
-    this.fillLight.position.set(-30, 45, -20);
+    // C. Luz Secundária de Preenchimento (Reflexo Atmosférico Suave)
+    this.fillLight = new THREE.DirectionalLight(0x93c5fd, 0.42);
+    this.fillLight.position.set(-35, 42, -15);
     this.scene.add(this.fillLight);
 
-    // D. Luz Noturna na Pista
+    // D. Luz Noturna de Pista
     this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.0, 35, 1.5);
     this.playerSpotLight.position.set(0, 5.2, 2.0);
     this.scene.add(this.playerSpotLight);
