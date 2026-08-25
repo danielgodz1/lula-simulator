@@ -554,12 +554,31 @@ export class UIManager {
   }
 
   updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '', totalCoins = 0) {
-    if (this.distDisplay) this.distDisplay.textContent = `${distanceKm} km`;
-    if (this.bestDisplay) this.bestDisplay.textContent = `${bestDistanceKm} km`;
-    if (this.coinsDisplay) this.coinsDisplay.textContent = `💰 ${totalCoins || coins}`;
+    const distStr = `${distanceKm} km`;
+    if (this.distDisplay && this._cachedDist !== distStr) {
+      this.distDisplay.textContent = distStr;
+      this._cachedDist = distStr;
+    }
+
+    const bestStr = `${bestDistanceKm} km`;
+    if (this.bestDisplay && this._cachedBest !== bestStr) {
+      this.bestDisplay.textContent = bestStr;
+      this._cachedBest = bestStr;
+    }
+
+    const coinVal = `💰 ${totalCoins || coins}`;
+    if (this.coinsDisplay && this._cachedCoins !== coinVal) {
+      this.coinsDisplay.textContent = coinVal;
+      this._cachedCoins = coinVal;
+    }
+
     if (this.speedDisplay) {
       const timePrefix = timeOfDayStr ? `${timeOfDayStr} · ` : '';
-      this.speedDisplay.textContent = `${timePrefix}${speedRatio.toFixed(1)}x ${powerupStatus}`;
+      const speedStr = `${timePrefix}${speedRatio.toFixed(1)}x ${powerupStatus}`;
+      if (this._cachedSpeedStr !== speedStr) {
+        this.speedDisplay.textContent = speedStr;
+        this._cachedSpeedStr = speedStr;
+      }
     }
   }
 
