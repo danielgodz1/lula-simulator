@@ -271,16 +271,16 @@ export class ObstacleManager {
         moveSpeed: isMoving ? 13 : 0,
         hornPlayed: false,
         passSoundPlayed: false,
+        _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
         getAABB() {
           const pz = parent.position.z + truck.position.z;
-          return {
-            minX: laneX - 1.15,
-            maxX: laneX + 1.15,
-            minY: 0,
-            maxY: 3.2,
-            minZ: pz - 5.25,
-            maxZ: pz + 5.25
-          };
+          this._aabb.minX = laneX - 1.15;
+          this._aabb.maxX = laneX + 1.15;
+          this._aabb.minY = 0;
+          this._aabb.maxY = 3.2;
+          this._aabb.minZ = pz - 5.25;
+          this._aabb.maxZ = pz + 5.25;
+          return this._aabb;
         }
       };
 
@@ -664,16 +664,16 @@ export class ObstacleManager {
       moveSpeed: isMoving ? 15 : 0,
       hornPlayed: false,
       passSoundPlayed: false,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + train.position.z;
-        return {
-          minX: laneX - (2.35 * 0.85) / 2,
-          maxX: laneX + (2.35 * 0.85) / 2,
-          minY: 0,
-          maxY: 3.40,
-          minZ: pz - 9.2,
-          maxZ: pz + 9.8
-        };
+        this._aabb.minX = laneX - (2.35 * 0.85) / 2;
+        this._aabb.maxX = laneX + (2.35 * 0.85) / 2;
+        this._aabb.minY = 0;
+        this._aabb.maxY = 3.40;
+        this._aabb.minZ = pz - 9.2;
+        this._aabb.maxZ = pz + 9.8;
+        return this._aabb;
       }
     };
 
@@ -704,16 +704,16 @@ export class ObstacleManager {
       localZ: localZ,
       isPicanha: false,
       collected: false,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + coin.position.z;
-        return {
-          minX: laneX - 0.45,
-          maxX: laneX + 0.45,
-          minY: 3.2,
-          maxY: 4.2,
-          minZ: pz - 0.45,
-          maxZ: pz + 0.45
-        };
+        this._aabb.minX = laneX - 0.45;
+        this._aabb.maxX = laneX + 0.45;
+        this._aabb.minY = 3.2;
+        this._aabb.maxY = 4.2;
+        this._aabb.minZ = pz - 0.45;
+        this._aabb.maxZ = pz + 0.45;
+        return this._aabb;
       }
     });
   }
@@ -744,16 +744,16 @@ export class ObstacleManager {
       localZ: localZ,
       baseY: 1.05,
       isFloatingCard: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + cardGroup.position.z;
-        return {
-          minX: laneX - (2.2 * 0.85) / 2,
-          maxX: laneX + (2.2 * 0.85) / 2,
-          minY: 0,
-          maxY: 1.55,
-          minZ: pz - 0.45,
-          maxZ: pz + 0.45
-        };
+        this._aabb.minX = laneX - (2.2 * 0.85) / 2;
+        this._aabb.maxX = laneX + (2.2 * 0.85) / 2;
+        this._aabb.minY = 0;
+        this._aabb.maxY = 1.55;
+        this._aabb.minZ = pz - 0.45;
+        this._aabb.maxZ = pz + 0.45;
+        return this._aabb;
       }
     });
   }
@@ -785,16 +785,16 @@ export class ObstacleManager {
       localZ: localZ,
       baseY: 1.15,
       isFloatingCard: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + cardGroup.position.z;
-        return {
-          minX: laneX - (2.2 * 0.85) / 2,
-          maxX: laneX + (2.2 * 0.85) / 2,
-          minY: 0,
-          maxY: 1.65,
-          minZ: pz - 0.45,
-          maxZ: pz + 0.45
-        };
+        this._aabb.minX = laneX - (2.2 * 0.85) / 2;
+        this._aabb.maxX = laneX + (2.2 * 0.85) / 2;
+        this._aabb.minY = 0;
+        this._aabb.maxY = 1.65;
+        this._aabb.minZ = pz - 0.45;
+        this._aabb.maxZ = pz + 0.45;
+        return this._aabb;
       }
     });
   }
@@ -865,16 +865,16 @@ export class ObstacleManager {
       laneX: laneX,
       localZ: localZ,
       isOverhead: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + barrierGroup.position.z;
-        return {
-          minX: laneX - 1.15,
-          maxX: laneX + 1.15,
-          minY: 1.10,
-          maxY: 2.30,
-          minZ: pz - 0.35,
-          maxZ: pz + 0.35
-        };
+        this._aabb.minX = laneX - 1.15;
+        this._aabb.maxX = laneX + 1.15;
+        this._aabb.minY = 1.10;
+        this._aabb.maxY = 2.30;
+        this._aabb.minZ = pz - 0.35;
+        this._aabb.maxZ = pz + 0.35;
+        return this._aabb;
       }
     });
   }
@@ -927,15 +927,18 @@ export class ObstacleManager {
       value: 1,
       collected: false,
       isPicanha: false,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + coinGroup.position.z;
         const px = coinGroup.position.x;
         const py = coinGroup.position.y;
-        return {
-          minX: px - 0.8, maxX: px + 0.8,
-          minY: py - 0.8, maxY: py + 0.8,
-          minZ: pz - 0.8, maxZ: pz + 0.8
-        };
+        this._aabb.minX = px - 0.8;
+        this._aabb.maxX = px + 0.8;
+        this._aabb.minY = py - 0.8;
+        this._aabb.maxY = py + 0.8;
+        this._aabb.minZ = pz - 0.8;
+        this._aabb.maxZ = pz + 0.8;
+        return this._aabb;
       }
     });
   }
@@ -1048,15 +1051,18 @@ export class ObstacleManager {
       value: 5,
       collected: false,
       isPicanha: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + picanhaGroup.position.z;
         const px = picanhaGroup.position.x;
         const py = picanhaGroup.position.y;
-        return {
-          minX: px - 0.9, maxX: px + 0.9,
-          minY: py - 0.6, maxY: py + 0.8,
-          minZ: pz - 0.9, maxZ: pz + 0.9
-        };
+        this._aabb.minX = px - 0.9;
+        this._aabb.maxX = px + 0.9;
+        this._aabb.minY = py - 0.6;
+        this._aabb.maxY = py + 0.8;
+        this._aabb.minZ = pz - 0.9;
+        this._aabb.maxZ = pz + 0.9;
+        return this._aabb;
       }
     });
   }
@@ -1127,13 +1133,16 @@ export class ObstacleManager {
       y: 1.15,
       baseY: 1.15,
       collected: false,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + pGroup.position.z;
-        return {
-          minX: laneX - 0.65, maxX: laneX + 0.65,
-          minY: 0.4, maxY: 1.9,
-          minZ: pz - 0.65, maxZ: pz + 0.65
-        };
+        this._aabb.minX = laneX - 0.65;
+        this._aabb.maxX = laneX + 0.65;
+        this._aabb.minY = 0.4;
+        this._aabb.maxY = 1.9;
+        this._aabb.minZ = pz - 0.65;
+        this._aabb.maxZ = pz + 0.65;
+        return this._aabb;
       }
     });
   }
@@ -1142,7 +1151,8 @@ export class ObstacleManager {
     const playerAABB = player.getAABB();
 
     // A. Animação de Flutuação e Rotação dos Cards Realistas
-    for (const obs of this.obstacles) {
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const obs = this.obstacles[i];
       if (obs.isFloatingCard) {
         obs.mesh.rotation.y = Math.sin(elapsedTime * 2.2 + obs.laneX) * 0.22;
         obs.mesh.position.y = obs.baseY + Math.sin(elapsedTime * 3.0 + obs.laneX) * 0.06;
@@ -1150,7 +1160,8 @@ export class ObstacleManager {
     }
 
     // B. Animação, Efeitos Sonoros e Buzina de Metrô
-    for (const train of this.movingTrains) {
+    for (let i = 0; i < this.movingTrains.length; i++) {
+      const train = this.movingTrains[i];
       const trainWorldZ = train.parent.position.z + train.mesh.position.z;
       if (trainWorldZ < 90 && trainWorldZ > -90) {
         train.mesh.position.z += train.moveSpeed * dt;
@@ -1171,14 +1182,17 @@ export class ObstacleManager {
     let onTrainTop = false;
     let trainRoofY = 0;
 
-    for (const obs of this.obstacles) {
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const obs = this.obstacles[i];
       if (obs.type === 'train' || obs.type === 'truck') {
+        const obsWorldZ = obs.parent.position.z + obs.mesh.position.z;
+        if (Math.abs(player.z - obsWorldZ) > 15.0) continue;
+
         const obsAABB = obs.getAABB();
         const overTrainX = (player.x + 0.40) > obsAABB.minX && (player.x - 0.40) < obsAABB.maxX;
         const overTrainZ = (player.z + 0.40) > obsAABB.minZ && (player.z - 0.40) < obsAABB.maxZ;
 
         if (overTrainX && overTrainZ) {
-          // O jogador está sobre a projeção do veículo pesado
           if (player.y >= obsAABB.maxY - 0.45) {
             onTrainTop = true;
             trainRoofY = Math.max(trainRoofY, obsAABB.maxY);
@@ -1198,16 +1212,18 @@ export class ObstacleManager {
       player.groundY = 0;
     }
 
-    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do veículo)
+    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do veículo ou distante)
     if (!player.isDead) {
-      for (const obs of this.obstacles) {
-        const obsAABB = obs.getAABB();
+      for (let i = 0; i < this.obstacles.length; i++) {
+        const obs = this.obstacles[i];
+        const obsWorldZ = obs.parent.position.z + obs.mesh.position.z;
+        if (Math.abs(player.z - obsWorldZ) > 22.0) continue;
 
+        const obsAABB = obs.getAABB();
         const collisionX = playerAABB.maxX > obsAABB.minX && playerAABB.minX < obsAABB.maxX;
         const collisionZ = playerAABB.maxZ > obsAABB.minZ && playerAABB.minZ < obsAABB.maxZ;
 
         if (obs.type === 'train' || obs.type === 'truck') {
-          // Se o jogador estiver acima do teto do trem ou caminhão, está correndo por cima!
           if (player.y >= obsAABB.maxY - 0.35) {
             continue;
           }
@@ -1232,6 +1248,10 @@ export class ObstacleManager {
       if (coin.collected) continue;
 
       const coinWorldZ = coin.parent.position.z + coin.mesh.position.z;
+      const distZ = Math.abs(player.z - coinWorldZ);
+
+      // Despreza moedas muito distantes da visão
+      if (distZ > 36.0 && !player.magnetActive) continue;
 
       coin.mesh.rotation.y += 3.6 * dt;
       if (coin.baseY !== undefined && !player.magnetActive) {
@@ -1240,8 +1260,7 @@ export class ObstacleManager {
 
       // ATRAÇÃO MAGNÉTICA EM 3D (X, Y, Z) COM PULL FORTE
       if (player.magnetActive && !player.isDead) {
-        const distZ = Math.abs(player.z - coinWorldZ);
-        if (distZ < 32) {
+        if (distZ < 32.0) {
           const attractRate = 22.0 * dt;
           coin.mesh.position.x += (player.x - coin.mesh.position.x) * Math.min(1.0, attractRate);
           coin.mesh.position.y += ((player.y + 0.9) - coin.mesh.position.y) * Math.min(1.0, attractRate);
@@ -1250,18 +1269,17 @@ export class ObstacleManager {
       }
 
       const curCoinWorldZ = coin.parent.position.z + coin.mesh.position.z;
-      const distToPlayer = Math.hypot(
-        player.x - coin.mesh.position.x,
-        (player.y + 0.9) - coin.mesh.position.y,
-        player.z - curCoinWorldZ
-      );
+      const dx = player.x - coin.mesh.position.x;
+      const dy = (player.y + 0.9) - coin.mesh.position.y;
+      const dz = player.z - curCoinWorldZ;
+      const distSq = dx * dx + dy * dy + dz * dz;
 
       const coinAABB = coin.getAABB();
       const overlapX = playerAABB.maxX > coinAABB.minX && playerAABB.minX < coinAABB.maxX;
       const overlapY = playerAABB.maxY > coinAABB.minY && playerAABB.minY < coinAABB.maxY;
       const overlapZ = playerAABB.maxZ > coinAABB.minZ && playerAABB.minZ < coinAABB.maxZ;
 
-      if ((overlapX && overlapY && overlapZ) || distToPlayer < 1.7) {
+      if ((overlapX && overlapY && overlapZ) || distSq < 3.24) {
         coin.collected = true;
         this.spawnCoinParticles(coin.mesh.position.x, coin.mesh.position.y, coin.mesh.position.z, coin.parent);
         coin.parent.remove(coin.mesh);
@@ -1281,10 +1299,13 @@ export class ObstacleManager {
       }
     }
 
-    // E. Rotação e Coleta de Power-ups 3D (Sapatos Dourados e Ímã em Ferradura)
+    // F. Rotação e Coleta de Power-ups 3D
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const pup = this.powerups[i];
       if (pup.collected) continue;
+
+      const pupWorldZ = pup.parent.position.z + pup.mesh.position.z;
+      if (Math.abs(player.z - pupWorldZ) > 25.0) continue;
 
       pup.mesh.rotation.y += 2.6 * dt;
       pup.mesh.position.y = pup.baseY + Math.sin(elapsedTime * 3.5 + pup.laneX) * 0.10;
