@@ -419,7 +419,12 @@ class AuthManager {
     const localAvatar = this.currentUser?.avatar || '';
     // Extrai personagens desbloqueados garantindo preservação retrocompatível
     const localUnlockedSet = new Set(['lula']);
-    if (localDilma >= 200) localUnlockedSet.add('marcal');
+    const localFlappyBest = Math.max(localFlappy, parseInt(localStorage.getItem('lula_best') || '0', 10));
+    const localRunnerBest = Math.max(localRunner, parseInt(localStorage.getItem('run_best') || '0', 10));
+    const localNikolas = Math.max(parseInt(localStorage.getItem('flappy_nikolas_record_score') || '0', 10), this.currentUser.nikolasScore || 0);
+
+    if (localFlappyBest >= 300 && localRunnerBest >= 300) localUnlockedSet.add('nikolas');
+    if (localNikolas >= 900) localUnlockedSet.add('marcal');
     try {
       const runnerUnlocks = JSON.parse(localStorage.getItem('runner_unlocked_characters') || '[]');
       if (Array.isArray(runnerUnlocks)) runnerUnlocks.forEach(x => localUnlockedSet.add(x));
@@ -452,6 +457,7 @@ class AuthManager {
           flappyScore: Math.max(localFlappy, this.currentUser.flappyScore || 0),
           runnerScore: Math.max(localRunner, this.currentUser.runnerScore || 0),
           dilmaScore: Math.max(localDilma, this.currentUser.dilmaScore || 0),
+          nikolasScore: Math.max(localNikolas, this.currentUser.nikolasScore || 0),
           totalPicanhas: Math.max(localPicanhas, this.currentUser.totalPicanhas || 0),
           lifetimePicanhas: Math.max(localLifetimePicanhas, this.currentUser.lifetimePicanhas || 0),
           runnerCoins: Math.max(localRunnerCoins, this.currentUser.runnerCoins || 0),
@@ -473,7 +479,8 @@ class AuthManager {
           return {
             success: true,
             user: data.user,
-            isMarcalUnlocked: (data.user.dilmaScore >= 200 || (data.user.unlockedCharacters && data.user.unlockedCharacters.includes('marcal')))
+            isMarcalUnlocked: (data.user.nikolasScore >= 900 || (data.user.unlockedCharacters && data.user.unlockedCharacters.includes('marcal'))),
+            isNikolasUnlocked: ((data.user.flappyScore >= 300 && data.user.runnerScore >= 300) || (data.user.unlockedCharacters && data.user.unlockedCharacters.includes('nikolas')))
           };
         }
       }
@@ -484,7 +491,8 @@ class AuthManager {
     return {
       success: true,
       user: this.currentUser,
-      isMarcalUnlocked: (localDilma >= 200)
+      isMarcalUnlocked: (localNikolas >= 900),
+      isNikolasUnlocked: (localFlappyBest >= 300 && localRunnerBest >= 300)
     };
   }
 
@@ -1202,9 +1210,10 @@ class AuthManager {
     const totalPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
     const flappyBest = parseInt(localStorage.getItem('lula_best') || '0', 10);
     const runnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
-    const dilmaBest = Math.max(parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10), user?.dilmaScore || 0);
+    const nikolasBest = Math.max(parseInt(localStorage.getItem('flappy_nikolas_record_score') || '0', 10), user?.nikolasScore || 0);
     const runnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
-    const isMarcalUnlocked = dilmaBest >= 200 || (Array.isArray(user?.unlockedCharacters) && user.unlockedCharacters.includes('marcal'));
+    const isNikolasUnlocked = (flappyBest >= 300 && runnerBest >= 300) || (Array.isArray(user?.unlockedCharacters) && user.unlockedCharacters.includes('nikolas'));
+    const isMarcalUnlocked = (isNikolasUnlocked && nikolasBest >= 900) || (Array.isArray(user?.unlockedCharacters) && user.unlockedCharacters.includes('marcal'));
 
     const overlay = document.createElement('div');
     overlay.id = 'authModalOverlay';
@@ -1300,7 +1309,7 @@ class AuthManager {
               </div>
             </div>
 
-            <!-- ESTATÍSTICAS E STATUS DO PABLO MARÇAL -->
+            <!-- ESTATÍSTICAS E STATUS DOS PERSONAGENS -->
             <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,223,0,0.2); border-radius: 12px; padding: 12px; margin-bottom: 14px;">
               <div style="font-size: 12px; font-weight: 700; color: var(--amarelo-brasil, #ffd700); margin-bottom: 8px;">
                 📊 Estatísticas & Desbloqueios da Conta:
@@ -1311,11 +1320,19 @@ class AuthManager {
                 <div>🐦 Flappy Recorde: <b style="color: var(--verde-neon);">${flappyBest} pts</b></div>
                 <div>🏃 Runner Recorde: <b style="color: var(--verde-neon);">${runnerBest} km</b></div>
               </div>
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
-                <span>🥔 Recorde c/ Dilma: <b>${dilmaBest} pts</b></span>
-                <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isMarcalUnlocked ? 'background: rgba(14,165,233,0.2); color: #38bdf8; border: 1px solid #0284c7;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
-                  ${isMarcalUnlocked ? '✨ Marçal Desbloqueado' : '🔒 Marçal (200 pts Dilma)'}
-                </span>
+              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; display: flex; flex-direction: column; gap: 6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>⚡ Nikolas Ferreira:</span>
+                  <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isNikolasUnlocked ? 'background: rgba(6,182,212,0.2); color: #06b6d4; border: 1px solid #0891b2;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
+                    ${isNikolasUnlocked ? '✨ Desbloqueado' : '🔒 300 pts Flappy + 300 km 3D'}
+                  </span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>🚀 Pablo Marçal (${nikolasBest}/900 pts Nikolas):</span>
+                  <span style="font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 6px; ${isMarcalUnlocked ? 'background: rgba(14,165,233,0.2); color: #38bdf8; border: 1px solid #0284c7;' : 'background: rgba(239,68,68,0.2); color: #fca5a5; border: 1px solid #ef4444;'}">
+                    ${isMarcalUnlocked ? '✨ Desbloqueado' : '🔒 900 pts c/ Nikolas'}
+                  </span>
+                </div>
               </div>
             </div>
 

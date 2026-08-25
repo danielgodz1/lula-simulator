@@ -1,5 +1,5 @@
 // api/sync.js — Sincronização Inteligente Bidirecional de Perfil, Recordes e Avatares com Firebase Admin SDK
-import admin, { db } from './_firebaseAdmin.js';
+import admin, { db, hasAdminCredentials } from './_firebaseAdmin.js';
 import { applyCors } from './_cors.js';
 
 export default async function handler(req, res) {
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
       flappyScore = 0,
       runnerScore = 0,
       dilmaScore = 0,
+      nikolasScore = 0,
       totalPicanhas = 0,
       lifetimePicanhas = 0,
       runnerCoins = 0,
@@ -49,15 +50,25 @@ export default async function handler(req, res) {
     }
 
     const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const userRef = db.collection('lula_users_v2').doc(normalizedName);
 
     try {
-      const userSnap = await userRef.get();
-      const existingData = userSnap.exists ? userSnap.data() : {};
+      let existingData = {};
+      let userRef = null;
+
+      if (hasAdminCredentials && db) {
+        try {
+          userRef = db.collection('lula_users_v2').doc(normalizedName);
+          const userSnap = await userRef.get();
+          existingData = userSnap.exists ? userSnap.data() : {};
+        } catch (dbErr) {
+          console.warn('Aviso ao consultar lula_users_v2 via Admin SDK:', dbErr.message);
+        }
+      }
 
       const localFlappy = Math.max(0, parseInt(flappyScore || 0, 10));
       const localRunner = Math.max(0, parseInt(runnerScore || 0, 10));
       const localDilma = Math.max(0, parseInt(dilmaScore || 0, 10));
+      const localNikolas = Math.max(0, parseInt(nikolasScore || 0, 10));
       const localPicanhas = Math.max(0, parseInt(totalPicanhas || 0, 10));
       const localLifetimePicanhas = Math.max(localPicanhas, parseInt(lifetimePicanhas || 0, 10));
       const localCoins = Math.max(0, parseInt(runnerCoins || 0, 10));
@@ -66,6 +77,7 @@ export default async function handler(req, res) {
       const cloudFlappy = Math.max(0, parseInt(existingData.flappyScore || 0, 10));
       const cloudRunner = Math.max(0, parseInt(existingData.runnerScore || 0, 10));
       const cloudDilma = Math.max(0, parseInt(existingData.dilmaScore || 0, 10));
+      const cloudNikolas = Math.max(0, parseInt(existingData.nikolasScore || 0, 10));
       const cloudPicanhas = Math.max(0, parseInt(existingData.totalPicanhas || 0, 10));
       const cloudLifetimePicanhas = Math.max(0, parseInt(existingData.lifetimePicanhas || existingData.totalPicanhas || 0, 10));
       const cloudCoins = Math.max(0, parseInt(existingData.runnerCoins || 0, 10));
@@ -75,6 +87,7 @@ export default async function handler(req, res) {
       const mergedFlappy = Math.max(localFlappy, cloudFlappy);
       const mergedRunner = Math.max(localRunner, cloudRunner);
       const mergedDilma = Math.max(localDilma, cloudDilma);
+      const mergedNikolas = Math.max(localNikolas, cloudNikolas);
       const mergedPicanhas = Math.max(localPicanhas, cloudPicanhas);
       const mergedLifetimePicanhas = Math.max(localLifetimePicanhas, cloudLifetimePicanhas);
       const mergedCoins = Math.max(localCoins, cloudCoins);
@@ -85,8 +98,13 @@ export default async function handler(req, res) {
       const localUnlocked = Array.isArray(unlockedCharacters) ? unlockedCharacters : [];
       const mergedUnlockedSet = new Set([...cloudUnlocked, ...localUnlocked]);
 
-      // Se dilmaScore >= 200, garante desbloqueio do Pablo Marçal
-      if (mergedDilma >= 200) {
+      // Requisito Nikolas: 300 pts Flappy Lula + 300 km Empresário 3D
+      if (mergedFlappy >= 300 && mergedRunner >= 300) {
+        mergedUnlockedSet.add('nikolas');
+      }
+
+      // Requisito Pablo Marçal: 900 pts com Nikolas Ferreira
+      if (mergedNikolas >= 900) {
         mergedUnlockedSet.add('marcal');
       }
 
@@ -116,6 +134,7 @@ export default async function handler(req, res) {
         flappyScore: mergedFlappy,
         runnerScore: mergedRunner,
         dilmaScore: mergedDilma,
+        nikolasScore: mergedNikolas,
         totalPicanhas: mergedPicanhas,
         lifetimePicanhas: mergedLifetimePicanhas,
         runnerCoins: mergedCoins,
@@ -135,15 +154,22 @@ export default async function handler(req, res) {
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
-      if (!userSnap.exists) {
-        updatedPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+      if (!existingData.createdAt) {
+        updatedPayload.createdAt = (hasAdminCredentials && admin) ? admin.firestore.FieldValue.serverTimestamp() : new Date().toISOString();
         updatedPayload.hasPassword = false;
       }
 
-      await userRef.set(updatedPayload, { merge: true });
+      if (userRef) {
+        try {
+          await userRef.set(updatedPayload, { merge: true });
+        } catch (setErr) {
+          console.warn('Aviso ao salvar lula_users_v2:', setErr.message);
+        }
+      }
 
       // Atualiza Documento Consolidado de Acumulados (Top 300)
       const updateAccumulatedLeaderboards = async () => {
+        if (!hasAdminCredentials || !db) return;
         try {
           const updateBoard = async (docName, scoreValue) => {
             const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
@@ -183,20 +209,23 @@ export default async function handler(req, res) {
         } catch (e) {
           console.warn('Aviso: falha ao atualizar ranking acumulado:', e);
         }
+      };
+
       await updateAccumulatedLeaderboards();
 
       // Registra evento no Feed de Atividades caso haja novo recorde significativo
       const oldFlappy = existingData.flappyScore || 0;
-      if (mergedFlappy >= 50 && mergedFlappy > oldFlappy) {
-        db.collection('lula_activity_feed').add({
-          username: cleanName,
-          avatar: finalAvatar,
-          eventType: 'new_record',
-          title: 'Novo Recorde Pessoal! 🚀',
-          desc: `${cleanName} acaba de cravar ${mergedFlappy} pontos no Flappy Lula!`,
-          value: mergedFlappy,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        }).catch(() => {});
+      if (mergedFlappy >= 50 && mergedFlappy > oldFlappy && hasAdminCredentials && db) {
+        try {
+          await db.collection('lula_activity_feed').add({
+            username: cleanName,
+            avatar: finalAvatar,
+            eventType: 'new_record',
+            details: `Bateu recorde de ${mergedFlappy} pts no Flappy Lula! 🚀`,
+            score: mergedFlappy,
+            timestamp: admin.firestore.FieldValue.serverTimestamp()
+          });
+        } catch(e) {}
       }
 
       return res.status(200).json({
@@ -207,6 +236,7 @@ export default async function handler(req, res) {
           flappyScore: mergedFlappy,
           runnerScore: mergedRunner,
           dilmaScore: mergedDilma,
+          nikolasScore: mergedNikolas,
           totalPicanhas: mergedPicanhas,
           runnerCoins: mergedCoins,
           unlockedCharacters: mergedUnlocked,

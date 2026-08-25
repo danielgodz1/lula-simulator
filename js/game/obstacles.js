@@ -307,55 +307,258 @@ export class ObstacleManager {
     const train = new THREE.Group();
     train.position.set(laneX, 1.7, localZ);
 
-    const body = new THREE.Mesh(this.geometries.train, this.materials.trainBody);
+    // Seleção Dinâmica entre 3 Pinturas Realistas (Metrô Rio, Metrô SP, Expresso Brasil)
+    const trainThemes = [
+      {
+        id: 'rio',
+        name: 'Trem do Metrô Rio',
+        sideTex: textureAtlas.trainSideRio,
+        frontTex: textureAtlas.trainFrontRio,
+        accentColor: 0x0284c7,
+        roofColor: 0x94a3b8
+      },
+      {
+        id: 'sp',
+        name: 'Trem do Metrô SP',
+        sideTex: textureAtlas.trainSideSP,
+        frontTex: textureAtlas.trainFrontSP,
+        accentColor: 0xdc2626,
+        roofColor: 0x94a3b8
+      },
+      {
+        id: 'br',
+        name: 'Expresso Brasil 3D',
+        sideTex: textureAtlas.trainSideBR,
+        frontTex: textureAtlas.trainFrontBR,
+        accentColor: 0x16a34a,
+        roofColor: 0x334155
+      }
+    ];
+
+    const theme = trainThemes[Math.floor(Math.random() * trainThemes.length)];
+
+    // Materiais PBR do Vagão
+    const sideMat = new THREE.MeshStandardMaterial({
+      map: theme.sideTex,
+      metalness: 0.75,
+      roughness: 0.25,
+      bumpScale: 0.05
+    });
+
+    const roofMat = new THREE.MeshStandardMaterial({
+      map: textureAtlas.trainRoof,
+      metalness: 0.7,
+      roughness: 0.3
+    });
+
+    const chassisMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.85,
+      roughness: 0.4
+    });
+
+    const rearMat = new THREE.MeshStandardMaterial({
+      color: theme.accentColor,
+      metalness: 0.6,
+      roughness: 0.35
+    });
+
+    // 1. CORPO PRINCIPAL DO VAGÃO (Multi-Material Box)
+    // Faces: 0: +X (Direita), 1: -X (Esquerda), 2: +Y (Teto), 3: -Y (Chassi), 4: +Z (Frente), 5: -Z (Traseira)
+    const bodyMaterials = [
+      sideMat,
+      sideMat,
+      roofMat,
+      chassisMat,
+      chassisMat,
+      rearMat
+    ];
+
+    const bodyGeo = new THREE.BoxGeometry(2.38, 3.15, 17.2);
+    const body = new THREE.Mesh(bodyGeo, bodyMaterials);
     body.castShadow = true;
     body.receiveShadow = true;
     train.add(body);
 
-    const front = new THREE.Mesh(new THREE.BoxGeometry(2.42, 3.42, 1.2), this.materials.trainFront);
-    front.position.set(0, 0, 8.5);
-    front.castShadow = true;
-    train.add(front);
+    // 2. CABINE FRONTAL AERODINÂMICA COM LETREIRO LED LUMINOSO
+    const frontCab = new THREE.Group();
+    frontCab.position.set(0, 0, 8.6);
 
+    const frontNose = new THREE.Mesh(
+      new THREE.BoxGeometry(2.40, 3.20, 1.2),
+      new THREE.MeshStandardMaterial({
+        color: theme.accentColor,
+        metalness: 0.7,
+        roughness: 0.3
+      })
+    );
+    frontNose.castShadow = true;
+    frontCab.add(frontNose);
+
+    // Painel Frontal com Vidro e Letreiro LED
+    const frontFacePlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.36, 3.16),
+      new THREE.MeshStandardMaterial({
+        map: theme.frontTex,
+        roughness: 0.2,
+        metalness: 0.6,
+        side: THREE.DoubleSide
+      })
+    );
+    frontFacePlane.position.set(0, 0, 0.61);
+    frontCab.add(frontFacePlane);
+
+    // Viseira Aerodinâmica Superior
+    const visor = new THREE.Mesh(
+      new THREE.BoxGeometry(2.44, 0.25, 0.6),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.2 })
+    );
+    visor.position.set(0, 1.55, 0.35);
+    frontCab.add(visor);
+
+    // Faróis Duplos Xenon Projetores com Moldura Cromada
+    const headlightBezelMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.1 });
     [-0.75, 0.75].forEach(hx => {
-      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.1, 12), this.materials.headlight);
+      const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 16), headlightBezelMat);
+      bezel.rotation.x = Math.PI / 2;
+      bezel.position.set(hx, -0.45, 0.64);
+
+      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.1, 16), this.materials.headlight);
       lamp.rotation.x = Math.PI / 2;
-      lamp.position.set(hx, -0.4, 9.15);
-      train.add(lamp);
+      lamp.position.set(hx, -0.45, 0.66);
+
+      frontCab.add(bezel, lamp);
     });
 
-    const beamGeo = new THREE.ConeGeometry(2.2, 12.0, 8, 1, true);
+    // Luz de Alerta Central Superior
+    const topBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.1), new THREE.MeshStandardMaterial({
+      color: 0xfef08a,
+      emissive: 0xfef08a,
+      emissiveIntensity: 1.5
+    }));
+    topBeacon.position.set(0, 1.35, 0.65);
+    frontCab.add(topBeacon);
+
+    // Feixe Volumétrico de Luz dos Faróis (Projeção Consecutiva para Frente)
+    const beamGeo = new THREE.ConeGeometry(2.4, 14.0, 10, 1, true);
     const beam = new THREE.Mesh(beamGeo, this.materials.headlightBeam);
     beam.rotation.x = -Math.PI / 2;
-    beam.position.set(0, -0.4, 15.0);
-    train.add(beam);
+    beam.position.set(0, -0.45, 7.6);
+    frontCab.add(beam);
 
-    const cabinWin = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.1), this.materials.trainWindow);
-    cabinWin.position.set(0, 0.6, 9.12);
-    train.add(cabinWin);
+    train.add(frontCab);
+
+    // 3. LUZES TRASEIRAS VERMELHAS (LEDs de Cauda)
+    [-0.75, 0.75].forEach(rx => {
+      const tailLamp = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.14, 0.14, 0.06, 12),
+        new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0xef4444, emissiveIntensity: 1.4 })
+      );
+      tailLamp.rotation.x = Math.PI / 2;
+      tailLamp.position.set(rx, -0.45, -8.63);
+      train.add(tailLamp);
+    });
+
+    // 4. MÓDULOS DE AR-CONDICIONADO DUPLOS (HVAC) & PANTÓGRAFO NO TETO
+    const hvacMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.7, roughness: 0.3 });
+    const hvacGrilleMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 });
+
+    [-4.2, 4.2].forEach(hz => {
+      const hvac = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.28, 2.6), hvacMat);
+      hvac.position.set(0, 1.68, hz);
+      hvac.castShadow = true;
+
+      const grille = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.08, 2.0), hvacGrilleMat);
+      grille.position.set(0, 1.83, hz);
+
+      train.add(hvac, grille);
+    });
+
+    // Tubulação / Conector Elétrico Central no Teto
+    const roofPipe = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 14.0), hvacMat);
+    roofPipe.position.set(0.65, 1.62, 0);
+    train.add(roofPipe);
+
+    // 5. TRUQUES MECÂNICOS INFERIORES (BOGIES COM RODAS DE AÇO E RESERVATÓRIOS)
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.2 });
+    const bogieFrameMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.8, roughness: 0.4 });
+
+    [-5.0, 5.0].forEach(bz => {
+      const bogie = new THREE.Group();
+      bogie.position.set(0, -1.35, bz);
+
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.25, 2.8), bogieFrameMat);
+      bogie.add(frame);
+
+      // 4 Rodas de Trem de Aço por Bogie
+      [-0.95, 0.95].forEach(wx => {
+        [-0.9, 0.9].forEach(wz => {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.14, 16), wheelMat);
+          wheel.rotation.z = Math.PI / 2;
+          wheel.position.set(wx, 0, wz);
+          bogie.add(wheel);
+        });
+      });
+
+      // Cilindro do Freio de Ar
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.6, 12), hvacMat);
+      tank.rotation.x = Math.PI / 2;
+      tank.position.set(0, -0.05, 0);
+      bogie.add(tank);
+
+      train.add(bogie);
+    });
+
+    // 6. RAMPA DE ACESSO TRASEIRA COM FAIXAS ZEBRADAS (Permite Subir e Correr no Teto!)
+    const rampGroup = new THREE.Group();
+    rampGroup.position.set(0, -0.15, -9.8);
+
+    const rampMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 0.18, 3.8),
+      new THREE.MeshStandardMaterial({
+        map: textureAtlas.trainRamp,
+        metalness: 0.6,
+        roughness: 0.35,
+        side: THREE.DoubleSide
+      })
+    );
+    rampMesh.position.set(0, 0.85, 0);
+    rampMesh.rotation.x = Math.PI / 7.2;
+    rampMesh.castShadow = true;
+    rampMesh.receiveShadow = true;
+    rampGroup.add(rampMesh);
+
+    train.add(rampGroup);
+
+    // 7. MOEDAS DE OURO NO TETO DO VAGÃO (Recompensa por surfar no teto!)
+    for (let rz = -4.5; rz <= 4.5; rz += 3.0) {
+      if (Math.random() > 0.25) {
+        this.createRoofCoin(parent, laneX, localZ + rz);
+      }
+    }
 
     parent.add(train);
 
     const obstacleObj = {
-      name: 'Trem do Metrô',
+      name: theme.name,
       type: 'train',
       mesh: train,
       parent: parent,
       laneX: laneX,
       localZ: localZ,
       isMoving: isMoving,
-      moveSpeed: isMoving ? 14 : 0,
+      moveSpeed: isMoving ? 15 : 0,
       hornPlayed: false,
       passSoundPlayed: false,
       getAABB() {
         const pz = parent.position.z + train.position.z;
         return {
-          minX: laneX - (2.3 * 0.85) / 2,
-          maxX: laneX + (2.3 * 0.85) / 2,
+          minX: laneX - (2.35 * 0.85) / 2,
+          maxX: laneX + (2.35 * 0.85) / 2,
           minY: 0,
-          maxY: 3.4,
-          minZ: pz - 9.0,
-          maxZ: pz + 9.0
+          maxY: 3.40,
+          minZ: pz - 9.2,
+          maxZ: pz + 9.8
         };
       }
     };
@@ -364,6 +567,41 @@ export class ObstacleManager {
     if (isMoving) {
       this.movingTrains.push(obstacleObj);
     }
+  }
+
+  // 1.1 MOEDAS DE OURO SOBRE O TETO DO TREM
+  createRoofCoin(parent, laneX, localZ) {
+    const coin = new THREE.Mesh(this.geometries.coinCore, this.materials.goldCoin);
+    coin.rotation.x = Math.PI / 2;
+    coin.position.set(laneX, 3.65, localZ);
+    coin.castShadow = true;
+
+    const rim = new THREE.Mesh(this.geometries.coinRim, this.materials.goldCoinRim);
+    coin.add(rim);
+
+    parent.add(coin);
+
+    this.coins.push({
+      type: 'coin',
+      value: 1,
+      mesh: coin,
+      parent: parent,
+      laneX: laneX,
+      localZ: localZ,
+      isPicanha: false,
+      collected: false,
+      getAABB() {
+        const pz = parent.position.z + coin.position.z;
+        return {
+          minX: laneX - 0.45,
+          maxX: laneX + 0.45,
+          minY: 3.2,
+          maxY: 4.2,
+          minZ: pz - 0.45,
+          maxZ: pz + 0.45
+        };
+      }
+    });
   }
 
   createCLTFloatingCard(parent, laneX, localZ) {

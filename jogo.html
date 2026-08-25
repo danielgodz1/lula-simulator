@@ -2452,13 +2452,26 @@
           }).catch(() => {});
         }
 
-        // Se jogou com a Dilma, registra pontuação para desbloquear o Pablo Marçal (200 pts)
-        if (activeCharacter.id === 'dilma') {
-          const prevDilmaBest = CharacterInventory.getDilmaBest();
-          const newDilmaBest = CharacterInventory.recordDilmaScore(score);
-          if (newDilmaBest >= 200 && prevDilmaBest < 200) {
-            showBannerAlert('🎉 PABLO MARÇAL DESBLOQUEADO (200 pts com a Dilma)!', false);
+        // Se jogou com o Nikolas Ferreira, registra pontuação para desbloquear o Pablo Marçal (900 pts)
+        if (activeCharacter.id === 'nikolas') {
+          const prevNikolasBest = CharacterInventory.getNikolasBest();
+          const newNikolasBest = CharacterInventory.recordNikolasScore(score);
+          if (newNikolasBest >= 900 && prevNikolasBest < 900) {
+            showBannerAlert('🎉 PABLO MARÇAL DESBLOQUEADO (900 pts com Nikolas Ferreira)!', false);
           }
+        }
+
+        // Se jogou com a Dilma, registra pontuação
+        if (activeCharacter.id === 'dilma') {
+          CharacterInventory.recordDilmaScore(score);
+        }
+
+        // Checagem de desbloqueio do Nikolas Ferreira (300 pts Flappy + 300 km 3D)
+        const currentFlappyBest = Math.max(score, parseInt(localStorage.getItem('lula_best') || '0', 10));
+        const currentRunnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
+        if (currentFlappyBest >= 300 && currentRunnerBest >= 300 && !CharacterInventory.isUnlocked('nikolas')) {
+          CharacterInventory.recordUnlockedCharacter('nikolas');
+          showBannerAlert('🎉 NIKOLAS FERREIRA DESBLOQUEADO (300 pts Flappy + 300 km 3D)!', false);
         }
         
         // REGRAS DE ÁUDIO DE MORTE SOLICITADAS

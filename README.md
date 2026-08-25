@@ -44,10 +44,10 @@
 | 🕊️ **Lula da Silva** | *O Presidente* | **Inicial (Padrão)** | Voo suave e tolerante a colisões leves. Acúmulo padrão de picanhas. |
 | 👠 **Janja da Silva** | *A Primeira-Dama* | **30 Picanhas** 🥩 | Hitbox reduzida e voo ágil com aura violeta/rosa. |
 | 🏛️ **Alexandre de Moraes** | *O Ministro* | **50 Picanhas** 🥩 | Voo imponente com aura azul e tolerância judicial a impactos. |
-| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **100 Pts Flappy + 300 km Corredor** 🏃 | **Habilidade Viral**: Velocidade acelerada com 2x picanhas. A cada 1 minuto de partida, o Lula aparece flutuando concedendo **20 segundos de lentidão** e pontos triplicados (3x)! |
-| 🏍️ **Jair Bolsonaro** | *O Ex-Presidente* | **100 Picanhas** 🥩 | **Modo Motociata**: Aura verde-amarela acelerada e impulsão aerodinâmica. |
-| 🥔 **Dilma Rousseff** | *A Estocadora de Vento* | **100 Picanhas** 🥩 | **Saudação à Mandioca**: Solta chuva contínua de mandiocas e aipins dourados (`🥔`, `🍠`, `🌾`) pelos canos. Acumula picanhas normalmente no placar! |
-| 💵 **Pablo Marçal** | *O Homem do Código* | **Liberar Dilma + Fazer 200 pts com ela** 🏆 | **Mindset Quântico 3X**: Velocidade 1.35x maior, **triplica todos os pontos obtidos (3X score)** e joga chuva de notas de dinheiro e dólares (`💵`, `💸`, `💰`, `🤑`) pelo ar. |
+| ⚡ **Nikolas Ferreira** | *O Viral da Internet* | **300 Pts Flappy + 300 km Corredor** 🏃 | **Habilidade Viral**: Velocidade acelerada com 2x picanhas. A cada 1 minuto de partida, o Lula aparece flutuando concedendo **20 segundos de lentidão** e pontos triplicados (3x)! |
+| 🏍️ **Jair Bolsonaro** | *O Capitão Patriota* | **60 Picanhas** 🥩 | **Voo Patriota**: Espaço entre os canos 15% mais aberto para desvios fáceis e seguros. |
+| 🥔 **Dilma Rousseff** | *Coração Valente* | **100 Picanhas** 🥩 | **Estocando Vento**: Gravidade 10% mais suave permitindo planeios controlados com facilidade. |
+| 💵 **Pablo Marçal** | *O Homem do Código* | **Liberar Nikolas + Fazer 900 pts com ele** 🏆 | **Mindset Quântico 3X**: Velocidade 1.35x maior, **triplica todos os pontos obtidos (3X score)** e joga chuva de notas de dinheiro e dólares (`💵`, `💸`, `💰`, `🤑`) pelo ar. |
 
 ---
 

@@ -336,11 +336,14 @@
 
       const localFbs = JSON.parse(localStorage.getItem('lula_feedbacks_local') || '[]');
       localFbs.unshift(newFb);
-      localStorage.setItem('lula_feedbacks_local', JSON.stringify(localFbs.slice(0, 15)));
+      localStorage.setItem('lula_feedbacks_local', JSON.stringify(localFbs.slice(0, 20)));
 
       btn.disabled = false; btn.textContent = '🚀 ENVIAR FEEDBACK';
       document.getElementById('fbComment').value = '';
-      loadFeedbacksList();
+      selectedStars = 0;
+      starBtns.forEach(b => b.classList.remove('active'));
+
+      await loadFeedbacksList();
     };
 
     async function loadFeedbacksList() {

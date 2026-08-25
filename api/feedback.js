@@ -1,4 +1,5 @@
-// api/feedback.js — Vercel Serverless Function com sanitização total contra Script Injection (XSS), CORS restrito e Proteção Anti-Spam
+// api/feedback.js — Vercel Serverless Function com Firebase Admin SDK, sanitização total contra Script Injection (XSS), CORS restrito e Proteção Anti-Spam
+import admin, { db, hasAdminCredentials } from './_firebaseAdmin.js';
 import { Resend } from 'resend';
 import { applyCors } from './_cors.js';
 
@@ -59,32 +60,75 @@ export default async function handler(req, res) {
   };
 
   if (req.method === 'GET') {
-    const limit = Math.min(50, parseInt(req.query.limit || '30', 10));
+    const limit = Math.min(60, Math.max(1, parseInt(req.query.limit || '30', 10)));
     try {
+      if (hasAdminCredentials && db) {
+        try {
+          const snap = await db.collection('lula_feedbacks')
+            .orderBy('createdAt', 'desc')
+            .limit(limit)
+            .get();
+
+          if (!snap.empty) {
+            const feedbacks = snap.docs.map(doc => {
+              const data = doc.data() || {};
+              const country = sanitizeStr(data.country || 'BR', 5).toUpperCase();
+              let createdAtStr = '';
+              if (data.createdAt) {
+                if (typeof data.createdAt.toDate === 'function') {
+                  createdAtStr = data.createdAt.toDate().toISOString();
+                } else if (typeof data.createdAt === 'string') {
+                  createdAtStr = data.createdAt;
+                } else if (data.createdAt._seconds) {
+                  createdAtStr = new Date(data.createdAt._seconds * 1000).toISOString();
+                }
+              }
+              return {
+                id: doc.id,
+                name: sanitizeStr(data.name || 'Anônimo', 40),
+                stars: Math.max(1, Math.min(5, parseInt(data.stars || 5, 10))),
+                comment: sanitizeStr(data.comment || data.message || '', 500),
+                createdAt: createdAtStr || new Date().toISOString(),
+                country: country,
+                countryName: sanitizeStr(data.countryName || COUNTRY_NAMES[country] || 'Brasil', 40),
+                flag: sanitizeStr(data.flag || getCountryFlag(country), 10)
+              };
+            }).filter(fb => fb.comment.length > 0);
+
+            return res.status(200).json({ success: true, feedbacks });
+          }
+        } catch (adminErr) {
+          console.warn('Aviso: Fallback Firestore REST no GET:', adminErr.message);
+        }
+      }
+
+      // Fallback REST
       const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks?pageSize=${limit}`;
       const fireRes = await fetch(url);
-      if (!fireRes.ok) throw new Error('Firestore response error');
-      const data = await fireRes.json();
-      if (data.documents && data.documents.length > 0) {
-        const feedbacks = data.documents
-          .map(doc => {
-            const country = sanitizeStr(doc.fields?.country?.stringValue || 'BR', 5).toUpperCase();
-            return {
-              name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
-              stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
-              comment: sanitizeStr(doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '', 500),
-              createdAt: doc.fields?.createdAt?.timestampValue || '',
-              country: country,
-              countryName: sanitizeStr(doc.fields?.countryName?.stringValue || COUNTRY_NAMES[country] || 'Brasil', 40),
-              flag: sanitizeStr(doc.fields?.flag?.stringValue || getCountryFlag(country), 10)
-            };
-          })
-          .filter(fb => fb.comment.length > 0);
-        return res.status(200).json({ success: true, feedbacks });
+      if (fireRes.ok) {
+        const data = await fireRes.json();
+        if (data.documents && data.documents.length > 0) {
+          const feedbacks = data.documents
+            .map(doc => {
+              const country = sanitizeStr(doc.fields?.country?.stringValue || 'BR', 5).toUpperCase();
+              return {
+                name: sanitizeStr(doc.fields?.name?.stringValue || 'Anônimo', 40),
+                stars: Math.max(1, Math.min(5, parseInt(doc.fields?.stars?.integerValue || '5', 10))),
+                comment: sanitizeStr(doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '', 500),
+                createdAt: doc.fields?.createdAt?.timestampValue || '',
+                country: country,
+                countryName: sanitizeStr(doc.fields?.countryName?.stringValue || COUNTRY_NAMES[country] || 'Brasil', 40),
+                flag: sanitizeStr(doc.fields?.flag?.stringValue || getCountryFlag(country), 10)
+              };
+            })
+            .filter(fb => fb.comment.length > 0);
+          return res.status(200).json({ success: true, feedbacks });
+        }
       }
       return res.status(200).json({ success: true, feedbacks: [] });
     } catch (e) {
-      return res.status(200).json({ success: false, feedbacks: [] });
+      console.error('❌ Erro ao consultar feedbacks:', e);
+      return res.status(200).json({ success: true, feedbacks: [] });
     }
   }
 
@@ -117,7 +161,7 @@ export default async function handler(req, res) {
       feedbackRateLimits.set(ip, { count: 1, first: now });
     } else {
       limit.count += 1;
-      if (limit.count > 6) {
+      if (limit.count > 10) {
         return res.status(429).json({
           success: false,
           error: 'Muitas avaliações enviadas recentemente. Por favor aguarde um momento.'
@@ -126,25 +170,54 @@ export default async function handler(req, res) {
     }
 
     try {
-      const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks`;
-      const payload = {
-        fields: {
-          name: { stringValue: cleanName },
-          stars: { integerValue: numStars.toString() },
-          comment: { stringValue: cleanComment },
-          country: { stringValue: cleanCountry },
-          countryName: { stringValue: cleanCountryName },
-          flag: { stringValue: cleanFlag },
-          createdAt: { timestampValue: new Date().toISOString() }
-        }
+      const feedbackPayload = {
+        name: cleanName,
+        stars: numStars,
+        comment: cleanComment,
+        country: cleanCountry,
+        countryName: cleanCountryName,
+        flag: cleanFlag,
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
       };
 
-      const fireRes = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      let saved = false;
 
+      if (hasAdminCredentials && db) {
+        try {
+          await db.collection('lula_feedbacks').add(feedbackPayload);
+          saved = true;
+        } catch (adminErr) {
+          console.warn('Aviso: Fallback Firestore REST no POST:', adminErr.message);
+        }
+      }
+
+      if (!saved) {
+        // Fallback REST
+        const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_feedbacks`;
+        const payload = {
+          fields: {
+            name: { stringValue: cleanName },
+            stars: { integerValue: numStars.toString() },
+            comment: { stringValue: cleanComment },
+            country: { stringValue: cleanCountry },
+            countryName: { stringValue: cleanCountryName },
+            flag: { stringValue: cleanFlag },
+            createdAt: { timestampValue: new Date().toISOString() }
+          }
+        };
+
+        const fireRes = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (fireRes.ok) {
+          saved = true;
+        }
+      }
+
+      // Notificação opcional por e-mail via Resend
       const recipient = process.env.CONTACT_EMAIL;
       if (resend && recipient) {
         try {
@@ -166,14 +239,14 @@ export default async function handler(req, res) {
         } catch(e) {}
       }
 
-      if (fireRes.ok) {
-        return res.status(200).json({ success: true, message: 'Avaliação enviada com sucesso!' });
-      }
+      return res.status(200).json({ success: true, message: 'Avaliação enviada com sucesso!' });
     } catch (e) {
-      return res.status(200).json({ success: true, fallback: true });
+      console.error('❌ Falha ao salvar feedback:', e);
+      return res.status(500).json({
+        success: false,
+        error: `Erro ao registrar avaliação: ${e.message || 'Falha no banco de dados.'}`
+      });
     }
-
-    return res.status(200).json({ success: true });
   }
 
   return res.status(405).json({ success: false, error: 'Método não permitido.' });

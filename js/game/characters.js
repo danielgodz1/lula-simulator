@@ -53,10 +53,10 @@ export const CHARACTERS = [
     name: 'Nikolas Ferreira',
     nickname: 'O Deputado Viral',
     title: 'Nikolas Ferreira — O Deputado Viral',
-    desc: 'Requer 100 pontos no Flappy Lula e 300 km no Empresário 3D! Velocidade turbo com dobro de picanhas (2X)!',
+    desc: 'Requer 300 pontos no Flappy Lula (com qualquer personagem) e 300 km no Empresário 3D! Velocidade turbo com dobro de picanhas (2X)!',
     sprite: 'img/nikolas.png',
     flySprite: 'img/characters/nikolas_fly.png',
-    requiredPicanhas: 0, // Desbloqueio especial por missão: 100 pts no Flappy + 300 km no 3D
+    requiredPicanhas: 0, // Desbloqueio especial por missão: 300 pts no Flappy + 300 km no 3D
     skillName: '⚡ Ritmo Acelerado (2x Picanhas)',
     skillDesc: 'Velocidade turbo e 2x picanhas. A cada 1 min, o Lula aparece dando 20s de lentidão e 3x pontos!',
     auraColor: '#06b6d4',
@@ -86,12 +86,11 @@ export const CHARACTERS = [
     modifier: (state) => {
       state.HITBOX_WIDTH_RATIO = 0.062;
       state.HITBOX_HEIGHT_RATIO = 0.032;
-      state.GAP_RATIO = 0.44;
-      state.SPEED_MULT = 1.0;
+      state.GAP_RATIO = 0.45;
+      state.SPEED_MULT = 0.98;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
       state.hasShield = true;
-      state.shieldCharges = 1;
       state.isTurboAllowed = false;
     }
   },
@@ -100,42 +99,41 @@ export const CHARACTERS = [
     name: 'Jair Bolsonaro',
     nickname: 'O Capitão',
     title: 'Jair Bolsonaro — O Capitão',
-    desc: 'Faixa presidencial e pose clássica. Acumule 4 canos perfeitos para ativar o Modo Turbo!',
+    desc: 'Faixa presidencial e visual patriota. Espaço entre os canos ampliado para manobras fáceis.',
     sprite: 'img/bolsonaro.png',
     flySprite: 'img/characters/bolsonaro_fly.png',
-    requiredPicanhas: 200,
-    skillName: '🚀 Modo Turbo Patriota',
-    skillDesc: 'A cada 4 canos perfeitos sem bater, ativa 4s de super velocidade e ímã de picanha!',
+    requiredPicanhas: 60,
+    skillName: '🎯 Voo Patriota (Espaço Ampliado)',
+    skillDesc: 'Espaço entre os canos 15% mais aberto para desvios fáceis e seguros.',
     auraColor: '#22c55e',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.064;
-      state.HITBOX_HEIGHT_RATIO = 0.034;
-      state.GAP_RATIO = 0.43;
-      state.SPEED_MULT = 1.0;
+      state.HITBOX_WIDTH_RATIO = 0.060;
+      state.HITBOX_HEIGHT_RATIO = 0.030;
+      state.GAP_RATIO = 0.50;
+      state.SPEED_MULT = 0.95;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
       state.hasShield = false;
-      state.isTurboAllowed = true;
-      state.comboGoal = 4;
+      state.isTurboAllowed = false;
     }
   },
   {
     id: 'dilma',
     name: 'Dilma Rousseff',
-    nickname: 'A Estocadora de Vento',
-    title: 'Dilma Rousseff — A Estocadora',
-    desc: 'Saudação à mandioca! Ao passar pelos canos, chovem mandiocas douradas (pontua picanhas normalmente)!',
+    nickname: 'A Saudadora da Mandioca',
+    title: 'Dilma Rousseff — Coração Valente',
+    desc: 'Saudação à mandioca e estocagem de vento! Velocidade moderada e resistência incomparável.',
     sprite: 'img/dilma.png',
     flySprite: 'img/characters/dilma_fly.png',
     requiredPicanhas: 100, // Liberada com 100 picanhas
-    skillName: '🥔 Saudação à Mandioca',
-    skillDesc: 'Chuva de mandiocas e aipins nos canos! Acúmulo de picanhas padrão e voo suave.',
+    skillName: '💨 Estocando Vento (Gravidade Suave)',
+    skillDesc: 'Gravidade 10% mais suave permitindo planeios controlados com facilidade.',
     auraColor: '#ef4444',
     modifier: (state) => {
-      state.HITBOX_WIDTH_RATIO = 0.063;
-      state.HITBOX_HEIGHT_RATIO = 0.033;
-      state.GAP_RATIO = 0.43;
-      state.SPEED_MULT = 1.0;
+      state.HITBOX_WIDTH_RATIO = 0.062;
+      state.HITBOX_HEIGHT_RATIO = 0.032;
+      state.GAP_RATIO = 0.44;
+      state.SPEED_MULT = 0.96;
       state.EXTRA_SCORE_PER_PIPE = 1;
       state.spawnExtraLikes = false;
       state.hasShield = false;
@@ -147,10 +145,10 @@ export const CHARACTERS = [
     name: 'Pablo Marçal',
     nickname: 'O Homem do Código',
     title: 'Pablo Marçal — Mindset Quântico',
-    desc: 'Requer liberar a Dilma e conquistar 200 pontos jogando com a Dilma! Velocidade ágil, 3X pontos e chuva de dinheiro!',
+    desc: 'Requer liberar o Nikolas Ferreira e conquistar 900 pontos jogando com o Nikolas! Velocidade ágil, 3X pontos e chuva de dinheiro!',
     sprite: 'img/marcal.png',
     flySprite: 'img/characters/marcal_fly.png',
-    requiredPicanhas: 0, // Desbloqueio especial por missão da Dilma
+    requiredPicanhas: 0, // Desbloqueio especial por missão do Nikolas: 900 pts
     skillName: '💵 Mindset 3X & Chuva de Grana',
     skillDesc: 'Ritmo acelerado, triplica os pontos obtidos (3X por cano) e solta chuva de notas e dólares!',
     auraColor: '#0ea5e9',
@@ -171,6 +169,7 @@ const SELECTED_CHAR_KEY = 'flappy_selected_character_id';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
 const LIFETIME_PICANHAS_KEY = 'flappy_lifetime_accumulated_picanhas';
 const DILMA_BEST_SCORE_KEY = 'flappy_dilma_record_score';
+const NIKOLAS_BEST_SCORE_KEY = 'flappy_nikolas_record_score';
 
 export class CharacterInventory {
   static getTotalPicanhas() {
@@ -212,6 +211,42 @@ export class CharacterInventory {
       this.syncDilmaScoreToCloud(newBest);
     }
     return newBest;
+  }
+
+  static getNikolasBest() {
+    return parseInt(localStorage.getItem(NIKOLAS_BEST_SCORE_KEY) || '0', 10);
+  }
+
+  static recordNikolasScore(score) {
+    const num = parseInt(score, 10) || 0;
+    const current = this.getNikolasBest();
+    const newBest = Math.max(num, current);
+    localStorage.setItem(NIKOLAS_BEST_SCORE_KEY, newBest.toString());
+    if (newBest > 0) {
+      this.syncNikolasScoreToCloud(newBest);
+    }
+    return newBest;
+  }
+
+  static async syncNikolasScoreToCloud(score) {
+    try {
+      const rawUser = localStorage.getItem('lula_current_user_v2');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u && u.username) {
+          u.nikolasScore = Math.max(u.nikolasScore || 0, score);
+          localStorage.setItem('lula_current_user_v2', JSON.stringify(u));
+          fetch('/api/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: u.username,
+              nikolasScore: score
+            })
+          }).catch(() => {});
+        }
+      }
+    } catch(e) {}
   }
 
   static addPicanhas(amount) {
@@ -387,7 +422,7 @@ export class CharacterInventory {
       return true;
     }
 
-    // 2. REQUISITO DO NIKOLAS FERREIRA: 100 pts no Flappy Lula E 300 km no Empresário 3D
+    // 2. REQUISITO DO NIKOLAS FERREIRA: 300 pts no Flappy Lula (com qualquer personagem) E 300 km no Empresário 3D
     if (char.id === 'nikolas') {
       const flappyBest = Math.max(
         parseInt(localStorage.getItem('lula_best') || '0', 10),
@@ -397,18 +432,18 @@ export class CharacterInventory {
         parseInt(localStorage.getItem('run_best') || '0', 10),
         parseInt(localStorage.getItem('run_synced_best') || '0', 10)
       );
-      const meetsNikolasReq = flappyBest >= 100 && runnerBest >= 300;
+      const meetsNikolasReq = flappyBest >= 300 && runnerBest >= 300;
       if (meetsNikolasReq) {
         this.recordUnlockedCharacter('nikolas');
       }
       return meetsNikolasReq;
     }
 
-    // 3. DESBLOQUEIO ESPECIAL DO PABLO MARÇAL (200 pts com a Dilma)
+    // 3. DESBLOQUEIO ESPECIAL DO PABLO MARÇAL (900 pts com Nikolas Ferreira)
     if (char.id === 'marcal') {
-      const isDilmaUnlocked = this.isUnlocked('dilma');
-      const dilmaBest = Math.max(this.getDilmaBest(), parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10));
-      const meetsMarcalReq = isDilmaUnlocked && dilmaBest >= 200;
+      const isNikolasUnlocked = this.isUnlocked('nikolas');
+      const nikolasBest = Math.max(this.getNikolasBest(), parseInt(localStorage.getItem('flappy_nikolas_record_score') || '0', 10));
+      const meetsMarcalReq = isNikolasUnlocked && nikolasBest >= 900;
       if (meetsMarcalReq) {
         this.recordUnlockedCharacter('marcal');
       }
@@ -458,16 +493,16 @@ export class CharacterInventory {
     if (char.id === 'nikolas') {
       const flappyBest = parseInt(localStorage.getItem('lula_best') || '0', 10);
       const runnerBest = parseInt(localStorage.getItem('run_best') || '0', 10);
-      return `🔒 100 pts Flappy + 300 km 3D (${flappyBest}/100 pts · ${runnerBest}/300 km)`;
+      return `🔒 300 pts Flappy + 300 km 3D (${flappyBest}/300 pts · ${runnerBest}/300 km)`;
     }
 
     if (char.id === 'marcal') {
-      const isDilmaUnlocked = this.isUnlocked('dilma');
-      const dilmaBest = this.getDilmaBest();
-      if (!isDilmaUnlocked) {
-        return `🔒 Requer liberar a Dilma (100 🥩)`;
+      const isNikolasUnlocked = this.isUnlocked('nikolas');
+      const nikolasBest = this.getNikolasBest();
+      if (!isNikolasUnlocked) {
+        return `🔒 Requer liberar o Nikolas (300 pts Flappy + 300 km 3D)`;
       }
-      return `🔒 Faça 200 pts com a Dilma (${dilmaBest}/200 pts)`;
+      return `🔒 Faça 900 pts com o Nikolas (${nikolasBest}/900 pts)`;
     }
 
     return `🔒 ${char.requiredPicanhas} 🥩 (${this.getTotalPicanhas()}/${char.requiredPicanhas})`;

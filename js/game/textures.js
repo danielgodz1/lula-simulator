@@ -11,6 +11,17 @@ class TextureAtlasManager {
     this.morroParallaxTexture = null;
     this.goldCoinTexture = null;
     this.softShadowTexture = null;
+
+    // Texturas de Alta Definição dos Trens de Metrô
+    this.trainSideRio = null;
+    this.trainSideSP = null;
+    this.trainSideBR = null;
+    this.trainFrontRio = null;
+    this.trainFrontSP = null;
+    this.trainFrontBR = null;
+    this.trainRoof = null;
+    this.trainRamp = null;
+
     this.init();
   }
 
@@ -20,6 +31,7 @@ class TextureAtlasManager {
     this.createMorroParallaxTexture();
     this.createGoldCoinTexture();
     this.createSoftShadowTexture();
+    this.createSubwayTrainTextures();
   }
 
   createSoftShadowTexture() {
@@ -407,6 +419,362 @@ class TextureAtlasManager {
     this.morroParallaxTexture = new THREE.CanvasTexture(canvas);
     this.morroParallaxTexture.wrapS = THREE.RepeatWrapping;
     this.morroParallaxTexture.wrapT = THREE.ClampToEdgeWrapping;
+  }
+
+  /**
+   * Gera Texturas Procedurais de Alta Fidelidade para os Trens 3D (Subway Surfers)
+   */
+  createSubwayTrainTextures() {
+    // 1. Texturas Laterais dos Vagões (Aço Escovado, Portas Automáticas, Janelas Iluminadas e Pinturas Oficiais)
+    const createSideCanvas = (theme) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      // Fundo Base: Aço Inoxidável Escovado Metálico
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+      if (theme.id === 'br') {
+        bgGrad.addColorStop(0, '#1e293b');
+        bgGrad.addColorStop(0.3, '#334155');
+        bgGrad.addColorStop(0.7, '#1e293b');
+        bgGrad.addColorStop(1, '#0f172a');
+      } else {
+        bgGrad.addColorStop(0, '#94a3b8');
+        bgGrad.addColorStop(0.2, '#cbd5e1');
+        bgGrad.addColorStop(0.5, '#e2e8f0');
+        bgGrad.addColorStop(0.8, '#cbd5e1');
+        bgGrad.addColorStop(1, '#64748b');
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 256);
+
+      // Micro-ranhuras de Aço Escovado
+      ctx.fillStyle = theme.id === 'br' ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.05)';
+      for (let y = 0; y < 256; y += 4) {
+        ctx.fillRect(0, y, 1024, 1);
+      }
+
+      // Faixas de Pintura Aerodinâmicas Superiores e Inferiores
+      ctx.fillStyle = theme.stripePrimary;
+      ctx.fillRect(0, 16, 1024, 28);
+      ctx.fillRect(0, 196, 1024, 38);
+
+      ctx.fillStyle = theme.stripeSecondary;
+      ctx.fillRect(0, 44, 1024, 10);
+      ctx.fillRect(0, 184, 1024, 12);
+
+      ctx.fillStyle = theme.stripeAccent || '#ffffff';
+      ctx.fillRect(0, 54, 1024, 4);
+      ctx.fillRect(0, 178, 1024, 6);
+
+      // 4 Portas Automáticas Duplas Deslizantes com Avisos de Segurança
+      const doorPositions = [80, 320, 580, 820];
+      doorPositions.forEach(dx => {
+        // Moldura da Porta
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(dx, 36, 110, 180);
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(dx, 36, 110, 180);
+
+        // Folhas da Porta Dupla
+        ctx.fillStyle = theme.doorColor || '#64748b';
+        ctx.fillRect(dx + 4, 40, 48, 172);
+        ctx.fillRect(dx + 58, 40, 48, 172);
+
+        // Vidros das Portas (com iluminação interna suave)
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(dx + 10, 52, 36, 68);
+        ctx.fillRect(dx + 64, 52, 36, 68);
+
+        ctx.fillStyle = theme.windowGlow || '#fef08a';
+        ctx.fillRect(dx + 14, 56, 28, 60);
+        ctx.fillRect(dx + 68, 56, 28, 60);
+
+        // Maçanetas / Puxadores Cromados
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(dx + 46, 130, 4, 30);
+        ctx.fillRect(dx + 60, 130, 4, 30);
+
+        // Faixa Zebrada de Alerta no Rodapé da Porta
+        ctx.fillStyle = '#eab308';
+        ctx.fillRect(dx + 4, 198, 102, 12);
+        ctx.fillStyle = '#000000';
+        for (let z = dx + 6; z < dx + 104; z += 12) {
+          ctx.beginPath();
+          ctx.moveTo(z, 210);
+          ctx.lineTo(z + 6, 198);
+          ctx.lineTo(z + 10, 198);
+          ctx.lineTo(z + 4, 210);
+          ctx.fill();
+        }
+      });
+
+      // 6 Grandes Janelas Panorâmicas de Passageiros
+      const winPositions = [205, 445, 705, 945];
+      winPositions.forEach(wx => {
+        // Moldura em Alumínio Escuro
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(wx, 55, 95, 105);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(wx, 55, 95, 105);
+
+        // Vidro Fumê com Reflexo e Brilho Interior dos Passageiros
+        const winGrad = ctx.createLinearGradient(wx, 55, wx + 95, 160);
+        winGrad.addColorStop(0, '#1e293b');
+        winGrad.addColorStop(0.4, theme.windowGlow || '#fef08a');
+        winGrad.addColorStop(0.7, '#38bdf8');
+        winGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = winGrad;
+        ctx.fillRect(wx + 4, 59, 87, 97);
+
+        // Divisória Central da Janela Dupla
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(wx + 46, 55, 4, 105);
+
+        // Cortina / Silhueta Suave
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+        ctx.fillRect(wx + 6, 61, 83, 20);
+      });
+
+      // Letreiro / Inscrições de Linha do Metrô
+      ctx.font = 'bold 24px Bangers, sans-serif';
+      ctx.fillStyle = theme.textColor || '#ffffff';
+      ctx.fillText(theme.name, 450, 36);
+
+      ctx.font = 'bold 16px monospace';
+      ctx.fillStyle = '#facc15';
+      ctx.fillText('VAGÃO 04 • AR-CONDICIONADO ❄️', 690, 36);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    };
+
+    // 2. Texturas Frontais das Cabines dos Trens (Letreiro LED Digital, Para-brisa, Faróis e Grelha)
+    const createFrontCanvas = (theme) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Fundo Metálico
+      ctx.fillStyle = theme.frontBg || '#0f172a';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Moldura Aerodinâmica da Cabine
+      ctx.fillStyle = theme.stripePrimary;
+      ctx.fillRect(0, 0, 512, 60);
+      ctx.fillRect(0, 380, 512, 132);
+
+      ctx.fillStyle = theme.stripeSecondary;
+      ctx.fillRect(0, 60, 512, 16);
+      ctx.fillRect(0, 360, 512, 20);
+
+      // Letreiro LED de Destino Digital (Matriz Luminosa)
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(56, 82, 400, 54);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(56, 82, 400, 54);
+
+      ctx.fillStyle = theme.ledColor || '#facc15';
+      ctx.font = '900 32px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(theme.destText, 256, 110);
+
+      // Para-brisa Gigante da Cabine com Reflexo Futurista
+      const winGrad = ctx.createLinearGradient(60, 145, 452, 340);
+      winGrad.addColorStop(0, '#0284c7');
+      winGrad.addColorStop(0.4, '#38bdf8');
+      winGrad.addColorStop(0.7, '#0f172a');
+      winGrad.addColorStop(1, '#0284c7');
+      ctx.fillStyle = winGrad;
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(50, 145, 412, 195, 20) : ctx.fillRect(50, 145, 412, 195);
+      ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Palhetas do Limpador de Para-brisa
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(170, 325); ctx.lineTo(210, 220);
+      ctx.moveTo(330, 325); ctx.lineTo(370, 220);
+      ctx.stroke();
+
+      // Emblema Central do Metrô
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.arc(256, 400, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('M', 256, 400);
+
+      // Grelha Inferior e Pára-choque Industrial com Faixas Zebradas
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(40, 440, 432, 60);
+      ctx.fillStyle = '#facc15';
+      for (let x = 40; x < 460; x += 32) {
+        ctx.beginPath();
+        ctx.moveTo(x, 500);
+        ctx.lineTo(x + 18, 440);
+        ctx.lineTo(x + 30, 440);
+        ctx.lineTo(x + 12, 500);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    };
+
+    // 3. Textura de Teto Corrugado
+    const createRoofCanvas = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(0, 0, 512, 1024);
+
+      // Nervuras de Alumínio Corrugado
+      ctx.fillStyle = '#64748b';
+      for (let x = 0; x < 512; x += 16) {
+        ctx.fillRect(x, 0, 4, 1024);
+      }
+
+      // Passarela Antiderrapante Central (Walkway de Corrida)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(160, 0, 192, 1024);
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(160, 0, 192, 1024);
+
+      // Textura em Diamante Antiderrapante
+      ctx.fillStyle = '#475569';
+      for (let y = 10; y < 1024; y += 24) {
+        for (let x = 175; x < 340; x += 24) {
+          ctx.fillRect(x, y, 10, 10);
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    };
+
+    // 4. Textura da Rampa Traseira Antiderrapante com Faixas Zebradas
+    const createRampCanvas = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      // Chapa de Aço Diamantada
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 0, 256, 512);
+
+      // Faixas Diagonais Zebradas de Advertência
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(0, 0, 256, 512);
+      ctx.fillStyle = '#000000';
+      for (let y = -256; y < 768; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(256, y + 256);
+        ctx.lineTo(256, y + 285);
+        ctx.lineTo(0, y + 29);
+        ctx.fill();
+      }
+
+      // Bordas Metálicas
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(0, 0, 256, 512);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.ClampToEdgeWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    };
+
+    // Instanciação das texturas com as três grandes pinturas de trem
+    this.trainSideRio = createSideCanvas({
+      id: 'rio',
+      name: '🚆 METRÔ RIO • LINHA 1',
+      stripePrimary: '#0284c7',
+      stripeSecondary: '#06b6d4',
+      stripeAccent: '#ffdf00',
+      doorColor: '#64748b',
+      windowGlow: '#fef08a',
+      textColor: '#ffffff'
+    });
+
+    this.trainSideSP = createSideCanvas({
+      id: 'sp',
+      name: '🚆 METRÔ SÃO PAULO',
+      stripePrimary: '#dc2626',
+      stripeSecondary: '#eab308',
+      stripeAccent: '#ffffff',
+      doorColor: '#475569',
+      windowGlow: '#38bdf8',
+      textColor: '#ffffff'
+    });
+
+    this.trainSideBR = createSideCanvas({
+      id: 'br',
+      name: '⚡ EXPRESSO BRASIL 3D',
+      stripePrimary: '#16a34a',
+      stripeSecondary: '#facc15',
+      stripeAccent: '#06b6d4',
+      doorColor: '#334155',
+      windowGlow: '#86efac',
+      textColor: '#facc15'
+    });
+
+    this.trainFrontRio = createFrontCanvas({
+      stripePrimary: '#0284c7',
+      stripeSecondary: '#06b6d4',
+      destText: '01 CENTRAL DO BRASIL',
+      ledColor: '#facc15',
+      frontBg: '#0f172a'
+    });
+
+    this.trainFrontSP = createFrontCanvas({
+      stripePrimary: '#dc2626',
+      stripeSecondary: '#eab308',
+      destText: '04 ESTAÇÃO DA LUZ',
+      ledColor: '#facc15',
+      frontBg: '#1e293b'
+    });
+
+    this.trainFrontBR = createFrontCanvas({
+      stripePrimary: '#16a34a',
+      stripeSecondary: '#facc15',
+      destText: '99 EXPRESSO FAVELA',
+      ledColor: '#38bdf8',
+      frontBg: '#0f172a'
+    });
+
+    this.trainRoof = createRoofCanvas();
+    this.trainRamp = createRampCanvas();
   }
 }
 

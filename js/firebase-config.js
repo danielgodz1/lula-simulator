@@ -250,8 +250,36 @@ export async function sendFeedback(feedbackData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(feedbackData)
     });
-    if (apiRes.ok) return { success: true };
-  } catch (e) {}
+    if (apiRes.ok) {
+      const data = await apiRes.json();
+      if (data.success) {
+        // Atualiza imediatamente o cache de feedbacks com o novo item
+        try {
+          const cacheKey = 'lula_cache_feedbacks';
+          const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]');
+          cached.unshift({
+            name: feedbackData.name || 'Anônimo',
+            stars: feedbackData.stars || 5,
+            comment: feedbackData.comment || '',
+            country: feedbackData.country || 'BR',
+            countryName: feedbackData.countryName || 'Brasil',
+            flag: feedbackData.flag || '🇧🇷',
+            createdAt: feedbackData.createdAt || new Date().toISOString()
+          });
+          localStorage.setItem(cacheKey, JSON.stringify(cached.slice(0, 50)));
+        } catch(e) {}
+
+        return { success: true, message: data.message || 'Avaliação enviada com sucesso!' };
+      } else {
+        return { success: false, error: data.error || 'Falha ao enviar avaliação.' };
+      }
+    } else {
+      const errData = await apiRes.json().catch(() => ({}));
+      return { success: false, error: errData.error || `Erro HTTP ${apiRes.status}` };
+    }
+  } catch (e) {
+    console.warn('Aviso no envio de feedback via API, tentando fallback:', e);
+  }
 
   try {
     const url = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_feedbacks`;
@@ -271,11 +299,12 @@ export async function sendFeedback(feedbackData) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    if (res.ok) return { success: true };
+    if (res.ok) return { success: true, message: 'Avaliação enviada com sucesso!' };
+    const errObj = await res.json().catch(() => ({}));
+    return { success: false, error: errObj.error?.message || `Erro Firestore ${res.status}` };
   } catch (e) {
     return { success: false, error: e.message };
   }
-  return { success: false, error: 'Offline fallback' };
 }
 
 // 4. OBTER AVALIAÇÕES COM CACHE RESILIENTE
@@ -289,12 +318,14 @@ export async function getFeedbacks(limit = 30) {
   };
 
   try {
-    const apiRes = await fetch(`/api/feedback?limit=${limit}`);
+    const apiRes = await fetch(`/api/feedback?limit=${limit}&_t=${Date.now()}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
-      if (data.success && Array.isArray(data.feedbacks) && data.feedbacks.length > 0) {
-        localStorage.setItem(cacheKey, JSON.stringify(data.feedbacks));
-        return data.feedbacks;
+      if (data.success && Array.isArray(data.feedbacks)) {
+        if (data.feedbacks.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(data.feedbacks));
+          return data.feedbacks;
+        }
       }
     }
   } catch (e) {}
@@ -308,14 +339,17 @@ export async function getFeedbacks(limit = 30) {
         const list = data.documents.map(doc => ({
           name: doc.fields?.name?.stringValue || 'Anônimo',
           stars: parseInt(doc.fields?.stars?.integerValue || '5', 10),
-          comment: doc.fields?.comment?.stringValue || '',
+          comment: doc.fields?.comment?.stringValue || doc.fields?.message?.stringValue || '',
           country: doc.fields?.country?.stringValue || 'BR',
           countryName: doc.fields?.countryName?.stringValue || 'Brasil',
           flag: doc.fields?.flag?.stringValue || '🇧🇷',
           createdAt: doc.fields?.createdAt?.timestampValue || ''
-        }));
-        localStorage.setItem(cacheKey, JSON.stringify(list));
-        return list;
+        })).filter(fb => fb.comment.length > 0);
+
+        if (list.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(list));
+          return list;
+        }
       }
     }
   } catch (e) {}
