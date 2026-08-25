@@ -1697,7 +1697,9 @@
           if (shouldBePrison && !isPrisonMode) {
             isPrisonMode = true;
             document.body.classList.add('prison-mode');
-            showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO!`, true);
+            screenShake = 34; // Terremoto forte ao entrar na prisão
+            try { sounds.playEarthquakeRumble(); } catch(e){}
+            showBannerAlert(`🚨 ${score} PONTOS: MODO CADEIA ATIVADO! TERREMOTO!`, true);
           } else if (!shouldBePrison && isPrisonMode) {
             isPrisonMode = false;
             document.body.classList.remove('prison-mode');
@@ -2177,16 +2179,75 @@
       }
     }
 
+    let prisonSmokeParticles = [];
+
+    function updatePrisonSmoke() {
+      if (isPrisonMode && state === STATE.PLAYING) {
+        // Spawna partículas de fumaça e poeira caindo do teto da prisão durante o tremor
+        if (frameCount % 3 === 0) {
+          prisonSmokeParticles.push({
+            x: Math.random() * (W + 60) - 20,
+            y: -15,
+            vx: -0.6 - Math.random() * 1.0,
+            vy: 1.6 + Math.random() * 2.0,
+            size: 8 + Math.random() * 18,
+            alpha: 0.55 + Math.random() * 0.35,
+            rot: Math.random() * Math.PI * 2,
+            rotSpeed: (Math.random() - 0.5) * 0.03
+          });
+        }
+      }
+
+      for (const p of prisonSmokeParticles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.rotSpeed;
+        p.alpha -= 0.003;
+      }
+      prisonSmokeParticles = prisonSmokeParticles.filter(p => p.y < H + 25 && p.alpha > 0.02);
+    }
+
+    function drawPrisonSmoke() {
+      if (prisonSmokeParticles.length === 0) return;
+      ctx.save();
+      for (const p of prisonSmokeParticles) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        
+        const smokeGrad = ctx.createRadialGradient(0, 0, 1, 0, 0, p.size);
+        smokeGrad.addColorStop(0, 'rgba(226, 232, 240, 0.40)'); // Cinza claro fuligem
+        smokeGrad.addColorStop(0.5, 'rgba(100, 116, 139, 0.22)'); // Fumaça
+        smokeGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+        ctx.fillStyle = smokeGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
     function draw() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // Tremedeira / Screen Shake na morte
+      // Tremedeira / Screen Shake na morte e Terremoto Contínuo na Prisão
+      let shakeX = 0;
+      let shakeY = 0;
       if (screenShake > 0) {
-        const sx = (Math.random() - 0.5) * screenShake;
-        const sy = (Math.random() - 0.5) * screenShake;
-        ctx.translate(sx, sy);
-        screenShake *= 0.86;
+        shakeX += (Math.random() - 0.5) * screenShake;
+        shakeY += (Math.random() - 0.5) * screenShake;
+        screenShake *= 0.88;
         if (screenShake < 0.2) screenShake = 0;
+      }
+      if (isPrisonMode && state === STATE.PLAYING) {
+        // Terremoto e abalo sísmico contínuo na prisão
+        shakeX += Math.sin(frameCount * 0.42) * 1.6 + (Math.random() - 0.5) * 1.2;
+        shakeY += Math.cos(frameCount * 0.48) * 1.8 + (Math.random() - 0.5) * 1.2;
+      }
+      if (shakeX !== 0 || shakeY !== 0) {
+        ctx.translate(shakeX, shakeY);
       }
 
       const GH = H * GH_RATIO;
@@ -2225,9 +2286,13 @@
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, W, H);
 
+        // Fumaça e fuligem caindo ao fundo
+        drawPrisonSmoke();
+
         // Holofotes de busca da prisão varrendo o céu (Searchlights dinâmicos)
         ctx.save();
         const beamAngle1 = Math.sin(frameCount * 0.02) * 0.45;
+        const beamAngle2 = Math.cos(frameCount * 0.025) * 0.50;
         const beamAngle2 = Math.cos(frameCount * 0.025) * 0.50;
 
         // Holofote Esquerdo
@@ -2588,7 +2653,15 @@
 
       updatePipes(dt);
       updatePicanhas();
-      if (isPrisonMode) updatePrisoners();
+      if (isPrisonMode) {
+        updatePrisoners();
+        updatePrisonSmoke();
+        // A cada ~7 segundos na prisão, novo tremor de terremoto com som subterrâneo
+        if (frameCount % 420 === 0 && state === STATE.PLAYING) {
+          screenShake = 16;
+          try { sounds.playEarthquakeRumble(); } catch(e){}
+        }
+      }
 
       if (gameState.isTurboActive) {
         gameState.turboTimer -= dt;

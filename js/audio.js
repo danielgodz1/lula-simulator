@@ -492,6 +492,69 @@ class AudioManager {
     }
   }
 
+  // EFEITO SONORO DE TERREMOTO / TREMOR DE PRISÃO (SUBTERRÂNEO COM GRAVE PROFUNDO E IMPACTO)
+  playEarthquakeRumble() {
+    if (this.isMuted) return;
+    this.ensureContext();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+
+      // 1. Oscilador Sub-grave Descendente (55Hz -> 26Hz)
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      subOsc.type = 'sawtooth';
+      subOsc.frequency.setValueAtTime(58, now);
+      subOsc.frequency.exponentialRampToValueAtTime(24, now + 1.8);
+
+      // Filtro passa-baixas para dar o som de terra e concreto tremendo
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(140, now);
+      filter.frequency.exponentialRampToValueAtTime(55, now + 1.8);
+
+      subGain.gain.setValueAtTime(0.0, now);
+      subGain.gain.linearRampToValueAtTime(0.30, now + 0.12);
+      subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+
+      subOsc.connect(filter);
+      filter.connect(subGain);
+      subGain.connect(this.ctx.destination);
+
+      subOsc.start(now);
+      subOsc.stop(now + 1.8);
+
+      // 2. Ruído de desmoronamento / atrito de concreto
+      const bufferSize = Math.floor(this.ctx.sampleRate * 1.6);
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+
+      const noiseFilter = this.ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.frequency.setValueAtTime(95, now);
+      noiseFilter.Q.setValueAtTime(2.5, now);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.0, now);
+      noiseGain.gain.linearRampToValueAtTime(0.24, now + 0.15);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+
+      whiteNoise.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+
+      whiteNoise.start(now);
+      whiteNoise.stop(now + 1.6);
+    } catch (e) {}
+  }
+
   // Síntese de fala opcional (SpeechSynthesis API)
   speak(text, rate = 1.0, pitch = 1.0) {
     if (this.isMuted || !window.speechSynthesis) return;

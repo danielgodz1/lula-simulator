@@ -786,11 +786,11 @@ class TextureAtlasManager {
     const ctx = canvas.getContext('2d');
 
     // 1. Fundo de Aço Industrial com Faixas Zebradas de Trânsito
-    ctx.fillStyle = '#1e293b';
+    ctx.fillStyle = '#0f172a';
     ctx.fillRect(0, 0, 512, 256);
 
-    // Faixas Zebradas de Perigo (Vermelho e Branco Reflexivo nas Laterais)
-    ctx.fillStyle = '#dc2626';
+    // Faixas Zebradas de Perigo (Vermelho Bem Forte Escarlate e Branco)
+    ctx.fillStyle = '#991b1b';
     ctx.fillRect(0, 0, 512, 256);
 
     ctx.fillStyle = '#ffffff';
@@ -804,13 +804,13 @@ class TextureAtlasManager {
     }
 
     // Moldura Escura Central para Destaque da Placa
-    ctx.fillStyle = '#0f172a';
+    ctx.fillStyle = '#020617';
     ctx.fillRect(106, 18, 300, 220);
     ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 6;
     ctx.strokeRect(106, 18, 300, 220);
 
-    // 2. Placa Octogonal Vermelha de STOP
+    // 2. Placa Octogonal em Vermelho Bem Forte / Escarlate Intenso
     const cx = 256;
     const cy = 128;
     const r = 88;
@@ -827,9 +827,14 @@ class TextureAtlasManager {
     ctx.closePath();
 
     // Sombra 3D da placa
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 16;
-    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = 'rgba(0,0,0,0.9)';
+    ctx.shadowBlur = 18;
+
+    const signGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, r);
+    signGrad.addColorStop(0, '#dc2626'); // Vermelho vivo no centro
+    signGrad.addColorStop(0.65, '#991b1b'); // Vermelho escuro profundo
+    signGrad.addColorStop(1.0, '#7f1d1d'); // Vermelho sangue intenso na borda
+    ctx.fillStyle = signGrad;
     ctx.fill();
 
     // Borda Branca Grossa do Octógono
@@ -837,16 +842,16 @@ class TextureAtlasManager {
     ctx.lineWidth = 7;
     ctx.stroke();
 
-    // Borda Interna Fina Vermelha
-    ctx.strokeStyle = '#991b1b';
+    // Borda Interna Fina Vermelha Escura
+    ctx.strokeStyle = '#450a0a';
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.restore();
 
     // 3. Texto "STOP" em Tipografia Bold 3D
     ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#7f1d1d';
-    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#450a0a';
+    ctx.lineWidth = 7;
     ctx.font = '900 52px "Arial Black", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
