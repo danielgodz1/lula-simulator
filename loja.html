@@ -13,14 +13,14 @@
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/loja.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/ads.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/ads.css">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
 
@@ -709,9 +709,9 @@
   </div>
 
   <script type="module">
-    import { auth } from './js/auth.js';
-    import { SKIN_PRICING_TABLE, isSkinUnlocked, getEquippedSkin } from './js/game/skins.js';
-    import { social } from './js/social-manager.js';
+    import { auth } from '/js/auth.js';
+    import { SKIN_PRICING_TABLE, isSkinUnlocked, getEquippedSkin } from '/js/game/skins.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -911,7 +911,7 @@
       renderSkins();
     }).catch(() => {});
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>

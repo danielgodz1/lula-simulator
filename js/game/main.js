@@ -41,8 +41,10 @@ export class Game {
     this.maxSpeed = 320; // 10.0x baseSpeed
     this.distance = 0;
     this.coins = 0;
-    this.picanhas = 0;
-    this.bestDistance = parseInt(localStorage.getItem('run_best') || '0', 10);
+    const userObj = auth.getCurrentUser();
+    const localRunBest = parseInt(localStorage.getItem('run_best') || '0', 10);
+    this.bestDistance = (userObj && typeof userObj.runnerScore === 'number') ? Math.max(localRunBest, userObj.runnerScore) : localRunBest;
+    localStorage.setItem('run_best', this.bestDistance.toString());
 
     // Power-ups
     this.magnetActive = false;

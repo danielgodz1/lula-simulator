@@ -16,7 +16,7 @@
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/ranking.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -39,18 +39,18 @@
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 
   <style>
     .page {
@@ -372,10 +372,10 @@
   </div>
 
   <script type="module">
-    import { getTopScores, firebaseConfig } from './js/firebase-config.js';
-    import { auth, DEFAULT_AVATAR_SVG } from './js/auth.js';
-    import { escapeHTML } from './js/security.js';
-    import { social } from './js/social-manager.js';
+    import { getTopScores, firebaseConfig } from '/js/firebase-config.js';
+    import { auth, DEFAULT_AVATAR_SVG } from '/js/auth.js';
+    import { escapeHTML } from '/js/security.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -515,7 +515,7 @@
         const equippedMedal = (isCurPlayer ? localStorage.getItem('lula_equipped_medal') : '') || item.equippedMedal || (rankIdx === 0 ? 'medal_bolsonaro' : (rankIdx === 1 ? 'medal_picanha' : (rankIdx === 2 ? 'medal_stf' : '')));
         let medalHtml = '';
         if (equippedMedal === 'medal_bolsonaro') {
-          medalHtml = `<span class="ranking-medal-tag medal-bolsonaro" title="Medalha Imbrochável (Clube Bolsonaro)"><img src="img/conquistas/medalha_bolsonaro.png" class="mini-medal-img" alt="Medalha Imbrochável"> 🎖️ Imbrochável</span>`;
+          medalHtml = `<span class="ranking-medal-tag medal-bolsonaro" title="Medalha Imbrochável (Clube Bolsonaro)"><img src="/img/conquistas/medalha_bolsonaro.png" class="mini-medal-img" alt="Medalha Imbrochável"> 🎖️ Imbrochável</span>`;
         } else if (equippedMedal === 'medal_picanha') {
           medalHtml = `<span class="ranking-medal-tag medal-picanha" title="Picanha de Ouro Presidencial">🥩 Picanha Ouro</span>`;
         } else if (equippedMedal === 'medal_stf') {
@@ -565,7 +565,7 @@
     loadRankingData();
     import('./js/ads-manager.js').then(m => m.AdsManager.init());
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>

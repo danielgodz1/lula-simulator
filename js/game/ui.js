@@ -448,9 +448,10 @@ export class UIManager {
 
   renderCharacterCards() {
     if (!this.characterCardsContainer) return;
+    const isEn = typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
     const totalCoins = RunnerInventory.getTotalCoins();
     if (this.charModalCoinBalance) {
-      this.charModalCoinBalance.textContent = `💰 ${totalCoins} MOEDAS`;
+      this.charModalCoinBalance.textContent = `💰 ${totalCoins} ${isEn ? 'COINS' : 'MOEDAS'}`;
     }
 
     const selectedChar = RunnerInventory.getSelectedCharacter();
@@ -460,6 +461,8 @@ export class UIManager {
       const isUnlocked = RunnerInventory.isUnlocked(char.id);
       const isEquipped = selectedChar.id === char.id;
       const isCurrentlyPreviewed = this.previewCharId === char.id;
+      const charDisplayName = isEn && char.name_en ? char.name_en : char.name;
+      const charDisplayDesc = isEn && char.desc_en ? char.desc_en : char.desc;
 
       const card = document.createElement('div');
       card.className = 'character-card-runner';
@@ -480,22 +483,22 @@ export class UIManager {
 
       card.innerHTML = `
         <div style="width:58px; height:58px; border-radius:50%; background:rgba(0,0,0,0.4); border:2px solid ${char.themeColor || '#eab308'}; display:flex; align-items:center; justify-content:center; margin-bottom:6px; overflow:hidden;">
-          <img src="${char.sprite || 'img/favela.png'}" alt="${char.name}" style="width:100%; height:100%; object-fit:cover;">
+          <img src="${char.sprite || '/img/favela.png'}" alt="${charDisplayName}" style="width:100%; height:100%; object-fit:cover;">
         </div>
         <div style="font-family:'Bangers',cursive; font-size:17px; color:${char.themeColor || '#fef08a'}; margin-bottom:2px;">
-          ${char.name}
+          ${charDisplayName}
         </div>
         <div style="font-size:10px; color:#94a3b8; margin-bottom:6px; min-height:24px; line-height:1.2;">
-          ${char.desc}
+          ${charDisplayDesc}
         </div>
         <div style="margin-top:auto; width:100%;">
           ${isEquipped ? `
             <button class="btn-primary" style="width:100%; padding:6px 0; font-size:12px; background:#16a34a; border-color:#22c55e; cursor:default;">
-              ✓ EQUIPADO
+              ✓ ${isEn ? 'EQUIPPED' : 'EQUIPADO'}
             </button>
           ` : isUnlocked ? `
             <button class="btn-primary btn-equip-char" data-id="${char.id}" style="width:100%; padding:6px 0; font-size:12px; background:#0284c7; border-color:#38bdf8; cursor:pointer;">
-              VER 3D / EQUIPAR
+              ${isEn ? 'VIEW 3D / EQUIP' : 'VER 3D / EQUIPAR'}
             </button>
           ` : `
             <button class="btn-primary btn-unlock-char" data-id="${char.id}" style="width:100%; padding:6px 0; font-size:11px; background:#ca8a04; border-color:#eab308; cursor:pointer;">

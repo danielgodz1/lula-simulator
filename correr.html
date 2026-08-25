@@ -16,7 +16,7 @@
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/correr.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -66,18 +66,18 @@
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 
   <!-- Import Map para Three.js e Addons JSM -->
   <script type="importmap">
@@ -536,11 +536,11 @@
   </div>
 
   <script type="module">
-    import { initGame } from './js/game/main.js';
-    import { auth } from './js/auth.js';
-    import { AdsManager } from './js/ads-manager.js';
-    import { gameAudio } from './js/game/audio.js';
-    import { social } from './js/social-manager.js';
+    import { initGame } from '/js/game/main.js';
+    import { auth } from '/js/auth.js';
+    import { AdsManager } from '/js/ads-manager.js';
+    import { gameAudio } from '/js/game/audio.js';
+    import { social } from '/js/social-manager.js';
 
     // Renderiza badge do perfil no cabeçalho e sino
     auth.renderProfileBadge('nav');
@@ -630,7 +630,7 @@
     initGame();
     AdsManager.init();
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>

@@ -511,14 +511,14 @@ class SocialManager {
 
     // Fallback gracioso caso esteja em servidor local estático ou offline
     const defaultRoster = [
-      { seed: 1, player: 'Lula 13', score: 250, avatar: 'img/lula.png', flag: '🇧🇷' },
-      { seed: 8, player: 'Piloto Federal', score: 95, avatar: 'img/favela.png', flag: '🇧🇷' },
-      { seed: 4, player: 'Mindset 3X', score: 180, avatar: 'img/marcal.png', flag: '🇧🇷' },
-      { seed: 5, player: 'Estocadora Galáctica', score: 160, avatar: 'img/dilma.png', flag: '🇧🇷' },
-      { seed: 2, player: 'Capitão 22', score: 210, avatar: 'img/bolsonaro.png', flag: '🇧🇷' },
-      { seed: 7, player: 'Janja VIP', score: 120, avatar: 'img/janja.png', flag: '🇧🇷' },
-      { seed: 3, player: 'Xandão Supremo', score: 195, avatar: 'img/moraes.png', flag: '🇧🇷' },
-      { seed: 6, player: 'Deputado Viral', score: 140, avatar: 'img/nikolas.png', flag: '🇧🇷' }
+      { seed: 1, player: 'Lula 13', score: 250, avatar: '/img/lula.png', flag: '🇧🇷' },
+      { seed: 8, player: 'Piloto Federal', score: 95, avatar: '/img/favela.png', flag: '🇧🇷' },
+      { seed: 4, player: 'Mindset 3X', score: 180, avatar: '/img/marcal.png', flag: '🇧🇷' },
+      { seed: 5, player: 'Estocadora Galáctica', score: 160, avatar: '/img/dilma.png', flag: '🇧🇷' },
+      { seed: 2, player: 'Capitão 22', score: 210, avatar: '/img/bolsonaro.png', flag: '🇧🇷' },
+      { seed: 7, player: 'Janja VIP', score: 120, avatar: '/img/janja.png', flag: '🇧🇷' },
+      { seed: 3, player: 'Xandão Supremo', score: 195, avatar: '/img/moraes.png', flag: '🇧🇷' },
+      { seed: 6, player: 'Deputado Viral', score: 140, avatar: '/img/nikolas.png', flag: '🇧🇷' }
     ];
 
     const quarters = [

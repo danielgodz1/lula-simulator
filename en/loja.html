@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🛍️ Official Skin Shop & Prestige — Flappy Lula</title>
-  <meta name="description" content="Customize your favorite characters with exclusive skins and level up your Prestige in Flappy Lula!">
+  <title>🛍️ Loja Oficial de Skins & Prestígio — Lula Simulator</title>
+  <meta name="description" content="Personalize seus personagens favoritos com skins cosméticas exclusivas (Lula, Bolsonaro, Nikolas, Janja, Moraes, Dilma, Marçal, Empresário) e ative o Prestígio Lendário no Lula Simulator!">
   <link rel="canonical" href="https://flappylula.com/loja.html">
 
   <!-- Hreflang Multi-Idioma (PT-BR / EN) -->
-  <link rel="alternate" hreflang="pt-BR" href="https://flappylula.com/loja.html" />
+  <link rel="alternate" hreflang="pt-BR" href="https://lulasimulator.com.br/loja.html" />
   <link rel="alternate" hreflang="en" href="https://flappylula.com/loja.html" />
-  <link rel="alternate" hreflang="x-default" href="https://flappylula.com/loja.html" />
+  <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/loja.html" />
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
@@ -606,7 +606,7 @@
       <li><a href="/en/loja.html" class="active">🛍️ Skin Shop</a></li>
       <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
       <li><a href="/en/ranking.html">🏆 Leaderboard</a></li>
-      <li><a href="/en/feedback.html">⭐ Avaliações</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
       <li><a href="/en/visitantes.html">📊 Tráfego</a></li>
       <li><a href="/en/contato.html">✉️ Contato</a></li>
     </ul>
@@ -618,7 +618,7 @@
 
   <div class="page-container">
     <div class="page-header">
-      <h1>🛍️ LOJA OFICIAL DE SKINS & PRESTÍGIO</h1>
+      <h1>🛍️ OFFICIAL SKIN SHOP & PRESTIGE</h1>
       <p>Personalize seus personagens com skins cosméticas exclusivas, cumpra missões diárias e evolua seu Nível de Prestígio!</p>
     </div>
 
@@ -666,9 +666,9 @@
 
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <span style="font-size: 13px; color: var(--text-muted);" id="prestigeStatusDesc">
-          Acumule 10.000 Picanhas para avançar de Prestígio.
+          Accumulate 10,000 Steaks to advance in Prestige.
         </span>
-        <button id="btnActivatePrestige" class="btn-prestige-action" disabled>⭐ PRESTIGIAR AGORA</button>
+        <button id="btnActivatePrestige" class="btn-prestige-action" disabled>⭐ ACTIVATE PRESTIGE NOW</button>
       </div>
     </div>
 
@@ -676,10 +676,10 @@
     <div class="missions-section">
       <div class="missions-header">
         <div>
-          <h3>🎯 MISSÕES DIÁRIAS (RESET À MEIA-NOITE)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Cumpra os objetivos diários para faturar Picanhas e Moedas extras!</p>
+          <h3>🎯 DAILY MISSIONS (RESET AT MIDNIGHT)</h3>
+          <p style="font-size: 13px; color: var(--text-muted);">Complete daily objectives to earn extra Steaks and Coins!</p>
         </div>
-        <div style="font-size: 12px; font-weight: 700; color: var(--amarelo-brasil);" id="missionsDateLabel">📅 Hoje</div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--amarelo-brasil);" id="missionsDateLabel">📅 Today</div>
       </div>
 
       <div class="missions-grid" id="missionsGridContainer">
@@ -690,7 +690,7 @@
     <!-- FILTRO DE PERSONAGENS DA LOJA -->
     <div class="filter-tabs-wrapper">
       <div class="filter-tabs" id="filterTabsContainer">
-        <button class="filter-btn active" data-filter="all">🌟 Todas as Skins</button>
+        <button class="filter-btn active" data-filter="all">🌟 All Skins</button>
         <button class="filter-btn" data-filter="lula">🕊️ Lula</button>
         <button class="filter-btn" data-filter="bolsonaro">🔰 Bolsonaro</button>
         <button class="filter-btn" data-filter="nikolas">🎧 Nikolas</button>
@@ -698,7 +698,7 @@
         <button class="filter-btn" data-filter="moraes">⚖️ Xandão</button>
         <button class="filter-btn" data-filter="dilma">🥔 Dilma</button>
         <button class="filter-btn" data-filter="marcal">💼 Pablo Marçal</button>
-        <button class="filter-btn" data-filter="empresario">🏙️ Empresário 3D</button>
+        <button class="filter-btn" data-filter="empresario">🏙️ 3D Runner</button>
       </div>
     </div>
 
@@ -726,7 +726,7 @@
 
       document.getElementById('displayTotalPicanhas').textContent = `${picanhas} 🥩`;
       document.getElementById('displayRunnerCoins').textContent = `${coins} 💰`;
-      document.getElementById('displayPrestigeLevel').textContent = prestige > 0 ? `⭐ Prestígio ${prestige}` : 'Nível 0';
+      document.getElementById('displayPrestigeLevel').textContent = prestige > 0 ? `⭐ Prestige ${prestige}` : 'Level 0';
 
       // Atualiza progresso do prestígio
       const targetPrestige = 10000;
@@ -737,17 +737,17 @@
       const btnPrestige = document.getElementById('btnActivatePrestige');
       if (picanhas >= targetPrestige) {
         btnPrestige.disabled = false;
-        btnPrestige.textContent = `⭐ ATIVAR PRESTÍGIO NÍVEL ${prestige + 1}!`;
+        btnPrestige.textContent = `⭐ ACTIVATE PRESTIGE LEVEL ${prestige + 1}!`;
       } else {
         btnPrestige.disabled = true;
-        btnPrestige.textContent = '⭐ PRESTIGIAR (10.000 🥩)';
+        btnPrestige.textContent = '⭐ PRESTIGE (10,000 🥩)';
       }
     }
 
     function renderMissions() {
       const data = auth.getDailyMissions();
       const container = document.getElementById('missionsGridContainer');
-      document.getElementById('missionsDateLabel').textContent = `📅 Missões de ${data.date}`;
+      document.getElementById('missionsDateLabel').textContent = `📅 Missions of ${data.date}`;
       container.innerHTML = '';
 
       data.missions.forEach(m => {
@@ -765,8 +765,8 @@
               <div class="mission-progress-fill" style="width: ${pct}%;"></div>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-bottom:12px;">
-              <span>Progresso: <b>${m.current} / ${m.target}</b></span>
-              <span style="color:var(--amarelo-brasil); font-weight:700;">Recompensa: +${m.reward} ${unit}</span>
+              <span>Progress: <b>${m.current} / ${m.target}</b></span>
+              <span style="color:var(--amarelo-brasil); font-weight:700;">Reward: +${m.reward} ${unit}</span>
             </div>
           </div>
           <div>
@@ -813,7 +813,7 @@
         card.className = `skin-card ${isEquipped ? 'is-equipped' : ''}`;
         card.innerHTML = `
           <div class="skin-badge-tag" style="border-color:${skin.glowColor}; color:${skin.glowColor};">
-            ${skin.badge}
+            ${skin.badge_en || skin.badge}
           </div>
           <div class="skin-preview-box" style="border: 2px solid ${skin.glowColor}; color:${skin.glowColor}; box-shadow: 0 0 20px ${skin.glowColor}33; display:flex; align-items:center; justify-content:center; overflow:hidden;">
             ${skin.sprite 
@@ -821,21 +821,21 @@
               : `<span style="font-size:36px;">${skin.emoji}</span>`
             }
           </div>
-          <div class="skin-name">${skin.name}</div>
-          <div class="skin-char-name">Personagem: ${skin.charId.toUpperCase()}</div>
-          <div class="skin-desc">${skin.desc}</div>
+          <div class="skin-name">${skin.name_en || skin.name}</div>
+          <div class="skin-char-name">Character: ${skin.charId.toUpperCase()}</div>
+          <div class="skin-desc">${skin.desc_en || skin.desc}</div>
           <div class="skin-actions">
             ${!unlocked 
               ? `<button class="btn-buy-skin" data-id="${skin.id}">
-                   🛒 COMPRAR (${skin.price} ${unit})
+                   🛒 BUY (${skin.price} ${unit})
                  </button>`
               : (isEquipped 
                   ? `<div style="display:flex; gap:6px; width:100%;">
-                       <button class="btn-equipped-active" style="flex:1;">✅ EQUIPADA</button>
-                       <button class="btn-unequip-skin" data-char="${skin.charId}" style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#f87171; border-radius:10px; padding:8px 10px; font-weight:700; font-size:11px; cursor:pointer;" title="Voltar ao visual padrão">🔄 PADRÃO</button>
+                       <button class="btn-equipped-active" style="flex:1;">✅ EQUIPPED</button>
+                       <button class="btn-unequip-skin" data-char="${skin.charId}" style="background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#f87171; border-radius:10px; padding:8px 10px; font-weight:700; font-size:11px; cursor:pointer;" title="Voltar ao visual padrão">🔄 DEFAULT</button>
                      </div>`
                   : `<button class="btn-equip-skin" data-id="${skin.id}" data-char="${skin.charId}">
-                       ⚡ EQUIPAR SKIN
+                       ⚡ EQUIP SKIN
                      </button>`
                 )
             }

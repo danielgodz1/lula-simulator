@@ -64,8 +64,8 @@ let leftLeg, rightLeg, leftArm, rightArm, briefcaseMesh, headMesh;
 
 // Texturas Compartilhadas
 const textureLoader = new THREE.TextureLoader();
-let picanhaTexture = textureLoader.load('img/picanha.png');
-let favelaBackdropTexture = textureLoader.load('img/favela.png');
+let picanhaTexture = textureLoader.load('/img/picanha.png');
+let favelaBackdropTexture = textureLoader.load('/img/favela.png');
 
 // Texturas Procedurais Criadas no Canvas (Nítidas e Realistas)
 let cltTexture = createCLTTexture();

@@ -10,14 +10,14 @@ const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
 export const DEFAULT_AVATAR_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%231e293b'/%3E%3Ccircle cx='50' cy='50' r='48' fill='none' stroke='%23ffdf00' stroke-width='3'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2394a3b8'/%3E%3Cpath d='M20 86c0-16.5 13.5-30 30-30s30 13.5 30 30' fill='%2394a3b8'/%3E%3C/svg%3E";
 
 export const PRESET_AVATARS = [
-  { id: 'lula', name: 'Lula', src: 'img/lula.png' },
-  { id: 'marcal', name: 'Marçal', src: 'img/marcal.png' },
-  { id: 'dilma', name: 'Dilma', src: 'img/dilma.png' },
-  { id: 'empresario', name: 'Empresário', src: 'img/favela.png' },
-  { id: 'bolsonaro', name: 'Capitão', src: 'img/bolsonaro.png' },
-  { id: 'moraes', name: 'Xandão', src: 'img/moraes.png' },
-  { id: 'nikolas', name: 'Nikolas', src: 'img/nikolas.png' },
-  { id: 'janja', name: 'Janja', src: 'img/janja.png' }
+  { id: 'lula', name: 'Lula', src: '/img/lula.png' },
+  { id: 'marcal', name: 'Marçal', src: '/img/marcal.png' },
+  { id: 'dilma', name: 'Dilma', src: '/img/dilma.png' },
+  { id: 'empresario', name: 'Empresário', src: '/img/favela.png' },
+  { id: 'bolsonaro', name: 'Capitão', src: '/img/bolsonaro.png' },
+  { id: 'moraes', name: 'Xandão', src: '/img/moraes.png' },
+  { id: 'nikolas', name: 'Nikolas', src: '/img/nikolas.png' },
+  { id: 'janja', name: 'Janja', src: '/img/janja.png' }
 ];
 
 class AuthManager {

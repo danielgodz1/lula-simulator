@@ -824,19 +824,19 @@
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="/en/index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
-    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
+    <a href="/en/index.html" class="nav-brand">🐦 FLAPPY LULA</a>
+    <button class="nav-toggle-btn" id="navToggle" aria-label="Navigation Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
-      <li><a href="index.html">Início</a></li>
+      <li><a href="index.html">Home</a></li>
       <li><a href="/en/jogo.html" class="active">🐦 Flappy Lula</a></li>
-      <li><a href="/en/correr.html">🏃 Empresário 3D</a></li>
-      <li><a href="/en/social.html">👥 Social & Duelos</a></li>
-      <li><a href="/en/loja.html">🛍️ Loja de Skins</a></li>
-      <li><a href="/en/conquistas.html">🏅 Conquistas</a></li>
-      <li><a href="/en/ranking.html">🏆 Ranking</a></li>
-      <li><a href="/en/visitantes.html">🌍 Visitantes</a></li>
-      <li><a href="/en/feedback.html">⭐ Feedbacks</a></li>
-      <li><a href="/en/contato.html">📬 Contato</a></li>
+      <li><a href="/en/correr.html">🏃 3D Runner</a></li>
+      <li><a href="/en/social.html">👥 Social & Duels</a></li>
+      <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
+      <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
+      <li><a href="/en/ranking.html">🏆 Leaderboard</a></li>
+      <li><a href="/en/visitantes.html">🌍 Visitors</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
+      <li><a href="/en/contato.html">📬 Contact</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -1236,12 +1236,18 @@
     let { W, H } = calcSize();
 
     const lulaIconImg = new Image();
-    lulaIconImg.src = 'img/lula.png';
+    lulaIconImg.src = '/img/lula.png';
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
     let score = 0;
     let bestScore = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const currentUserObj = auth.getCurrentUser();
+    if (currentUserObj && typeof currentUserObj.flappyScore === 'number' && currentUserObj.flappyScore > bestScore) {
+      bestScore = currentUserObj.flappyScore;
+      localStorage.setItem('lula_best', bestScore.toString());
+    }
+    if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
     let frameCount = 0;
     let groundScroll = 0;
     let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];

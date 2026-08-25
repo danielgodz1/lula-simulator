@@ -39,7 +39,7 @@
   <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <!-- Schema.org / JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -70,18 +70,18 @@
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 
   <style>
     /* Estilos específicos da Landing Page */
@@ -465,7 +465,7 @@
       <!-- Poster Oficial Hero -->
       <div class="hero-character">
         <div class="hero-poster-wrapper">
-          <img src="img/flappy_lula_hero.jpg" alt="Flappy Lula Oficial" class="hero-poster-img">
+          <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Oficial" class="hero-poster-img">
           <div class="hero-badge-tag">⭐ ARTE OFICIAL DO JOGO ⭐</div>
         </div>
       </div>
@@ -615,13 +615,13 @@
     <p>🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026</p>
   </footer>
 
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
   <script type="module">
-    import { auth, DEFAULT_AVATAR_SVG } from './js/auth.js';
-    import { getTopScores, firebaseConfig } from './js/firebase-config.js';
-    import { escapeHTML } from './js/security.js';
-    import { AdsManager } from './js/ads-manager.js';
-    import { social } from './js/social-manager.js';
+    import { auth, DEFAULT_AVATAR_SVG } from '/js/auth.js';
+    import { getTopScores, firebaseConfig } from '/js/firebase-config.js';
+    import { escapeHTML } from '/js/security.js';
+    import { AdsManager } from '/js/ads-manager.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));

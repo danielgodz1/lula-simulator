@@ -19,7 +19,7 @@ export class ObstacleManager {
     this.particlePool = [];
 
     this.textureLoader = new THREE.TextureLoader();
-    this.picanhaTexture = this.textureLoader.load('img/picanha.png');
+    this.picanhaTexture = this.textureLoader.load('/img/picanha.png');
 
     // Materiais PBR Reutilizáveis
     this.materials = {

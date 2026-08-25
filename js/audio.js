@@ -428,11 +428,11 @@ class AudioManager {
     if (!this.areMemesEnabled()) return;
     this.stopAllVoiceAndDeathAudios();
     try {
-      const audio = new Audio('audios/brasilbrasil.mp3');
+      const audio = new Audio('/audios/brasilbrasil.mp3');
       audio.volume = 0.15; // Volume bem baixo e sutil
       this.activeAudios.push(audio);
       audio.play().catch(() => {
-        const alt = new Audio('audios/brasilbrasi.mp3');
+        const alt = new Audio('/audios/brasilbrasi.mp3');
         alt.volume = 0.15;
         this.activeAudios.push(alt);
         alt.play().catch(() => {});
@@ -444,7 +444,7 @@ class AudioManager {
     if (!this.areMemesEnabled()) return;
     this.stopAllVoiceAndDeathAudios();
     try {
-      const audio = new Audio('audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
+      const audio = new Audio('/audios/o-homem-uma-maquina-uma-besta-enjaulada.mp3');
       audio.volume = 0.35; // Volume moderado e agradável
       this.activeAudios.push(audio);
       audio.play().catch(() => {});
@@ -458,11 +458,11 @@ class AudioManager {
     }
     this.stopAllVoiceAndDeathAudios();
     try {
-      const audio = new Audio('audios/ehsoissoacabou.mpeg');
+      const audio = new Audio('/audios/ehsoissoacabou.mpeg');
       audio.volume = 0.35; // Volume moderado
       this.activeAudios.push(audio);
       audio.play().catch(() => {
-        const alt = new Audio('audios/ehsoissoacabou.mp3');
+        const alt = new Audio('/audios/ehsoissoacabou.mp3');
         alt.volume = 0.35;
         this.activeAudios.push(alt);
         alt.play().catch(() => {
@@ -481,7 +481,7 @@ class AudioManager {
     }
     this.stopAllVoiceAndDeathAudios();
     try {
-      const audio = new Audio('audios/voce-nao-tem-aura.mp3');
+      const audio = new Audio('/audios/voce-nao-tem-aura.mp3');
       audio.volume = 0.35; // Volume moderado
       this.activeAudios.push(audio);
       audio.play().catch(() => {

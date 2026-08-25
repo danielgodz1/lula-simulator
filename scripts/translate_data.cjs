@@ -1,4 +1,9 @@
-// js/game/skins.js — Catálogo Centralizado de Skins Cosméticas e Tabela Fixa de Preços
+// scripts/translate_data.cjs — Adiciona suporte multilíngue aos metadados de Skins e Personagens
+
+const fs = require('fs');
+
+// 1. ATUALIZA SKINS.JS
+const skinsJsContent = `// js/game/skins.js — Catálogo Centralizado de Skins Cosméticas e Tabela Fixa de Preços
 
 export const SKIN_PRICING_TABLE = {
   // --- LULA ---
@@ -310,3 +315,7 @@ export function getEquippedSkin(user, charId) {
   const skinId = typeof equipped === 'object' ? equipped[charId] : (typeof equipped === 'string' ? equipped : null);
   return skinId ? getSkinById(skinId) : null;
 }
+`;
+
+fs.writeFileSync('js/game/skins.js', skinsJsContent, 'utf8');
+console.log('✔ js/game/skins.js updated with bilingual support');

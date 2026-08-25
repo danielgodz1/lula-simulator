@@ -16,7 +16,7 @@
   <link rel="alternate" hreflang="x-default" href="https://lulasimulator.com.br/jogo.html" />
 
   <!-- Script Gerenciador de Idiomas -->
-  <script src="js/language-manager.js" defer></script>
+  <script src="/js/language-manager.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -66,18 +66,18 @@
 
   <!-- Favicon para Google Search, Celulares e Navegadores -->
   <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="192x192" href="img/favicon-192x192.png">
-  <link rel="icon" type="image/png" sizes="96x96" href="img/favicon-96x96.png">
-  <link rel="icon" type="image/png" sizes="48x48" href="img/favicon-48x48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/img/favicon-192x192.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48x48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
 
   <style>
     html, body {
@@ -898,7 +898,7 @@
         <!-- PREVIEW DO PERSONAGEM ATUALMENTE EQUIPADO -->
         <div id="equippedCharCard" style="background:rgba(0,0,0,0.5); border:1.5px solid var(--amarelo-brasil); border-radius:12px; padding:8px 10px; margin-bottom:12px; display:flex; align-items:center; gap:8px; text-align:left;">
           <div style="width:44px; height:44px; border-radius:50%; border:2px solid #ffdf00; overflow:hidden; flex-shrink:0; background:#000;">
-            <img id="equippedCharImg" src="img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
+            <img id="equippedCharImg" src="/img/lula.png" alt="Personagem Selecionado" style="width:100%; height:100%; object-fit:cover;">
           </div>
           <div style="flex:1;">
             <div id="equippedCharName" style="font-weight:700; color:#fff; font-size:13px;">Lula da Silva</div>
@@ -964,7 +964,7 @@
 
         <div class="go-quick-options">
           <div class="go-char-picker-btn" id="btnGoChangeChar" title="Trocar de Personagem">
-            <img id="goEquippedCharImg" src="img/lula.png" alt="Personagem Equipado">
+            <img id="goEquippedCharImg" src="/img/lula.png" alt="Personagem Equipado">
             <span id="goEquippedCharName">Lula da Silva</span>
             <span style="color:var(--amarelo-brasil); font-size:10px; margin-left:2px;">✎ Trocar</span>
           </div>
@@ -991,7 +991,7 @@
 
             <div class="go-lula-meme-box">
               <div class="go-lula-avatar">
-                <img src="img/lula_cry.png" alt="Lula Chorando">
+                <img src="/img/lula_cry.png" alt="Lula Chorando">
               </div>
               <div class="go-meme-text" id="goMemeText">
                 "Companheiro, bateu no cano e a Receita Federal confiscou a picanha!"
@@ -1045,14 +1045,14 @@
   </div>
 
   <script type="module">
-    import { savePlayerScore, getTopScores, startScoreSession } from './js/firebase-config.js';
-    import { sounds } from './js/audio.js';
-    import { auth } from './js/auth.js';
-    import { CHARACTERS, CharacterInventory } from './js/game/characters.js';
-    import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from './js/game/skins.js';
-    import { escapeHTML } from './js/security.js';
-    import { AdsManager } from './js/ads-manager.js';
-    import { social } from './js/social-manager.js';
+    import { savePlayerScore, getTopScores, startScoreSession } from '/js/firebase-config.js';
+    import { sounds } from '/js/audio.js';
+    import { auth } from '/js/auth.js';
+    import { CHARACTERS, CharacterInventory } from '/js/game/characters.js';
+    import { SKIN_PRICING_TABLE, getEquippedSkin, getSkinsForCharacter, isSkinUnlocked } from '/js/game/skins.js';
+    import { escapeHTML } from '/js/security.js';
+    import { AdsManager } from '/js/ads-manager.js';
+    import { social } from '/js/social-manager.js';
 
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
@@ -1235,12 +1235,18 @@
     let { W, H } = calcSize();
 
     const lulaIconImg = new Image();
-    lulaIconImg.src = 'img/lula.png';
+    lulaIconImg.src = '/img/lula.png';
 
     const STATE = { WAITING: 0, PLAYING: 1, DEAD: 2 };
     let state = STATE.WAITING;
     let score = 0;
     let bestScore = parseInt(localStorage.getItem('lula_best') || '0', 10);
+    const currentUserObj = auth.getCurrentUser();
+    if (currentUserObj && typeof currentUserObj.flappyScore === 'number' && currentUserObj.flappyScore > bestScore) {
+      bestScore = currentUserObj.flappyScore;
+      localStorage.setItem('lula_best', bestScore.toString());
+    }
+    if (bestHUD) bestHUD.textContent = `${bestScore} 🥩`;
     let frameCount = 0;
     let groundScroll = 0;
     let pipes = [], picanhas = [], likesBonus = [], floatingLulaIcons = [];
@@ -3053,7 +3059,7 @@
 
     requestAnimationFrame(loop);
   </script>
-  <script src="js/tracker.js"></script>
+  <script src="/js/tracker.js"></script>
 
 </body>
 </html>
