@@ -722,9 +722,13 @@ export class ObstacleManager {
     const cardGroup = new THREE.Group();
     cardGroup.position.set(laneX, 1.05, localZ);
 
-    const card = new THREE.Mesh(this.geometries.documentCard, this.materials.cltCardMat);
-    card.castShadow = true;
-    cardGroup.add(card);
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
+    const cardMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 1.45, 0.10),
+      [edgeMat, edgeMat, edgeMat, edgeMat, this.materials.cltCardMat, this.materials.cltCardMat]
+    );
+    cardMesh.castShadow = true;
+    cardGroup.add(cardMesh);
 
     const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
     stand.position.y = -1.0;
@@ -759,9 +763,13 @@ export class ObstacleManager {
     cardGroup.position.set(laneX, 1.15, localZ);
 
     const mat = isBolsa ? this.materials.bolsaCardMat : this.materials.auxilioCardMat;
-    const card = new THREE.Mesh(this.geometries.socialCard, mat);
-    card.castShadow = true;
-    cardGroup.add(card);
+    const edgeMat = new THREE.MeshStandardMaterial({ color: isBolsa ? 0x16a34a : 0x0284c7, metalness: 0.6, roughness: 0.3 });
+    const cardMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 1.45, 0.10),
+      [edgeMat, edgeMat, edgeMat, edgeMat, mat, mat]
+    );
+    cardMesh.castShadow = true;
+    cardGroup.add(cardMesh);
 
     const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
     stand.position.y = -1.1;
@@ -816,11 +824,11 @@ export class ObstacleManager {
     barrierGroup.add(topBar);
 
     // 2. Placa Central Vermelha com Logo "🛑 STOP" e Faixas Zebradas Reflexivas
-    const signGeo = new THREE.BoxGeometry(2.35, 0.85, 0.08);
+    const signGeo = new THREE.BoxGeometry(2.35, 0.85, 0.10);
     const signFrontMat = new THREE.MeshLambertMaterial({
-      map: textureAtlas.stopSignTexture
+      map: textureAtlas.stopSignTexture,
+      side: THREE.DoubleSide
     });
-    const signBackMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
     const signSideMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
 
     const signMesh = new THREE.Mesh(signGeo, [
@@ -829,7 +837,7 @@ export class ObstacleManager {
       signSideMat,
       signSideMat,
       signFrontMat, // Frente voltada para o jogador (+Z)
-      signBackMat
+      signFrontMat  // Verso (-Z)
     ]);
     signMesh.position.set(0, 0.0, 0);
     signMesh.castShadow = true;

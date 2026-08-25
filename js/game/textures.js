@@ -29,6 +29,10 @@ class TextureAtlasManager {
     this.facadeWindowTexture = null;
     this.transformerTexture = null;
     this.cableTexture = null;
+    this.doorTexture = null;
+    this.rollerDoorTexture = null;
+    this.corrugatedRoofTexture = null;
+    this.stopSignTexture = null;
 
     this.init();
   }
@@ -37,6 +41,7 @@ class TextureAtlasManager {
     this.createUnifiedAtlas();
     this.createSpecialTextures();
     this.createBrazilianFavelaTextures();
+    this.createStopSignTexture();
     this.createMorroParallaxTexture();
     this.createGoldCoinTexture();
     this.createSoftShadowTexture();
@@ -628,6 +633,97 @@ class TextureAtlasManager {
     this.corrugatedRoofTexture.wrapT = THREE.RepeatWrapping;
     this.corrugatedRoofTexture.repeat.set(3, 3);
     this.corrugatedRoofTexture.needsUpdate = true;
+  }
+
+  /**
+   * Textura da Placa "🛑 STOP / PARE" com Faixas Zebradas Reflexivas e LEDs de Alerta
+   */
+  createStopSignTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Fundo com Faixas Zebradas Reflexivas Amarelas e Pretas
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 0, 512, 256);
+
+    ctx.fillStyle = '#0f172a';
+    const stripeW = 32;
+    for (let x = -256; x < 768; x += stripeW * 2) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + stripeW, 0);
+      ctx.lineTo(x + stripeW - 50, 256);
+      ctx.lineTo(x - 50, 256);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Moldura preta grossa
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 14;
+    ctx.strokeRect(0, 0, 512, 256);
+
+    // 2. Placa Central Octogonal Vermelha de "PARE / STOP"
+    const cx = 256;
+    const cy = 128;
+    const r = 90;
+
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI) / 4 + Math.PI / 8;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = '#dc2626';
+    ctx.fill();
+
+    // Borda Branca Grossa do Octógono
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 8;
+    ctx.stroke();
+
+    // Borda Interna Escura
+    ctx.strokeStyle = '#450a0a';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Texto "PARE" em Tipografia Bold Branca
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#450a0a';
+    ctx.lineWidth = 8;
+    ctx.font = '900 56px "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText('PARE', cx, cy);
+    ctx.fillText('PARE', cx, cy);
+
+    // 4. Lâmpadas LED de Alerta nos 4 Cantos
+    const corners = [[36, 36], [476, 36], [36, 220], [476, 220]];
+    corners.forEach(([lx, ly]) => {
+      const grad = ctx.createRadialGradient(lx, ly, 4, lx, ly, 22);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.4, '#eab308');
+      grad.addColorStop(1, 'rgba(234, 179, 8, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    this.stopSignTexture = new THREE.CanvasTexture(canvas);
+    this.stopSignTexture.needsUpdate = true;
   }
 
   /**
