@@ -775,6 +775,107 @@ class TextureAtlasManager {
 
     this.trainRoof = createRoofCanvas();
     this.trainRamp = createRampCanvas();
+    this.stopSignTexture = this.createStopSignTexture();
+  }
+
+  // 5. Textura da Placa de Trânsito Aérea "STOP / PARE" com Faixas Zebradas Reflexivas
+  createStopSignTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Fundo de Aço Industrial com Faixas Zebradas de Trânsito
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 512, 256);
+
+    // Faixas Zebradas de Perigo (Vermelho e Branco Reflexivo nas Laterais)
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(0, 0, 512, 256);
+
+    ctx.fillStyle = '#ffffff';
+    for (let x = -256; x < 768; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + 256, 256);
+      ctx.lineTo(x + 280, 256);
+      ctx.lineTo(x + 24, 0);
+      ctx.fill();
+    }
+
+    // Moldura Escura Central para Destaque da Placa
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(106, 18, 300, 220);
+    ctx.strokeStyle = '#facc15';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(106, 18, 300, 220);
+
+    // 2. Placa Octogonal Vermelha de STOP
+    const cx = 256;
+    const cy = 128;
+    const r = 88;
+
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const angle = (i * Math.PI / 4) + (Math.PI / 8);
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+
+    // Sombra 3D da placa
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+
+    // Borda Branca Grossa do Octógono
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 7;
+    ctx.stroke();
+
+    // Borda Interna Fina Vermelha
+    ctx.strokeStyle = '#991b1b';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Texto "STOP" em Tipografia Bold 3D
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#7f1d1d';
+    ctx.lineWidth = 6;
+    ctx.font = '900 52px "Arial Black", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.strokeText('STOP', cx, cy);
+    ctx.fillText('STOP', cx, cy);
+
+    // 4. Lâmpadas LED de Alerta nos 4 Cantos
+    const corners = [[36, 36], [476, 36], [36, 220], [476, 220]];
+    corners.forEach(([lx, ly]) => {
+      const grad = ctx.createRadialGradient(lx, ly, 4, lx, ly, 22);
+      grad.addColorStop(0, '#fef08a');
+      grad.addColorStop(0.4, '#eab308');
+      grad.addColorStop(1, 'rgba(234, 179, 8, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.needsUpdate = true;
+    return tex;
   }
 }
 

@@ -663,43 +663,81 @@ export class ObstacleManager {
     });
   }
 
+  // 4. OBSTÁCULO AÉREO: PLACA DE TRÂNSITO "🛑 STOP / PARE" (Passa por baixo com slide ou pula por cima)
   createClotheslineObstacle(parent, laneX, localZ) {
-    const clothesline = new THREE.Group();
-    clothesline.position.set(laneX, 1.85, localZ);
+    const barrierGroup = new THREE.Group();
+    barrierGroup.position.set(laneX, 1.70, localZ);
 
-    const lineGeo = new THREE.BufferGeometry().setFromPoints([
-      new THREE.Vector3(-1.3, 0, 0),
-      new THREE.Vector3(1.3, 0, 0)
-    ]);
-    const line = new THREE.Line(lineGeo, this.materials.clotheslineWire);
-    clothesline.add(line);
+    // 1. Postes Laterais Metálicos de Sustentação
+    const poleMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
+    [-1.25, 1.25].forEach(px => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 10), poleMat);
+      pole.position.set(px, -0.60, 0);
+      barrierGroup.add(pole);
 
-    [-0.7, 0, 0.7].forEach((rx, idx) => {
-      const clothMat = this.materials.clothes[idx % this.materials.clothes.length];
-      const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.75), clothMat);
-      cloth.position.set(rx, -0.4, 0);
-      cloth.castShadow = true;
-      clothesline.add(cloth);
+      // Base pesada de borracha/concreto
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.12, 12), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
+      base.position.set(px, -1.64, 0);
+      barrierGroup.add(base);
     });
 
-    parent.add(clothesline);
+    // Barra Transversal Superior
+    const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 10), poleMat);
+    topBar.rotation.z = Math.PI / 2;
+    topBar.position.set(0, 0.48, 0);
+    barrierGroup.add(topBar);
+
+    // 2. Placa Central Vermelha com Logo "🛑 STOP" e Faixas Zebradas Reflexivas
+    const signGeo = new THREE.BoxGeometry(2.35, 0.85, 0.08);
+    const signFrontMat = new THREE.MeshLambertMaterial({
+      map: textureAtlas.stopSignTexture
+    });
+    const signBackMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+    const signSideMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+
+    const signMesh = new THREE.Mesh(signGeo, [
+      signSideMat,
+      signSideMat,
+      signSideMat,
+      signSideMat,
+      signFrontMat, // Frente voltada para o jogador (+Z)
+      signBackMat
+    ]);
+    signMesh.position.set(0, 0.0, 0);
+    signMesh.castShadow = true;
+    barrierGroup.add(signMesh);
+
+    // 3. Lâmpadas de Alerta Superiores Amarelas
+    [-0.95, 0.95].forEach(lx => {
+      const lampBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.06, 12), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
+      lampBezel.rotation.x = Math.PI / 2;
+      lampBezel.position.set(lx, 0.50, 0.06);
+
+      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+      lamp.position.set(lx, 0.50, 0.08);
+
+      barrierGroup.add(lampBezel, lamp);
+    });
+
+    parent.add(barrierGroup);
 
     this.obstacles.push({
+      name: 'Barreira STOP',
       type: 'clothesline',
-      mesh: clothesline,
+      mesh: barrierGroup,
       parent: parent,
       laneX: laneX,
       localZ: localZ,
       isOverhead: true,
       getAABB() {
-        const pz = parent.position.z + clothesline.position.z;
+        const pz = parent.position.z + barrierGroup.position.z;
         return {
-          minX: laneX - (2.2 * 0.85) / 2,
-          maxX: laneX + (2.2 * 0.85) / 2,
-          minY: 1.05,
-          maxY: 2.35,
-          minZ: pz - 0.4,
-          maxZ: pz + 0.4
+          minX: laneX - 1.15,
+          maxX: laneX + 1.15,
+          minY: 1.10,
+          maxY: 2.30,
+          minZ: pz - 0.35,
+          maxZ: pz + 0.35
         };
       }
     });

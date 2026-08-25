@@ -1939,19 +1939,88 @@
 
       for (const p of pipes) {
         if (isPrisonMode) {
-          // Canos da Prisão de Aço Escuro
-          ctx.fillStyle = '#374151';
-          ctx.fillRect(p.x, 0, PW, p.topH);
-          ctx.fillRect(p.x, p.botY, PW, H - GH - p.botY);
+          // CANOS TEXTURIZADOS DE PRISÃO DE ALTA FIDELIDADE (AÇO ESCOVADO, REBITES E FAIXAS DE ALERTA)
+          const drawPrisonSegment = (px, py, pw, ph) => {
+            if (ph <= 0) return;
+            // Gradiente Metálico de Aço Escovado
+            const steelGrad = ctx.createLinearGradient(px, 0, px + pw, 0);
+            steelGrad.addColorStop(0.0, '#1e293b');
+            steelGrad.addColorStop(0.20, '#475569');
+            steelGrad.addColorStop(0.50, '#64748b');
+            steelGrad.addColorStop(0.80, '#334155');
+            steelGrad.addColorStop(1.0, '#0f172a');
+            ctx.fillStyle = steelGrad;
+            ctx.fillRect(px, py, pw, ph);
 
-          ctx.fillStyle = '#1f2937';
-          ctx.fillRect(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
-          ctx.fillRect(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+            // Barras de Cela Verticais em Relevo 3D
+            const barSpacing = Math.max(14, pw / 3.2);
+            for (let bx = px + barSpacing * 0.5; bx < px + pw - 4; bx += barSpacing) {
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+              ctx.fillRect(bx, py, 2.5, ph);
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+              ctx.fillRect(bx + 2.5, py, 2, ph);
+            }
 
-          ctx.strokeStyle = '#111827';
-          ctx.lineWidth = 2.5;
-          ctx.strokeRect(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
-          ctx.strokeRect(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+            // Rebites e Parafusos Industriais de Segurança
+            for (let ry = py + 16; ry < py + ph - 8; ry += 32) {
+              [px + 5, px + pw - 7].forEach(rx => {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath(); ctx.arc(rx, ry, 2.5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath(); ctx.arc(rx + 0.8, ry + 0.8, 1.2, 0, Math.PI * 2); ctx.fill();
+              });
+            }
+
+            // Contorno Escuro
+            ctx.strokeStyle = '#020617';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(px, py, pw, ph);
+          };
+
+          const drawPrisonCollar = (cx, cy, cw, ch) => {
+            // Base do Anel
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(cx, cy, cw, ch);
+
+            // Faixas Zebradas de Perigo de Trânsito / Prisão (Amarelo e Preto)
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(cx, cy, cw, ch);
+            ctx.clip();
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(cx, cy, cw, ch);
+            ctx.fillStyle = '#111827';
+            for (let hx = cx - ch; hx < cx + cw + ch; hx += 16) {
+              ctx.beginPath();
+              ctx.moveTo(hx, cy);
+              ctx.lineTo(hx + ch, cy + ch);
+              ctx.lineTo(hx + ch + 8, cy + ch);
+              ctx.lineTo(hx + 8, cy);
+              ctx.fill();
+            }
+            ctx.restore();
+
+            // Bordas Cromadas Reforçadas
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cx, cy, cw, ch);
+
+            // LED de Alerta Central Piscante
+            const ledFlash = (frameCount % 40) < 20;
+            const ledX = cx + cw / 2;
+            const ledY = cy + ch / 2;
+            ctx.fillStyle = ledFlash ? '#ef4444' : '#38bdf8';
+            ctx.beginPath(); ctx.arc(ledX, ledY, 3.5, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
+          };
+
+          // Cano Superior
+          drawPrisonSegment(p.x, 0, PW, p.topH - collarH);
+          drawPrisonCollar(p.x - collarExtra, p.topH - collarH, PW + collarExtra * 2, collarH);
+
+          // Cano Inferior
+          drawPrisonCollar(p.x - collarExtra, p.botY, PW + collarExtra * 2, collarH);
+          drawPrisonSegment(p.x, p.botY + collarH, PW, H - GH - (p.botY + collarH));
         } else {
           // CANOS RETRO VIBRANTES (ESTILO FLAPPY BIRD ORIGINAL)
           
@@ -2142,23 +2211,62 @@
         drawPixelBushes(horizonY);
 
       } else {
-        ctx.fillStyle = '#0f172a';
+        // FUNDO DE PRISÃO ATMOSFÉRICO ILUMINADO COM HOLOFOTES DE BUSCA
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad.addColorStop(0, '#1e293b');
+        bgGrad.addColorStop(0.60, '#0f172a');
+        bgGrad.addColorStop(1, '#020617');
+        ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, W, H);
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-        ctx.lineWidth = 1;
-        for (let y = 0; y < H - GH; y += 26) {
+        // Holofotes de busca da prisão varrendo o céu (Searchlights dinâmicos)
+        ctx.save();
+        const beamAngle1 = Math.sin(frameCount * 0.02) * 0.45;
+        const beamAngle2 = Math.cos(frameCount * 0.025) * 0.50;
+
+        // Holofote Esquerdo
+        const sGrad1 = ctx.createRadialGradient(W * 0.25, H, 10, W * 0.25 + Math.tan(beamAngle1) * H, 0, W * 0.40);
+        sGrad1.addColorStop(0, 'rgba(254, 240, 138, 0.25)');
+        sGrad1.addColorStop(0.45, 'rgba(56, 189, 248, 0.12)');
+        sGrad1.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sGrad1;
+        ctx.beginPath();
+        ctx.moveTo(W * 0.25 - 24, H);
+        ctx.lineTo(W * 0.25 + Math.tan(beamAngle1) * H - 80, 0);
+        ctx.lineTo(W * 0.25 + Math.tan(beamAngle1) * H + 80, 0);
+        ctx.lineTo(W * 0.25 + 24, H);
+        ctx.fill();
+
+        // Holofote Direito
+        const sGrad2 = ctx.createRadialGradient(W * 0.75, H, 10, W * 0.75 + Math.tan(beamAngle2) * H, 0, W * 0.40);
+        sGrad2.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+        sGrad2.addColorStop(0.45, 'rgba(254, 240, 138, 0.10)');
+        sGrad2.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = sGrad2;
+        ctx.beginPath();
+        ctx.moveTo(W * 0.75 - 24, H);
+        ctx.lineTo(W * 0.75 + Math.tan(beamAngle2) * H - 75, 0);
+        ctx.lineTo(W * 0.75 + Math.tan(beamAngle2) * H + 75, 0);
+        ctx.lineTo(W * 0.75 + 24, H);
+        ctx.fill();
+        ctx.restore();
+
+        // Grades de Prisão ao Fundo com Relevo
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
+        ctx.lineWidth = 1.5;
+        for (let y = 0; y < H - GH; y += 32) {
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
         }
 
-        for (let x = 16; x < W; x += 36) {
-          ctx.fillStyle = '#475569';
-          ctx.fillRect(x - 2.5, 0, 5, H - GH);
+        for (let x = 18; x < W; x += 42) {
+          ctx.fillStyle = 'rgba(71, 85, 105, 0.50)';
+          ctx.fillRect(x - 2, 0, 4, H - GH);
         }
 
+        // Sirene Vermelha / Azul de Alerta no Topo
         const flash = (frameCount % 30) < 15;
-        ctx.fillStyle = flash ? 'rgba(239, 68, 68, 0.20)' : 'rgba(59, 130, 246, 0.20)';
-        ctx.fillRect(0, 0, W, 20);
+        ctx.fillStyle = flash ? 'rgba(239, 68, 68, 0.30)' : 'rgba(59, 130, 246, 0.30)';
+        ctx.fillRect(0, 0, W, 24);
       }
 
       // CANOS VERDES ESTILIZADOS
@@ -2238,9 +2346,35 @@
         ctx.textAlign = 'left';
       }
 
-      // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI COM CAPA (TAMANHO ÁGIL & PROPORCIONAL)
+      // RENDERIZAÇÃO DO PERSONAGEM VOADOR SUPER-HERÓI
       const charWidth = H * 0.092;
       const charHeight = charWidth * 0.55;
+
+      // DETECTA SKIN COSMÉTICA EQUIPADA DO PERSONAGEM
+      const curUser = auth.getCurrentUser();
+      const equippedSkin = getEquippedSkin(curUser, activeCharacter.id);
+      const skinDef = equippedSkin;
+      const equippedSkinId = equippedSkin ? equippedSkin.id : null;
+
+      const skinSprite = (equippedSkin && skinFlySprites[equippedSkin.id]) ? skinFlySprites[equippedSkin.id] : null;
+      const flySprite = characterFlySprites[activeCharacter.id];
+      const baseSprite = characterSprites[activeCharacter.id];
+
+      const spriteToDraw = (skinSprite && skinSprite.complete && skinSprite.naturalWidth > 0)
+        ? skinSprite
+        : (flySprite && flySprite.complete && flySprite.naturalWidth > 0)
+          ? flySprite
+          : (baseSprite && baseSprite.complete && baseSprite.naturalWidth > 0)
+            ? baseSprite
+            : null;
+
+      let targetW = charWidth;
+      let targetH = charHeight;
+      if (spriteToDraw && spriteToDraw.naturalHeight > 0) {
+        const aspect = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
+        targetH = charHeight;
+        targetW = targetH * aspect;
+      }
       
       ctx.save();
       ctx.imageSmoothingEnabled = true;
@@ -2248,16 +2382,34 @@
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      // DETECTA SKIN COSMÉTICA EQUIPADA DO PERSONAGEM
-      const curUser = auth.getCurrentUser();
-      const equippedSkin = getEquippedSkin(curUser, activeCharacter.id);
-      const skinDef = equippedSkin;
-      const equippedSkinId = equippedSkin ? equippedSkin.id : null;
+      // BRILHO / HALO LUMINOSO DE ALTA VISIBILIDADE NO MODO PRISÃO (CADEIA) E SKINS
+      let auraGlow = skinDef ? skinDef.glowColor : null;
+      if (isPrisonMode || auraGlow) {
+        ctx.save();
+        const auraRadius = Math.max(targetW, targetH) * 0.85;
+        const auraGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, auraRadius);
+        if (isPrisonMode) {
+          auraGrad.addColorStop(0, 'rgba(254, 240, 138, 0.70)');
+          auraGrad.addColorStop(0.35, 'rgba(251, 146, 60, 0.40)');
+          auraGrad.addColorStop(0.70, 'rgba(56, 189, 248, 0.20)');
+          auraGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+        } else {
+          auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
+          auraGrad.addColorStop(0.5, auraGlow ? `${auraGlow}44` : 'rgba(56, 189, 248, 0.3)');
+          auraGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+        }
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // CONFIGURAÇÃO DA CAPA PERSONALIZADA
       let capeStartColor = '#ef4444';
       let capeMidColor = '#dc2626';
       let capeEndColor = '#991b1b';
       let capeStrokeColor = '#7f1d1d';
-      let auraGlow = skinDef ? skinDef.glowColor : null;
 
       if (equippedSkinId === 'lula_presidencial') {
         capeStartColor = '#22c55e'; capeMidColor = '#16a34a'; capeEndColor = '#ffd700'; capeStrokeColor = '#15803d';
@@ -2275,19 +2427,27 @@
         capeStartColor = skinDef.glowColor; capeMidColor = skinDef.glowColor; capeEndColor = '#0f172a';
       }
 
-      // ANIMAÇÃO DE ONDULAÇÃO DA CAPA PERSONALIZADA ATRÁS DO CORPO (FLAPPY HERO CAPE)
-      if (state !== STATE.DEAD) {
-        const capeWave1 = Math.sin(frameCount * 0.38) * (charHeight * 0.14);
-        const capeWave2 = Math.cos(frameCount * 0.44) * (charHeight * 0.16);
-        const vyOffset = -lula.vy * 0.6;
+      // VERIFICA SE O PERSONAGEM/SKIN JÁ TEM UMA CAPA DESENHADA NATIVAMENTE NO SPRITE
+      // Se o sprite já tem uma capa ilustrada (ex: flySprites específicos), evita desenhar a capa procedural duplicada!
+      const hasNativeCapeInSprite = (
+        (flySprite && spriteToDraw === flySprite && (activeCharacter.id === 'lula' || activeCharacter.id === 'bolsonaro')) ||
+        (equippedSkin && equippedSkin.hasCape)
+      );
+
+      // ANIMAÇÃO DA CAPA ONDULANTE ATRÁS DO PESCOÇO/COSTAS (SOMENTE SE NÃO HOUVER CAPA NATIVA NO SPRITE)
+      if (state !== STATE.DEAD && !hasNativeCapeInSprite) {
+        const capeWave1 = Math.sin(frameCount * 0.38) * (targetH * 0.15);
+        const capeWave2 = Math.cos(frameCount * 0.44) * (targetH * 0.18);
+        const vyOffset = -lula.vy * 0.55;
 
         ctx.save();
-        const sX = -charWidth * 0.12;
-        const sY = -charHeight * 0.10;
-        const tipX1 = -charWidth * 0.62;
-        const tipY1 = -charHeight * 0.08 + capeWave1 + vyOffset;
-        const tipX2 = -charWidth * 0.58;
-        const tipY2 = charHeight * 0.20 + capeWave2 + vyOffset;
+        // Âncora colada exatamente atrás do pescoço e dos ombros do personagem voador
+        const sX = -targetW * 0.20;
+        const sY = -targetH * 0.16;
+        const tipX1 = -targetW * 0.72;
+        const tipY1 = -targetH * 0.12 + capeWave1 + vyOffset;
+        const tipX2 = -targetW * 0.65;
+        const tipY2 = targetH * 0.22 + capeWave2 + vyOffset;
 
         const capeGrad = ctx.createLinearGradient(sX, sY, tipX1, tipY1);
         capeGrad.addColorStop(0, capeStartColor);
@@ -2297,9 +2457,9 @@
         ctx.fillStyle = capeGrad;
         ctx.beginPath();
         ctx.moveTo(sX, sY);
-        ctx.quadraticCurveTo(sX - charWidth * 0.25, sY - charHeight * 0.12 + capeWave1 * 0.5, tipX1, tipY1);
+        ctx.quadraticCurveTo(sX - targetW * 0.28, sY - targetH * 0.14 + capeWave1 * 0.5, tipX1, tipY1);
         ctx.lineTo(tipX2, tipY2);
-        ctx.quadraticCurveTo(sX - charWidth * 0.22, sY + charHeight * 0.16, sX, sY + charHeight * 0.12);
+        ctx.quadraticCurveTo(sX - targetW * 0.24, sY + targetH * 0.18, sX, sY + targetH * 0.10);
         ctx.closePath();
         ctx.fill();
 
@@ -2317,7 +2477,7 @@
         ctx.shadowColor = '#a855f7';
         ctx.shadowBlur = 12;
         ctx.beginPath();
-        ctx.ellipse(0, 0, charWidth * 0.55, charHeight * 0.85, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 0, targetW * 0.55, targetH * 0.85, 0, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
       }
@@ -2328,31 +2488,23 @@
         ctx.strokeStyle = 'rgba(255, 223, 0, 0.6)';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(-charWidth * 0.55, -6);
-        ctx.lineTo(-charWidth * 0.95, -6);
-        ctx.moveTo(-charWidth * 0.55, 6);
-        ctx.lineTo(-charWidth * 0.85, 6);
+        ctx.moveTo(-targetW * 0.55, -6);
+        ctx.lineTo(-targetW * 0.95, -6);
+        ctx.moveTo(-targetW * 0.55, 6);
+        ctx.lineTo(-targetW * 0.85, 6);
         ctx.stroke();
         ctx.restore();
       }
 
-      const skinSprite = (equippedSkin && skinFlySprites[equippedSkin.id]) ? skinFlySprites[equippedSkin.id] : null;
-      const flySprite = characterFlySprites[activeCharacter.id];
-      const baseSprite = characterSprites[activeCharacter.id];
-
-      const spriteToDraw = (skinSprite && skinSprite.complete && skinSprite.naturalWidth > 0)
-        ? skinSprite
-        : (flySprite && flySprite.complete && flySprite.naturalWidth > 0)
-          ? flySprite
-          : (baseSprite && baseSprite.complete && baseSprite.naturalWidth > 0)
-            ? baseSprite
-            : null;
-
       if (spriteToDraw) {
-        const aspect = spriteToDraw.naturalWidth / spriteToDraw.naturalHeight;
-        const targetH = charHeight;
-        const targetW = targetH * aspect;
+        ctx.save();
+        // No modo prisão, adiciona iluminação de contorno para o personagem destacar no escuro
+        if (isPrisonMode) {
+          ctx.shadowColor = '#ffd700';
+          ctx.shadowBlur = 14;
+        }
         ctx.drawImage(spriteToDraw, -targetW * 0.5, -targetH * 0.5, targetW, targetH);
+        ctx.restore();
       } else {
         ctx.font = `${charHeight}px serif`;
         ctx.fillText('🦸‍♂️', -charWidth * 0.4, charHeight * 0.35);
@@ -2362,21 +2514,21 @@
       if (state === STATE.DEAD) {
         ctx.save();
         const dizzyAngle = frameCount * 0.14;
-        const headX = charWidth * 0.15;
-        const headY = -charHeight * 0.42;
+        const headX = targetW * 0.15;
+        const headY = -targetH * 0.42;
 
         // Auréola elíptica giratória dourada
         ctx.strokeStyle = '#ffd700';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.ellipse(headX, headY, charWidth * 0.26, charHeight * 0.15, Math.PI / 10, 0, Math.PI * 2);
+        ctx.ellipse(headX, headY, targetW * 0.26, targetH * 0.15, Math.PI / 10, 0, Math.PI * 2);
         ctx.stroke();
 
         // 3 Estrelas brilhantes orbitando a cabeça
         for (let i = 0; i < 3; i++) {
           const ang = dizzyAngle + (i * Math.PI * 2 / 3);
-          const sx = headX + Math.cos(ang) * (charWidth * 0.28);
-          const sy = headY + Math.sin(ang) * (charHeight * 0.15);
+          const sx = headX + Math.cos(ang) * (targetW * 0.28);
+          const sy = headY + Math.sin(ang) * (targetH * 0.15);
 
           ctx.fillStyle = '#ffdf00';
           ctx.beginPath();
