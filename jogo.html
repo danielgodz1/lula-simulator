@@ -2382,22 +2382,15 @@
       ctx.translate(lula.x, lula.y);
       ctx.rotate(lula.rotation * Math.PI / 180);
 
-      // BRILHO / HALO LUMINOSO DE ALTA VISIBILIDADE NO MODO PRISÃO (CADEIA) E SKINS
-      let auraGlow = skinDef ? skinDef.glowColor : null;
-      if (isPrisonMode || auraGlow) {
+      // BRILHO / HALO LUMINOSO DE ALTA VISIBILIDADE EXCLUSIVAMENTE NO MODO PRISÃO (CENÁRIO PRETO)
+      if (isPrisonMode) {
         ctx.save();
         const auraRadius = Math.max(targetW, targetH) * 0.85;
         const auraGrad = ctx.createRadialGradient(0, 0, 6, 0, 0, auraRadius);
-        if (isPrisonMode) {
-          auraGrad.addColorStop(0, 'rgba(254, 240, 138, 0.70)');
-          auraGrad.addColorStop(0.35, 'rgba(251, 146, 60, 0.40)');
-          auraGrad.addColorStop(0.70, 'rgba(56, 189, 248, 0.20)');
-          auraGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-        } else {
-          auraGrad.addColorStop(0, 'rgba(255, 255, 255, 0.55)');
-          auraGrad.addColorStop(0.5, auraGlow ? `${auraGlow}44` : 'rgba(56, 189, 248, 0.3)');
-          auraGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
-        }
+        auraGrad.addColorStop(0, 'rgba(254, 240, 138, 0.70)');
+        auraGrad.addColorStop(0.35, 'rgba(251, 146, 60, 0.40)');
+        auraGrad.addColorStop(0.70, 'rgba(56, 189, 248, 0.20)');
+        auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = auraGrad;
         ctx.beginPath();
         ctx.arc(0, 0, auraRadius, 0, Math.PI * 2);

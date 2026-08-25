@@ -366,10 +366,74 @@ export class ObstacleManager {
     body.receiveShadow = true;
     train.add(body);
 
-    // 2. CABINE FRONTAL AERODINÂMICA COM LETREIRO LED LUMINOSO
+    // 1.1 DETALHAMENTO 3D REAL DAS LATERAIS (JANELAS EM RELEVO, PORTAS E VIGAS CANELADAS)
+    const windowFrameMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+    const windowGlassMat = new THREE.MeshLambertMaterial({
+      color: 0x1e293b,
+      emissive: theme.id === 'rio' ? 0x0284c7 : (theme.id === 'sp' ? 0x38bdf8 : 0x10b981),
+      emissiveIntensity: 0.25
+    });
+    const doorFrameMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const corrugatedMat = new THREE.MeshLambertMaterial({ color: 0xcbd5e1 });
+
+    [-1.20, 1.20].forEach(sideX => {
+      const isRight = sideX > 0;
+      const sideGroup = new THREE.Group();
+      sideGroup.position.x = sideX;
+
+      // Vigas de Aço Inoxidável Caneladas (Frisos Longitudinais em Relevo 3D)
+      [-0.45, 0.45].forEach(ribY => {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.12, 17.0), corrugatedMat);
+        rib.position.set(0, ribY, 0);
+        sideGroup.add(rib);
+      });
+
+      // Saias de Chassi Inferiores de Proteção entre os Bogies
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.42, 6.4), chassisMat);
+      skirt.position.set(0, -1.38, 0);
+      sideGroup.add(skirt);
+
+      // Janelas 3D dos Passageiros em Relevo com Moldura Prateada e Vidro Iluminado
+      [-5.8, -3.8, 0.0, 3.8, 5.8].forEach(wz => {
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.96, 1.48), windowFrameMat);
+        frame.position.set(0, 0.48, wz);
+
+        const glass = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.84, 1.36), windowGlassMat);
+        glass.position.set(0, 0.48, wz);
+
+        sideGroup.add(frame, glass);
+      });
+
+      // Portas Automáticas Duplas Corrediças em Relevo 3D
+      [-1.9, 1.9].forEach(dz => {
+        const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.15, 1.42), doorFrameMat);
+        doorFrame.position.set(0, -0.05, dz);
+
+        const doorDivider = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.10, 0.06), windowFrameMat);
+        doorDivider.position.set(0, -0.05, dz);
+
+        // Janelinhas das portas
+        [-0.32, 0.32].forEach(pwx => {
+          const doorWin = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.72, 0.38), windowGlassMat);
+          doorWin.position.set(0, 0.42, dz + pwx);
+          sideGroup.add(doorWin);
+        });
+
+        // Degrau de Entrada com Alerta Amarelo
+        const step = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.08, 1.40), new THREE.MeshBasicMaterial({ color: 0xfde047 }));
+        step.position.set(isRight ? 0.04 : -0.04, -1.14, dz);
+
+        sideGroup.add(doorFrame, doorDivider, step);
+      });
+
+      train.add(sideGroup);
+    });
+
+    // 2. CABINE FRONTAL AERODINÂMICA 3D ROBUSTA (PARA-BRISA, PARA-CHOQUE E ENGATE)
     const frontCab = new THREE.Group();
     frontCab.position.set(0, 0, 8.6);
 
+    // Nariz Principal Inclinado da Cabine
     const frontNose = new THREE.Mesh(
       new THREE.BoxGeometry(2.40, 3.20, 1.2),
       new THREE.MeshStandardMaterial({
@@ -381,18 +445,67 @@ export class ObstacleManager {
     frontNose.castShadow = true;
     frontCab.add(frontNose);
 
-    // Painel Frontal com Vidro e Letreiro LED
-    const frontFacePlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(2.36, 3.16),
+    // Para-brisa Panorâmico Inclinado 3D em Relevo com Vidro Fumê
+    const windshieldFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(2.18, 1.15, 0.12),
+      new THREE.MeshLambertMaterial({ color: 0x0f172a })
+    );
+    windshieldFrame.position.set(0, 0.58, 0.62);
+
+    const windshieldGlass = new THREE.Mesh(
+      new THREE.BoxGeometry(2.08, 1.05, 0.14),
+      new THREE.MeshPhongMaterial({
+        color: 0x0f172a,
+        specular: 0x93c5fd,
+        shininess: 90,
+        emissive: 0x0284c7,
+        emissiveIntensity: 0.15
+      })
+    );
+    windshieldGlass.position.set(0, 0.58, 0.63);
+
+    // Limpador de Para-brisa 3D Duplo
+    [-0.50, 0.45].forEach(wx => {
+      const wiperArm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.55, 0.03), doorFrameMat);
+      wiperArm.rotation.z = Math.PI / 8;
+      wiperArm.position.set(wx, 0.45, 0.71);
+      frontCab.add(wiperArm);
+    });
+
+    frontCab.add(windshieldFrame, windshieldGlass);
+
+    // Caixa de Letreiro LED Digital Rebaixada no Topo da Cabine
+    const signBox = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.36, 0.15), doorFrameMat);
+    signBox.position.set(0, 1.30, 0.62);
+
+    const ledSign = new THREE.Mesh(
+      new THREE.BoxGeometry(1.75, 0.28, 0.08),
       new THREE.MeshStandardMaterial({
         map: theme.frontTex,
         roughness: 0.2,
-        metalness: 0.6,
-        side: THREE.DoubleSide
+        metalness: 0.5
       })
     );
-    frontFacePlane.position.set(0, 0, 0.61);
-    frontCab.add(frontFacePlane);
+    ledSign.position.set(0, 1.30, 0.68);
+    frontCab.add(signBox, ledSign);
+
+    // Para-choque / Piloto Dianteiro de Aço Robusto em Cunha (Cowcatcher 3D)
+    const bumperMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.55, 0.55), bumperMat);
+    bumper.position.set(0, -1.05, 0.72);
+
+    // Frisos Horizontais do Para-choque
+    [-0.15, 0.15].forEach(by => {
+      const bFriso = new THREE.Mesh(new THREE.BoxGeometry(2.20, 0.06, 0.08), corrugatedMat);
+      bFriso.position.set(0, by, 0.28);
+      bumper.add(bFriso);
+    });
+
+    // Pino / Engate de Tração Central 3D (Coupler)
+    const coupler = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.26, 0.55), windowFrameMat);
+    coupler.position.set(0, -1.15, 1.05);
+
+    frontCab.add(bumper, coupler);
 
     // Viseira Aerodinâmica Superior
     const visor = new THREE.Mesh(
@@ -402,27 +515,37 @@ export class ObstacleManager {
     visor.position.set(0, 1.55, 0.35);
     frontCab.add(visor);
 
-    // Faróis Duplos Xenon Projetores com Moldura Cromada
+    // Espelhos Retrovisores / Câmeras de Bordo nas Extremidades
+    [-1.24, 1.24].forEach(mx => {
+      const mirrorStem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.25, 8), doorFrameMat);
+      mirrorStem.rotation.z = mx > 0 ? -Math.PI / 3 : Math.PI / 3;
+      mirrorStem.position.set(mx, 0.65, 0.35);
+
+      const mirrorHead = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 0.15), doorFrameMat);
+      mirrorHead.position.set(mx > 0 ? mx + 0.12 : mx - 0.12, 0.72, 0.35);
+
+      frontCab.add(mirrorStem, mirrorHead);
+    });
+
+    // Faróis Duplos Xenon Projetores com Moldura Cromada Robusta
     const headlightBezelMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.1 });
     [-0.75, 0.75].forEach(hx => {
-      const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.08, 16), headlightBezelMat);
+      const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.12, 16), headlightBezelMat);
       bezel.rotation.x = Math.PI / 2;
-      bezel.position.set(hx, -0.45, 0.64);
+      bezel.position.set(hx, -0.45, 0.66);
 
-      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.1, 16), this.materials.headlight);
+      const lamp = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 16), this.materials.headlight);
       lamp.rotation.x = Math.PI / 2;
-      lamp.position.set(hx, -0.45, 0.66);
+      lamp.position.set(hx, -0.45, 0.70);
 
       frontCab.add(bezel, lamp);
     });
 
     // Luz de Alerta Central Superior
-    const topBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.1), new THREE.MeshStandardMaterial({
-      color: 0xfef08a,
-      emissive: 0xfef08a,
-      emissiveIntensity: 1.5
+    const topBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.12, 0.1), new THREE.MeshBasicMaterial({
+      color: 0xfef08a
     }));
-    topBeacon.position.set(0, 1.35, 0.65);
+    topBeacon.position.set(0, 1.48, 0.65);
     frontCab.add(topBeacon);
 
     // Feixe Volumétrico de Luz dos Faróis (Projeção Consecutiva para Frente)
