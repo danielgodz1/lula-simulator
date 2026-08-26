@@ -40,10 +40,10 @@ export class Game {
     this.STATE = { WAITING: 0, PLAYING: 1, GAMEOVER: 2 };
     this.state = this.STATE.WAITING;
 
-    // Velocidade Calibrada (1.0x até 10.0x)
-    this.baseSpeed = 32;
+    // Velocidade Calibrada Realista (Estilo Subway Surfers)
+    this.baseSpeed = 22;
     this.speed = this.baseSpeed;
-    this.maxSpeed = 320; // 10.0x baseSpeed
+    this.maxSpeed = 95;
     this.distance = 0;
     this.coins = 0;
     this.picanhas = 0;
@@ -138,26 +138,27 @@ export class Game {
     gameAudio.playCrash();
     gameAudio.stopAmbience();
 
-    const distanceKm = Math.floor(this.distance / 10);
-    if (distanceKm > this.bestDistance) {
-      this.bestDistance = distanceKm;
+    // Distância final exata em metros sem divisões espúrias
+    const finalDistanceMeters = Math.floor(this.distance);
+    if (finalDistanceMeters > this.bestDistance) {
+      this.bestDistance = finalDistanceMeters;
       localStorage.setItem('run_best', this.bestDistance.toString());
     }
 
-    auth.updateUserScore('runner', distanceKm);
-    savePlayerScore('runner', distanceKm, distanceKm);
+    auth.updateUserScore('runner', finalDistanceMeters);
+    savePlayerScore('runner', finalDistanceMeters, finalDistanceMeters);
 
     const punchlines = [
-      'ASSINADO E CARIMBADO!',
-      'REGISTRADO COM CLT 44H!',
+      'ASSINADO E CARIMBADO NA CLT!',
+      'REGISTRADO COM CARGA 44H SEMANAIS!',
       'FOI PEGO PELA CARTEIRA DE TRABALHO!',
       'AUDITADO PELA RECEITA FEDERAL!',
-      'O LEÃO NÃO PERDOOU!'
+      'O LEÃO DO IRPF NÃO PERDOOU!'
     ];
     const finalReason = customReason || punchlines[Math.floor(Math.random() * punchlines.length)];
 
     setTimeout(() => {
-      this.ui.showGameOver(obstacle, distanceKm, this.coins, this.picanhas, () => this.restart(), finalReason);
+      this.ui.showGameOver(obstacle, finalDistanceMeters, this.coins, this.picanhas, () => this.restart(), finalReason, this.bestDistance);
     }, 650);
   }
 
@@ -169,44 +170,33 @@ export class Game {
     else if (this.consecutiveCoins > 5) this.multiplier = 2;
     else this.multiplier = 1;
 
-    const finalVal = value * this.multiplier;
-    this.coins += finalVal;
-    RunnerInventory.addCoins(finalVal);
-    auth.updateMissionProgress('m_runner_coins', finalVal);
-    if (this.ui.showFloatingPoints) {
-      this.ui.showFloatingPoints(`+${finalVal}`, '#facc15');
-    }
+    const earned = value * this.multiplier;
+    this.coins += earned;
+    RunnerInventory.addCoins(earned);
     this.updateHUD();
   }
 
-  onCollectPicanha(value) {
-    this.picanhas++;
-    const finalVal = (value || 5) * this.multiplier;
-    this.coins += finalVal;
-    RunnerInventory.addCoins(finalVal);
-    auth.updateMissionProgress('m_runner_coins', finalVal);
-    if (this.ui.showFloatingPoints) {
-      this.ui.showFloatingPoints(`🥩 +${finalVal}`, '#ef4444');
-    }
+  onCollectPicanha() {
+    this.picanhas += 1;
+    RunnerInventory.addPicanhas(1);
     this.updateHUD();
   }
 
   onCollectPowerup(type) {
     if (type === 'magnet') {
       this.magnetActive = true;
-      this.magnetTimer = 9.0;
-      if (this.ui.showFloatingPoints) this.ui.showFloatingPoints('🧲 IMÃ ATIVO!', '#38bdf8');
+      this.magnetTimer = 10.0;
+      this.character.setMagnetVisual(true);
     } else if (type === 'superjump') {
       this.superJumpActive = true;
       this.superJumpTimer = 10.0;
-      this.character.superJump = true;
-      if (this.ui.showFloatingPoints) this.ui.showFloatingPoints('👟 SUPER PULO!', '#facc15');
+      this.character.setJumpBootsVisual(true);
     }
   }
 
   updateHUD() {
     const distanceMeters = Math.floor(this.distance);
-    const bestMeters = Math.floor(this.bestDistance * 10);
+    const bestMeters = Math.floor(this.bestDistance);
     const speedRatio = this.speed / this.baseSpeed;
 
     const powerups = {
@@ -214,7 +204,7 @@ export class Game {
       superJumpTimer: this.superJumpActive ? this.superJumpTimer : 0
     };
 
-    const timeStr = this.sceneManager.getFormattedTime();
+    const timeStr = this.sceneManager.getFormattedTime ? this.sceneManager.getFormattedTime() : '12:00';
     const totalCoins = RunnerInventory.getTotalCoins();
     this.ui.updateHUD(distanceMeters, bestMeters, speedRatio, this.coins, this.picanhas, powerups, timeStr, totalCoins);
   }
@@ -232,27 +222,23 @@ export class Game {
     this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay);
 
     if (this.state === this.STATE.PLAYING) {
-      // 2. Aceleração e Distância Progressiva e Suave
-      this.distance += this.speed * dt;
+      // 2. Distância e Aceleração Progressiva em Ritmo Realista
+      // O avanço em metros acompanha a velocidade real de corrida do personagem
+      this.distance += (this.speed * 0.45) * dt;
+
       if (this.speed < this.maxSpeed) {
-        const currentRatio = this.speed / this.baseSpeed;
-        let accel = 0.20;
-        if (currentRatio < 2.0) {
-          accel = 0.14;
-        } else if (currentRatio < 3.5) {
-          accel = 0.20;
-        } else if (currentRatio < 5.0) {
-          accel = 0.26;
-        } else {
-          accel = 0.32;
-        }
+        // Aceleração suave conforme avança na corrida
+        const accel = 0.12 + Math.min(this.distance / 10000, 0.28);
         this.speed += accel * dt;
       }
 
       // 3. Timers de Power-up
       if (this.magnetActive) {
         this.magnetTimer -= dt;
-        if (this.magnetTimer <= 0) this.magnetActive = false;
+        if (this.magnetTimer <= 0) {
+          this.magnetActive = false;
+          this.character.setMagnetVisual(false);
+        }
       }
       this.character.magnetActive = this.magnetActive;
 

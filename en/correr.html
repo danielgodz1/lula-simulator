@@ -443,57 +443,302 @@
       box-shadow: 0 0 50px rgba(255, 223, 0, 0.35);
     }
 
-    .modal-card {
-      background: rgba(22, 27, 38, 0.98);
-      border: 2px solid var(--vermelho-alert);
-      border-radius: 24px;
-      padding: 28px 32px;
-      max-width: 520px;
+    /* ARCADE DASHBOARD GAME OVER MODAL */
+    .game-over-container {
+      background: rgba(18, 24, 38, 0.96);
+      border: 3px solid var(--amarelo-brasil);
+      border-radius: 20px;
+      padding: 18px 20px;
+      max-width: 580px;
       width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 223, 0, 0.35);
+      animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-align: center;
       max-height: 92dvh;
       overflow-y: auto;
-      text-align: center;
-      box-shadow: 0 0 50px rgba(204, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.8);
-      animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      -webkit-overflow-scrolling: touch;
+      box-sizing: border-box;
     }
 
-    @keyframes modalPop {
-      from { transform: scale(0.8); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-title {
+    .go-header-title {
       font-family: 'Bangers', cursive;
-      font-size: 46px;
-      color: var(--vermelho-alert);
+      font-size: 38px;
+      color: #ef4444;
+      text-shadow: 2px 2px 0px #000, 0 0 16px rgba(239, 68, 68, 0.6);
+      margin-bottom: 8px;
       letter-spacing: 2px;
+    }
+
+    .go-quick-options {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 6px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .go-char-picker-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1.5px solid var(--amarelo-brasil);
+      padding: 4px 10px;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .go-char-picker-btn:hover {
+      background: rgba(234, 179, 8, 0.25);
+    }
+
+    .go-char-picker-btn img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid #ffd700;
+      object-fit: cover;
+      background: #000;
+    }
+
+    .go-panels-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.05fr;
+      gap: 12px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    @media (max-width: 520px) {
+      .go-panels-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .go-left-panel {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 223, 0, 0.35);
+      border-radius: 14px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .go-score-box {
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+      border-bottom: 1.5px dashed rgba(255, 255, 255, 0.15);
+      padding-bottom: 8px;
+    }
+
+    .go-score-item label {
+      display: block;
+      font-family: 'Bangers', cursive;
+      font-size: 13px;
+      color: var(--amarelo-brasil);
+      margin-bottom: 2px;
+      letter-spacing: 0.8px;
+    }
+
+    .go-score-item span {
+      font-family: 'Bangers', cursive;
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+
+    .go-rewards-row {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .go-reward-badge {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-family: 'Bangers', cursive;
+      font-size: 13px;
+      color: #facc15;
+      letter-spacing: 0.5px;
+    }
+
+    .go-lula-meme-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.45);
+      border-radius: 10px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .go-lula-avatar img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--amarelo-brasil);
+      object-fit: cover;
+    }
+
+    .go-meme-text {
+      font-size: 11.5px;
+      color: var(--text-main);
+      line-height: 1.35;
+      font-style: italic;
+    }
+
+    .go-right-panel {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 223, 0, 0.35);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .go-lb-header {
+      font-family: 'Bangers', cursive;
+      font-size: 14px;
+      color: var(--amarelo-brasil);
+      text-align: center;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 6px;
+      letter-spacing: 0.8px;
+    }
+
+    .go-lb-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 135px;
+      overflow-y: auto;
       margin-bottom: 6px;
     }
 
-    .modal-subtitle {
-      font-family: 'Bangers', cursive;
-      font-size: 24px;
-      color: var(--amarelo-brasil);
-      margin-bottom: 12px;
+    .go-lb-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 3px 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
-    .modal-message {
-      font-size: 14px;
-      color: var(--text-main);
-      line-height: 1.5;
-      background: rgba(0, 0, 0, 0.45);
-      padding: 12px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 18px;
-      white-space: pre-line;
+    .go-lb-rank {
+      font-weight: bold;
+      width: 20px;
+      text-align: center;
     }
 
-    .modal-dist {
+    .go-lb-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin: 0 6px;
+      color: #e2e8f0;
+    }
+
+    .go-lb-score {
       font-family: 'Bangers', cursive;
-      font-size: 28px;
-      color: var(--verde-neon);
-      margin-bottom: 20px;
+      color: #22c55e;
+      letter-spacing: 0.5px;
+    }
+
+    .go-lb-you-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(234, 179, 8, 0.18);
+      border: 1.5px solid var(--amarelo-brasil);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: 11.5px;
+      font-weight: bold;
+    }
+
+    .go-buttons-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn-pixel-play {
+      flex: 1.4;
+      background: linear-gradient(180deg, #22c55e, #15803d);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Bangers', cursive;
+      font-size: 20px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+      letter-spacing: 1px;
+    }
+
+    .btn-pixel-play:hover {
+      transform: scale(1.03);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6);
+    }
+
+    .btn-pixel-share {
+      flex: 1;
+      background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Bangers', cursive;
+      font-size: 16px;
+      padding: 10px 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.8px;
+    }
+
+    .btn-pixel-share:hover {
+      transform: scale(1.03);
+    }
+
+    .btn-pixel-home {
+      flex: 1;
+      background: linear-gradient(180deg, #64748b, #334155);
+      border: 2px solid #fff;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Bangers', cursive;
+      font-size: 16px;
+      padding: 10px 10px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      letter-spacing: 0.8px;
+    }
+
+    .btn-pixel-home:hover {
+      transform: scale(1.03);
     }
   </style>
 </head>
@@ -680,36 +925,92 @@
       </div>
     </div>
 
-    <!-- MODAL DE GAME OVER 3D -->
+    <!-- DUAL COLUMN ARCADE GAME OVER MODAL -->
     <div class="modal-overlay" id="gameOverModal" style="display:none;">
-      <div class="modal-card">
-        <div class="modal-title">GAME OVER!</div>
-        <div class="modal-subtitle" id="goTitle">OBSTACLE</div>
-        <div class="modal-message" id="goMessage">You were caught by the obstacle!</div>
-        <div class="modal-dist" id="goDistance">0 KM TRAVELED</div>
-        <div style="display:flex; gap:10px; margin-top:12px;">
-          <button class="btn-primary" id="btnRestart" style="flex:1.4; font-size:18px; padding:12px 14px;">
-            🔄 PLAY AGAIN
+      <div class="game-over-container">
+        <div class="go-header-title">GAME OVER</div>
+
+        <!-- QUICK EQUIPPED CHARACTER SELECTOR -->
+        <div class="go-quick-options">
+          <div class="go-char-picker-btn" id="btnOpenCharSelectGO" title="Switch Character">
+            <img id="goEquippedCharImg" src="/img/empresario_faria_lima.png" alt="Character">
+            <span id="goEquippedCharName">3D Businessman</span>
+            <span style="color:var(--amarelo-brasil); font-size:11px; margin-left:4px;">✎ Switch</span>
+          </div>
+          <div style="font-family:'Bangers',cursive; color:#facc15; font-size:15px;" id="goTitle">
+            CLT 44H
+          </div>
+        </div>
+
+        <!-- 2-COLUMN PANELS GRID -->
+        <div class="go-panels-grid">
+          <!-- LEFT PANEL: STATS AND MEME -->
+          <div class="go-left-panel">
+            <div class="go-score-box">
+              <div class="go-score-item">
+                <label>DISTANCE</label>
+                <span id="goCurrentScoreVal" style="color:#22c55e;">0 m</span>
+              </div>
+              <div class="go-score-item">
+                <label>BEST RECORD</label>
+                <span id="goHighScoreVal" style="color:#f59e0b;">0 m</span>
+              </div>
+            </div>
+
+            <div class="go-rewards-row">
+              <div class="go-reward-badge" id="goCoinsEarned">💰 +0 COINS</div>
+              <div class="go-reward-badge" id="goPicanhasEarned">🥩 +0 PICANHAS</div>
+            </div>
+
+            <div class="go-lula-meme-box">
+              <div class="go-lula-avatar">
+                <img id="goMemeAvatar" src="/img/lula_cry.png" alt="Meme Avatar">
+              </div>
+              <div class="go-meme-text" id="goMessage">
+                "Signed and stamped! The Labor Card caught you in the favela!"
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT PANEL: TOP 5 NATIONAL LEADERBOARD LIVE -->
+          <div class="go-right-panel">
+            <div class="go-lb-header">
+              🏆 TOP 5 LEADERBOARD (3D)
+            </div>
+            
+            <div class="go-lb-list" id="goLeaderboardList">
+              <div style="text-align:center; padding:10px; font-size:10px; color:#94a3b8;">Loading live scores...</div>
+            </div>
+
+            <div class="go-lb-you-row">
+              <span id="goYouName">YOU (Player)</span>
+              <span id="goYouScore" style="font-family:'Bangers', cursive; color:#facc15; font-size:16px;">0 m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS ROW -->
+        <div class="go-buttons-row">
+          <button class="btn-pixel-play" id="btnRestart">
+            ▶ PLAY AGAIN
           </button>
-          <a href="index.html" class="btn-secondary" style="flex:1; font-size:16px; padding:12px 10px; display:flex; align-items:center; justify-content:center; text-decoration:none; border-radius:12px;">
+          <button class="btn-pixel-share" id="btnShareScore">
+            🔗 SHARE
+          </button>
+          <a href="/en/index.html" class="btn-pixel-home">
             🏠 HOME
           </a>
         </div>
-        <div style="margin-top:10px;">
-          <button class="btn-secondary" id="btnOpenCharSelectGO" style="width:100%; font-size:16px; padding:10px 14px; border-color:#eab308; color:#fef08a; font-family:'Bangers',cursive; letter-spacing:1px;">
-            🎭 TROCAR DE PERSONAGEM
-          </button>
-        </div>
 
-        <!-- BOTÃO SMARTLINK RECOMPENSA PICANHAS BÔNUS -->
-        <div style="display:flex; justify-content:center; margin-top:8px;">
+        <!-- SMARTLINK REWARD BONUS PICANHAS -->
+        <div style="display:flex; justify-content:center; margin-top:10px;">
           <button id="btnRewardPicanhasGO" class="btn-rewarded-smartlink">
-            🎁 GANHAR +10 PICANHAS BÔNUS
+            🎁 GET +10 BONUS PICANHAS
           </button>
         </div>
 
-        <!-- BANNER DE MONETIZAÇÃO ESTÁTICO GAME OVER 320x50 -->
-        <div id="adBannerGameOver" class="ad-banner-container-320x50" style="margin-top: 8px; margin-bottom: 0;"></div>
+        <!-- AD BANNER GAME OVER 320x50 -->
+        <div id="adBannerGameOver" class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 0;"></div>
       </div>
     </div>
   </div>

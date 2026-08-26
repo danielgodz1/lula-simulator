@@ -134,6 +134,17 @@ export async function savePlayerScore(gameType, score, sessionMatchScore = null)
       savedOk = true;
       localStorage.setItem(syncedKey, finalScoreToSend.toString());
       currentSessionTokens[gameKey] = '';
+
+      // Invalida imediatamente os caches do leaderboard para refletir na hora o novo score
+      inMemoryLeaderboardCache[gameKey] = { data: null, timestamp: 0 };
+      inMemoryLeaderboardCache[`${gameKey}_weekly`] = { data: null, timestamp: 0 };
+      try {
+        localStorage.removeItem(`lula_cache_scores_v2_${gameKey}`);
+        localStorage.removeItem(`lula_cache_scores_ts_${gameKey}`);
+        localStorage.removeItem(`lula_cache_scores_v2_${gameKey}_weekly`);
+        localStorage.removeItem(`lula_cache_scores_ts_${gameKey}_weekly`);
+      } catch (e) {}
+
       return { saved: true, ok: true };
     }
   } catch (e) {}

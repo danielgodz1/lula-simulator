@@ -4,6 +4,9 @@ import { gameAudio } from './audio.js';
 import { RUNNER_CHARACTERS, RunnerInventory } from './characters.js';
 import { modelLoader } from './model-loader.js';
 import { AdsManager } from '../ads-manager.js';
+import { getTopScores } from '../firebase-config.js';
+import { auth } from '../auth.js';
+import { escapeHTML } from '../security.js';
 
 export class UIManager {
   constructor() {
@@ -27,8 +30,19 @@ export class UIManager {
     this.gameOverModal = document.getElementById('gameOverModal');
     this.goTitle = document.getElementById('goTitle');
     this.goMessage = document.getElementById('goMessage');
-    this.goDistance = document.getElementById('goDistance');
+    this.goCurrentScoreVal = document.getElementById('goCurrentScoreVal');
+    this.goHighScoreVal = document.getElementById('goHighScoreVal');
+    this.goCoinsEarned = document.getElementById('goCoinsEarned');
+    this.goPicanhasEarned = document.getElementById('goPicanhasEarned');
+    this.goEquippedCharImg = document.getElementById('goEquippedCharImg');
+    this.goEquippedCharName = document.getElementById('goEquippedCharName');
+    this.goLeaderboardList = document.getElementById('goLeaderboardList');
+    this.goYouName = document.getElementById('goYouName');
+    this.goYouScore = document.getElementById('goYouScore');
     this.btnRestart = document.getElementById('btnRestart');
+    this.btnShareScore = document.getElementById('btnShareScore');
+    this.btnRewardPicanhasGO = document.getElementById('btnRewardPicanhasGO');
+    this.btnOpenCharSelectGO = document.getElementById('btnOpenCharSelectGO');
 
     // Modal de Seleção de Personagens
     this.charSelectModal = document.getElementById('charSelectModal');
@@ -719,36 +733,78 @@ export class UIManager {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  showGameOver(obstacle, distanceKm, coins, picanhas, onRestart, customReason) {
+  showGameOver(obstacle, distanceMeters, coins, picanhas, onRestart, customReason, bestDistance = 0) {
     if (!this.gameOverModal) return;
 
     const funnyMsg = customReason || this.getFunnyDeathMessage(obstacle);
-    if (this.goTitle) this.goTitle.textContent = customReason ? `📘 ${customReason}` : (obstacle ? obstacle.name : 'OBSTÁCULO');
+    if (this.goTitle) this.goTitle.textContent = customReason ? `📘 ${customReason}` : (obstacle ? obstacle.name : 'CLT 44H');
     if (this.goMessage) this.goMessage.textContent = funnyMsg;
-    if (this.goDistance) {
-      const meters = distanceKm * 10;
-      this.goDistance.textContent = `${meters.toLocaleString()} M PERCORRIDOS · +${coins.toLocaleString()} MOEDAS · 🥩 ${picanhas} PICANHAS`;
+
+    // Estatísticas da Partida
+    if (this.goCurrentScoreVal) this.goCurrentScoreVal.textContent = `${distanceMeters.toLocaleString()} m`;
+    const finalBest = Math.max(distanceMeters, bestDistance || parseInt(localStorage.getItem('run_best') || '0', 10));
+    if (this.goHighScoreVal) this.goHighScoreVal.textContent = `${finalBest.toLocaleString()} m`;
+    if (this.goCoinsEarned) this.goCoinsEarned.textContent = `💰 +${coins.toLocaleString()} MOEDAS`;
+    if (this.goPicanhasEarned) this.goPicanhasEarned.textContent = `🥩 +${picanhas} PICANHAS`;
+
+    // Atualiza o Personagem Equipado no Topo do Modal
+    const activeChar = RunnerInventory.getSelectedCharacter();
+    if (this.goEquippedCharName && activeChar) {
+      this.goEquippedCharName.textContent = activeChar.name;
     }
+    if (this.goEquippedCharImg && activeChar) {
+      this.goEquippedCharImg.src = activeChar.img;
+    }
+
+    // Botão de Trocar Personagem no Game Over
+    if (this.btnOpenCharSelectGO) {
+      this.btnOpenCharSelectGO.onclick = (e) => {
+        if (e) e.stopPropagation();
+        this.openCharacterSelect();
+      };
+    }
+
+    // Identificação do Jogador no Rodapé do Placar
+    const user = auth.getCurrentUser();
+    const playerName = user ? user.username : (localStorage.getItem('lula_player') || 'Visitante');
+    if (this.goYouName) this.goYouName.textContent = `VOCÊ (${playerName})`;
+    if (this.goYouScore) this.goYouScore.textContent = `${finalBest.toLocaleString()} m`;
 
     this.gameOverModal.style.display = 'flex';
 
-    // Botão de Cópia Rápida de Telemetria no Game Over (?debug=1)
-    if (window.__RUNNER_PROFILER__ && window.__RUNNER_PROFILER__.enabled) {
-      let profGoBtn = document.getElementById('profGoCopyBtn');
-      if (!profGoBtn) {
-        profGoBtn = document.createElement('button');
-        profGoBtn.id = 'profGoCopyBtn';
-        profGoBtn.style.cssText = 'margin-top:12px; width:100%; padding:9px 12px; background:#0284c7; border:1.5px solid #38bdf8; border-radius:8px; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; font-family:inherit; transition:background 0.2s;';
-        profGoBtn.innerHTML = '📋 COPIAR ESTATÍSTICAS DE PERFORMANCE (P/ O CHAT)';
-        profGoBtn.onclick = (e) => {
-          e.stopPropagation();
-          window.__RUNNER_PROFILER__.copyReportToClipboard(profGoBtn);
-        };
-        const modalContent = this.gameOverModal.querySelector('.modal-card') || this.gameOverModal.firstElementChild || this.gameOverModal;
-        modalContent.appendChild(profGoBtn);
-      }
+    // Carrega o Placar Nacional Oficial em Tempo Real
+    this.loadGameOverLeaderboard();
+
+    // Botão de Compartilhar / Copiar Pontuação
+    if (this.btnShareScore) {
+      this.btnShareScore.onclick = (e) => {
+        if (e) e.stopPropagation();
+        const shareText = `🏃 Corri ${distanceMeters.toLocaleString()}m no modo Empresário 3D do Lula Simulator! Consegue bater meu recorde? Jogue grátis em: https://lulasimulator.com/correr.html`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareText).then(() => {
+            this.showToast('✅ Recorde copiado para a área de transferência!');
+          }).catch(() => {
+            this.showToast('✅ Link copiado!');
+          });
+        }
+      };
     }
 
+    // Botão de Smartlink / Recompensa +10 Picanhas
+    if (this.btnRewardPicanhasGO) {
+      this.btnRewardPicanhasGO.onclick = (e) => {
+        if (e) e.stopPropagation();
+        AdsManager.triggerSmartlinkReward((success) => {
+          if (success) {
+            RunnerInventory.addPicanhas(10);
+            this.showToast('🎉 +10 PICANHAS BÔNUS CREDITADAS!');
+            if (this.goPicanhasEarned) this.goPicanhasEarned.textContent = `🥩 +${picanhas + 10} PICANHAS`;
+          }
+        });
+      };
+    }
+
+    // Botão de Reinício Principal
     if (this.btnRestart) {
       this.btnRestart.onclick = (e) => {
         if (e) e.stopPropagation();
@@ -757,6 +813,65 @@ export class UIManager {
         onRestart();
       };
     }
+
+    // Reinício via Teclado (Enter ou Espaço)
+    const handleKeyRestart = (e) => {
+      if (this.gameOverModal.style.display === 'flex' && (e.code === 'Space' || e.code === 'Enter')) {
+        document.removeEventListener('keydown', handleKeyRestart);
+        gameAudio.stopAllVoiceAudios();
+        this.gameOverModal.style.display = 'none';
+        onRestart();
+      }
+    };
+    document.addEventListener('keydown', handleKeyRestart, { once: true });
+  }
+
+  async loadGameOverLeaderboard() {
+    if (!this.goLeaderboardList) return;
+
+    try {
+      const scores = await getTopScores('runner', 5, true);
+      if (scores && scores.length > 0) {
+        this.goLeaderboardList.innerHTML = '';
+        scores.forEach((item, i) => {
+          const row = document.createElement('div');
+          row.className = 'go-lb-row';
+          const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+          const safePlayer = escapeHTML(item.player || 'Anônimo');
+          const safeScore = parseInt(item.score || 0, 10);
+          const safeFlag = item.flag || '🇧🇷';
+          const safeCountry = escapeHTML(item.countryName || 'Brasil');
+          row.innerHTML = `
+            <span class="go-lb-rank">${medals[i] || (i + 1)}</span>
+            <span class="go-lb-name" style="display:inline-flex; align-items:center; gap:4px;">
+              <span title="${safeCountry}" style="font-size:11px;">${safeFlag}</span>
+              <span>${safePlayer}</span>
+            </span>
+            <span class="go-lb-score">${safeScore.toLocaleString()} m</span>
+          `;
+          this.goLeaderboardList.appendChild(row);
+        });
+      } else {
+        this.goLeaderboardList.innerHTML = '<div style="text-align:center; padding:8px; font-size:10px; color:#94a3b8;">Nenhum recorde ainda. Seja o 1º!</div>';
+      }
+    } catch (e) {
+      this.goLeaderboardList.innerHTML = '<div style="text-align:center; padding:8px; font-size:10px; color:#94a3b8;">Recordes sincronizados</div>';
+    }
+  }
+
+  showToast(msg) {
+    let toast = document.getElementById('runnerToastMsg');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'runnerToastMsg';
+      toast.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#0f172a; border:2px solid #facc15; border-radius:30px; color:#fff; padding:10px 22px; font-family:"Bangers",cursive; font-size:16px; letter-spacing:1px; z-index:9999; box-shadow:0 10px 30px rgba(0,0,0,0.8); transition:opacity 0.3s;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    setTimeout(() => {
+      if (toast) toast.style.opacity = '0';
+    }, 2800);
   }
 
   hideGameOver() {
