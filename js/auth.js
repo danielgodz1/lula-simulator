@@ -773,7 +773,10 @@ class AuthManager {
     `;
 
     document.body.appendChild(overlay);
-    overlay.querySelector('#btnCloseStreakModal').onclick = () => overlay.remove();
+    overlay.querySelector('#btnCloseStreakModal').onclick = () => {
+      overlay.remove();
+      this.renderProfileBadge(); // Atualiza o display após fechar o modal
+    };
   }
 
   // -------------------------------------------------------------
