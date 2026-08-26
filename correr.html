@@ -254,20 +254,12 @@
       color: #6ee7b7;
     }
 
-    .hud-actions {
-      display: flex;
-      gap: 6px;
-      pointer-events: auto;
-    }
-
     .hud-btn-action {
       background: rgba(15, 23, 42, 0.9);
       border: 1.5px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      padding: 6px 12px;
       border-radius: 50px;
       font-family: 'Bangers', cursive;
-      font-size: 15px;
       letter-spacing: 0.5px;
       cursor: pointer;
       backdrop-filter: blur(8px);
@@ -850,6 +842,21 @@
           <span class="pill-label">HORÁRIO</span>
         </div>
       </div>
+
+      <!-- Pílula 6: Botões de Ação -->
+      <div class="hud-pill pill-actions" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(8, 12, 20, 0.95)); border: 1.5px solid rgba(255, 255, 255, 0.2); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45); padding: 4px 8px;">
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button id="btnOpenCharSelect" class="hud-btn-action" style="padding: 4px 8px; font-size: 11px;" title="Selecionar Personagem">
+            🎭
+          </button>
+          <button id="btnSoundToggle" class="hud-btn-action hud-btn-round" style="width: 28px; height: 28px; font-size: 12px;" title="Som">
+            🔊
+          </button>
+          <button id="btnFullscreenToggle" class="hud-btn-action hud-btn-round" style="width: 28px; height: 28px; font-size: 12px;" title="Tela Cheia">
+            ⛶
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- BADGES DE HABILIDADES ATIVAS COM CRONÔMETRO REGRESSIVO -->
@@ -859,20 +866,6 @@
       </div>
       <div id="jumpSkillBadge" style="display:none; background:linear-gradient(135deg, rgba(217,119,6,0.92), rgba(180,83,9,0.98)); border:2px solid #facc15; border-radius:30px; padding:5px 16px; font-family:'Bangers',cursive; font-size:16px; color:#fff; box-shadow:0 0 20px rgba(250,204,21,0.8); align-items:center; gap:6px;">
         👟 SUPER PULO: <span id="jumpSkillTimer" style="color:#fef08a; font-size:17px;">10.0s</span>
-      </div>
-    </div>
-
-      <!-- Botões de Ação Rápida -->
-      <div class="hud-actions">
-        <button id="btnOpenCharSelect" class="hud-btn-action" title="Selecionar Personagem">
-          🎭 SKINS
-        </button>
-        <button id="btnSoundToggle" class="hud-btn-action hud-btn-round" title="Som">
-          🔊
-        </button>
-        <button id="btnFullscreenToggle" class="hud-btn-action hud-btn-round" title="Tela Cheia">
-          ⛶
-        </button>
       </div>
     </div>
 
