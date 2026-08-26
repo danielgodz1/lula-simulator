@@ -1896,20 +1896,43 @@ class AuthManager {
       });
     });
 
-    // Impede fechar com ESC ou clique fora
+    const createGuestAccount = async () => {
+      const guestCounter = parseInt(localStorage.getItem('lula_guest_counter') || '0', 10);
+      const newGuestNum = guestCounter + 1;
+      localStorage.setItem('lula_guest_counter', newGuestNum.toString());
+      const guestName = `visitante${newGuestNum}`;
+
+      btn.innerText = isEnglishContext() ? '⏳ CREATING GUEST...' : '⏳ CRIANDO VISITANTE...';
+      btn.disabled = true;
+
+      const res = await this.reserveNick(guestName);
+      btn.innerText = isEnglishContext() ? '▶ PLAY NOW 🚀' : '▶ JOGAR AGORA 🇧🇷';
+      btn.disabled = false;
+
+      if (res.success) {
+        overlay.remove();
+        this.renderProfileBadge();
+        if (onConfirmed) onConfirmed(res.user);
+      } else {
+        // Se falhar, tenta com outro número
+        await createGuestAccount();
+      }
+    };
+
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         e.preventDefault();
         e.stopPropagation();
+        createGuestAccount();
       }
     });
-
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && document.getElementById('mandatoryNickModalOverlay')) {
         e.preventDefault();
         e.stopPropagation();
+        createGuestAccount();
       }
-    }, { once: true });
+    });
   }
 }
 
