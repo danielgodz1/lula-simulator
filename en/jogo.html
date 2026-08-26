@@ -2752,9 +2752,9 @@
 
         auth.updateUserScore('flappy', score);
         savePlayerScore('flappy', score, score);
-        CharacterInventory.syncPicanhasNow();
-        auth.updateMissionProgress('m_flappy_games', 1);
-        auth.updateMissionProgress('m_flappy_score', score, true);
+        CharacterInventory.syncPicanhasNow?.();
+        auth.updateMissionProgress?.('m_flappy_games', 1);
+        auth.updateMissionProgress?.('m_flappy_score', score, true);
 
         setTimeout(() => {
           showGameOverScreen();
