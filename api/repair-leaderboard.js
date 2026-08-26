@@ -155,13 +155,58 @@ export default async function handler(req, res) {
         console.warn('⚠️ Aviso ao ler coleções de score individuais:', scoreDocErr.message);
       }
 
-      // 3. Ordena e limita a 300 entradas
+      // 3. ⭐ MAIS IMPORTANTE: lê o leaderboard existente e mescla
+      //    Garante que NENHUM dado já presente no ranking seja perdido.
+      //    O repair é ADITIVO: só adiciona ou melhora scores, nunca remove.
+      try {
+        const mergeLeaderboardIntoMap = (map, existingScores) => {
+          if (!Array.isArray(existingScores)) return;
+          existingScores.forEach(s => {
+            if (!s || !s.player || !s.score) return;
+            const key = s.player.toLowerCase();
+            const sc = typeof s.score === 'number' ? s.score : parseInt(s.score, 10);
+            if (sc <= 0 || isNaN(sc)) return;
+            const existing = map.get(key);
+            if (!existing || sc > existing.score) {
+              map.set(key, {
+                player: s.player,
+                score: sc,
+                avatar: s.avatar || existing?.avatar || '',
+                country: s.country || existing?.country || 'BR',
+                countryName: s.countryName || existing?.countryName || s.country || 'BR',
+                flag: s.flag || existing?.flag || getFlagEmoji(s.country || 'BR'),
+                prestigeLevel: parseInt(s.prestigeLevel || existing?.prestigeLevel || 0, 10),
+                updatedAt: s.updatedAt || new Date().toISOString()
+              });
+            } else if (existing && !existing.avatar && s.avatar) {
+              // aproveita avatar do leaderboard se o mapa ainda não tem
+              existing.avatar = s.avatar;
+            }
+          });
+        };
+
+        const [existingFlappySnap, existingRunnerSnap] = await Promise.all([
+          db.collection('lula_leaderboards_v2').doc('flappy').get(),
+          db.collection('lula_leaderboards_v2').doc('runner').get()
+        ]);
+
+        if (existingFlappySnap.exists) {
+          mergeLeaderboardIntoMap(flappyMap, existingFlappySnap.data().scores || []);
+        }
+        if (existingRunnerSnap.exists) {
+          mergeLeaderboardIntoMap(runnerMap, existingRunnerSnap.data().scores || []);
+        }
+      } catch (mergeErr) {
+        console.warn('⚠️ Aviso ao mesclar leaderboard existente:', mergeErr.message);
+      }
+
+      // 4. Ordena e limita a 300 entradas
       const flappyList = Array.from(flappyMap.values()).sort((a, b) => b.score - a.score).slice(0, 300);
       const runnerList = Array.from(runnerMap.values()).sort((a, b) => b.score - a.score).slice(0, 300);
 
       const now = new Date().toISOString();
 
-      // 4. Sobrescreve os documentos consolidados
+      // 5. Grava os documentos consolidados (mescla de todas as fontes)
       await Promise.all([
         db.collection('lula_leaderboards_v2').doc('flappy').set({
           game: 'flappy',
@@ -181,15 +226,15 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        message: 'Rankings reconstruídos com sucesso!',
+        message: 'Rankings reconstruídos com sucesso! Dados existentes preservados e mesclados.',
         repairedAt: now,
         flappy: {
-          usersRestored: flappyList.length,
-          topScore: flappyList[0] ? `${flappyList[0].player}: ${flappyList[0].score}` : 'N/A'
+          totalEntries: flappyList.length,
+          top5: flappyList.slice(0, 5).map(s => `${s.player}: ${s.score}`)
         },
         runner: {
-          usersRestored: runnerList.length,
-          topScore: runnerList[0] ? `${runnerList[0].player}: ${runnerList[0].score}` : 'N/A'
+          totalEntries: runnerList.length,
+          top5: runnerList.slice(0, 5).map(s => `${s.player}: ${s.score}`)
         }
       });
     } catch (e) {
