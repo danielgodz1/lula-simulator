@@ -81,7 +81,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=2.1">
 
   <style>
     /* Estilos específicos da Landing Page */
@@ -148,16 +148,265 @@
     .hero-text .tagline {
       font-size: 20px;
       color: var(--text-muted);
-      margin: 20px 0 36px;
+      margin: 16px 0 24px;
       line-height: 1.5;
     }
 
     .hero-text .tagline strong { color: var(--amarelo-brasil); }
 
-    .btn-group {
+    /* HIERARQUIA VISUAL SUPREMA DA HERO SECTION */
+    .hero-cta-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 10px;
+      width: 100%;
+    }
+
+    .hero-play-callout {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Bangers', cursive;
+      font-size: 16px;
+      letter-spacing: 1.5px;
+      color: var(--amarelo-brasil);
+      text-shadow: 0 0 14px rgba(255, 223, 0, 0.8);
+      animation: heroCalloutBlink 2s ease-in-out infinite alternate;
+      width: fit-content;
+    }
+
+    .hero-primary-row {
       display: flex;
       flex-wrap: wrap;
+      align-items: center;
       gap: 16px;
+      width: 100%;
+    }
+
+    .hero-secondary-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* 1. BOTÃO REI DA TELA: PLAY FLAPPY LULA */
+    .btn-hero-flappy {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #00e676 0%, #10b981 40%, #059669 85%, #047857 100%);
+      color: #032310 !important;
+      font-family: 'Bangers', cursive;
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      padding: 18px 38px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 2.5px solid #a7f3d0;
+      cursor: pointer;
+      box-shadow: 0 0 35px rgba(0, 230, 118, 0.75), 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.45);
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
+      overflow: hidden;
+      user-select: none;
+      animation: heroPulseCta 3.2s ease-in-out infinite;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 1;
+    }
+
+    .btn-hero-flappy::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 70%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      transform: skewX(-25deg);
+      animation: heroShimmer 3.8s ease-in-out infinite;
+    }
+
+    .btn-hero-flappy:hover {
+      transform: translateY(-4px) scale(1.06);
+      background: linear-gradient(135deg, #22c55e 0%, #00e676 50%, #facc15 100%);
+      color: #000 !important;
+      border-color: #ffffff;
+      box-shadow: 0 0 55px rgba(0, 230, 118, 0.95), 0 0 25px rgba(250, 204, 21, 0.6), 0 14px 36px rgba(0, 0, 0, 0.7);
+    }
+
+    .btn-hero-flappy .hero-icon-bird {
+      font-size: 32px;
+      display: inline-block;
+      animation: heroIconBirdWiggle 2.5s ease-in-out infinite;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    /* 2. BOTÃO DESTAQUE 3D RUNNER (PREENCHIDO COM GRADIENTE ENERGÉTICO & BADGE) */
+    .btn-hero-runner {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ea580c 60%, #c2410c 100%);
+      color: #ffffff !important;
+      font-family: 'Bangers', cursive;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 16px 30px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 2px solid #fed7aa;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.65), 0 8px 25px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+      user-select: none;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: visible;
+      z-index: 1;
+    }
+
+    .btn-hero-runner:hover {
+      transform: translateY(-3px) scale(1.04);
+      background: linear-gradient(135deg, #fbbf24 0%, #f97316 60%, #dc2626 100%);
+      box-shadow: 0 0 45px rgba(249, 115, 22, 0.85), 0 12px 30px rgba(0, 0, 0, 0.6);
+      border-color: #ffffff;
+    }
+
+    .btn-hero-runner .hero-icon-runner {
+      font-size: 28px;
+      display: inline-block;
+      animation: heroIconRunnerBob 1.6s ease-in-out infinite alternate;
+    }
+
+    .hero-badge-corner {
+      position: absolute;
+      top: -12px;
+      right: -8px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 3px 8px;
+      border-radius: 999px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border: 1.5px solid #ffffff;
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.9), 0 3px 8px rgba(0, 0, 0, 0.5);
+      animation: heroBadgeFlash 1.8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    /* 3. BOTÕES SECUNDÁRIOS COMPACTOS (GLASSMORPHISM) */
+    .btn-hero-sub {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.75);
+      color: #e2e8f0 !important;
+      font-family: 'Bangers', cursive;
+      font-size: 16px;
+      letter-spacing: 1px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn-hero-sub:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff !important;
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-hero-sub.sub-social {
+      border-color: rgba(239, 68, 68, 0.5);
+      color: #fca5a5 !important;
+    }
+
+    .btn-hero-sub.sub-social:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #fff !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-hero-sub.sub-ranking {
+      border-color: rgba(250, 204, 21, 0.5);
+      color: #fde047 !important;
+    }
+
+    .btn-hero-sub.sub-ranking:hover {
+      background: rgba(250, 204, 21, 0.2);
+      border-color: #facc15;
+      color: #fff !important;
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+    }
+
+    .btn-hero-sub.sub-shop {
+      border-color: rgba(56, 189, 248, 0.5);
+      color: #7dd3fc !important;
+    }
+
+    .btn-hero-sub.sub-shop:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: #38bdf8;
+      color: #fff !important;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    /* ANIMAÇÕES EXCLUSIVAS DA HERO */
+    @keyframes heroPulseCta {
+      0%, 100% {
+        transform: scale(1.0);
+        box-shadow: 0 0 35px rgba(0, 230, 118, 0.75), 0 10px 30px rgba(0, 0, 0, 0.6);
+      }
+      50% {
+        transform: scale(1.045);
+        box-shadow: 0 0 50px rgba(0, 230, 118, 0.95), 0 0 20px rgba(250, 204, 21, 0.4), 0 14px 34px rgba(0, 0, 0, 0.7);
+      }
+    }
+
+    @keyframes heroShimmer {
+      0%, 65% { left: -120%; }
+      85%, 100% { left: 140%; }
+    }
+
+    @keyframes heroIconBirdWiggle {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-3px) rotate(-6deg); }
+      75% { transform: translateY(2px) rotate(6deg); }
+    }
+
+    @keyframes heroIconRunnerBob {
+      0% { transform: translateX(0) translateY(0); }
+      100% { transform: translateX(3px) translateY(-2px); }
+    }
+
+    @keyframes heroCalloutBlink {
+      0% { opacity: 0.85; transform: translateY(0); }
+      100% { opacity: 1.0; transform: translateY(-2px); text-shadow: 0 0 16px rgba(255, 223, 0, 0.9); }
+    }
+
+    @keyframes heroBadgeFlash {
+      0% { transform: scale(1.0); opacity: 0.9; }
+      100% { transform: scale(1.1); opacity: 1.0; box-shadow: 0 0 16px rgba(239, 68, 68, 1); }
     }
 
     /* Preview visual com a imagem oficial */
@@ -350,15 +599,36 @@
         margin: 14px 0 22px;
         line-height: 1.5;
       }
-      .btn-group {
+      .hero-cta-container {
+        align-items: center;
+        margin-top: 18px;
+      }
+      .hero-play-callout {
+        margin: 0 auto;
+        font-size: 13.5px;
+      }
+      .hero-primary-row {
         flex-direction: column;
         width: 100%;
         gap: 12px;
       }
-      .btn-group a {
+      .btn-hero-flappy {
         width: 100%;
-        font-size: 18px;
-        padding: 12px 18px;
+        font-size: 23px;
+        padding: 16px 24px;
+      }
+      .btn-hero-runner {
+        width: 100%;
+        font-size: 19px;
+        padding: 14px 22px;
+      }
+      .hero-secondary-row {
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn-hero-sub {
+        font-size: 13.5px;
+        padding: 8px 14px;
       }
       .hero-character {
         margin-top: 10px;
@@ -443,19 +713,38 @@
         <p class="tagline">
           Faça o presidente voar no <strong>Flappy Lula</strong> distribuindo picanha, junte badges lendárias de <strong>50 e 500 Picanhas</strong> com figuras históricas da política ou fuja da CLT no <strong>Empresário 3D</strong>!
         </p>
-        <div class="btn-group">
-          <a href="jogo.html" class="btn-primary">
-            🐦 JOGAR FLAPPY LULA
-          </a>
-          <a href="correr.html" class="btn-secondary">
-            🏃 JOGAR EMPRESÁRIO 3D
-          </a>
-          <a href="social.html" class="btn-secondary" style="border-color: #ef4444; color: #ef4444;">
-            👥 AMIGOS & DUELOS
-          </a>
-          <a href="ranking.html" class="btn-secondary" style="border-color: #ffd700; color: #ffd700;">
-            🏆 VER RANKING
-          </a>
+        <div class="hero-cta-container">
+          <div class="hero-play-callout">
+            <span>⚡ JOGUE AGORA • 100% GRÁTIS NO NAVEGADOR!</span>
+          </div>
+          
+          <div class="hero-primary-row">
+            <a href="jogo.html" class="btn-hero-flappy" id="heroPlayFlappy">
+              <span class="hero-icon-bird">🐦</span>
+              <span>PLAY FLAPPY LULA</span>
+            </a>
+            
+            <a href="correr.html" class="btn-hero-runner" id="heroPlayRunner">
+              <span class="hero-icon-runner">🏃</span>
+              <span>PLAY 3D RUNNER</span>
+              <span class="hero-badge-corner">🔥 NOVO 3D</span>
+            </a>
+          </div>
+
+          <div class="hero-secondary-row">
+            <a href="social.html" class="btn-hero-sub sub-social">
+              <span>👥</span>
+              <span>AMIGOS & DUELOS</span>
+            </a>
+            <a href="ranking.html" class="btn-hero-sub sub-ranking">
+              <span>🏆</span>
+              <span>RANKING</span>
+            </a>
+            <a href="loja.html" class="btn-hero-sub sub-shop">
+              <span>🛍️</span>
+              <span>LOJA DE SKINS</span>
+            </a>
+          </div>
         </div>
 
         <!-- BANNER DE MONETIZAÇÃO HERO 320x50 (AUTO-REFRESH) -->
