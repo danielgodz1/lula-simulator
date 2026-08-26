@@ -1151,6 +1151,24 @@
       document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
     }
 
+    // Alternar modo de Áudio
+    const btnSound = document.getElementById('btnSoundToggle');
+    if (btnSound) {
+      const updateSoundUI = () => {
+        const info = gameAudio.getModeInfo();
+        btnSound.textContent = info.icon;
+        btnSound.title = info.label;
+      };
+      updateSoundUI();
+
+      btnSound.addEventListener('click', (e) => {
+        e.stopPropagation();
+        gameAudio.init();
+        const info = gameAudio.cycleAudioMode();
+        updateSoundUI();
+      });
+    }
+
     // Inicializa o motor do jogo modular 3D e AdsManager
     initGame();
     AdsManager.init();
