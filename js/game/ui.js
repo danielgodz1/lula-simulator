@@ -590,6 +590,12 @@ export class UIManager {
       this._cachedBest = bestStr;
     }
 
+    const speedStr = `${speedRatio.toFixed(1)}x`;
+    if (this.speedDisplay && this._cachedSpeed !== speedStr) {
+      this.speedDisplay.textContent = speedStr;
+      this._cachedSpeed = speedStr;
+    }
+
     const coinVal = `${(totalCoins || coins).toLocaleString()}`;
     if (this.coinsDisplay && this._cachedCoins !== coinVal) {
       this.coinsDisplay.textContent = coinVal;

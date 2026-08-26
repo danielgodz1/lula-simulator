@@ -61,8 +61,8 @@
     link.className = 'nav-lang-switch';
     link.title = isEn ? 'Mudar para Português (lulasimulator.com.br)' : 'Switch to English (flappylula.com)';
     link.innerHTML = isEn
-      ? '<span style="font-size:16px;">🇧🇷</span>'
-      : '<span style="font-size:16px;">🇺🇸</span>';
+      ? '<span style="font-size:18px; line-height:1;">🇧🇷</span>'
+      : '<span style="font-size:18px; line-height:1;">🇺🇸</span>';
 
     // Estilização retrô moderna compatível com o tema
     link.style.cssText = `

@@ -913,6 +913,9 @@
         <button class="btn-primary" id="btnStartGameAction" style="font-size:18px; padding:10px 20px; width:100%;">
           🔊 TAP TO PLAY!
         </button>
+        <button class="btn-secondary" id="btnBackToHome" style="font-size:14px; padding:8px 16px; width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:var(--text-muted); margin-top:8px;">
+          🏠 Back to Home
+        </button>
       </div>
     </div>
 
@@ -1168,7 +1171,7 @@
     let SPAWN_FREQ = 120;
 
     function isFullscreenActive() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement);
     }
 
     function calcSize() {
@@ -1510,12 +1513,22 @@
           const el = document.documentElement;
           if (el.requestFullscreen) el.requestFullscreen();
           else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+          else if (el.webkitEnterFullscreen) el.webkitEnterFullscreen();
           btnFullscreen.textContent = '🗗';
         } else {
           if (document.exitFullscreen) document.exitFullscreen();
           else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          else if (document.webkitExitFullScreen) document.webkitExitFullScreen();
           btnFullscreen.textContent = '⛶';
         }
+      });
+    }
+
+    // Botão voltar ao menu INÍCIO
+    const btnBackToHome = document.getElementById('btnBackToHome');
+    if (btnBackToHome) {
+      btnBackToHome.addEventListener('click', () => {
+        window.location.href = '/en/index.html';
       });
     }
 

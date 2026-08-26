@@ -815,7 +815,16 @@
         </div>
       </div>
 
-      <!-- Pílula 4: Relógio em Horas do Jogo -->
+      <!-- Pílula 4: Velocidade -->
+      <div class="hud-pill pill-speed" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.88), rgba(220, 38, 38, 0.95)); border: 1.5px solid rgba(248, 113, 113, 0.6); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.45);">
+        <div class="pill-icon">⚡</div>
+        <div class="pill-data">
+          <span class="pill-value" id="speedDisplay" style="color: #fca5a5;">1.0x</span>
+          <span class="pill-label" style="color: #fca5a5;">VELOCIDADE</span>
+        </div>
+      </div>
+
+      <!-- Pílula 5: Relógio em Horas do Jogo -->
       <div class="hud-pill pill-clock" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.88), rgba(67, 56, 202, 0.95)); border: 1.5px solid rgba(129, 140, 248, 0.6); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.45);">
         <div class="pill-icon">🕐</div>
         <div class="pill-data">
@@ -877,6 +886,9 @@
         <div style="display:flex; flex-direction:column; gap:10px;">
           <button class="btn-primary" id="btnStartGame" style="font-size:20px; padding:12px 28px; width:100%;">
             🔊 TOQUE PARA INICIAR A CORRIDA!
+          </button>
+          <button class="btn-secondary" id="btnBackToHome" style="font-size:14px; padding:10px 20px; width:100%; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); color:var(--text-muted);">
+            🏠 Voltar ao Menu Início
           </button>
           <button class="btn-secondary" id="btnOpenCharSelectStart" style="font-size:16px; padding:10px 20px; width:100%; border-color:#eab308; color:#fef08a; font-family:'Bangers',cursive; letter-spacing:1px;">
             🎭 ESCOLHER PERSONAGEM (LULA / BOLSONARO)
@@ -1055,6 +1067,14 @@
       });
     });
 
+    // Botão voltar ao menu INÍCIO
+    const btnBackToHome = document.getElementById('btnBackToHome');
+    if (btnBackToHome) {
+      btnBackToHome.addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+    }
+
     // Ao clicar em qualquer link (como "Início" na tela de Game Over), silencia os áudios
     document.querySelectorAll('a').forEach(a => {
       a.addEventListener('click', () => {
@@ -1083,16 +1103,20 @@
       }
     }, { passive: false });
 
-    // Alternar modo Tela Cheia
+    // Alternar modo Tela Cheia (com suporte para iOS)
     const btnFullscreen = document.getElementById('btnFullscreenToggle');
     if (btnFullscreen) {
       btnFullscreen.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen();
-          } else if (document.documentElement.webkitRequestFullscreen) {
-            document.documentElement.webkitRequestFullscreen();
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement;
+        if (!isFullscreen) {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+          } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen();
+          } else if (elem.webkitEnterFullscreen) {
+            elem.webkitEnterFullscreen();
           }
           btnFullscreen.textContent = '🗗';
         } else {
@@ -1100,10 +1124,20 @@
             document.exitFullscreen();
           } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
+          } else if (document.webkitExitFullScreen) {
+            document.webkitExitFullScreen();
           }
           btnFullscreen.textContent = '⛶';
         }
       });
+
+      // Atualizar ícone ao mudar estado de fullscreen
+      const updateFullscreenIcon = () => {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement;
+        btnFullscreen.textContent = isFullscreen ? '🗗' : '⛶';
+      };
+      document.addEventListener('fullscreenchange', updateFullscreenIcon);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
     }
 
     // Inicializa o motor do jogo modular 3D e AdsManager
