@@ -677,6 +677,23 @@ export class UIManager {
 
     this.gameOverModal.style.display = 'flex';
 
+    // Botão de Cópia Rápida de Telemetria no Game Over (?debug=1)
+    if (window.__RUNNER_PROFILER__ && window.__RUNNER_PROFILER__.enabled) {
+      let profGoBtn = document.getElementById('profGoCopyBtn');
+      if (!profGoBtn) {
+        profGoBtn = document.createElement('button');
+        profGoBtn.id = 'profGoCopyBtn';
+        profGoBtn.style.cssText = 'margin-top:12px; width:100%; padding:9px 12px; background:#0284c7; border:1.5px solid #38bdf8; border-radius:8px; color:#fff; font-weight:bold; font-size:12px; cursor:pointer; font-family:inherit; transition:background 0.2s;';
+        profGoBtn.innerHTML = '📋 COPIAR ESTATÍSTICAS DE PERFORMANCE (P/ O CHAT)';
+        profGoBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.__RUNNER_PROFILER__.copyReportToClipboard(profGoBtn);
+        };
+        const modalContent = this.gameOverModal.querySelector('.modal-card') || this.gameOverModal.firstElementChild || this.gameOverModal;
+        modalContent.appendChild(profGoBtn);
+      }
+    }
+
     if (this.btnRestart) {
       this.btnRestart.onclick = (e) => {
         if (e) e.stopPropagation();

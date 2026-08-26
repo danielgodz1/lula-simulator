@@ -431,7 +431,7 @@ export class GameAudio {
     }
   }
 
-  // 12. SOM AMBIENTE DA FAVELA / CIDADE
+  // 12. SOM AMBIENTE DA FAVELA / CIDADE E RITMO URBANO PROCEDURAL
   startAmbience() {
     if (this.ambienceNode) return;
     this.ensureContext();
@@ -439,6 +439,8 @@ export class GameAudio {
 
     try {
       const now = this.ctx.currentTime;
+
+      // A. Vento e Rolamento de Trilhos Contínuo
       const bufferSize = this.ctx.sampleRate * 2;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -448,7 +450,7 @@ export class GameAudio {
         b0 = 0.99886 * b0 + white * 0.0555179;
         b1 = 0.99332 * b1 + white * 0.0750759;
         b2 = 0.96900 * b2 + white * 0.1538520;
-        data[i] = (b0 + b1 + b2) * 0.14;
+        data[i] = (b0 + b1 + b2) * 0.18;
       }
 
       this.ambienceNode = this.ctx.createBufferSource();
@@ -457,17 +459,166 @@ export class GameAudio {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(380, now);
+      filter.frequency.setValueAtTime(450, now);
 
       this.ambienceGain = this.ctx.createGain();
-      this.ambienceGain.gain.setValueAtTime(this.isMuted ? 0 : 0.035, now);
+      this.ambienceGain.gain.setValueAtTime(this.isMuted ? 0 : 0.05, now);
 
       this.ambienceNode.connect(filter);
       filter.connect(this.ambienceGain);
       this.ambienceGain.connect(this.ctx.destination);
 
       this.ambienceNode.start(0);
+
+      // B. Trilha Sonora Rítmica Urbana Procedural (Beat Bossa/Samba-Funk Estilizado)
+      this.startRhythmBeat();
+
+      // C. Eventos Sonoros Aleatórios da Cidade (Vozes, Latido do Caramelo, Pássaros)
+      this.startCityEvents();
     } catch (e) {}
+  }
+
+  startRhythmBeat() {
+    if (this.beatInterval) clearInterval(this.beatInterval);
+    if (!this.ctx) return;
+
+    const bpm = 124;
+    const stepTime = (60 / bpm) / 4; // 16th notes
+    let step = 0;
+
+    // Pattern de Bateria Estilizada Brasileira (16 steps = 1 compasso)
+    const kickPattern =    [1, 0, 0, 0,  1, 0, 0, 1,  0, 1, 0, 0,  1, 0, 0, 0];
+    const snarePattern =   [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0];
+    const hatPattern =     [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1];
+    const tamborimPattern =[0, 0, 1, 0,  0, 1, 0, 1,  1, 0, 1, 0,  0, 1, 1, 0];
+
+    this.beatInterval = setInterval(() => {
+      if (this.isMuted || !this.ctx || this.ctx.state !== 'running') return;
+      const t = this.ctx.currentTime;
+      const s = step % 16;
+
+      try {
+        // Kick / Surdo Macio
+        if (kickPattern[s]) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(110, t);
+          osc.frequency.exponentialRampToValueAtTime(38, t + 0.12);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.15);
+        }
+
+        // Snare / Caixa Suave com Reverb
+        if (snarePattern[s]) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(180, t);
+          osc.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+          gain.gain.setValueAtTime(0.06, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.10);
+        }
+
+        // Hi-Hat / Chimbau Leve
+        if (hatPattern[s] && s % 2 === 0) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'highpass';
+          osc.frequency.setValueAtTime(8000, t);
+          gain.gain.setValueAtTime(0.02, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.04);
+        }
+
+        // Tamborim Brasileiro Sutil
+        if (tamborimPattern[s]) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, t);
+          osc.frequency.exponentialRampToValueAtTime(650, t + 0.04);
+          gain.gain.setValueAtTime(0.03, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.06);
+        }
+      } catch (e) {}
+
+      step++;
+    }, stepTime * 1000);
+  }
+
+  startCityEvents() {
+    if (this.cityInterval) clearInterval(this.cityInterval);
+
+    this.cityInterval = setInterval(() => {
+      if (this.isMuted || !this.ctx || this.ctx.state !== 'running') return;
+      const t = this.ctx.currentTime;
+      const eventType = Math.floor(Math.random() * 3);
+
+      try {
+        // 1. Latido brincalhão do Cachorro Caramelo (Au au!)
+        if (eventType === 0) {
+          for (let b = 0; b < 2; b++) {
+            const bt = t + b * 0.18;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(420, bt);
+            osc.frequency.exponentialRampToValueAtTime(280, bt + 0.10);
+            gain.gain.setValueAtTime(0.04, bt);
+            gain.gain.exponentialRampToValueAtTime(0.001, bt + 0.12);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(bt);
+            osc.stop(bt + 0.13);
+          }
+        }
+        // 2. Canto de Pássaros Tropicais nas Palmeiras
+        else if (eventType === 1) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(2200, t);
+          osc.frequency.linearRampToValueAtTime(2800, t + 0.08);
+          osc.frequency.exponentialRampToValueAtTime(1900, t + 0.18);
+          gain.gain.setValueAtTime(0.03, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.22);
+        }
+        // 3. Murmúrio / Vibração Distante de Boteco
+        else {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, t);
+          osc.frequency.exponentialRampToValueAtTime(440, t + 0.15);
+          gain.gain.setValueAtTime(0.02, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.28);
+        }
+      } catch (e) {}
+    }, 7500); // A cada ~7.5 segundos
   }
 
   stopAmbience() {
@@ -478,6 +629,14 @@ export class GameAudio {
       } catch (e) {}
       this.ambienceNode = null;
       this.ambienceGain = null;
+    }
+    if (this.beatInterval) {
+      clearInterval(this.beatInterval);
+      this.beatInterval = null;
+    }
+    if (this.cityInterval) {
+      clearInterval(this.cityInterval);
+      this.cityInterval = null;
     }
   }
 }

@@ -20,7 +20,8 @@ export class GameScene {
     this.skyCtx = null;
     this.skyTexture = null;
     this.parallaxFavela = null;
-    this.kites = [];
+    this.clouds = [];
+    this.birds = [];
 
     this.timeOfDay = 0.38; // Começa de dia com sol radiante e alta visibilidade (10h da manhã)
     this.cycleDuration = 180; // 180 segundos para um ciclo suave
@@ -301,8 +302,9 @@ export class GameScene {
     this.moonMesh.visible = false;
     this.scene.add(this.moonMesh);
 
-    // 8. Pipas
-    this.createFloatingKites();
+    // 8. Nuvens Cartoon Volumétricas e Pássaros Tropicais
+    this.createStylizedClouds();
+    this.createBirdFlock();
 
     // 9. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
     this.isDebugVisible = new URLSearchParams(window.location.search).get('debug') === '1';
@@ -332,33 +334,94 @@ export class GameScene {
     this.scene.add(this.parallaxFavela);
   }
 
-  createFloatingKites() {
-    const kiteColors = [0xef4444, 0xfacc15, 0x3b82f6, 0x10b981, 0xec4899];
-    const kiteGeo = new THREE.PlaneGeometry(1.6, 2.2);
+  createStylizedClouds() {
+    // 6 Nuvens Volumétricas Cartoon Estilizadas (Puffy Low-Poly Clouds)
+    const cloudGeo = new THREE.DodecahedronGeometry(1, 1);
+    this.cloudMat = new THREE.MeshLambertMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.92,
+      flatShading: true
+    });
 
-    for (let i = 0; i < 5; i++) {
-      const kiteMat = new THREE.MeshBasicMaterial({
-        color: kiteColors[i % kiteColors.length],
-        side: THREE.DoubleSide
-      });
-      const kite = new THREE.Mesh(kiteGeo, kiteMat);
-      kite.rotation.z = Math.PI / 4;
-      
-      const x = (i % 2 === 0 ? -1 : 1) * (14 + Math.random() * 18);
-      const y = 14 + Math.random() * 12;
-      const z = -35 - i * 35;
-      kite.position.set(x, y, z);
+    const cloudCoords = [
+      { x: -65, y: 38, z: -80, s: 14 },
+      { x: 55, y: 44, z: -120, s: 18 },
+      { x: -35, y: 52, z: -170, s: 22 },
+      { x: 70, y: 40, z: -210, s: 16 },
+      { x: -80, y: 48, z: -250, s: 20 },
+      { x: 25, y: 56, z: -150, s: 15 }
+    ];
 
-      this.scene.add(kite);
-      this.kites.push({
-        mesh: kite,
-        baseX: x,
-        baseY: y,
-        baseZ: z,
-        phase: Math.random() * Math.PI * 2,
-        speed: 1.5 + Math.random() * 1.5
+    cloudCoords.forEach((cc, idx) => {
+      const cloudGroup = new THREE.Group();
+      const puffs = [
+        { ox: 0, oy: 0, oz: 0, r: 1.0 },
+        { ox: -0.8, oy: -0.2, oz: 0.1, r: 0.75 },
+        { ox: 0.8, oy: -0.2, oz: -0.1, r: 0.75 },
+        { ox: -0.3, oy: 0.4, oz: 0, r: 0.65 },
+        { ox: 0.3, oy: 0.3, oz: 0.2, r: 0.60 }
+      ];
+
+      puffs.forEach(p => {
+        const puff = new THREE.Mesh(cloudGeo, this.cloudMat);
+        puff.position.set(p.ox * cc.s, p.oy * cc.s, p.oz * cc.s);
+        puff.scale.set(p.r * cc.s, p.r * cc.s * 0.75, p.r * cc.s);
+        cloudGroup.add(puff);
       });
-    }
+
+      cloudGroup.position.set(cc.x, cc.y, cc.z);
+      this.scene.add(cloudGroup);
+
+      this.clouds.push({
+        group: cloudGroup,
+        baseX: cc.x,
+        baseY: cc.y,
+        baseZ: cc.z,
+        speed: 1.5 + idx * 0.4
+      });
+    });
+  }
+
+  createBirdFlock() {
+    // Bando de Pássaros Tropicais (Gaivotas / Andorinhas Cariocas)
+    const wingGeo = new THREE.PlaneGeometry(1.4, 0.45);
+    const birdMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide });
+
+    const flockGroup = new THREE.Group();
+    const birdOffsets = [
+      { ox: 0, oy: 0, oz: 0 },
+      { ox: -3.5, oy: -0.8, oz: 3.0 },
+      { ox: 3.5, oy: -0.6, oz: 3.2 },
+      { ox: -7.0, oy: -1.6, oz: 6.2 },
+      { ox: 7.0, oy: -1.4, oz: 6.0 }
+    ];
+
+    birdOffsets.forEach((bo, bIdx) => {
+      const bird = new THREE.Group();
+      const leftWing = new THREE.Mesh(wingGeo, birdMat);
+      leftWing.position.set(-0.7, 0, 0);
+      leftWing.rotation.y = 0.2;
+
+      const rightWing = new THREE.Mesh(wingGeo, birdMat);
+      rightWing.position.set(0.7, 0, 0);
+      rightWing.rotation.y = -0.2;
+
+      bird.add(leftWing, rightWing);
+      bird.position.set(bo.ox, bo.oy, bo.oz);
+      flockGroup.add(bird);
+
+      this.birds.push({
+        leftWing,
+        rightWing,
+        phase: bIdx * 0.6
+      });
+    });
+
+    flockGroup.position.set(-45, 32, -160);
+    flockGroup.rotation.y = 0.4;
+    this.scene.add(flockGroup);
+    this.birdFlock = flockGroup;
   }
 
   /**
@@ -381,6 +444,22 @@ export class GameScene {
     this.moonMesh.visible = isNight;
     this.sunGroup.visible = !isNight || sunY > -10;
 
+    // Animação Suave das Nuvens no Céu
+    this.clouds.forEach(c => {
+      c.group.position.x = c.baseX + (elapsedTime * c.speed) % 240 - 120;
+    });
+
+    // Animação do Bando de Pássaros
+    if (this.birdFlock) {
+      this.birdFlock.position.x = -60 + ((elapsedTime * 8.0) % 220);
+      this.birdFlock.position.y = 32 + Math.sin(elapsedTime * 0.8) * 3;
+      this.birds.forEach(b => {
+        const wingAngle = Math.sin(elapsedTime * 7.0 + b.phase) * 0.55;
+        b.leftWing.rotation.z = wingAngle;
+        b.rightWing.rotation.z = -wingAngle;
+      });
+    }
+
     if (t < 0.15) {
       // 5h - Alvorecer
       this.scene.fog.color.setHex(0x312e81);
@@ -389,6 +468,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.70;
       this.sunLight.color.setHex(0xfecdd3);
       this.sunLight.intensity = 1.05;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xfecdd3);
       if (this.fillLight) {
         this.fillLight.color.setHex(0xa5b4fc);
         this.fillLight.intensity = 0.30;
@@ -402,6 +482,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.85;
       this.sunLight.color.setHex(0xfffbeb);
       this.sunLight.intensity = 1.35;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xffffff);
       if (this.fillLight) {
         this.fillLight.color.setHex(0x93c5fd);
         this.fillLight.intensity = 0.40;
@@ -414,6 +495,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.95;
       this.sunLight.color.setHex(0xffffff);
       this.sunLight.intensity = 1.45;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xffffff);
       if (this.fillLight) {
         this.fillLight.color.setHex(0xbfdbfe);
         this.fillLight.intensity = 0.35;
@@ -427,6 +509,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.80;
       this.sunLight.color.setHex(0xf97316);
       this.sunLight.intensity = 1.25;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xfdba74);
       if (this.fillLight) {
         this.fillLight.color.setHex(0xfdba74);
         this.fillLight.intensity = 0.35;
@@ -440,6 +523,7 @@ export class GameScene {
       this.hemiLight.intensity = 0.45;
       this.sunLight.color.setHex(0x60a5fa);
       this.sunLight.intensity = 0.35;
+      if (this.cloudMat) this.cloudMat.color.setHex(0x334155);
       if (this.fillLight) {
         this.fillLight.color.setHex(0x1e3a8a);
         this.fillLight.intensity = 0.20;
@@ -570,12 +654,6 @@ export class GameScene {
 
     if (this.sunRays) {
       this.sunRays.material.rotation += 0.05 * dt;
-    }
-
-    for (const k of this.kites) {
-      k.mesh.position.x = k.baseX + Math.sin(elapsedTime * k.speed + k.phase) * 1.8;
-      k.mesh.position.y = k.baseY + Math.cos(elapsedTime * (k.speed * 0.8) + k.phase) * 1.2;
-      k.mesh.rotation.z = Math.PI / 4 + Math.sin(elapsedTime * k.speed) * 0.15;
     }
   }
 

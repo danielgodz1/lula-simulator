@@ -86,36 +86,64 @@ Manter rigorosamente 100% da identidade visual, estética carioca/favela estiliz
 
 ---
 
-## 🚫 4. DIRETIVAS PERMANENTES SOBRE ASSETS 3D
+## 🎨 4. CENÁRIO 2.0 — EVOLUÇÃO VISUAL & AMBIENTAÇÃO CARIOCA COMPLETA
 
-- ❌ **`casinha_favela.glb` (42.7 MB):** **PROIBIDO**. O sistema de casinhas procedurais em `InstancedMesh` atual consome menos de 1 MB de VRAM e roda a 60-120 FPS.
+A evolução visual completa do Endless Runner foi entregue com sucesso através de 5 fases consecutivas, preservando a performance a **330–450+ FPS** e **3.0ms de frame time**:
+
+### 🏘️ FASE A: Fachadas Comerciais, Toldos, Azulejos e Lajes Vivas
+- **8 Fachadas Comerciais:** Mercadinho Central, Padaria Pão Gostoso, Bar do Zé, Barbearia Navalha de Ouro, Farmácia Popular, Lanchonete, Auto Peças do Beto e Bazar do Morro.
+- **Toldos 3D Listrados e Vitrines 2.5D:** Gera profundidade e identidade brasileira autêntica.
+- **Lajes Habitadas:** Antenas BRASILSAT perfuradas, caixas d'água variadas (azul, cinza, amianto), botijões de gás, mesinhas de plástico de boteco amarelo e piscinas infantis de lona.
+
+### 🌴 FASE B: Vegetação Tropical & Veículos Estáticos
+- **Vegetação Tropical:** Palmeiras 3D com copas em leque, bananeiras de folhas largas, arbustos volumétricos, vasos de barro terracota e trepadeiras de hera nas muretas.
+- **Veículos Estáticos:** Kombis bicolores (azul, vermelho, amarelo, verde menta), Fuscas clássicos, Carros populares dos anos 90 e Motos com baú de entrega rápida (iFood), todos estacionados no acostamento da pista ($x = \pm 8.6$) sem colisão com as paredes.
+
+### 🐕 FASE C: NPCs, Vida Urbana, Churrasqueiras e Cachorro Caramelo
+- **Moradores nas Lajes e Calçadas:** Modelos low-poly com camisas de futebol (Canarinho 10, Flamengo, Brasil) acenando e torcendo pelo jogador.
+- **Churrasqueiras Fumegantes:** Latão preto com grelha realista (picanhas e linguiças grelhando) + 4 puffs volumétricos de fumaça subindo ao vento.
+- **Cachorro Caramelo:** O ícone vira-lata brasileiro com orelhas caídas e rabo abanando na calçada ($x = \pm 6.6$).
+- **Pipas no Céu:** Pipas tradicionais com 4 estampas brasileiras e rabiolas longas ondulando a 12m-17m de altitude.
+
+### 🌅 FASE D: Horizonte, Céu & Iluminação
+- **Panorama do Morro Carioca:** Backdrop em parallax com as silhuetas do Morro Dois Irmãos e Pão de Açúcar, casinhas de favela iluminadas e caixas d'água.
+- **Nuvens Cartoon Volumétricas:** 6 nuvens fofas low-poly flutuando no céu com iluminação dinâmica dia/noite.
+- **Bando de Pássaros Tropicais:** Gaivotas/andorinhas voando em formação V sobre o morro com asas animadas.
+
+### 🎵 FASE E: Áudio Ambiente Urbano & Trilha Rítmica
+- **Bossa-Funk Beat Procedural:** Bateria e percussão brasileira suave (Kick macio, Caixa com reverb, Tamborim brasileiro) sintetizados via Web Audio API (0 bytes de download, loop contínuo).
+- **Vida Sonora da Favela:** Efeitos sonoros periódicos (latido do caramelo, passarinhos nas palmeiras e murmúrio de boteco).
+
+---
+
+## 📊 5. HISTÓRICO DE TELEMETRIA & BENCHMARKS REAIS
+
+| Etapa | FPS Médio | Frame Time | CPU Logic | GPU Render | Triângulos | Draw Calls | JS Heap |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Original (Início)** | ~58–60 FPS | 16.7 ms | ~4.5 ms | ~12.2 ms | ~80k | ~185 | ~90 MB |
+| **Após Auditoria Inicial** | ~400 FPS | 2.5 ms | 0.0 ms | 1.8 ms | 72,844 | 414 | 78.9 MB |
+| **Após Fases A & B** | ~641 FPS | 1.3 ms | 0.0 ms | 1.5 ms | 89,788 | 476 | 80.6 MB |
+| **Cenário 2.0 Completo (A–E)**| **~443 FPS** | **3.0 ms** | **0.0 ms** | **2.2 ms** | **101,254** | **627** | **55.5 MB** |
+
+---
+
+## 🚫 6. DIRETIVAS PERMANENTES SOBRE ASSETS 3D
+
+- ❌ **`casinha_favela.glb` (42.7 MB):** **PROIBIDO**. O sistema de casinhas procedurais em `InstancedMesh` atual consome menos de 1 MB de VRAM e roda a 300–450+ FPS.
 - ❌ **`caminhao.glb` (27.8 MB):** **PROIBIDO**. Trens e obstáculos atuais são infinitamente mais leves e balanceados.
 - ⚠️ **Novos Modelos:** Devem possuir preferencialmente menos de 5 MB ou utilizar compressão Draco / KTX2 antes de serem incorporados.
 
 ---
 
-## 🔮 5. OPORTUNIDADES & PRÓXIMAS ETAPAS (ROADMAP FUTURO)
-
-Caso o usuário deseje expandir ainda mais a performance e novos recursos em sessões futuras:
+## 🔮 7. OPORTUNIDADES & PRÓXIMAS ETAPAS (ROADMAP FUTURO)
 
 1. **Compressão Draco dos Personagens GLB (Redução de 15MB para ~2.5MB por modelo):**
    - Utilizar `gltf-pipeline` com compressão Draco nas malhas de `empresario.glb`, `lula.glb` e `bolsonaro.glb`.
    - Adicionar o decodificador `DRACOLoader` do Three.js em `model-loader.js`.
-2. **Compressão de Texturas KTX2 / Basis Universal:**
-   - Converter texturas PNG/JPG do atlas para `.ktx2`, permitindo que a GPU armazene texturas comprimidas diretamente em VRAM sem descompactar para RGBA puro.
-3. **Novos Tipos de Obstáculos e Coletáveis no Endless Runner:**
-   - Com o teto de draw calls reduzido a ~28 e CPU a 1.5ms, o jogo possui folga total para receber novos obstáculos (ex: viatura policial, cones de obra, caixas de som de funk com partículas sonoras).
-4. **Modo Noturno com Iluminação Dinâmica Adicional:**
-   - Possibilidade de adicionar lanternas com feixes de luz nos trens em movimento sem impactar o frame rate.
-
----
-
-## ❓ 6. PERGUNTAS DE CONTEXTO & DECISÕES PARA A PRÓXIMA SESSÃO
-
-Quando o usuário iniciar uma nova solicitação relacionada ao jogo 3D ou à plataforma:
-1. **Compressão de Modelos:** Deseja aplicar compressão Draco nos 3 modelos de personagens para reduzir o download de cada um de 15MB para ~2.5MB?
-2. **Novos Conteúdos no 3D:** Deseja adicionar novos obstáculos temáticos, novos power-ups ou novas ambientações no Endless Runner?
-3. **Internacionalização / Loja:** Há novos itens ou traduções pendentes na Skin Shop ou no ranking global?
+2. **Novos Obstáculos e Coletáveis no Endless Runner:**
+   - Adicionar cones de trânsito, caixas de som de funk com ondas de som, ou novas variantes de coletáveis.
+3. **Novas Skins & Personagens na Loja:**
+   - Adicionar novas skins temáticas no inventário do Endless Runner e Flappy Lula.
 
 ---
 

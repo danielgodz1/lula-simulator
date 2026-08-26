@@ -34,6 +34,32 @@ class TextureAtlasManager {
     this.corrugatedRoofTexture = null;
     this.stopSignTexture = null;
 
+    // Cenário 2.0 (Fase A) — Comércio Brasileiro, Toldos, Azulejos e Lajes Vivas
+    this.commercialSigns = [];
+    this.storefrontDisplays = [];
+    this.awningTextures = [];
+    this.tileFacadeTexture = null;
+    this.windowGrilleTexture = null;
+    this.modernWindowTexture = null;
+    this.dishAntennaTexture = null;
+
+    // Cenário 2.0 (Fase B) — Vegetação Tropical e Veículos Estáticos
+    this.palmLeafTexture = null;
+    this.bananaLeafTexture = null;
+    this.bushFoliageTexture = null;
+    this.kombiSideTexture = null;
+    this.carDetailsTexture = null;
+    this.motoBoxTexture = null;
+    this.ivyTexture = null;
+
+    // Cenário 2.0 (Fase C) — Pipas, Churrasqueiras e Vida Urbana
+    this.kiteTextures = [];
+    this.grillTexture = null;
+    this.smokeTexture = null;
+
+    // Cenário 2.0 (Fase D) — Panorama e Horizonte Carioca
+    this.morroParallaxTexture = null;
+
     this.init();
   }
 
@@ -46,6 +72,9 @@ class TextureAtlasManager {
     this.createGoldCoinTexture();
     this.createSoftShadowTexture();
     this.createSubwayTrainTextures();
+    this.createCity2Textures();
+    this.createVegetationAndVehicleTextures();
+    this.createNpcAndAtmosphereTextures();
   }
 
   createSoftShadowTexture() {
@@ -1241,6 +1270,1220 @@ class TextureAtlasManager {
     tex.needsUpdate = true;
     return tex;
   }
+
+  /**
+   * Cenário 2.0 (Fase A) — Comércio Brasileiro, Toldos, Vitrines, Azulejos e Lajes Vivas
+   */
+  createCity2Textures() {
+    this.createCommercialSignTextures();
+    this.createAwningTextures();
+    this.createStorefrontDisplays();
+    this.createTileFacadeTexture();
+    this.createWindowGrilleTexture();
+    this.createModernWindowTexture();
+    this.createDishAntennaTexture();
+  }
+
+  createCommercialSignTextures() {
+    const signDefs = [
+      {
+        title: 'MERCADINHO CENTRAL',
+        sub: 'HORTIFRUTI • BEBIDAS • MERCEARIA',
+        bgCol: '#15803d',
+        accentCol: '#fde047',
+        textColor: '#ffffff',
+        borderCol: '#166534',
+        icon: 'fruit'
+      },
+      {
+        title: 'PADARIA & CONFEITARIA',
+        sub: 'PÃO QUENTE TODA HORA • CAFÉ & DOCES',
+        bgCol: '#78350f',
+        accentCol: '#fbbf24',
+        textColor: '#fef08a',
+        borderCol: '#451a03',
+        icon: 'bread'
+      },
+      {
+        title: 'BAR DO ZÉ',
+        sub: 'CERVEJA ESTUPIDAMENTE GELADA • PETISCOS',
+        bgCol: '#b91c1c',
+        accentCol: '#fde047',
+        textColor: '#ffffff',
+        borderCol: '#7f1d1d',
+        icon: 'beer'
+      },
+      {
+        title: 'BARBEARIA NAVALHA DE OURO',
+        sub: 'CORTE CLÁSSICO • BARBOTERAPIA • SOCIAL',
+        bgCol: '#1e3a8a',
+        accentCol: '#38bdf8',
+        textColor: '#facc15',
+        borderCol: '#172554',
+        icon: 'barber'
+      },
+      {
+        title: 'DROGARIA & FARMÁCIA POPULAR',
+        sub: 'MEDICAMENTOS • PERFUMARIA • CONVÊNIOS',
+        bgCol: '#047857',
+        accentCol: '#f8fafc',
+        textColor: '#ffffff',
+        borderCol: '#064e3b',
+        icon: 'cross'
+      },
+      {
+        title: 'LANCHONETE & PASTELARIA',
+        sub: 'PASTEL CROCANTE • COXINHA • SUCOS NATURAIS',
+        bgCol: '#c2410c',
+        accentCol: '#fde047',
+        textColor: '#ffffff',
+        borderCol: '#7c2d12',
+        icon: 'snack'
+      },
+      {
+        title: 'AUTO PEÇAS & OFICINA DO BETO',
+        sub: 'MECÂNICA • AUTO ELÉTRICA • PNEUS',
+        bgCol: '#0f172a',
+        accentCol: '#eab308',
+        textColor: '#f8fafc',
+        borderCol: '#334155',
+        icon: 'gear'
+      },
+      {
+        title: 'BAZAR & PRESENTES DO MORRO',
+        sub: 'UTILIDADES • BRINQUEDOS • PAPELARIA',
+        bgCol: '#7e22ce',
+        accentCol: '#f472b6',
+        textColor: '#ffffff',
+        borderCol: '#581c87',
+        icon: 'star'
+      }
+    ];
+
+    this.commercialSigns = signDefs.map(def => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      // Fundo com leve gradiente estilizado
+      const grad = ctx.createLinearGradient(0, 0, 0, 128);
+      grad.addColorStop(0.0, def.bgCol);
+      grad.addColorStop(1.0, def.borderCol);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 128);
+
+      // Moldura externa em relevo
+      ctx.strokeStyle = def.accentCol;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, 504, 120);
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(10, 10, 492, 108);
+
+      // Friso decorativo nos cantos
+      const cornerSize = 14;
+      ctx.fillStyle = def.accentCol;
+      [[10, 10], [502 - cornerSize, 10], [10, 118 - cornerSize], [502 - cornerSize, 118 - cornerSize]].forEach(([cx, cy]) => {
+        ctx.fillRect(cx, cy, cornerSize, cornerSize);
+      });
+
+      // Ícone estilizado à esquerda
+      ctx.save();
+      const ix = 52;
+      const iy = 64;
+
+      if (def.icon === 'beer') {
+        // Caneco de Chopp com espuma
+        ctx.fillStyle = '#facc15';
+        ctx.fillRect(ix - 16, iy - 16, 26, 36);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ix - 16, iy - 16, 9, 0, Math.PI * 2);
+        ctx.arc(ix - 3, iy - 19, 11, 0, Math.PI * 2);
+        ctx.arc(ix + 10, iy - 16, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(ix + 10, iy - 8, 10, 20);
+      } else if (def.icon === 'cross') {
+        // Cruz médica vermelha sobre círculo branco
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ix, iy, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(ix - 6, iy - 18, 12, 36);
+        ctx.fillRect(ix - 18, iy - 6, 36, 12);
+      } else if (def.icon === 'bread') {
+        // Pão francês estilizado
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.ellipse(ix, iy, 24, 14, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(ix - 12, iy - 8);
+        ctx.lineTo(ix - 4, iy + 6);
+        ctx.moveTo(ix + 2, iy - 8);
+        ctx.lineTo(ix + 10, iy + 6);
+        ctx.stroke();
+      } else if (def.icon === 'barber') {
+        // Barber Pole listrado
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(ix - 12, iy - 24, 24, 48);
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.moveTo(ix - 12, iy - 20);
+        ctx.lineTo(ix + 12, iy - 8);
+        ctx.lineTo(ix + 12, iy);
+        ctx.lineTo(ix - 12, iy - 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#1d4ed8';
+        ctx.beginPath();
+        ctx.moveTo(ix - 12, iy + 4);
+        ctx.lineTo(ix + 12, iy + 16);
+        ctx.lineTo(ix + 12, iy + 24);
+        ctx.lineTo(ix - 12, iy + 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(ix - 12, iy - 24, 24, 48);
+      } else if (def.icon === 'fruit') {
+        // Cesto com maçã e laranja
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(ix - 8, iy - 2, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(ix + 10, iy + 2, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(ix - 9, iy - 19, 4, 7);
+      } else if (def.icon === 'snack') {
+        // Pastel dourado
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.moveTo(ix - 18, iy - 12);
+        ctx.lineTo(ix + 18, iy - 12);
+        ctx.lineTo(ix + 24, iy + 14);
+        ctx.lineTo(ix - 24, iy + 14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      } else if (def.icon === 'gear') {
+        // Engrenagem e chave
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(ix, iy, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(ix, iy, 7, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Estrela
+        ctx.fillStyle = '#facc15';
+        ctx.font = '36px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', ix, iy);
+      }
+      ctx.restore();
+
+      // Texto do Título em Tipografia Bold com Contorno Sombra
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Sombra projetada preta
+      ctx.font = '900 28px "Arial Black", "Impact", sans-serif';
+      ctx.fillStyle = '#000000';
+      ctx.fillText(def.title, 290 + 2, 50 + 2);
+
+      // Texto Principal
+      ctx.fillStyle = def.textColor;
+      ctx.fillText(def.title, 290, 50);
+
+      // Subtítulo
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillStyle = def.accentCol;
+      ctx.fillText(def.sub, 290, 88);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createAwningTextures() {
+    const awningPalettes = [
+      ['#dc2626', '#f8fafc'], // Vermelho e Branco
+      ['#0284c7', '#f8fafc'], // Azul e Branco
+      ['#16a34a', '#fde047'], // Verde e Amarelo
+      ['#ea580c', '#f8fafc']  // Laranja e Branco
+    ];
+
+    this.awningTextures = awningPalettes.map(([c1, c2]) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      const stripeW = 32;
+      for (let x = 0; x < 256; x += stripeW) {
+        ctx.fillStyle = (Math.floor(x / stripeW) % 2 === 0) ? c1 : c2;
+        ctx.fillRect(x, 0, stripeW, 256);
+
+        // Gradiente de sombra cilíndrica do tecido
+        const g = ctx.createLinearGradient(x, 0, x + stripeW, 0);
+        g.addColorStop(0.0, 'rgba(0,0,0,0.18)');
+        g.addColorStop(0.5, 'rgba(255,255,255,0.22)');
+        g.addColorStop(1.0, 'rgba(0,0,0,0.25)');
+        ctx.fillStyle = g;
+        ctx.fillRect(x, 0, stripeW, 256);
+      }
+
+      // Beiral recortado com ondas decorativas no rodapé
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(0, 240, 256, 16);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createStorefrontDisplays() {
+    const displays = [
+      // 0: Bar do Zé (Prateleiras com garrafas e engradados)
+      (ctx) => {
+        ctx.fillStyle = '#451a03'; // Madeira do fundo
+        ctx.fillRect(0, 0, 256, 256);
+
+        // 3 Prateleiras
+        [70, 140, 210].forEach(py => {
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(10, py, 236, 12);
+          ctx.fillStyle = '#291102';
+          ctx.fillRect(10, py + 12, 236, 4);
+
+          // Garrafas coloridas
+          const botColors = ['#15803d', '#b91c1c', '#ca8a04', '#0284c7', '#d97706', '#166534'];
+          for (let bx = 20; bx < 230; bx += 18) {
+            const h = 32 + (bx % 3) * 8;
+            ctx.fillStyle = botColors[(bx * 7) % botColors.length];
+            ctx.fillRect(bx, py - h, 10, h);
+            ctx.fillStyle = '#fde047';
+            ctx.fillRect(bx + 2, py - h - 5, 6, 5); // Rolha/tampa
+          }
+        });
+      },
+      // 1: Mercadinho (Frutas e produtos empilhados)
+      (ctx) => {
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Prateleiras de mercearia
+        [75, 145, 215].forEach((py, sIdx) => {
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(8, py, 240, 10);
+
+          if (sIdx === 0) {
+            // Caixas de cereais/leite
+            for (let x = 15; x < 235; x += 22) {
+              ctx.fillStyle = ['#dc2626', '#2563eb', '#16a34a', '#eab308'][(x * 3) % 4];
+              ctx.fillRect(x, py - 38, 16, 38);
+            }
+          } else if (sIdx === 1) {
+            // Caixas de frutas
+            for (let x = 16; x < 230; x += 48) {
+              ctx.fillStyle = '#78350f';
+              ctx.fillRect(x, py - 28, 42, 28);
+              ctx.fillStyle = ['#ef4444', '#f97316', '#facc15', '#22c55e'][(x * 5) % 4];
+              for (let f = 0; f < 3; f++) {
+                ctx.beginPath();
+                ctx.arc(x + 10 + f * 11, py - 20, 6, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          } else {
+            // Garrafas de refrigerante e óleo
+            for (let x = 18; x < 235; x += 18) {
+              ctx.fillStyle = (x % 36 === 0) ? '#dc2626' : '#16a34a';
+              ctx.fillRect(x, py - 32, 12, 32);
+            }
+          }
+        });
+      },
+      // 2: Padaria (Estufa de salgados, bolos e pães)
+      (ctx) => {
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Estufa aquecida iluminada
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(20, 40, 216, 170);
+        ctx.strokeStyle = '#ca8a04';
+        ctx.lineWidth = 6;
+        ctx.strokeRect(20, 40, 216, 170);
+
+        // Bandejas com salgados dourados (coxinha, pastel, pão de queijo)
+        [90, 140, 190].forEach(by => {
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(30, by, 196, 6);
+          for (let sx = 40; sx < 210; sx += 24) {
+            ctx.fillStyle = '#d97706';
+            ctx.beginPath();
+            ctx.arc(sx + 8, by - 12, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(sx + 8, by - 14, 5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      },
+      // 3: Barbearia (Espelho iluminado, navalha e poltrona)
+      (ctx) => {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Espelho central com moldura prateada
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(38, 25, 180, 160);
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(38, 25, 180, 160);
+
+        // Reflexo no espelho
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.moveTo(38, 25);
+        ctx.lineTo(100, 25);
+        ctx.lineTo(38, 87);
+        ctx.fill();
+
+        // Bancada com frascos
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(20, 185, 216, 55);
+        for (let fx = 40; fx < 210; fx += 26) {
+          ctx.fillStyle = ['#38bdf8', '#fb7185', '#a855f7'][(fx * 2) % 3];
+          ctx.fillRect(fx, 155, 12, 30);
+        }
+      }
+    ];
+
+    this.storefrontDisplays = displays.map(drawFn => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      drawFn(ctx);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createTileFacadeTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Fundo branco porcelana
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 512, 512);
+
+    const tileSize = 64;
+    for (let y = 0; y < 512; y += tileSize) {
+      for (let x = 0; x < 512; x += tileSize) {
+        // Rejunte cinza suave
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, tileSize, tileSize);
+
+        const cx = x + tileSize / 2;
+        const cy = y + tileSize / 2;
+        const half = tileSize / 2 - 6;
+
+        // Padrão de azulejo português colonial azul cobalto
+        ctx.fillStyle = '#1d4ed8';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - half);
+        ctx.lineTo(cx + half, cy);
+        ctx.lineTo(cx, cy + half);
+        ctx.lineTo(cx - half, cy);
+        ctx.closePath();
+        ctx.fill();
+
+        // Miolo floral em amarelo dourado
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 4 Petalas brancas
+        ctx.fillStyle = '#ffffff';
+        [[-10, 0], [10, 0], [0, -10], [0, 10]].forEach(([px, py]) => {
+          ctx.beginPath();
+          ctx.arc(cx + px, cy + py, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    }
+
+    this.tileFacadeTexture = new THREE.CanvasTexture(canvas);
+    this.tileFacadeTexture.wrapS = THREE.RepeatWrapping;
+    this.tileFacadeTexture.wrapT = THREE.RepeatWrapping;
+    this.tileFacadeTexture.repeat.set(2, 2);
+    this.tileFacadeTexture.needsUpdate = true;
+  }
+
+  createWindowGrilleTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Vidro azul reflexivo
+    const grad = ctx.createLinearGradient(0, 0, 256, 256);
+    grad.addColorStop(0.0, '#38bdf8');
+    grad.addColorStop(0.5, '#0284c7');
+    grad.addColorStop(1.0, '#0369a1');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Reflexo de luz na diagonal
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.40)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(90, 0);
+    ctx.lineTo(0, 90);
+    ctx.fill();
+
+    // Grade de ferro fundido ornamental preta
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(4, 4, 248, 248);
+
+    // Barras verticais e transversais
+    ctx.lineWidth = 5;
+    for (let x = 32; x < 256; x += 32) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 256);
+      ctx.stroke();
+    }
+    for (let y = 32; y < 256; y += 48) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(256, y);
+      ctx.stroke();
+    }
+
+    // Losangos decorativos de ferro
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 4;
+    for (let x = 32; x < 240; x += 64) {
+      for (let y = 48; y < 240; y += 96) {
+        ctx.strokeRect(x - 12, y - 12, 24, 24);
+      }
+    }
+
+    this.windowGrilleTexture = new THREE.CanvasTexture(canvas);
+    this.windowGrilleTexture.needsUpdate = true;
+  }
+
+  createModernWindowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Moldura preta fosca
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Vidro fumê com iluminação interior suave acolhedora
+    const grad = ctx.createLinearGradient(0, 0, 256, 256);
+    grad.addColorStop(0.0, '#1e293b');
+    grad.addColorStop(0.6, '#334155');
+    grad.addColorStop(1.0, '#fef08a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(10, 10, 236, 236);
+
+    // Divisão de caixilho basculante
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(10, 120, 236, 12);
+    ctx.fillRect(120, 10, 12, 236);
+
+    this.modernWindowTexture = new THREE.CanvasTexture(canvas);
+    this.modernWindowTexture.needsUpdate = true;
+  }
+
+  createDishAntennaTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Superfície de chapa de aço cinza metálica
+    const grad = ctx.createRadialGradient(128, 128, 10, 128, 128, 124);
+    grad.addColorStop(0.0, '#f1f5f9');
+    grad.addColorStop(0.7, '#cbd5e1');
+    grad.addColorStop(1.0, '#64748b');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(128, 128, 120, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Trama de chapa furadinha perfurada
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    for (let y = 20; y < 236; y += 10) {
+      for (let x = 20; x < 236; x += 10) {
+        const d = Math.hypot(x - 128, y - 128);
+        if (d < 110) {
+          ctx.fillRect(x, y, 2, 2);
+        }
+      }
+    }
+
+    // Logo "BRASILSAT" no prato
+    ctx.fillStyle = '#1d4ed8';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('BRASILSAT', 128, 128);
+
+    ctx.fillStyle = '#facc15';
+    ctx.beginPath();
+    ctx.arc(128, 146, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.dishAntennaTexture = new THREE.CanvasTexture(canvas);
+    this.dishAntennaTexture.needsUpdate = true;
+  }
+
+  // ==========================================
+  // CENÁRIO 2.0 (FASE B) — VEGETAÇÃO E VEÍCULOS
+  // ==========================================
+
+  createVegetationAndVehicleTextures() {
+    this.createPalmLeafTexture();
+    this.createBananaLeafTexture();
+    this.createBushFoliageTexture();
+    this.createIvyTexture();
+    this.createKombiSideTexture();
+    this.createCarDetailsTexture();
+    this.createMotoBoxTexture();
+  }
+
+  createPalmLeafTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, 256, 256);
+
+    // Folha de Palmeira / Coqueiro Estilizada Tropical
+    const grad = ctx.createLinearGradient(0, 256, 256, 0);
+    grad.addColorStop(0.0, '#14532d');
+    grad.addColorStop(0.5, '#16a34a');
+    grad.addColorStop(1.0, '#4ade80');
+    ctx.fillStyle = grad;
+
+    // Haste central
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(16, 240);
+    ctx.quadraticCurveTo(100, 160, 240, 20);
+    ctx.stroke();
+
+    // Folíolos / Folhas em leque
+    ctx.fillStyle = grad;
+    for (let i = 0.15; i <= 0.95; i += 0.05) {
+      const px = 16 + i * (240 - 16);
+      const py = 240 - Math.pow(i, 0.85) * 220;
+
+      // Lado esquerdo do folíolo
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px - 35 - i * 30, py + 15 + i * 20);
+      ctx.lineTo(px, py - 6);
+      ctx.fill();
+
+      // Lado direito do folíolo
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + 15 + i * 20, py - 35 - i * 25);
+      ctx.lineTo(px + 4, py);
+      ctx.fill();
+    }
+
+    this.palmLeafTexture = new THREE.CanvasTexture(canvas);
+    this.palmLeafTexture.needsUpdate = true;
+  }
+
+  createBananaLeafTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, 256, 256);
+
+    // Folha Larga de Bananeira
+    ctx.save();
+    ctx.translate(128, 128);
+    ctx.rotate(0.1);
+
+    const grad = ctx.createLinearGradient(0, 120, 0, -120);
+    grad.addColorStop(0.0, '#15803d');
+    grad.addColorStop(0.6, '#22c55e');
+    grad.addColorStop(1.0, '#86efac');
+    ctx.fillStyle = grad;
+
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 48, 115, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Nervura central
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(0, 115);
+    ctx.lineTo(0, -115);
+    ctx.stroke();
+
+    // Nervuras laterais
+    ctx.strokeStyle = 'rgba(254, 240, 138, 0.45)';
+    ctx.lineWidth = 2;
+    for (let y = -80; y <= 80; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(38, y - 12);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(-38, y - 12);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    this.bananaLeafTexture = new THREE.CanvasTexture(canvas);
+    this.bananaLeafTexture.needsUpdate = true;
+  }
+
+  createBushFoliageTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Textura orgânica de folhas de arbusto estilizadas
+    const colors = ['#15803d', '#22c55e', '#4ade80', '#14532d'];
+    for (let i = 0; i < 90; i++) {
+      const cx = (Math.sin(i * 99) * 0.5 + 0.5) * 256;
+      const cy = (Math.cos(i * 77) * 0.5 + 0.5) * 256;
+      const r = 12 + (i % 16);
+
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    this.bushFoliageTexture = new THREE.CanvasTexture(canvas);
+    this.bushFoliageTexture.wrapS = THREE.RepeatWrapping;
+    this.bushFoliageTexture.wrapT = THREE.RepeatWrapping;
+    this.bushFoliageTexture.needsUpdate = true;
+  }
+
+  createIvyTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, 512, 256);
+
+    // Trepadeiras caindo sobre mureta de concreto
+    ctx.strokeStyle = '#14532d';
+    ctx.lineWidth = 3;
+
+    for (let branch = 0; branch < 8; branch++) {
+      const startX = 30 + branch * 60;
+      ctx.beginPath();
+      ctx.moveTo(startX, 0);
+      let currX = startX;
+      let currY = 0;
+      const maxLen = 120 + (branch % 4) * 30;
+
+      while (currY < maxLen) {
+        currY += 15;
+        currX += (Math.sin(currY * 0.1) * 8);
+        ctx.lineTo(currX, currY);
+
+        // Folhinhas verdes ao longo do ramo
+        ctx.fillStyle = (branch % 2 === 0) ? '#22c55e' : '#4ade80';
+        ctx.beginPath();
+        ctx.arc(currX + 8, currY, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#15803d';
+        ctx.beginPath();
+        ctx.arc(currX - 8, currY + 4, 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.stroke();
+    }
+
+    this.ivyTexture = new THREE.CanvasTexture(canvas);
+    this.ivyTexture.needsUpdate = true;
+  }
+
+  createKombiSideTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Parte superior branca / off-white clássica
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, 512, 110);
+
+    // Faixa cromada divisória
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(0, 106, 512, 8);
+
+    // Parte inferior (fundo neutro para mat tint)
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(0, 114, 512, 142);
+
+    // Janelas da Kombi (3 janelas laterais + porta)
+    const windowPositions = [40, 140, 240, 360];
+    windowPositions.forEach(wx => {
+      // Moldura
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(wx - 2, 20, 84, 64);
+      // Vidro fumê
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(wx, 22, 80, 60);
+      // Reflexo estilizado
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(wx + 10, 82);
+      ctx.lineTo(wx + 40, 22);
+      ctx.lineTo(wx + 55, 22);
+      ctx.lineTo(wx + 25, 82);
+      ctx.fill();
+    });
+
+    // Maçanetas cromadas
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(110, 125, 20, 6);
+    ctx.fillRect(230, 125, 20, 6);
+
+    // Aberturas de ventilação traseira do motor
+    ctx.fillStyle = '#475569';
+    for (let vy = 135; vy <= 185; vy += 10) {
+      ctx.fillRect(440, vy, 45, 4);
+    }
+
+    this.kombiSideTexture = new THREE.CanvasTexture(canvas);
+    this.kombiSideTexture.needsUpdate = true;
+  }
+
+  createCarDetailsTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Faróis dianteiros redondos cromados
+    ctx.fillStyle = '#e2e8f0';
+    ctx.beginPath();
+    ctx.arc(45, 60, 28, 0, Math.PI * 2);
+    ctx.arc(211, 60, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(45, 60, 22, 0, Math.PI * 2);
+    ctx.arc(211, 60, 22, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Grade dianteira
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(80, 45, 96, 30);
+    ctx.fillStyle = '#94a3b8';
+    for (let gy = 50; gy < 75; gy += 6) {
+      ctx.fillRect(84, gy, 88, 2);
+    }
+
+    // Lanternas traseiras bicolores
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(25, 140, 40, 30);
+    ctx.fillRect(191, 140, 40, 30);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(25, 140, 14, 30);
+    ctx.fillRect(217, 140, 14, 30);
+
+    // Placa Mercosul Brasileira
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(78, 145, 100, 35);
+    ctx.fillStyle = '#1d4ed8';
+    ctx.fillRect(78, 145, 100, 10);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BRASIL', 128, 153);
+
+    ctx.fillStyle = '#000000';
+    ctx.font = '900 13px monospace';
+    ctx.fillText('LULA-2026', 128, 172);
+
+    this.carDetailsTexture = new THREE.CanvasTexture(canvas);
+    this.carDetailsTexture.needsUpdate = true;
+  }
+
+  createMotoBoxTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Baú vermelho de entregador
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(0, 0, 256, 256);
+
+    // Faixas refletivas amarelas nas bordas
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(0, 0, 256, 16);
+    ctx.fillRect(0, 240, 256, 16);
+
+    // Logo e texto estilizado
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(128, 100, 45, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#dc2626';
+    ctx.font = '900 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('IFOOD', 128, 100);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillText('ENTREGA RÁPIDA', 128, 170);
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('★ DISK PIZZA ★', 128, 195);
+
+    this.motoBoxTexture = new THREE.CanvasTexture(canvas);
+    this.motoBoxTexture.needsUpdate = true;
+  }
+
+  // ========================================================
+  // CENÁRIO 2.0 (FASE C) — PIPAS, CHURRASQUEIRAS E VIDA URBANA
+  // ========================================================
+
+  createNpcAndAtmosphereTextures() {
+    this.createKiteTextures();
+    this.createGrillTexture();
+    this.createSmokeTexture();
+  }
+
+  createKiteTextures() {
+    const patterns = [
+      // 1. Pipa Brasil (Verde e Amarela com Losango)
+      (ctx) => {
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.moveTo(128, 20);
+        ctx.lineTo(236, 128);
+        ctx.lineTo(128, 236);
+        ctx.lineTo(20, 128);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#1d4ed8';
+        ctx.beginPath();
+        ctx.arc(128, 128, 48, 0, Math.PI * 2);
+        ctx.fill();
+      },
+      // 2. Pipa Bicolor Azul e Branca (Estilo Carioca)
+      (ctx) => {
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(256, 256);
+        ctx.lineTo(0, 256);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(256, 256);
+        ctx.stroke();
+      },
+      // 3. Pipa Rubro-Negra / Vermelha e Preta
+      (ctx) => {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#0f172a';
+        for (let y = 0; y < 256; y += 64) {
+          ctx.fillRect(0, y, 256, 32);
+        }
+      },
+      // 4. Pipa Raia Roxa com Estrela Neon
+      (ctx) => {
+        const grad = ctx.createLinearGradient(0, 0, 256, 256);
+        grad.addColorStop(0.0, '#7c3aed');
+        grad.addColorStop(1.0, '#ec4899');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 256, 256);
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.arc(128, 128, 45, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    ];
+
+    this.kiteTextures = patterns.map(drawFn => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      // Fundo losango transparente
+      ctx.clearRect(0, 0, 256, 256);
+
+      // Traçado do losango da pipa
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(128, 10);
+      ctx.lineTo(246, 128);
+      ctx.lineTo(128, 246);
+      ctx.lineTo(10, 128);
+      ctx.closePath();
+      ctx.clip();
+
+      drawFn(ctx);
+
+      // Cruzeta / Varetas de bambu da pipa
+      ctx.restore();
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(128, 10);
+      ctx.lineTo(128, 246);
+      ctx.moveTo(10, 128);
+      ctx.lineTo(246, 128);
+      ctx.stroke();
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createGrillTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Fundo de carvão e brasa incandescente
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 256, 256);
+
+    for (let i = 0; i < 40; i++) {
+      const bx = Math.random() * 256;
+      const by = Math.random() * 256;
+      const r = 8 + Math.random() * 14;
+      ctx.fillStyle = Math.random() > 0.4 ? '#ef4444' : '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Grelha de arame
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 3;
+    for (let x = 16; x < 240; x += 18) {
+      ctx.beginPath();
+      ctx.moveTo(x, 10);
+      ctx.lineTo(x, 246);
+      ctx.stroke();
+    }
+
+    // Picanhas e linguiças grelhando
+    ctx.fillStyle = '#b91c1c';
+    ctx.beginPath();
+    ctx.ellipse(80, 80, 45, 25, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef08a';
+    ctx.fillRect(70, 58, 20, 4);
+
+    ctx.fillStyle = '#991b1b';
+    ctx.beginPath();
+    ctx.ellipse(170, 160, 50, 28, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Linguiças toscanas
+    ctx.fillStyle = '#7f1d1d';
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(170, 70 + i * 22, 35, 8, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    this.grillTexture = new THREE.CanvasTexture(canvas);
+    this.grillTexture.needsUpdate = true;
+  }
+
+  createSmokeTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
+    grad.addColorStop(0.0, 'rgba(255, 255, 255, 0.75)');
+    grad.addColorStop(0.4, 'rgba(226, 232, 240, 0.40)');
+    grad.addColorStop(0.8, 'rgba(203, 213, 225, 0.12)');
+    grad.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
+
+    this.smokeTexture = new THREE.CanvasTexture(canvas);
+    this.smokeTexture.needsUpdate = true;
+  }
+
+  // ========================================================
+  // CENÁRIO 2.0 (FASE D) — PANORAMA E HORIZONTE CARIOCA
+  // ========================================================
+
+  createMorroParallaxTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Fundo transparente no topo
+    ctx.clearRect(0, 0, 1024, 512);
+
+    // 1. Silhueta das Montanhas Distantes (Dois Irmãos / Pão de Açúcar em Verde Tropical e Névoa Azul)
+    ctx.fillStyle = '#065f46';
+    ctx.beginPath();
+    ctx.moveTo(0, 320);
+    ctx.quadraticCurveTo(160, 120, 320, 240);
+    ctx.quadraticCurveTo(460, 80, 600, 220);
+    ctx.quadraticCurveTo(780, 100, 920, 260);
+    ctx.quadraticCurveTo(980, 200, 1024, 280);
+    ctx.lineTo(1024, 512);
+    ctx.lineTo(0, 512);
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Segunda Camada de Morro Mais Próximo
+    ctx.fillStyle = '#047857';
+    ctx.beginPath();
+    ctx.moveTo(0, 360);
+    ctx.quadraticCurveTo(220, 180, 440, 310);
+    ctx.quadraticCurveTo(680, 160, 880, 320);
+    ctx.lineTo(1024, 380);
+    ctx.lineTo(1024, 512);
+    ctx.lineTo(0, 512);
+    ctx.closePath();
+    ctx.fill();
+
+    // 3. Casinhas da Favela Empilhadas na Encosta (Cores Vivas Brasileiras)
+    const favelaColors = [
+      '#f59e0b', '#ea580c', '#0284c7', '#10b981', '#ec4899',
+      '#8b5cf6', '#f43f5e', '#b45309', '#ca8a04', '#94a3b8'
+    ];
+
+    for (let x = 20; x < 1000; x += 18) {
+      const hillY = 240 + Math.sin(x * 0.012) * 90 + Math.cos(x * 0.025) * 40;
+      const stackCount = Math.floor(Math.random() * 4) + 2;
+
+      for (let s = 0; s < stackCount; s++) {
+        const hy = hillY + s * 22;
+        if (hy > 480) continue;
+
+        const hw = 22 + (Math.sin(x + s) * 8);
+        const hh = 18 + (Math.cos(x * s) * 6);
+        const color = favelaColors[(x + s * 3) % favelaColors.length];
+
+        // Corpo da casa
+        ctx.fillStyle = color;
+        ctx.fillRect(x, hy, hw, hh);
+
+        // Laje / Telhado
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(x - 2, hy, hw + 4, 3);
+
+        // Caixa d'água azul no topo da laje
+        if (s === 0 && Math.sin(x) > 0.2) {
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(x + hw * 0.3, hy - 7, 7, 7);
+        }
+
+        // Janelinhas acesas
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(x + 4, hy + 5, 4, 4);
+        if (hw > 20) {
+          ctx.fillRect(x + hw - 8, hy + 5, 4, 4);
+        }
+      }
+    }
+
+    // 4. Coqueiros no Topo das Cristas dos Morros
+    ctx.fillStyle = '#064e3b';
+    for (let px = 60; px < 980; px += 85) {
+      const py = 200 + Math.sin(px * 0.012) * 85;
+      // Tronco fino
+      ctx.fillRect(px, py, 2, 16);
+      // Copa em estrela
+      ctx.beginPath();
+      ctx.arc(px + 1, py, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    this.morroParallaxTexture = new THREE.CanvasTexture(canvas);
+    this.morroParallaxTexture.wrapS = THREE.RepeatWrapping;
+    this.morroParallaxTexture.wrapT = THREE.ClampToEdgeWrapping;
+    this.morroParallaxTexture.needsUpdate = true;
+  }
 }
+
 
 export const textureAtlas = new TextureAtlasManager();

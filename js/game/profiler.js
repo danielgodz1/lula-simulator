@@ -107,9 +107,28 @@ export class EngineProfiler {
         <div style="display:flex; justify-content:space-between;"><span>Pixel Ratio:</span><span id="profPixelRatio">--</span></div>
         <div style="display:flex; justify-content:space-between;"><span>JS Heap:</span><span id="profJsHeap">-- MB</span></div>
       </div>
+      <button id="profCopyBtn" style="margin-top:8px; width:100%; padding:6px 8px; background:#0284c7; hover:#0369a1; border:1px solid #38bdf8; border-radius:6px; color:#fff; font-weight:bold; font-size:10.5px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px; transition:background 0.2s;">
+        📋 COPIAR ESTATÍSTICAS (CTRL+V)
+      </button>
+      <div style="font-size:9.5px; color:#94a3b8; text-align:center; margin-top:4px;">Atalho: tecla <b>C</b></div>
     `;
 
     document.body.appendChild(this.domElement);
+
+    const btnCopy = document.getElementById('profCopyBtn');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.copyReportToClipboard(btnCopy);
+      });
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+      if (e.key === 'c' || e.key === 'C') {
+        this.copyReportToClipboard(btnCopy);
+      }
+    });
   }
 
   beginFrame() {
@@ -268,6 +287,67 @@ export class EngineProfiler {
     }
   }
 
+  getMarkdownReport() {
+    const currentFps = (1000 / Math.max(1, this.frameTime)).toFixed(0);
+    const minFps = this.minFps === 999 ? '--' : this.minFps.toFixed(0);
+    const avgFps = this.avgFps.toFixed(0);
+
+    return `### 📊 Telemetria da Corrida
+- **FPS:** ${currentFps} FPS (Mín: ${minFps} | Média: ${avgFps})
+- **Frame Time:** ${this.frameTime.toFixed(1)} ms (Pico/Spike: ${this.maxSpikeMs.toFixed(1)} ms)
+- **Stutters:** ${this.stutterCount20ms} (>20ms) / ${this.stutterCount33ms} (>33ms)
+- **CPU (JS Logic):** ${this.avgJsTime.toFixed(1)} ms | **GPU (Render):** ${this.avgGpuTime.toFixed(1)} ms
+- **Draw Calls:** ${this.drawCalls}
+- **Triângulos:** ${this.triangles.toLocaleString()}
+- **Geometrias / Texturas:** ${this.geometries} geo / ${this.textures} tex
+- **Objetos na Cena:** ${this.activeObjects}
+- **JS Heap:** ${this.heapUsedMb} MB`;
+  }
+
+  copyReportToClipboard(btnElement = null) {
+    const text = this.getMarkdownReport();
+
+    const doSuccess = () => {
+      if (btnElement) {
+        const orig = btnElement.innerHTML;
+        btnElement.innerHTML = '✓ COPIADO COM SUCESSO!';
+        btnElement.style.background = '#16a34a';
+        setTimeout(() => {
+          btnElement.innerHTML = orig;
+          btnElement.style.background = '#0284c7';
+        }, 2000);
+      }
+      console.log('📋 [Engine Profiler] Relatório copiado para a área de transferência:\n' + text);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(doSuccess).catch(() => {
+        this.fallbackCopy(text, doSuccess);
+      });
+    } else {
+      this.fallbackCopy(text, doSuccess);
+    }
+  }
+
+  fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      if (cb) cb();
+    } catch (e) {
+      console.warn('Erro ao copiar:', e);
+    }
+    document.body.removeChild(ta);
+  }
+
   getReport() {
     return {
       status: 'BEFORE_OPTIMIZATION_BASELINE',
@@ -296,10 +376,7 @@ export class EngineProfiler {
       },
       memory: {
         heapMb: this.heapUsedMb
-      },
-      bottleneckEvidence: (this.avgGpuTime > this.avgJsTime || this.drawCalls > 120)
-        ? 'Gargalo Principal: DRAW CALLS & GPU FILLRATE (Postes e objetos individuais elevam draw calls acima de 150)'
-        : 'Gargalo Principal: CPU/JS GARBAGE COLLECTION (Instanciação contínua de objetos no loop)'
+      }
     };
   }
 }
