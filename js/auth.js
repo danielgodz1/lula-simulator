@@ -2,6 +2,8 @@
 import { firebaseConfig } from './firebase-config.js';
 import { escapeHTML } from './security.js';
 import { getDeviceId } from './device-id.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -20,6 +22,33 @@ function isDenylisted(name) {
 
 function isEnglishContext() {
   return typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+}
+
+// Inicializar Firebase Functions
+let firebaseApp = null;
+let functionsInstance = null;
+
+function getFirebaseFunctions() {
+  if (!firebaseApp) {
+    firebaseApp = initializeApp(firebaseConfig);
+  }
+  if (!functionsInstance) {
+    functionsInstance = getFunctions(firebaseApp);
+  }
+  return functionsInstance;
+}
+
+// Registrar acesso ao fazer login
+async function registrarAcessoLogin(email) {
+  try {
+    const functions = getFirebaseFunctions();
+    const registrarAcesso = httpsCallable(functions, 'registrarAcessoLogin');
+    const result = await registrarAcesso({ email });
+    console.log('Acesso registrado:', result.data);
+  } catch (error) {
+    console.error('Erro ao registrar acesso:', error);
+    // Não falhar o login se o registro de acesso falhar
+  }
 }
 
 // Avatar padrão elegante em SVG Data URL (Zero requisições de rede, 100% offline-ready)
@@ -985,6 +1014,10 @@ class AuthManager {
       this.saveLocalUsersDB(localDB);
 
       this.setCurrentUser(userObj);
+
+      // Registrar acesso no Firebase Functions
+      registrarAcessoLogin(userObj.email || `${cleanName}@lulasimulator.com.br`).catch(() => {});
+
       return { success: true, user: userObj };
     } catch (err) {
       return {
@@ -1038,6 +1071,9 @@ class AuthManager {
 
       // Sincroniza dados com o servidor após o login
       this.syncUserDataNow().catch(() => {});
+
+      // Registrar acesso no Firebase Functions
+      registrarAcessoLogin(userObj.email || `${cleanName}@lulasimulator.com.br`).catch(() => {});
 
       return { success: true, user: userObj };
     } catch (err) {
