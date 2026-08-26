@@ -167,51 +167,88 @@ export default async function handler(req, res) {
         }
       }
 
-      // Atualiza Documento Consolidado de Acumulados (Top 300)
+      // Função base para atualizar qualquer documento de leaderboard consolidado
+      const updateLeaderboardDoc = async (docName, scoreValue, game, forceUpdate = false) => {
+        if (!scoreValue || scoreValue <= 0) return;
+        const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
+        const snap = await lbRef.get();
+        let scoresList = [];
+        if (snap.exists) {
+          const data = snap.data();
+          scoresList = Array.isArray(data.scores)
+            ? data.scores.filter(s => s && (s.score || 0) > 0)
+            : [];
+        }
+        const pKey = cleanName.toLowerCase();
+        const exIdx = scoresList.findIndex(s => (s.player || '').toLowerCase() === pKey);
+        let shouldUpdate = false;
+        if (exIdx !== -1) {
+          if (forceUpdate || scoreValue > scoresList[exIdx].score) {
+            scoresList[exIdx].score = scoreValue;
+            scoresList[exIdx].updatedAt = new Date().toISOString();
+            if (finalAvatar) scoresList[exIdx].avatar = finalAvatar;
+            if (mergedPrestige) scoresList[exIdx].prestigeLevel = mergedPrestige;
+            shouldUpdate = true;
+          } else if (finalAvatar && scoresList[exIdx].avatar !== finalAvatar) {
+            scoresList[exIdx].avatar = finalAvatar;
+            shouldUpdate = true;
+          }
+        } else {
+          const lowestScore = scoresList.length >= 300 ? (scoresList[scoresList.length - 1]?.score || 0) : 0;
+          if (scoresList.length < 300 || scoreValue > lowestScore) {
+            scoresList.push({
+              player: cleanName,
+              score: scoreValue,
+              avatar: finalAvatar,
+              country: country || 'BR',
+              countryName: existingData.countryName || country || 'BR',
+              flag: existingData.flag || '',
+              prestigeLevel: mergedPrestige,
+              updatedAt: new Date().toISOString()
+            });
+            shouldUpdate = true;
+          }
+        }
+        if (!shouldUpdate) return;
+        scoresList.sort((a, b) => b.score - a.score);
+        await lbRef.set({
+          game,
+          scores: scoresList.slice(0, 300),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      };
+
+      // Atualiza Rankings Gerais (flappy e runner) — corrige o caso em que
+      // o score aparece no perfil mas não no ranking principal
+      const updateGeneralLeaderboards = async () => {
+        if (!hasAdminCredentials || !db) return;
+        try {
+          await Promise.all([
+            mergedFlappy > 0 ? updateLeaderboardDoc('flappy', mergedFlappy, 'flappy') : Promise.resolve(),
+            mergedRunner > 0 ? updateLeaderboardDoc('runner', mergedRunner, 'runner') : Promise.resolve()
+          ]);
+        } catch (e) {
+          console.warn('Aviso: falha ao atualizar ranking geral:', e);
+        }
+      };
+
+      // Atualiza Documento Consolidado de Acumulados (picanhas e moedas)
       const updateAccumulatedLeaderboards = async () => {
         if (!hasAdminCredentials || !db) return;
         try {
-          const updateBoard = async (docName, scoreValue) => {
-            const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
-            const snap = await lbRef.get();
-            let scoresList = [];
-            if (snap.exists) {
-              const data = snap.data();
-              scoresList = Array.isArray(data.scores) ? data.scores : [];
-            }
-            const pKey = cleanName.toLowerCase();
-            const exIdx = scoresList.findIndex(s => (s.player || '').toLowerCase() === pKey);
-            if (exIdx !== -1) {
-              scoresList[exIdx].score = scoreValue;
-              if (finalAvatar) scoresList[exIdx].avatar = finalAvatar;
-              if (mergedPrestige) scoresList[exIdx].prestigeLevel = mergedPrestige;
-              scoresList[exIdx].updatedAt = new Date().toISOString();
-            } else {
-              scoresList.push({
-                player: cleanName,
-                score: scoreValue,
-                avatar: finalAvatar,
-                country: country || 'BR',
-                prestigeLevel: mergedPrestige,
-                updatedAt: new Date().toISOString()
-              });
-            }
-            scoresList.sort((a, b) => b.score - a.score);
-            await lbRef.set({
-              game: docName,
-              scores: scoresList.slice(0, 300),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-          };
-
-          if (mergedPicanhas > 0) await updateBoard('flappy_accumulated', mergedPicanhas);
-          if (mergedCoins > 0) await updateBoard('runner_accumulated', mergedCoins);
+          await Promise.all([
+            mergedPicanhas > 0 ? updateLeaderboardDoc('flappy_accumulated', mergedPicanhas, 'flappy', true) : Promise.resolve(),
+            mergedCoins > 0 ? updateLeaderboardDoc('runner_accumulated', mergedCoins, 'runner', true) : Promise.resolve()
+          ]);
         } catch (e) {
           console.warn('Aviso: falha ao atualizar ranking acumulado:', e);
         }
       };
 
-      await updateAccumulatedLeaderboards();
+      await Promise.all([
+        updateGeneralLeaderboards(),
+        updateAccumulatedLeaderboards()
+      ]);
 
       // Registra evento no Feed de Atividades caso haja novo recorde significativo
       const oldFlappy = existingData.flappyScore || 0;
