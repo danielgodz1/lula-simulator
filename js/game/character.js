@@ -384,49 +384,70 @@ export class Character {
   buildPowerupAccessories() {
     const goldMat = new THREE.MeshStandardMaterial({
       color: 0xffd700,
-      metalness: 0.9,
-      roughness: 0.15,
-      emissive: 0xb45309,
-      emissiveIntensity: 0.35
+      metalness: 0.95,
+      roughness: 0.12,
+      emissive: 0xd97706,
+      emissiveIntensity: 0.45
     });
 
     // Sapato Dourado Alado Esquerdo
     this.lShoeGolden = new THREE.Group();
-    this.lShoeGolden.position.set(-0.24, 0.12, 0.08);
-    const lGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    this.lShoeGolden.position.set(0, -0.74, 0.08);
+    const lGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.48), goldMat);
     lGoldBoot.castShadow = true;
-    this.lWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.lWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 4), goldMat);
     this.lWing.rotation.set(0, 0, Math.PI / 2);
-    this.lWing.position.set(-0.22, 0.08, -0.05);
+    this.lWing.position.set(-0.20, 0.08, -0.05);
     this.lShoeGolden.add(lGoldBoot, this.lWing);
-    this.lShoeGolden.visible = false;
 
     // Sapato Dourado Alado Direito
     this.rShoeGolden = new THREE.Group();
-    this.rShoeGolden.position.set(0.24, 0.12, 0.08);
-    const rGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.24, 0.54), goldMat);
+    this.rShoeGolden.position.set(0, -0.74, 0.08);
+    const rGoldBoot = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 0.48), goldMat);
     rGoldBoot.castShadow = true;
-    this.rWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.32, 4), goldMat);
+    this.rWing = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.28, 4), goldMat);
     this.rWing.rotation.set(0, 0, -Math.PI / 2);
-    this.rWing.position.set(0.22, 0.08, -0.05);
+    this.rWing.position.set(0.20, 0.08, -0.05);
     this.rShoeGolden.add(rGoldBoot, this.rWing);
-    this.rShoeGolden.visible = false;
 
-    this.mesh.add(this.lShoeGolden, this.rShoeGolden);
+    if (this.procLeftLeg && this.procRightLeg) {
+      this.procLeftLeg.add(this.lShoeGolden);
+      this.procRightLeg.add(this.rShoeGolden);
+    } else {
+      this.mesh.add(this.lShoeGolden, this.rShoeGolden);
+    }
 
-    // Ímã 3D na mão
+    // Ímã 3D em Ferradura na Mão
     this.handMagnet = this.createHandMagnet3D();
-    this.handMagnet.position.set(-0.48, 1.05, 0.22);
-    this.handMagnet.rotation.set(Math.PI / 6, 0, 0);
-    this.handMagnet.scale.set(0.75, 0.75, 0.75);
+    this.handMagnet.position.set(0, -0.70, 0.16);
+    this.handMagnet.rotation.set(Math.PI / 3, 0, 0);
+    this.handMagnet.scale.set(0.65, 0.65, 0.65);
+
+    if (this.procRightArm) {
+      this.procRightArm.add(this.handMagnet);
+    } else {
+      this.mesh.add(this.handMagnet);
+    }
+
+    this.lShoeGolden.visible = false;
+    this.rShoeGolden.visible = false;
     this.handMagnet.visible = false;
-    this.mesh.add(this.handMagnet);
   }
 
   createHandMagnet3D() {
     const group = new THREE.Group();
-    const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.6, roughness: 0.25 });
-    const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.15 });
+    const redMat = new THREE.MeshStandardMaterial({
+      color: 0xef4444,
+      metalness: 0.6,
+      roughness: 0.25,
+      emissive: 0x991b1b,
+      emissiveIntensity: 0.3
+    });
+    const silverMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      metalness: 0.95,
+      roughness: 0.1
+    });
 
     const arcGeo = new THREE.TorusGeometry(0.32, 0.09, 12, 24, Math.PI);
     const arc = new THREE.Mesh(arcGeo, redMat);
@@ -528,8 +549,13 @@ export class Character {
 
   slide() {
     if (this.isDead) return;
-    if (this.isJumping) {
-      this.jumpVelocity = -22;
+    if (this.isJumping || this.y > this.groundY + 0.1) {
+      // Fast Drop instantâneo acelerado para pousar rápido no solo ou sobre obstáculos/trens
+      this.jumpVelocity = -34;
+      this.isSliding = true;
+      this.slideTimer = this.slideDuration * 0.75;
+      gameAudio.playSlide();
+      return;
     }
     this.isSliding = true;
     this.slideTimer = this.slideDuration;

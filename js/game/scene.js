@@ -200,9 +200,9 @@ export class GameScene {
 
     this.perfCheckTimer = 0;
 
-    // Mapeamento de Tons ACES Filmic e Espaço de Cores sRGB
+    // Mapeamento de Tons ACES Filmic com Maior Saturação e Contraste Pop
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.20;
+    this.renderer.toneMappingExposure = 1.35;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -213,6 +213,10 @@ export class GameScene {
 
     this.container.innerHTML = '';
     this.container.appendChild(this.renderer.domElement);
+
+    // Sistema de Camera Shake (Tropeço e Impactos)
+    this.cameraShakeTimer = 0;
+    this.cameraShakeIntensity = 0;
 
     // 4. Domo de Céu Contínuo Sem Círculos ou Seams (Hemisfério Completo)
     const skyGeo = new THREE.SphereGeometry(420, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.5);
@@ -229,20 +233,20 @@ export class GameScene {
     // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Iluminação Solar em Camadas de Alto Realismo (Sol Carioca Tropical)
-    // A. Luz Hemisférica (Céu Azul Claro / Reflexo Terroso de Solo)
-    this.hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x78716c, 0.88);
+    // 6. Iluminação Solar Golden Hour de Fim de Tarde Radiante (Estilo Subway Surfers)
+    // A. Luz Hemisférica (Céu Azul Real / Solo Terroso Quente)
+    this.hemiLight = new THREE.HemisphereLight(0x0284c7, 0x9a3412, 0.85);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Solar Direcional Principal (Ângulo de 45º para Sombras Longas e Volume 3D)
-    this.sunLight = new THREE.DirectionalLight(0xfffdf0, 1.55);
-    this.sunLight.position.set(32, 65, 30);
+    // B. Luz Solar Direcional Principal (Sol Dourado Quente Lateral a 45º com Luz Âmbar)
+    this.sunLight = new THREE.DirectionalLight(0xffa834, 2.1);
+    this.sunLight.position.set(45, 38, 35);
     this.scene.add(this.sunLight);
 
-    // C. Luz Secundária de Preenchimento (Reflexo Atmosférico Suave)
-    this.fillLight = new THREE.DirectionalLight(0x93c5fd, 0.42);
-    this.fillLight.position.set(-35, 42, -15);
+    // C. Luz Secundária de Preenchimento Oposta (Azul Celeste Elétrico para Contraste e Sombras Vivas)
+    this.fillLight = new THREE.DirectionalLight(0x0284c7, 0.68);
+    this.fillLight.position.set(-45, 28, -20);
     this.scene.add(this.fillLight);
 
     // D. Luz Noturna de Pista
@@ -250,9 +254,9 @@ export class GameScene {
     this.playerSpotLight.position.set(0, 5.2, 2.0);
     this.scene.add(this.playerSpotLight);
 
-    // 7. Sol e Lua
+    // 7. Sol Dourado-Alaranjado no Horizonte (Late Afternoon Sun)
     this.sunGroup = new THREE.Group();
-    this.sunGroup.position.set(15, 30, -280);
+    this.sunGroup.position.set(38, 22, -260);
 
     const sunTexture = this.createSunTexture(512);
     const sunRaysTexture = this.createSunRaysTexture(512);
@@ -262,10 +266,10 @@ export class GameScene {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      color: 0xffffff
+      color: 0xfffbeb
     });
     const sunCoreSprite = new THREE.Sprite(sunCoreMat);
-    sunCoreSprite.scale.set(70, 70, 1);
+    sunCoreSprite.scale.set(95, 95, 1);
     this.sunGroup.add(sunCoreSprite);
 
     const sunHaloMat = new THREE.SpriteMaterial({
@@ -273,11 +277,11 @@ export class GameScene {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      color: 0xfb923c,
-      opacity: 0.65
+      color: 0xea580c,
+      opacity: 0.75
     });
     const sunHaloSprite = new THREE.Sprite(sunHaloMat);
-    sunHaloSprite.scale.set(160, 160, 1);
+    sunHaloSprite.scale.set(220, 220, 1);
     this.sunGroup.add(sunHaloSprite);
 
     const sunRaysMat = new THREE.SpriteMaterial({
@@ -285,12 +289,14 @@ export class GameScene {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      color: 0xffdf00,
-      opacity: 0.70
+      color: 0xf59e0b,
+      opacity: 0.85
     });
     this.sunRays = new THREE.Sprite(sunRaysMat);
-    this.sunRays.scale.set(180, 180, 1);
+    this.sunRays.scale.set(240, 240, 1);
     this.sunGroup.add(this.sunRays);
+
+    this.scene.add(this.sunGroup);
 
     this.scene.add(this.sunGroup);
 
@@ -632,6 +638,11 @@ export class GameScene {
     }
   }
 
+  triggerCameraShake(intensity = 0.40, duration = 0.38) {
+    this.cameraShakeIntensity = intensity;
+    this.cameraShakeTimer = duration;
+  }
+
   updateCamera(targetX, targetY, isDead = false, dt = 0.016, elapsedTime = 0) {
     if (isDead) {
       this.camera.position.x += (targetX - this.camera.position.x) * (2.5 * dt);
@@ -645,6 +656,15 @@ export class GameScene {
     
     const targetCamY = 4.4 + Math.max(0, targetY * 0.35);
     this.camera.position.y += (targetCamY - this.camera.position.y) * (8.0 * dt);
+
+    // Efeito de Camera Shake (Tropeço e Impactos)
+    if (this.cameraShakeTimer > 0) {
+      this.cameraShakeTimer -= dt;
+      const shakeX = (Math.random() - 0.5) * this.cameraShakeIntensity;
+      const shakeY = (Math.random() - 0.5) * this.cameraShakeIntensity;
+      this.camera.position.x += shakeX;
+      this.camera.position.y += shakeY;
+    }
 
     this.camera.lookAt(this.camera.position.x * 0.6, 1.6 + Math.max(0, targetY * 0.2), -16);
 

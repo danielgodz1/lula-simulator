@@ -113,9 +113,9 @@ export class ObstacleManager {
     };
 
     this.geometries = {
-      coinCore: new THREE.CylinderGeometry(0.46, 0.46, 0.08, 20),
-      coinRim: new THREE.TorusGeometry(0.46, 0.045, 6, 20),
-      particle: new THREE.BoxGeometry(0.09, 0.09, 0.09),
+      coinCore: new THREE.CylinderGeometry(0.48, 0.48, 0.22, 24),
+      coinRim: new THREE.TorusGeometry(0.48, 0.085, 8, 24),
+      particle: new THREE.BoxGeometry(0.12, 0.12, 0.12),
       train: new THREE.BoxGeometry(2.4, 3.4, 18.0)
     };
 
@@ -814,81 +814,108 @@ export class ObstacleManager {
     });
   }
 
-  // 4. OBSTÁCULO AÉREO: PLACA DE TRÂNSITO "🛑 STOP / PARE" (Passa por baixo com slide ou pula por cima)
+  // 4. OBSTÁCULO: BARREIRA CLÁSSICA SUBWAY SURFERS (Estampa Chevron em V, Semáforo e Amortecedores)
   createClotheslineObstacle(parent, laneX, localZ) {
     const barrierGroup = new THREE.Group();
-    barrierGroup.position.set(laneX, 1.70, localZ);
+    barrierGroup.position.set(laneX, 1.15, localZ);
 
-    // 1. Postes Laterais Metálicos de Sustentação
-    const poleMat = new THREE.MeshLambertMaterial({ color: 0x94a3b8 });
-    [-1.25, 1.25].forEach(px => {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 10), poleMat);
-      pole.position.set(px, -0.60, 0);
-      barrierGroup.add(pole);
+    // 1. Pés de Madeira e Travessa de Base
+    const woodMat = new THREE.MeshLambertMaterial({ color: 0x78350f, roughness: 0.8 });
+    const blueBaseMat = new THREE.MeshLambertMaterial({ color: 0x0284c7, roughness: 0.3 });
 
-      // Base pesada de borracha/concreto
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.12, 12), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
-      base.position.set(px, -1.64, 0);
-      barrierGroup.add(base);
+    // Travessa Base Inferior no Solo
+    const baseBoard = new THREE.Mesh(new THREE.BoxGeometry(2.10, 0.16, 0.55), blueBaseMat);
+    baseBoard.position.set(0, -1.05, 0);
+    barrierGroup.add(baseBoard);
+
+    // Pés Verticais de Madeira
+    [-0.82, 0.82].forEach(px => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.55, 0.16), woodMat);
+      leg.position.set(px, -0.32, 0);
+      leg.castShadow = true;
+      barrierGroup.add(leg);
     });
 
-    // Barra Transversal Superior
-    const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 10), poleMat);
-    topBar.rotation.z = Math.PI / 2;
-    topBar.position.set(0, 0.48, 0);
-    barrierGroup.add(topBar);
-
-    // 2. Placa Central Vermelha com Logo "🛑 STOP" e Faixas Zebradas Reflexivas
-    const signGeo = new THREE.BoxGeometry(2.35, 0.85, 0.10);
-    const signFrontMat = new THREE.MeshLambertMaterial({
-      map: textureAtlas.stopSignTexture,
-      side: THREE.DoubleSide
+    // 2. Painel Central Chevron em V (Listras Vermelhas e Brancas)
+    const panelGeo = new THREE.BoxGeometry(1.95, 1.35, 0.14);
+    const chevronMat = new THREE.MeshLambertMaterial({
+      map: textureAtlas.subwayChevronBarrierTexture,
+      side: THREE.DoubleSide,
+      roughness: 0.35
     });
-    const signSideMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
+    const panelBorderMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
 
-    const signMesh = new THREE.Mesh(signGeo, [
-      signSideMat,
-      signSideMat,
-      signSideMat,
-      signSideMat,
-      signFrontMat, // Frente voltada para o jogador (+Z)
-      signFrontMat  // Verso (-Z)
+    const panelMesh = new THREE.Mesh(panelGeo, [
+      panelBorderMat,
+      panelBorderMat,
+      panelBorderMat,
+      panelBorderMat,
+      chevronMat, // Frente voltada para o jogador (+Z)
+      chevronMat  // Verso (-Z)
     ]);
-    signMesh.position.set(0, 0.0, 0);
-    signMesh.castShadow = true;
-    barrierGroup.add(signMesh);
+    panelMesh.position.set(0, 0.28, 0);
+    panelMesh.castShadow = true;
+    barrierGroup.add(panelMesh);
 
-    // 3. Lâmpadas de Alerta Superiores Amarelas
-    [-0.95, 0.95].forEach(lx => {
-      const lampBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.06, 12), new THREE.MeshLambertMaterial({ color: 0x1e293b }));
-      lampBezel.rotation.x = Math.PI / 2;
-      lampBezel.position.set(lx, 0.50, 0.06);
+    // 3. 4 Amortecedores / Rebites Arredondados nos Cantos do Painel
+    const bumperMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      roughness: 0.2,
+      metalness: 0.8
+    });
+    const bumperGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.10, 16);
 
-      const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 10), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-      lamp.position.set(lx, 0.50, 0.08);
-
-      barrierGroup.add(lampBezel, lamp);
+    [
+      { x: -0.85, y: 0.82 },
+      { x: 0.85, y: 0.82 },
+      { x: -0.85, y: -0.26 },
+      { x: 0.85, y: -0.26 }
+    ].forEach(bp => {
+      const bumper = new THREE.Mesh(bumperGeo, bumperMat);
+      bumper.rotation.x = Math.PI / 2;
+      bumper.position.set(bp.x, bp.y, 0.10);
+      barrierGroup.add(bumper);
     });
 
+    // 4. Semáforo Ferroviário Superior no Topo Direito (Luz Vermelha e Verde)
+    const signalBox = new THREE.Mesh(
+      new THREE.BoxGeometry(0.24, 0.52, 0.14),
+      new THREE.MeshLambertMaterial({ color: 0x0f172a })
+    );
+    signalBox.position.set(0.72, 1.15, 0);
+
+    const redLight = new THREE.Mesh(
+      new THREE.SphereGeometry(0.065, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0xef4444 })
+    );
+    redLight.position.set(0.72, 1.25, 0.08);
+
+    const greenLight = new THREE.Mesh(
+      new THREE.SphereGeometry(0.065, 10, 10),
+      new THREE.MeshBasicMaterial({ color: 0x22c55e })
+    );
+    greenLight.position.set(0.72, 1.05, 0.08);
+
+    barrierGroup.add(signalBox, redLight, greenLight);
     parent.add(barrierGroup);
 
     this.obstacles.push({
-      name: 'Barreira STOP',
+      name: 'Barreira Subway Surfers',
       type: 'clothesline',
       mesh: barrierGroup,
       parent: parent,
       laneX: laneX,
       localZ: localZ,
-      isOverhead: true,
+      isOverhead: false,
       _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
       getAABB() {
         const pz = parent.position.z + barrierGroup.position.z;
-        this._aabb.minX = laneX - 1.15;
-        this._aabb.maxX = laneX + 1.15;
-        this._aabb.minY = 1.10;
-        this._aabb.maxY = 2.30;
-        this._aabb.minZ = pz - 0.35;
-        this._aabb.maxZ = pz + 0.35;
+        this._aabb.minX = laneX - 1.05;
+        this._aabb.maxX = laneX + 1.05;
+        this._aabb.minY = 0;
+        this._aabb.maxY = 1.65;
+        this._aabb.minZ = pz - 0.40;
+        this._aabb.maxZ = pz + 0.40;
         return this._aabb;
       }
     });
@@ -1244,11 +1271,29 @@ export class ObstacleManager {
           }
           const collisionY = playerAABB.maxY > obsAABB.minY && playerAABB.minY < obsAABB.maxY;
           if (collisionX && collisionY && collisionZ) {
-            onCrash(obs);
-            break;
+            // Diferenciação: Colisão Frontal Direta vs Raspão / Tropeço Lateral na Parede do Vagão
+            const trainFrontZ = obsWorldZ + 9.0; // Frente do trem voltada para o jogador (+Z)
+            const isHeadOn = Math.abs(player.z - trainFrontZ) < 1.6;
+
+            if (isHeadOn) {
+              onCrash(obs);
+              break;
+            } else {
+              // Impacto Lateral no Corpo do Trem: Rebate de faixa com Stumble e Camera Shake!
+              if (typeof onStumble === 'function') {
+                onStumble(obs);
+              }
+              // Rebate o jogador para a faixa anterior para evitar ficar preso dentro da malha
+              if (player.targetX > obs.laneX) {
+                player.x = Math.max(player.x, obsAABB.maxX + 0.35);
+              } else {
+                player.x = Math.min(player.x, obsAABB.minX - 0.35);
+              }
+              continue;
+            }
           }
 
-          // Raspão lateral em alta velocidade com o trem
+          // Raspão lateral de proximidade
           const sideScrapeX = (playerAABB.maxX > obsAABB.minX - 0.28 && playerAABB.minX < obsAABB.minX) ||
                               (playerAABB.minX < obsAABB.maxX + 0.28 && playerAABB.maxX > obsAABB.maxX);
           if (sideScrapeX && collisionZ && !obs.stumbleTriggered) {

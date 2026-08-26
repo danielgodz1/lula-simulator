@@ -12,6 +12,12 @@ export class UIManager {
     this.speedDisplay = document.getElementById('speedDisplay');
     this.coinsDisplay = document.getElementById('coinsDisplay');
     this.multiplierBadge = document.getElementById('multiplierBadge');
+    this.clockDisplay = document.getElementById('clockDisplay');
+    this.magnetSkillBadge = document.getElementById('magnetSkillBadge');
+    this.jumpSkillBadge = document.getElementById('jumpSkillBadge');
+    this.magnetSkillTimer = document.getElementById('magnetSkillTimer');
+    this.jumpSkillTimer = document.getElementById('jumpSkillTimer');
+
     this.floatingScoreLayer = document.getElementById('floatingScoreLayer');
     this.stumbleAlertBanner = document.getElementById('stumbleAlertBanner');
     this.stumbleAlertTimer = null;
@@ -557,29 +563,14 @@ export class UIManager {
     });
   }
 
-  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '', totalCoins = 0, multiplier = 1) {
-    const meters = distanceKm * 10;
-    const distStr = `${meters.toLocaleString()} m`;
+  updateHUD(distanceMeters, bestDistanceMeters, speedRatio, coins, picanhas, powerups = {}, timeOfDayStr = '', totalCoins = 0) {
+    const distStr = `${Math.floor(distanceMeters).toLocaleString()} m`;
     if (this.distDisplay && this._cachedDist !== distStr) {
       this.distDisplay.textContent = distStr;
       this._cachedDist = distStr;
     }
 
-    if (this.multiplierBadge) {
-      const multStr = `x${multiplier || 1} MULTI`;
-      if (this._cachedMult !== multStr) {
-        this.multiplierBadge.textContent = multStr;
-        this._cachedMult = multStr;
-        if (multiplier > 1) {
-          this.multiplierBadge.style.background = multiplier >= 6 ? '#ef4444' : (multiplier >= 4 ? '#ea580c' : '#9333ea');
-        } else {
-          this.multiplierBadge.style.background = '#334155';
-        }
-      }
-    }
-
-    const bestMeters = bestDistanceKm * 10;
-    const bestStr = `${bestMeters.toLocaleString()} m`;
+    const bestStr = `${Math.floor(bestDistanceMeters).toLocaleString()} m`;
     if (this.bestDisplay && this._cachedBest !== bestStr) {
       this.bestDisplay.textContent = bestStr;
       this._cachedBest = bestStr;
@@ -591,11 +582,33 @@ export class UIManager {
       this._cachedCoins = coinVal;
     }
 
-    if (this.speedDisplay) {
-      const speedStr = `${speedRatio.toFixed(1)}x ${powerupStatus}`;
-      if (this._cachedSpeedStr !== speedStr) {
-        this.speedDisplay.textContent = speedStr;
-        this._cachedSpeedStr = speedStr;
+    if (this.clockDisplay && timeOfDayStr) {
+      if (this._cachedClock !== timeOfDayStr) {
+        this.clockDisplay.textContent = timeOfDayStr;
+        this._cachedClock = timeOfDayStr;
+      }
+    }
+
+    // Atualização dos Badges de Habilidades com Cronômetro em Segundos Regressivo
+    if (this.magnetSkillBadge) {
+      if (powerups.magnetTimer > 0) {
+        this.magnetSkillBadge.style.display = 'flex';
+        if (this.magnetSkillTimer) {
+          this.magnetSkillTimer.textContent = `${powerups.magnetTimer.toFixed(1)}s`;
+        }
+      } else {
+        this.magnetSkillBadge.style.display = 'none';
+      }
+    }
+
+    if (this.jumpSkillBadge) {
+      if (powerups.superJumpTimer > 0) {
+        this.jumpSkillBadge.style.display = 'flex';
+        if (this.jumpSkillTimer) {
+          this.jumpSkillTimer.textContent = `${powerups.superJumpTimer.toFixed(1)}s`;
+        }
+      } else {
+        this.jumpSkillBadge.style.display = 'none';
       }
     }
   }

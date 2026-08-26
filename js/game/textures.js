@@ -86,6 +86,7 @@ class TextureAtlasManager {
     this.createTrainLiveryTextures();
     this.createSatiricalNeonSigns();
     this.createFlyingTaxTextures();
+    this.createSubwaySurfersTextures();
   }
 
   createSoftShadowTexture() {
@@ -2878,6 +2879,122 @@ class TextureAtlasManager {
 
     this.rareBrazilCoinTexture = new THREE.CanvasTexture(canvasBR);
     this.rareBrazilCoinTexture.needsUpdate = true;
+  }
+
+  createSubwaySurfersTextures() {
+    // 1. Placa de Barreira Chevron Clássica do Subway Surfers
+    const canvasChevron = document.createElement('canvas');
+    canvasChevron.width = 512;
+    canvasChevron.height = 512;
+    const ctxC = canvasChevron.getContext('2d');
+
+    // Fundo Branco/Creme
+    ctxC.fillStyle = '#f8fafc';
+    ctxC.fillRect(0, 0, 512, 512);
+
+    // Listras Diagonais em V (Chevron) Vermelhas Vivas
+    ctxC.fillStyle = '#dc2626';
+
+    const numStripes = 6;
+    const stripeH = 512 / numStripes;
+
+    for (let i = -2; i < numStripes + 2; i++) {
+      const y = i * stripeH;
+      ctxC.beginPath();
+      // Asa esquerda (descendo até o centro)
+      ctxC.moveTo(0, y);
+      ctxC.lineTo(256, y + stripeH * 0.9);
+      ctxC.lineTo(256, y + stripeH * 1.55);
+      ctxC.lineTo(0, y + stripeH * 0.65);
+      ctxC.closePath();
+      ctxC.fill();
+
+      // Asa direita (subindo do centro até a borda)
+      ctxC.beginPath();
+      ctxC.moveTo(512, y);
+      ctxC.lineTo(256, y + stripeH * 0.9);
+      ctxC.lineTo(256, y + stripeH * 1.55);
+      ctxC.lineTo(512, y + stripeH * 0.65);
+      ctxC.closePath();
+      ctxC.fill();
+    }
+
+    // Bordas Superiores e Inferiores Vermelhas com Listras Verticais de Alerta
+    ctxC.fillStyle = '#991b1b';
+    ctxC.fillRect(0, 0, 512, 45);
+    ctxC.fillRect(0, 467, 512, 45);
+
+    // Listras verticais amarelas nas bordas superior/inferior
+    ctxC.fillStyle = '#fde047';
+    for (let x = 15; x < 512; x += 55) {
+      ctxC.fillRect(x, 0, 22, 45);
+      ctxC.fillRect(x, 467, 22, 45);
+    }
+
+    // Contorno Geral Preto Robusto
+    ctxC.strokeStyle = '#0f172a';
+    ctxC.lineWidth = 12;
+    ctxC.strokeRect(6, 6, 500, 500);
+
+    this.subwayChevronBarrierTexture = new THREE.CanvasTexture(canvasChevron);
+    this.subwayChevronBarrierTexture.needsUpdate = true;
+
+    // 2. Chão de Terra / Balastro Quente Cartoon
+    const canvasDirt = document.createElement('canvas');
+    canvasDirt.width = 512;
+    canvasDirt.height = 512;
+    const ctxD = canvasDirt.getContext('2d');
+
+    // Gradiente Terra Quente / Areia Alaranjada
+    const dirtGrad = ctxD.createLinearGradient(0, 0, 512, 0);
+    dirtGrad.addColorStop(0, '#78350f');
+    dirtGrad.addColorStop(0.2, '#9a3412');
+    dirtGrad.addColorStop(0.5, '#c2410c');
+    dirtGrad.addColorStop(0.8, '#9a3412');
+    dirtGrad.addColorStop(1, '#78350f');
+    ctxD.fillStyle = dirtGrad;
+    ctxD.fillRect(0, 0, 512, 512);
+
+    // Partículas de Cascalho e Textura Quente
+    for (let i = 0; i < 1800; i++) {
+      const rx = Math.random() * 512;
+      const ry = Math.random() * 512;
+      const size = Math.random() * 3 + 1;
+      ctxD.fillStyle = Math.random() > 0.5 ? 'rgba(254, 215, 170, 0.25)' : 'rgba(69, 26, 3, 0.35)';
+      ctxD.fillRect(rx, ry, size, size);
+    }
+
+    this.warmTracksGroundTexture = new THREE.CanvasTexture(canvasDirt);
+    this.warmTracksGroundTexture.wrapS = THREE.RepeatWrapping;
+    this.warmTracksGroundTexture.wrapT = THREE.RepeatWrapping;
+    this.warmTracksGroundTexture.repeat.set(3, 12);
+    this.warmTracksGroundTexture.needsUpdate = true;
+
+    // 3. Dormentes de Madeira Escura Estilizada (Ties)
+    const canvasTie = document.createElement('canvas');
+    canvasTie.width = 256;
+    canvasTie.height = 64;
+    const ctxT = canvasTie.getContext('2d');
+
+    ctxT.fillStyle = '#451a03';
+    ctxT.fillRect(0, 0, 256, 64);
+
+    // Veios de Madeira
+    ctxT.fillStyle = '#291002';
+    for (let y = 8; y < 64; y += 12) {
+      ctxT.fillRect(0, y, 256, 3);
+    }
+
+    // Placas de Fixação de Aço com Parafusos nas Pontas
+    ctxT.fillStyle = '#64748b';
+    ctxT.fillRect(35, 10, 32, 44);
+    ctxT.fillRect(189, 10, 32, 44);
+    ctxT.fillStyle = '#f8fafc';
+    ctxT.fillRect(48, 28, 6, 8);
+    ctxT.fillRect(202, 28, 6, 8);
+
+    this.woodTieTexture = new THREE.CanvasTexture(canvasTie);
+    this.woodTieTexture.needsUpdate = true;
   }
 }
 

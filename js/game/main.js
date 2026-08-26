@@ -124,6 +124,7 @@ export class Game {
 
     this.character.triggerStumble();
     this.boss.triggerStumbleChase();
+    this.sceneManager.triggerCameraShake(0.55, 0.45);
     this.speed = Math.max(this.baseSpeed * 0.85, this.speed * 0.72);
     this.ui.showStumbleAlert();
   }
@@ -204,16 +205,18 @@ export class Game {
   }
 
   updateHUD() {
-    const distanceKm = Math.floor(this.distance / 10);
+    const distanceMeters = Math.floor(this.distance);
+    const bestMeters = Math.floor(this.bestDistance * 10);
     const speedRatio = this.speed / this.baseSpeed;
 
-    let powerupText = '';
-    if (this.magnetActive) powerupText += '🧲 ';
-    if (this.superJumpActive) powerupText += '👟 ';
+    const powerups = {
+      magnetTimer: this.magnetActive ? this.magnetTimer : 0,
+      superJumpTimer: this.superJumpActive ? this.superJumpTimer : 0
+    };
 
     const timeStr = this.sceneManager.getFormattedTime();
     const totalCoins = RunnerInventory.getTotalCoins();
-    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr, totalCoins, this.multiplier);
+    this.ui.updateHUD(distanceMeters, bestMeters, speedRatio, this.coins, this.picanhas, powerups, timeStr, totalCoins);
   }
 
   loop() {

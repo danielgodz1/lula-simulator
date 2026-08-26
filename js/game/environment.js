@@ -101,12 +101,24 @@ export class Environment {
 
     // Materiais Compartilhados Globais
     this.sharedMaterials = {
-      asphalt: new THREE.MeshLambertMaterial({ color: 0x334155 }),
-      gravel: new THREE.MeshLambertMaterial({ color: 0x64748b }),
-      curb: new THREE.MeshLambertMaterial({ color: 0xcbd5e1 }),
+      asphalt: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
+      gravel: new THREE.MeshLambertMaterial({
+        map: textureAtlas.warmTracksGroundTexture,
+        color: 0xffffff
+      }),
+      curb: new THREE.MeshLambertMaterial({ color: 0xd97706 }),
       yellowStripe: new THREE.MeshBasicMaterial({ color: 0xfde047 }),
-      railTie: new THREE.MeshLambertMaterial({ color: 0x78350f }),
-      steelRail: new THREE.MeshPhongMaterial({ color: 0xf8fafc, specular: 0xffffff, shininess: 80 }),
+      railTie: new THREE.MeshLambertMaterial({
+        map: textureAtlas.woodTieTexture,
+        color: 0xffffff
+      }),
+      steelRail: new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        metalness: 0.95,
+        roughness: 0.12,
+        emissive: 0x38bdf8,
+        emissiveIntensity: 0.1
+      }),
       concreteWall: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
       graffitiWall: new THREE.MeshLambertMaterial({ map: textureAtlas.atlasTexture }),
       waterTankBlue: new THREE.MeshLambertMaterial({ map: textureAtlas.waterTankTexture, color: 0x0284c7 }),

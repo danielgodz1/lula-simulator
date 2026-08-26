@@ -543,12 +543,12 @@
     </div>
 
     <div id="hudOverlay">
-      <!-- Pill 1: Distance & Multiplier -->
+      <!-- Pill 1: Distance -->
       <div class="hud-pill pill-distance">
         <div class="pill-icon">🏆</div>
         <div class="pill-data">
           <span class="pill-value" id="distDisplay">0 m</span>
-          <div class="pill-sub-badge" id="multiplierBadge">x1 MULTI</div>
+          <span class="pill-label">DISTANCE</span>
         </div>
       </div>
 
@@ -570,14 +570,25 @@
         </div>
       </div>
 
-      <!-- Pill 4: Speed -->
-      <div class="hud-pill pill-speed">
-        <div class="pill-icon">⚡</div>
+      <!-- Pill 4: Clock in Hours -->
+      <div class="hud-pill pill-clock" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.88), rgba(67, 56, 202, 0.95)); border: 1.5px solid rgba(129, 140, 248, 0.6); box-shadow: 0 4px 15px rgba(79, 70, 229, 0.45);">
+        <div class="pill-icon">🕐</div>
         <div class="pill-data">
-          <span class="pill-value" id="speedDisplay">1.0x</span>
-          <span class="pill-label">SPEED</span>
+          <span class="pill-value" id="clockDisplay" style="color: #c7d2fe;">22:00</span>
+          <span class="pill-label">TIME</span>
         </div>
       </div>
+    </div>
+
+    <!-- ACTIVE SKILLS BADGES WITH COUNTDOWN TIMER -->
+    <div id="activeSkillsContainer" style="position:absolute; top:64px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:26; pointer-events:none;">
+      <div id="magnetSkillBadge" style="display:none; background:linear-gradient(135deg, rgba(2,132,199,0.92), rgba(3,105,161,0.98)); border:2px solid #38bdf8; border-radius:30px; padding:5px 16px; font-family:'Bangers',cursive; font-size:16px; color:#fff; box-shadow:0 0 20px rgba(56,189,248,0.8); align-items:center; gap:6px;">
+        🧲 MAGNET: <span id="magnetSkillTimer" style="color:#fde047; font-size:17px;">9.0s</span>
+      </div>
+      <div id="jumpSkillBadge" style="display:none; background:linear-gradient(135deg, rgba(217,119,6,0.92), rgba(180,83,9,0.98)); border:2px solid #facc15; border-radius:30px; padding:5px 16px; font-family:'Bangers',cursive; font-size:16px; color:#fff; box-shadow:0 0 20px rgba(250,204,21,0.8); align-items:center; gap:6px;">
+        👟 SUPER JUMP: <span id="jumpSkillTimer" style="color:#fef08a; font-size:17px;">10.0s</span>
+      </div>
+    </div>
 
       <!-- Action Buttons -->
       <div class="hud-actions">
