@@ -565,7 +565,35 @@
       color: var(--text-muted);
     }
 
+    @media (max-width: 1200px) {
+      nav {
+        padding: 10px 16px;
+        gap: 12px;
+      }
+      .nav-brand {
+        font-size: 22px;
+      }
+      .nav-links a {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+      .nav-toggle-btn {
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+    }
+
     @media (max-width: 768px) {
+      nav {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .nav-brand {
+        font-size: 18px;
+      }
+      .nav-brand span:last-child {
+        display: none;
+      }
       .nav-links {
         display: none;
         flex-direction: column;
@@ -606,9 +634,9 @@
       <li><a href="loja.html" class="active">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html">🏆 Ranking</a></li>
-      <li><a href="feedback.html">⭐ Avaliações</a></li>
-      <li><a href="visitantes.html">📊 Tráfego</a></li>
-      <li><a href="contato.html">✉️ Contato</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="visitantes.html">🌍 Visitantes</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>

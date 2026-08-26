@@ -565,7 +565,35 @@
       color: var(--text-muted);
     }
 
+    @media (max-width: 1200px) {
+      nav {
+        padding: 10px 16px;
+        gap: 12px;
+      }
+      .nav-brand {
+        font-size: 22px;
+      }
+      .nav-links a {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+      .nav-toggle-btn {
+        font-size: 13px;
+        padding: 6px 12px;
+      }
+    }
+
     @media (max-width: 768px) {
+      nav {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .nav-brand {
+        font-size: 18px;
+      }
+      .nav-brand span:last-child {
+        display: none;
+      }
       .nav-links {
         display: none;
         flex-direction: column;
