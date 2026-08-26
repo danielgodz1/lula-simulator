@@ -11,6 +11,10 @@ export class UIManager {
     this.bestDisplay = document.getElementById('bestDisplay');
     this.speedDisplay = document.getElementById('speedDisplay');
     this.coinsDisplay = document.getElementById('coinsDisplay');
+    this.multiplierBadge = document.getElementById('multiplierBadge');
+    this.floatingScoreLayer = document.getElementById('floatingScoreLayer');
+    this.stumbleAlertBanner = document.getElementById('stumbleAlertBanner');
+    this.stumbleAlertTimer = null;
     this.btnSoundToggle = document.getElementById('btnSoundToggle');
 
     this.startOverlay = document.getElementById('startOverlay');
@@ -553,33 +557,70 @@ export class UIManager {
     });
   }
 
-  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '', totalCoins = 0) {
-    const distStr = `${distanceKm} km`;
+  updateHUD(distanceKm, bestDistanceKm, speedRatio, coins, picanhas, powerupStatus = '', timeOfDayStr = '', totalCoins = 0, multiplier = 1) {
+    const meters = distanceKm * 10;
+    const distStr = `${meters.toLocaleString()} m`;
     if (this.distDisplay && this._cachedDist !== distStr) {
       this.distDisplay.textContent = distStr;
       this._cachedDist = distStr;
     }
 
-    const bestStr = `${bestDistanceKm} km`;
+    if (this.multiplierBadge) {
+      const multStr = `x${multiplier || 1} MULTI`;
+      if (this._cachedMult !== multStr) {
+        this.multiplierBadge.textContent = multStr;
+        this._cachedMult = multStr;
+        if (multiplier > 1) {
+          this.multiplierBadge.style.background = multiplier >= 6 ? '#ef4444' : (multiplier >= 4 ? '#ea580c' : '#9333ea');
+        } else {
+          this.multiplierBadge.style.background = '#334155';
+        }
+      }
+    }
+
+    const bestMeters = bestDistanceKm * 10;
+    const bestStr = `${bestMeters.toLocaleString()} m`;
     if (this.bestDisplay && this._cachedBest !== bestStr) {
       this.bestDisplay.textContent = bestStr;
       this._cachedBest = bestStr;
     }
 
-    const coinVal = `💰 ${totalCoins || coins}`;
+    const coinVal = `${(totalCoins || coins).toLocaleString()}`;
     if (this.coinsDisplay && this._cachedCoins !== coinVal) {
       this.coinsDisplay.textContent = coinVal;
       this._cachedCoins = coinVal;
     }
 
     if (this.speedDisplay) {
-      const timePrefix = timeOfDayStr ? `${timeOfDayStr} · ` : '';
-      const speedStr = `${timePrefix}${speedRatio.toFixed(1)}x ${powerupStatus}`;
+      const speedStr = `${speedRatio.toFixed(1)}x ${powerupStatus}`;
       if (this._cachedSpeedStr !== speedStr) {
         this.speedDisplay.textContent = speedStr;
         this._cachedSpeedStr = speedStr;
       }
     }
+  }
+
+  showFloatingPoints(text, color = '#facc15') {
+    if (!this.floatingScoreLayer) return;
+    const el = document.createElement('div');
+    el.className = 'floating-point-pop';
+    el.textContent = text;
+    el.style.color = color;
+    el.style.left = `${45 + (Math.random() - 0.5) * 18}%`;
+    el.style.top = `${48 + (Math.random() - 0.5) * 12}%`;
+    this.floatingScoreLayer.appendChild(el);
+    setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 750);
+  }
+
+  showStumbleAlert() {
+    if (!this.stumbleAlertBanner) return;
+    this.stumbleAlertBanner.style.display = 'block';
+    clearTimeout(this.stumbleAlertTimer);
+    this.stumbleAlertTimer = setTimeout(() => {
+      if (this.stumbleAlertBanner) this.stumbleAlertBanner.style.display = 'none';
+    }, 2800);
   }
 
   showStartScreen(onStart) {
@@ -632,9 +673,9 @@ export class UIManager {
         "O Caixa Tem mandou esperar sua vez na fila virtual até o ano que vem! ⏳"
       ],
       train: [
-        "O Expresso Central do Brasil não espera empresário atrasado! 🚆",
-        "Tentou surfar no teto do trem da Central e o maquinista buzinou na sua orelha! 🚇",
-        "O ramal Japeri passou por cima dos seus pitches de investimento! 🚈",
+        "O Expresso Imposto não perdoa empresário atrasado! 🚆",
+        "Tentou surfar no teto do trem da Receita e levou uma autuação tributária! 🚇",
+        "O Trem do IRPF passou por cima dos seus pitches de investimento! 🚈",
         "Ficou preso na catraca do metrô da Estação Sé às 18h de uma sexta-feira chuvosa! 🌧️",
         "Problema na via da Linha 9 Esmeralda encerrou sua corrida sem previsão de retorno! 🛤️",
         "Vagão lotado te arremessou pra fora na estação Brás! 🚂"
@@ -665,14 +706,15 @@ export class UIManager {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  showGameOver(obstacle, distanceKm, coins, picanhas, onRestart) {
+  showGameOver(obstacle, distanceKm, coins, picanhas, onRestart, customReason) {
     if (!this.gameOverModal) return;
 
-    const funnyMsg = this.getFunnyDeathMessage(obstacle);
-    if (this.goTitle) this.goTitle.textContent = obstacle ? obstacle.name : 'OBSTÁCULO';
+    const funnyMsg = customReason || this.getFunnyDeathMessage(obstacle);
+    if (this.goTitle) this.goTitle.textContent = customReason ? `📘 ${customReason}` : (obstacle ? obstacle.name : 'OBSTÁCULO');
     if (this.goMessage) this.goMessage.textContent = funnyMsg;
     if (this.goDistance) {
-      this.goDistance.textContent = `${distanceKm} KM PERCORRIDOS · +R$ ${coins} MOEDAS · 🥩 ${picanhas} PICANHAS`;
+      const meters = distanceKm * 10;
+      this.goDistance.textContent = `${meters.toLocaleString()} M PERCORRIDOS · +${coins.toLocaleString()} MOEDAS · 🥩 ${picanhas} PICANHAS`;
     }
 
     this.gameOverModal.style.display = 'flex';

@@ -140,39 +140,176 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 8px;
+      gap: 10px;
       z-index: 20;
       pointer-events: none;
       flex-wrap: wrap;
       justify-content: center;
       max-width: 96vw;
+      align-items: center;
     }
 
-    .hud-box {
-      background: rgba(10, 10, 20, 0.88);
-      backdrop-filter: blur(10px);
-      border: 1.5px solid var(--amarelo-brasil);
-      padding: 5px 12px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-      min-width: 75px;
+    .hud-pill {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(8, 12, 20, 0.95));
+      backdrop-filter: blur(12px);
+      border-radius: 50px;
+      padding: 4px 14px 4px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.2s ease;
     }
 
-    .hud-box label {
-      display: block;
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 1px;
+    .hud-pill .pill-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
 
-    .hud-box span {
-      font-family: 'Bangers', cursive;
-      font-size: 20px;
-      color: var(--amarelo-brasil);
+    .hud-pill .pill-data {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
       line-height: 1;
+    }
+
+    .hud-pill .pill-value {
+      font-family: 'Bangers', cursive;
+      font-size: 21px;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    .hud-pill .pill-label {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(255, 255, 255, 0.65);
+      margin-top: 1px;
+    }
+
+    .hud-pill .pill-sub-badge {
+      font-family: 'Bangers', cursive;
+      font-size: 11px;
+      background: #9333ea;
+      color: #facc15;
+      padding: 1px 6px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+      border: 1px solid #c084fc;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    /* Cores Temáticas Específicas das Pílulas */
+    .pill-distance {
+      border-color: #0284c7;
+      box-shadow: 0 0 16px rgba(2, 132, 199, 0.4);
+    }
+    .pill-distance .pill-icon {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+    }
+    .pill-distance .pill-value {
+      color: #38bdf8;
+    }
+
+    .pill-coins {
+      border-color: #eab308;
+      box-shadow: 0 0 16px rgba(234, 179, 8, 0.45);
+    }
+    .pill-coins .pill-icon {
+      background: linear-gradient(135deg, #facc15, #ca8a04);
+    }
+    .pill-coins .pill-value {
+      color: #fef08a;
+    }
+
+    .pill-record {
+      border-color: #a855f7;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+    }
+    .pill-record .pill-icon {
+      background: linear-gradient(135deg, #a855f7, #7e22ce);
+    }
+    .pill-record .pill-value {
+      color: #e9d5ff;
+    }
+
+    .pill-speed {
+      border-color: #10b981;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+    }
+    .pill-speed .pill-icon {
+      background: linear-gradient(135deg, #10b981, #047857);
+    }
+    .pill-speed .pill-value {
+      color: #6ee7b7;
+    }
+
+    .hud-actions {
+      display: flex;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .hud-btn-action {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 50px;
+      font-family: 'Bangers', cursive;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+    }
+    .hud-btn-action:hover {
+      transform: scale(1.05);
+      border-color: #facc15;
+      color: #facc15;
+    }
+    .hud-btn-round {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 16px;
+    }
+
+    @keyframes stumblePulse {
+      0% { transform: translateX(-50%) scale(1.0); }
+      100% { transform: translateX(-50%) scale(1.08); box-shadow: 0 0 35px rgba(239,68,68,1.0); }
+    }
+
+    @keyframes popPointsFloat {
+      0% { opacity: 1; transform: translateY(0) scale(0.8); }
+      50% { opacity: 1; transform: translateY(-35px) scale(1.35); }
+      100% { opacity: 0; transform: translateY(-70px) scale(1.1); }
+    }
+
+    .floating-point-pop {
+      position: absolute;
+      font-family: 'Bangers', cursive;
+      font-size: 26px;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 15px currentColor;
+      pointer-events: none;
+      animation: popPointsFloat 0.75s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      z-index: 99;
     }
 
     #mobileControls {
@@ -397,32 +534,63 @@
 
     <div id="canvasContainer"></div>
 
+    <!-- FLOATING SCORE POP-UP LAYER (+1, +5, PICANHA) -->
+    <div id="floatingScoreLayer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:25; overflow:hidden;"></div>
+
+    <!-- STUMBLE WARNING BANNER (BOSS CHASER ALERT) -->
+    <div id="stumbleAlertBanner" style="display:none; position:absolute; top:65px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg, rgba(220,38,38,0.95), rgba(185,28,28,0.98)); border:2px solid #facc15; padding:8px 24px; border-radius:50px; color:#fff; font-family:'Bangers',cursive; font-size:18px; letter-spacing:1px; box-shadow:0 0 30px rgba(239,68,68,0.9); z-index:28; pointer-events:none; animation: stumblePulse 0.5s infinite alternate; white-space:nowrap;">
+      ⚠️ WATCH OUT! THE WORKBOOK BOSS IS RIGHT ON YOUR TAIL!
+    </div>
+
     <div id="hudOverlay">
-      <div class="hud-box">
-        <label>Distance</label>
-        <span id="distDisplay">0 km</span>
+      <!-- Pill 1: Distance & Multiplier -->
+      <div class="hud-pill pill-distance">
+        <div class="pill-icon">🏆</div>
+        <div class="pill-data">
+          <span class="pill-value" id="distDisplay">0 m</span>
+          <div class="pill-sub-badge" id="multiplierBadge">x1 MULTI</div>
+        </div>
       </div>
-      <div class="hud-box" style="border-color: var(--verde-neon);">
-        <label>Best</label>
-        <span id="bestDisplay" style="color: var(--verde-neon);">0 km</span>
+
+      <!-- Pill 2: Coins & Star -->
+      <div class="hud-pill pill-coins">
+        <div class="pill-icon">⭐</div>
+        <div class="pill-data">
+          <span class="pill-value" id="coinsDisplay">0</span>
+          <span class="pill-label">COINS</span>
+        </div>
       </div>
-      <div class="hud-box" style="border-color: #ffd700;">
-        <label>Coins</label>
-        <span id="coinsDisplay" style="color: #ffd700;">💰 0</span>
+
+      <!-- Pill 3: Best Record -->
+      <div class="hud-pill pill-record">
+        <div class="pill-icon">👑</div>
+        <div class="pill-data">
+          <span class="pill-value" id="bestDisplay">0 m</span>
+          <span class="pill-label">RECORD</span>
+        </div>
       </div>
-      <div class="hud-box" style="border-color: #3b82f6;">
-        <label>Speed</label>
-        <span id="speedDisplay" style="color: #60a5fa;">1.0x</span>
+
+      <!-- Pill 4: Speed -->
+      <div class="hud-pill pill-speed">
+        <div class="pill-icon">⚡</div>
+        <div class="pill-data">
+          <span class="pill-value" id="speedDisplay">1.0x</span>
+          <span class="pill-label">SPEED</span>
+        </div>
       </div>
-      <button id="btnOpenCharSelect" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 12px; border-color:#eab308; color:#fef08a; font-size:15px; font-weight:bold; font-family:'Bangers',cursive;" title="Select 3D Character">
-        🎭 CHARACTERS
-      </button>
-      <button id="btnSoundToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:var(--amarelo-brasil); color:var(--amarelo-brasil); font-size:16px;" title="Sound">
-        🔊
-      </button>
-      <button id="btnFullscreenToggle" class="hud-box" style="cursor:pointer; pointer-events:auto; min-width:auto; padding:6px 10px; border-color:#38bdf8; color:#38bdf8; font-size:16px;" title="Fullscreen">
-        ⛶
-      </button>
+
+      <!-- Action Buttons -->
+      <div class="hud-actions">
+        <button id="btnOpenCharSelect" class="hud-btn-action" title="Select 3D Character">
+          🎭 SKINS
+        </button>
+        <button id="btnSoundToggle" class="hud-btn-action hud-btn-round" title="Sound">
+          🔊
+        </button>
+        <button id="btnFullscreenToggle" class="hud-btn-action hud-btn-round" title="Fullscreen">
+          ⛶
+        </button>
+      </div>
     </div>
 
     <!-- CONTROLES MOBILE / TOUCH -->

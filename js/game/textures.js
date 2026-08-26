@@ -60,6 +60,12 @@ class TextureAtlasManager {
     // Cenário 2.0 (Fase D) — Panorama e Horizonte Carioca
     this.morroParallaxTexture = null;
 
+    // Cenário 2.0 (Fase Boss & Satírico) — CTPS Boss, Moeda Estrela e Trens Satíricos
+    this.ctpsBossCoverTexture = null;
+    this.goldStarCoinTexture = null;
+    this.trainLiveryTextures = [];
+    this.satiricalNeonSigns = [];
+
     this.init();
   }
 
@@ -75,6 +81,11 @@ class TextureAtlasManager {
     this.createCity2Textures();
     this.createVegetationAndVehicleTextures();
     this.createNpcAndAtmosphereTextures();
+    this.createCtpsBossTextures();
+    this.createGoldStarCoinTexture();
+    this.createTrainLiveryTextures();
+    this.createSatiricalNeonSigns();
+    this.createFlyingTaxTextures();
   }
 
   createSoftShadowTexture() {
@@ -2482,6 +2493,391 @@ class TextureAtlasManager {
     this.morroParallaxTexture.wrapS = THREE.RepeatWrapping;
     this.morroParallaxTexture.wrapT = THREE.ClampToEdgeWrapping;
     this.morroParallaxTexture.needsUpdate = true;
+  }
+
+  // ========================================================
+  // CENÁRIO 2.0 (BOSS & SATÍRICO) — CTPS VIVA, MOEDA ESTRELA E TRENS
+  // ========================================================
+
+  createCtpsBossTextures() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Capa Couro Sintético Azul Marinho Escuro
+    ctx.fillStyle = '#0c1829';
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Textura sutil de granulação de couro
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    for (let i = 0; i < 2400; i++) {
+      const rx = Math.random() * 512;
+      const ry = Math.random() * 512;
+      ctx.fillRect(rx, ry, 1.5, 1.5);
+    }
+
+    // Borda fina dourada com cantos arredondados
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(18, 18, 476, 476);
+
+    // 2. Textos Oficiais em Ouro Metálico
+    ctx.fillStyle = '#f59e0b';
+    ctx.textAlign = 'center';
+    ctx.font = '900 15px sans-serif';
+    ctx.fillText('REPÚBLICA FEDERATIVA DO BRASIL', 256, 44);
+    ctx.font = '700 13px sans-serif';
+    ctx.fillText('MINISTÉRIO DO TRABALHO', 256, 62);
+
+    // 3. Brasão da República Dourado
+    ctx.fillStyle = '#d97706';
+    ctx.beginPath();
+    ctx.arc(256, 175, 52, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#facc15';
+    // Estrela de 5 pontas central
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
+      const x = 256 + Math.cos(angle) * 38;
+      const y = 175 + Math.sin(angle) * 38;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    // 4. Rosto Cartoon Expressivo (Olhos de Raiva & Sobrancelhas Marcantes)
+    // Olho Esquerdo
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(190, 260, 38, 48, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Pupila Esquerda
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(198, 265, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(192, 258, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Olho Direito
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(322, 260, 38, 48, 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Pupila Direita
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.arc(314, 265, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(320, 258, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Sobrancelhas Furiosas Anguladas
+    ctx.fillStyle = '#020617';
+    // Esquerda
+    ctx.beginPath();
+    ctx.moveTo(130, 215);
+    ctx.lineTo(240, 245);
+    ctx.lineTo(235, 262);
+    ctx.lineTo(135, 230);
+    ctx.closePath();
+    ctx.fill();
+
+    // Direita
+    ctx.beginPath();
+    ctx.moveTo(382, 215);
+    ctx.lineTo(272, 245);
+    ctx.lineTo(277, 262);
+    ctx.lineTo(377, 230);
+    ctx.closePath();
+    ctx.fill();
+
+    // Boca com Dentes Cerrados Furiosos
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.roundRect(190, 340, 132, 42, 10);
+    ctx.fill();
+    ctx.stroke();
+    // Grade de dentes
+    ctx.beginPath();
+    ctx.moveTo(190, 361);
+    ctx.lineTo(322, 361);
+    for (let d = 215; d < 315; d += 25) {
+      ctx.moveTo(d, 340);
+      ctx.lineTo(d, 382);
+    }
+    ctx.stroke();
+
+    // 5. Texto Inferior "CARTEIRA DE TRABALHO E PREVIDÊNCIA SOCIAL"
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = '900 18px sans-serif';
+    ctx.fillText('CARTEIRA DE TRABALHO', 256, 442);
+    ctx.font = '900 14px sans-serif';
+    ctx.fillText('E PREVIDÊNCIA SOCIAL', 256, 464);
+
+    this.ctpsBossCoverTexture = new THREE.CanvasTexture(canvas);
+    this.ctpsBossCoverTexture.needsUpdate = true;
+  }
+
+  createGoldStarCoinTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    // Fundo Gradiente Radial Dourado Quente
+    const grad = ctx.createRadialGradient(128, 128, 20, 128, 128, 120);
+    grad.addColorStop(0, '#fef08a');
+    grad.addColorStop(0.35, '#facc15');
+    grad.addColorStop(0.75, '#ca8a04');
+    grad.addColorStop(1, '#78350f');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(128, 128, 118, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Anel de Borda Relevo
+    ctx.strokeStyle = '#fffbeb';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(128, 128, 108, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Estrela de 5 Pontas Dourada em Relevo Central
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#b45309';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const outerAngle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      const innerAngle = outerAngle + Math.PI / 5;
+      const ox = 128 + Math.cos(outerAngle) * 62;
+      const oy = 128 + Math.sin(outerAngle) * 62;
+      const ix = 128 + Math.cos(innerAngle) * 28;
+      const iy = 128 + Math.sin(innerAngle) * 28;
+
+      if (i === 0) ctx.moveTo(ox, oy);
+      else ctx.lineTo(ox, oy);
+      ctx.lineTo(ix, iy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Brilho Estelar Reflexivo
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.beginPath();
+    ctx.arc(95, 95, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    this.goldStarCoinTexture = new THREE.CanvasTexture(canvas);
+    this.goldStarCoinTexture.needsUpdate = true;
+  }
+
+  createTrainLiveryTextures() {
+    const liveries = [
+      { text: 'EXPRESSO IMPOSTO', bg: '#4c1d95', border: '#ec4899', glow: '#f43f5e' },
+      { text: 'TREM DO IRPF', bg: '#064e3b', border: '#facc15', glow: '#22c55e' },
+      { text: 'METRÔ DA RECEITA', bg: '#1e293b', border: '#f97316', glow: '#fbbf24' },
+      { text: 'LINHA CLT 44H', bg: '#0369a1', border: '#38bdf8', glow: '#0ea5e9' }
+    ];
+
+    this.trainLiveryTextures = liveries.map(liv => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = liv.bg;
+      ctx.fillRect(0, 0, 512, 128);
+
+      ctx.strokeStyle = liv.border;
+      ctx.lineWidth = 8;
+      ctx.strokeRect(6, 6, 500, 116);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 36px "Bangers", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = liv.glow;
+      ctx.shadowBlur = 18;
+      ctx.fillText(liv.text, 256, 64);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createSatiricalNeonSigns() {
+    const signs = [
+      { text: 'TRABALHE LEGAL ✔', bg: '#022c22', neon: '#22c55e' },
+      { text: 'BRASIL É TRABALHO! 🇧🇷', bg: '#1e1b4b', neon: '#facc15' },
+      { text: 'SÃO PAULO - TRIBUTOS', bg: '#4a044e', neon: '#ec4899' },
+      { text: 'MULTA GRAVÍSSIMA ⚠️', bg: '#450a0a', neon: '#ef4444' }
+    ];
+
+    this.satiricalNeonSigns = signs.map(s => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = s.bg;
+      ctx.fillRect(0, 0, 256, 128);
+
+      ctx.strokeStyle = s.neon;
+      ctx.lineWidth = 6;
+      ctx.strokeRect(6, 6, 244, 116);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 20px "Bangers", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = s.neon;
+      ctx.shadowBlur = 16;
+      ctx.fillText(s.text, 128, 64);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.needsUpdate = true;
+      return tex;
+    });
+  }
+
+  createFlyingTaxTextures() {
+    // 1. Nota de R$ 100 Realista Cartoon
+    const canvas100 = document.createElement('canvas');
+    canvas100.width = 256;
+    canvas100.height = 128;
+    const ctx100 = canvas100.getContext('2d');
+
+    ctx100.fillStyle = '#0284c7'; // Azul Turquesa da Nota de 100
+    ctx100.fillRect(0, 0, 256, 128);
+
+    ctx100.strokeStyle = '#38bdf8';
+    ctx100.lineWidth = 4;
+    ctx100.strokeRect(6, 6, 244, 116);
+
+    ctx100.fillStyle = '#ffffff';
+    ctx100.font = '900 32px "Bangers", sans-serif';
+    ctx100.fillText('100', 30, 45);
+    ctx100.fillText('100', 180, 110);
+
+    ctx100.font = '700 12px sans-serif';
+    ctx100.fillText('BANCO CENTRAL DO BRASIL', 40, 70);
+    ctx100.fillText('CEM REAIS', 40, 88);
+
+    // Faixa Holográfica
+    ctx100.fillStyle = '#facc15';
+    ctx100.fillRect(150, 6, 18, 116);
+
+    this.real100NoteTexture = new THREE.CanvasTexture(canvas100);
+    this.real100NoteTexture.needsUpdate = true;
+
+    // 2. Guia DARF / Carnê do Leão
+    const canvasDarf = document.createElement('canvas');
+    canvasDarf.width = 256;
+    canvasDarf.height = 340;
+    const ctxDarf = canvasDarf.getContext('2d');
+
+    ctxDarf.fillStyle = '#ffffff';
+    ctxDarf.fillRect(0, 0, 256, 340);
+
+    ctxDarf.strokeStyle = '#dc2626';
+    ctxDarf.lineWidth = 6;
+    ctxDarf.strokeRect(6, 6, 244, 328);
+
+    ctxDarf.fillStyle = '#dc2626';
+    ctxDarf.font = '900 18px sans-serif';
+    ctxDarf.textAlign = 'center';
+    ctxDarf.fillText('RECEITA FEDERAL', 128, 36);
+
+    ctxDarf.fillStyle = '#0f172a';
+    ctxDarf.font = '900 24px "Bangers", sans-serif';
+    ctxDarf.fillText('GUIA DARF / IRPF', 128, 68);
+
+    ctxDarf.fillStyle = '#ef4444';
+    ctxDarf.font = '700 14px sans-serif';
+    ctxDarf.fillText('AUTUAÇÃO FISCAL', 128, 92);
+
+    // Linhas de código de barras
+    ctxDarf.fillStyle = '#000000';
+    for (let x = 20; x < 236; x += 6) {
+      const w = Math.random() > 0.4 ? 3 : 1.5;
+      ctxDarf.fillRect(x, 260, w, 55);
+    }
+
+    this.darfFormTexture = new THREE.CanvasTexture(canvasDarf);
+    this.darfFormTexture.needsUpdate = true;
+
+    // 3. Moeda Rara Dourada com Bandeira do Brasil
+    const canvasBR = document.createElement('canvas');
+    canvasBR.width = 256;
+    canvasBR.height = 256;
+    const ctxBR = canvasBR.getContext('2d');
+
+    // Fundo Ouro Brilhante
+    const gradBR = ctxBR.createRadialGradient(128, 128, 20, 128, 128, 120);
+    gradBR.addColorStop(0, '#fef08a');
+    gradBR.addColorStop(0.3, '#facc15');
+    gradBR.addColorStop(0.8, '#b45309');
+    gradBR.addColorStop(1, '#451a03');
+
+    ctxBR.fillStyle = gradBR;
+    ctxBR.beginPath();
+    ctxBR.arc(128, 128, 118, 0, Math.PI * 2);
+    ctxBR.fill();
+
+    ctxBR.strokeStyle = '#fffbeb';
+    ctxBR.lineWidth = 8;
+    ctxBR.stroke();
+
+    // Bandeira do Brasil Central (Losango Amarelo e Círculo Azul)
+    ctxBR.fillStyle = '#16a34a';
+    ctxBR.fillRect(48, 64, 160, 128);
+
+    ctxBR.fillStyle = '#facc15';
+    ctxBR.beginPath();
+    ctxBR.moveTo(128, 70);
+    ctxBR.lineTo(200, 128);
+    ctxBR.lineTo(128, 186);
+    ctxBR.lineTo(56, 128);
+    ctxBR.closePath();
+    ctxBR.fill();
+
+    ctxBR.fillStyle = '#0284c7';
+    ctxBR.beginPath();
+    ctxBR.arc(128, 128, 34, 0, Math.PI * 2);
+    ctxBR.fill();
+
+    // Faixa Branca
+    ctxBR.fillStyle = '#ffffff';
+    ctxBR.beginPath();
+    ctxBR.arc(128, 128, 34, -0.2, 0.6);
+    ctxBR.lineWidth = 6;
+    ctxBR.strokeStyle = '#ffffff';
+    ctxBR.stroke();
+
+    this.rareBrazilCoinTexture = new THREE.CanvasTexture(canvasBR);
+    this.rareBrazilCoinTexture.needsUpdate = true;
   }
 }
 

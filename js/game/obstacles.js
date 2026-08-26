@@ -47,20 +47,20 @@ export class ObstacleManager {
         new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.6 })
       ],
       goldCoin: new THREE.MeshStandardMaterial({
-        map: textureAtlas.goldCoinTexture,
-        color: 0xffd700,
-        metalness: 0.95,
-        roughness: 0.15,
-        emissive: 0xb45309,
-        emissiveIntensity: 0.35,
+        map: textureAtlas.goldStarCoinTexture,
+        color: 0xfffbeb,
+        metalness: 0.92,
+        roughness: 0.12,
+        emissive: 0xd97706,
+        emissiveIntensity: 0.5,
         side: THREE.DoubleSide
       }),
       goldCoinRim: new THREE.MeshStandardMaterial({
-        color: 0xffd700,
+        color: 0xfacc15,
         metalness: 0.95,
         roughness: 0.15,
         emissive: 0xb45309,
-        emissiveIntensity: 0.35
+        emissiveIntensity: 0.45
       }),
       goldParticle: new THREE.MeshStandardMaterial({
         color: 0xffd700,
@@ -177,12 +177,12 @@ export class ObstacleManager {
     const spawnPoints = [-segmentLength / 2 + 20, -segmentLength / 2 + 60];
 
     spawnPoints.forEach((localZ) => {
-      const pattern = Math.floor(Math.random() * 5);
+      const pattern = Math.floor(Math.random() * 7);
       const chosenLane = Math.floor(Math.random() * 3);
 
       switch (pattern) {
         case 0:
-          // Trens do Metrô (Metrô Rio, Metrô SP, Expresso Brasil com pintura procedual HD, bogies e rampa)
+          // Trens Satíricos do Metrô
           const isMoving = Math.random() > 0.45;
           this.createSubwayTrain(parent, LANES[chosenLane], localZ, isMoving);
           const safeLane0 = (chosenLane + 1) % 3;
@@ -213,6 +213,21 @@ export class ObstacleManager {
           this.createPowerupItem(parent, LANES[chosenLane], localZ, pType);
           const safeLane4 = (chosenLane + 1) % 3;
           this.createCoinLine(parent, LANES[safeLane4], localZ - 10, 5);
+          break;
+
+        case 5:
+          // Impostos Voadores (DARF / Notas de R$ 100 voando que exigem pulo ou slide)
+          this.createFlyingTaxesObstacle(parent, LANES[chosenLane], localZ);
+          if (Math.random() > 0.5) {
+            this.createRareBrazilCoin(parent, LANES[(chosenLane + 1) % 3], localZ);
+          }
+          break;
+
+        case 6:
+          // Fiscal da Receita Federal com Prancheta e Crachá
+          this.createTaxAuditorObstacle(parent, LANES[chosenLane], localZ);
+          const safeLane6 = (chosenLane + 2) % 3;
+          this.createCoinLine(parent, LANES[safeLane6], localZ - 10, 4);
           break;
       }
     });
@@ -1147,7 +1162,7 @@ export class ObstacleManager {
     });
   }
 
-  update(dt, player, elapsedTime, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup) {
+  update(dt, player, elapsedTime, onCrash, onCollectCoin, onCollectPicanha, onCollectPowerup, onStumble) {
     const playerAABB = player.getAABB();
 
     // A. Animação de Flutuação e Rotação dos Cards Realistas
@@ -1212,7 +1227,7 @@ export class ObstacleManager {
       player.groundY = 0;
     }
 
-    // D. Verificação AABB Precisa de Colisão (Ignora se estiver no teto do veículo ou distante)
+    // D. Verificação AABB Precisa de Colisão & Tropeço Lateral (Mecânica Subway Surfers)
     if (!player.isDead) {
       for (let i = 0; i < this.obstacles.length; i++) {
         const obs = this.obstacles[i];
@@ -1232,11 +1247,31 @@ export class ObstacleManager {
             onCrash(obs);
             break;
           }
+
+          // Raspão lateral em alta velocidade com o trem
+          const sideScrapeX = (playerAABB.maxX > obsAABB.minX - 0.28 && playerAABB.minX < obsAABB.minX) ||
+                              (playerAABB.minX < obsAABB.maxX + 0.28 && playerAABB.maxX > obsAABB.maxX);
+          if (sideScrapeX && collisionZ && !obs.stumbleTriggered) {
+            obs.stumbleTriggered = true;
+            if (typeof onStumble === 'function') {
+              onStumble(obs);
+            }
+          }
         } else {
           const collisionY = playerAABB.maxY > obsAABB.minY && playerAABB.minY < obsAABB.maxY;
           if (collisionX && collisionY && collisionZ) {
             onCrash(obs);
             break;
+          }
+
+          // Raspão lateral em barreira / poste
+          const sideScrapeX = (playerAABB.maxX > obsAABB.minX - 0.22 && playerAABB.minX < obsAABB.minX) ||
+                              (playerAABB.minX < obsAABB.maxX + 0.22 && playerAABB.maxX > obsAABB.maxX);
+          if (sideScrapeX && collisionZ && !obs.stumbleTriggered) {
+            obs.stumbleTriggered = true;
+            if (typeof onStumble === 'function') {
+              onStumble(obs);
+            }
           }
         }
       }
@@ -1347,6 +1382,175 @@ export class ObstacleManager {
         this.particles.splice(i, 1);
       }
     }
+  }
+
+  // ========================================================
+  // NOVOS OBSTÁCULOS SATÍRICOS: IMPOSTOS VOADORES, FISCAL E MOEDA RARA BR
+  // ========================================================
+
+  createFlyingTaxesObstacle(parent, laneX, localZ) {
+    const taxGroup = new THREE.Group();
+    taxGroup.position.set(laneX, 1.35, localZ);
+
+    const isHigh = Math.random() > 0.5; // High = precisa de slide, Low = precisa de pulo
+    taxGroup.position.y = isHigh ? 1.55 : 0.65;
+
+    // Guia DARF Central
+    const darfGeo = new THREE.PlaneGeometry(1.3, 1.7);
+    const darfMat = new THREE.MeshBasicMaterial({
+      map: textureAtlas.darfFormTexture,
+      side: THREE.DoubleSide
+    });
+    const darfMesh = new THREE.Mesh(darfGeo, darfMat);
+    taxGroup.add(darfMesh);
+
+    // Notas de R$ 100 Voando em Leque ao Redor
+    const noteGeo = new THREE.PlaneGeometry(1.1, 0.55);
+    const noteMat = new THREE.MeshBasicMaterial({
+      map: textureAtlas.real100NoteTexture,
+      side: THREE.DoubleSide
+    });
+
+    [-0.7, 0.7].forEach((nx, idx) => {
+      const note = new THREE.Mesh(noteGeo, noteMat);
+      note.position.set(nx, idx === 0 ? 0.35 : -0.35, 0.15);
+      note.rotation.z = idx === 0 ? 0.35 : -0.35;
+      taxGroup.add(note);
+    });
+
+    parent.add(taxGroup);
+
+    this.obstacles.push({
+      name: isHigh ? 'Autuação Fiscal Aérea (Deslize!)' : 'Guia DARF Vencida (Pule!)',
+      type: 'darf',
+      mesh: taxGroup,
+      parent: parent,
+      laneX: laneX,
+      localZ: localZ,
+      isFloatingCard: true,
+      baseY: taxGroup.position.y,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
+      getAABB() {
+        const pz = parent.position.z + taxGroup.position.z;
+        const px = taxGroup.position.x;
+        const py = taxGroup.position.y;
+        this._aabb.minX = px - 0.95;
+        this._aabb.maxX = px + 0.95;
+        this._aabb.minY = py - 0.75;
+        this._aabb.maxY = py + 0.85;
+        this._aabb.minZ = pz - 0.45;
+        this._aabb.maxZ = pz + 0.45;
+        return this._aabb;
+      }
+    });
+  }
+
+  createTaxAuditorObstacle(parent, laneX, localZ) {
+    const auditor = new THREE.Group();
+    auditor.position.set(laneX, 0, localZ);
+
+    const suitMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.35 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.2 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
+    const clipboardMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.4 });
+
+    // Tronco com Terno
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 1.10, 0.45), suitMat);
+    body.position.y = 1.25;
+    body.castShadow = true;
+
+    // Gravata Vermelha
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.65, 0.06), tieMat);
+    tie.position.set(0, 1.25, 0.24);
+
+    // Cabeça
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.44, 0.42), skinMat);
+    head.position.y = 2.05;
+
+    // Óculos Escuros de Fiscal
+    const glasses = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.08), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+    glasses.position.set(0, 2.08, 0.22);
+
+    // Pernas
+    const lLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.80, 0.32), suitMat);
+    lLeg.position.set(-0.20, 0.40, 0);
+    const rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.80, 0.32), suitMat);
+    rLeg.position.set(0.20, 0.40, 0);
+
+    // Prancheta de Multa
+    const board = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.65, 0.06), clipboardMat);
+    board.position.set(0.48, 1.20, 0.28);
+    board.rotation.y = -0.3;
+
+    auditor.add(body, tie, head, glasses, lLeg, rLeg, board);
+    parent.add(auditor);
+
+    this.obstacles.push({
+      name: 'Fiscal da Receita Federal',
+      type: 'fiscal',
+      mesh: auditor,
+      parent: parent,
+      laneX: laneX,
+      localZ: localZ,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
+      getAABB() {
+        const pz = parent.position.z + auditor.position.z;
+        const px = auditor.position.x;
+        this._aabb.minX = px - 0.70;
+        this._aabb.maxX = px + 0.70;
+        this._aabb.minY = 0;
+        this._aabb.maxY = 2.30;
+        this._aabb.minZ = pz - 0.55;
+        this._aabb.maxZ = pz + 0.55;
+        return this._aabb;
+      }
+    });
+  }
+
+  createRareBrazilCoin(parent, laneX, localZ) {
+    const coinMesh = new THREE.Group();
+    coinMesh.position.set(laneX, 1.25, localZ);
+
+    const coinMat = new THREE.MeshStandardMaterial({
+      map: textureAtlas.rareBrazilCoinTexture,
+      color: 0xffffff,
+      metalness: 0.95,
+      roughness: 0.12,
+      emissive: 0x15803d,
+      emissiveIntensity: 0.4,
+      side: THREE.DoubleSide
+    });
+
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.12, 24), coinMat);
+    core.rotation.x = Math.PI / 2;
+
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.06, 8, 24), this.materials.goldCoinRim);
+
+    coinMesh.add(core, rim);
+    parent.add(coinMesh);
+
+    this.coins.push({
+      mesh: coinMesh,
+      parent: parent,
+      laneX: laneX,
+      baseY: 1.25,
+      value: 50,
+      collected: false,
+      isRareBrazil: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
+      getAABB() {
+        const pz = parent.position.z + coinMesh.position.z;
+        const px = coinMesh.position.x;
+        const py = coinMesh.position.y;
+        this._aabb.minX = px - 0.85;
+        this._aabb.maxX = px + 0.85;
+        this._aabb.minY = py - 0.75;
+        this._aabb.maxY = py + 0.75;
+        this._aabb.minZ = pz - 0.85;
+        this._aabb.maxZ = pz + 0.85;
+        return this._aabb;
+      }
+    });
   }
 
   reset() {

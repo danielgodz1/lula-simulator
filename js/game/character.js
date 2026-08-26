@@ -49,6 +49,10 @@ export class Character {
     this.superJump = false;
     this.magnetActive = false;
 
+    // Mecânica de Tropeço (Subway Surfers Stumble)
+    this.isStumbling = false;
+    this.stumbleTimer = 0;
+
     // Uniforms do Shader para Animação Realista das Pernas
     this.uniforms = {
       uRunTime: { value: 0.0 },
@@ -532,6 +536,13 @@ export class Character {
     gameAudio.playSlide();
   }
 
+  triggerStumble() {
+    if (this.isDead) return;
+    this.isStumbling = true;
+    this.stumbleTimer = 1.4;
+    gameAudio.playSwipe(); // som de desequilíbrio
+  }
+
   getAABB() {
     if (!this._aabb) {
       this._aabb = { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 };
@@ -637,6 +648,18 @@ export class Character {
         this.isSliding = false;
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
+      }
+    }
+
+    // 5. Desequilíbrio do Tropeço (Subway Surfers Stumble Wobble)
+    if (this.isStumbling) {
+      this.stumbleTimer -= dt;
+      if (this.stumbleTimer <= 0) {
+        this.isStumbling = false;
+      } else {
+        const wobble = Math.sin(this.stumbleTimer * 18.0) * 0.16;
+        this.mesh.rotation.z += wobble;
+        this.mesh.rotation.x += 0.10;
       }
     }
 

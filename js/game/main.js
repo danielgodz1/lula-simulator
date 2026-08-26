@@ -6,6 +6,7 @@ import { Character } from './character.js';
 import { Environment } from './environment.js';
 import { ObstacleManager } from './obstacles.js';
 import { UIManager } from './ui.js';
+import { CtpsBoss } from './boss.js';
 import { savePlayerScore, startScoreSession } from '../firebase-config.js';
 import { auth } from '../auth.js';
 import { RunnerInventory } from './characters.js';
@@ -16,6 +17,7 @@ export class Game {
   constructor() {
     this.sceneManager = new GameScene('canvasContainer');
     this.character = new Character(this.sceneManager.scene);
+    this.boss = new CtpsBoss(this.sceneManager.scene);
     this.environment = new Environment(this.sceneManager.scene);
     this.obstacleManager = new ObstacleManager(this.sceneManager.scene);
     this.ui = new UIManager();
@@ -44,6 +46,10 @@ export class Game {
     this.maxSpeed = 320; // 10.0x baseSpeed
     this.distance = 0;
     this.coins = 0;
+    this.picanhas = 0;
+    this.multiplier = 1;
+    this.consecutiveCoins = 0;
+
     const userObj = auth.getCurrentUser();
     const localRunBest = parseInt(localStorage.getItem('run_best') || '0', 10);
     this.bestDistance = (userObj && typeof userObj.runnerScore === 'number') ? Math.max(localRunBest, userObj.runnerScore) : localRunBest;
@@ -86,7 +92,10 @@ export class Game {
     this.distance = 0;
     this.coins = 0;
     this.picanhas = 0;
+    this.multiplier = 1;
+    this.consecutiveCoins = 0;
     this.character.reset();
+    this.boss.startRun();
   }
 
   restart() {
@@ -94,6 +103,7 @@ export class Game {
     this.ui.hideGameOver();
     this.environment.reset();
     this.obstacleManager.reset();
+    this.boss.reset();
 
     for (let i = 2; i < this.environment.segments.length; i++) {
       const seg = this.environment.segments[i];
@@ -103,11 +113,27 @@ export class Game {
     this.start();
   }
 
-  onCrash(obstacle) {
+  onStumble(obstacle) {
+    if (this.state !== this.STATE.PLAYING) return;
+
+    // Se a Carteira de Trabalho já estiver colada atrás (segundo tropeço consecutivo) -> Morte Fatal
+    if (this.boss.isAggressive && this.boss.z < 2.4) {
+      this.onCrash(obstacle, 'ASSINADO E CARIMBADO NA CLT!');
+      return;
+    }
+
+    this.character.triggerStumble();
+    this.boss.triggerStumbleChase();
+    this.speed = Math.max(this.baseSpeed * 0.85, this.speed * 0.72);
+    this.ui.showStumbleAlert();
+  }
+
+  onCrash(obstacle, customReason) {
     if (this.state !== this.STATE.PLAYING) return;
 
     this.state = this.STATE.GAMEOVER;
     this.character.die();
+    this.boss.triggerKillStamp(this.character.x, this.character.y);
     gameAudio.playCrash();
     gameAudio.stopAmbience();
 
@@ -120,23 +146,47 @@ export class Game {
     auth.updateUserScore('runner', distanceKm);
     savePlayerScore('runner', distanceKm, distanceKm);
 
+    const punchlines = [
+      'ASSINADO E CARIMBADO!',
+      'REGISTRADO COM CLT 44H!',
+      'FOI PEGO PELA CARTEIRA DE TRABALHO!',
+      'AUDITADO PELA RECEITA FEDERAL!',
+      'O LEÃO NÃO PERDOOU!'
+    ];
+    const finalReason = customReason || punchlines[Math.floor(Math.random() * punchlines.length)];
+
     setTimeout(() => {
-      this.ui.showGameOver(obstacle, distanceKm, this.coins, this.picanhas, () => this.restart());
-    }, 600);
+      this.ui.showGameOver(obstacle, distanceKm, this.coins, this.picanhas, () => this.restart(), finalReason);
+    }, 650);
   }
 
   onCollectCoin(value) {
-    this.coins += value;
-    RunnerInventory.addCoins(value);
-    auth.updateMissionProgress('m_runner_coins', value);
+    this.consecutiveCoins++;
+    if (this.consecutiveCoins > 50) this.multiplier = 6;
+    else if (this.consecutiveCoins > 30) this.multiplier = 4;
+    else if (this.consecutiveCoins > 15) this.multiplier = 3;
+    else if (this.consecutiveCoins > 5) this.multiplier = 2;
+    else this.multiplier = 1;
+
+    const finalVal = value * this.multiplier;
+    this.coins += finalVal;
+    RunnerInventory.addCoins(finalVal);
+    auth.updateMissionProgress('m_runner_coins', finalVal);
+    if (this.ui.showFloatingPoints) {
+      this.ui.showFloatingPoints(`+${finalVal}`, '#facc15');
+    }
     this.updateHUD();
   }
 
   onCollectPicanha(value) {
     this.picanhas++;
-    this.coins += value;
-    RunnerInventory.addCoins(value);
-    auth.updateMissionProgress('m_runner_coins', value);
+    const finalVal = (value || 5) * this.multiplier;
+    this.coins += finalVal;
+    RunnerInventory.addCoins(finalVal);
+    auth.updateMissionProgress('m_runner_coins', finalVal);
+    if (this.ui.showFloatingPoints) {
+      this.ui.showFloatingPoints(`🥩 +${finalVal}`, '#ef4444');
+    }
     this.updateHUD();
   }
 
@@ -144,10 +194,12 @@ export class Game {
     if (type === 'magnet') {
       this.magnetActive = true;
       this.magnetTimer = 9.0;
+      if (this.ui.showFloatingPoints) this.ui.showFloatingPoints('🧲 IMÃ ATIVO!', '#38bdf8');
     } else if (type === 'superjump') {
       this.superJumpActive = true;
       this.superJumpTimer = 10.0;
       this.character.superJump = true;
+      if (this.ui.showFloatingPoints) this.ui.showFloatingPoints('👟 SUPER PULO!', '#facc15');
     }
   }
 
@@ -161,7 +213,7 @@ export class Game {
 
     const timeStr = this.sceneManager.getFormattedTime();
     const totalCoins = RunnerInventory.getTotalCoins();
-    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr, totalCoins);
+    this.ui.updateHUD(distanceKm, this.bestDistance, speedRatio, this.coins, this.picanhas, powerupText, timeStr, totalCoins, this.multiplier);
   }
 
   loop() {
@@ -180,17 +232,16 @@ export class Game {
       // 2. Aceleração e Distância Progressiva e Suave
       this.distance += this.speed * dt;
       if (this.speed < this.maxSpeed) {
-        // Curva de velocidade calibrada: ritmo inicial suave e aumento gradual
         const currentRatio = this.speed / this.baseSpeed;
         let accel = 0.20;
         if (currentRatio < 2.0) {
-          accel = 0.14; // 1.0x a 2.0x (ritmo inicial agradável e acessível)
+          accel = 0.14;
         } else if (currentRatio < 3.5) {
-          accel = 0.20; // 2.0x a 3.5x (progressão equilibrada)
+          accel = 0.20;
         } else if (currentRatio < 5.0) {
-          accel = 0.26; // 3.5x a 5.0x (desafio intermediário que leva tempo para atingir)
+          accel = 0.26;
         } else {
-          accel = 0.32; // Acima de 5.0x (endgame de alta velocidade)
+          accel = 0.32;
         }
         this.speed += accel * dt;
       }
@@ -210,15 +261,18 @@ export class Game {
         }
       }
 
-      // 4. Atualização do Personagem (com AABB Y dinâmica no pulo e slide 90º)
+      // 4. Atualização do Personagem
       this.character.update(dt, this.speed);
 
-      // 5. Esteira Contínua da Favela e Reciclagem (Object Pooling)
+      // 5. Atualização do Boss Carteira de Trabalho Viva 3D (Subway Surfers Chaser)
+      this.boss.update(dt, this.character.x, this.character.y, this.speed);
+
+      // 6. Esteira Contínua da Favela e Reciclagem
       this.environment.update(this.speed, dt, (seg, newZ) => {
         this.obstacleManager.spawnSegmentEntities(seg, newZ);
       });
 
-      // 6. Atualização de Obstáculos, Efeitos Sonoros de Trem e Detecção AABB
+      // 7. Atualização de Obstáculos, Trens e Detecção AABB/Tropeço
       this.obstacleManager.update(
         dt,
         this.character,
@@ -226,12 +280,14 @@ export class Game {
         (obs) => this.onCrash(obs),
         (val) => this.onCollectCoin(val),
         (val) => this.onCollectPicanha(val),
-        (type) => this.onCollectPowerup(type)
+        (type) => this.onCollectPowerup(type),
+        (obs) => this.onStumble(obs)
       );
 
       this.updateHUD();
     } else if (this.state === this.STATE.GAMEOVER) {
       this.character.update(dt, 0);
+      this.boss.update(dt, this.character.x, this.character.y, 0);
     }
 
     // 7. Atualização da Câmera em 3ª Pessoa
