@@ -3,103 +3,123 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =========================================================================
-    // LULA SIMULATOR — REGRAS DE SEGURANÇA RESTRITAS (ZERO CLIENT WRITES)
-    // O browser NÃO escreve nada diretamente no Firestore.
-    // Todas as gravações ocorrem exclusivamente via Firebase Admin SDK (/api/*).
+    // LULA SIMULATOR — REGRAS DE SEGURANÇA (ZERO CLIENT WRITES)
+    //
+    // ARQUITETURA:
+    //   • O browser NUNCA escreve diretamente no Firestore.
+    //   • Todas as gravações ocorrem via Firebase Admin SDK nas rotas /api/*.
+    //   • O Admin SDK bypassa estas regras por design (privilégio de servidor).
+    //   • Estas regras controlam apenas leituras do cliente (browser).
+    //
+    // ROTAS DE ESCRITA (Admin SDK):
+    //   /api/score.js        → lula_scores_v2, lula_runner_scores_v2, lula_leaderboards_v2
+    //   /api/auth.js         → lula_users_v2, lula_nick_reservations, _auth_rate_limits
+    //   /api/sync.js         → lula_users_v2, lula_leaderboards_v2, lula_activity_feed
+    //   /api/social.js       → lula_activity_feed, lula_notifications, lula_tournaments,
+    //                          lula_friendships, lula_duels, lula_users_v2, lula_debug_deaths
+    //   /api/feedback.js     → lula_feedbacks
+    //   /api/contact.js      → lula_contatos
+    //   /api/analytics.js    → lula_analytics_v2
+    //   /api/access-log.js   → historico_acessos
+    //   /api/shop.js         → lula_users_v2
     // =========================================================================
 
-    // 1. Placar Flappy Lula (Leitura pública; Escrita restrita ao backend)
+    // ── 1. Placar Individual Flappy Lula ──────────────────────────────────────
     match /lula_scores_v2/{docId} {
       allow read: if true;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
 
-    // 2. Placar Empresário 3D (Leitura pública; Escrita restrita ao backend)
+    // ── 2. Placar Individual Empresário 3D ────────────────────────────────────
     match /lula_runner_scores_v2/{docId} {
       allow read: if true;
-      allow create, update, delete: if false;
+      allow write: if false;
     }
 
-    // 3. Perfis de Usuários (Leitura individual permitida; Listagem e escrita bloqueadas)
-    match /lula_users_v2/{userId} {
-      allow get: if true;
-      allow list: if false;
-      allow create, update, delete: if false;
-
-      // Subcoleção Privada de Credenciais (100% Bloqueada para clientes: Apenas Admin SDK)
-      match /private/{docId} {
-        allow read, write: if false;
-      }
-    }
-
-    // 4. Reservas de Nicknames por Dispositivo (100% Bloqueada para clientes: Apenas Admin SDK)
-    match /lula_nick_reservations/{normalizedNick} {
-      allow read, write: if false;
-    }
-
-    // 5. Feedbacks & Avaliações (Leitura pública; Criação via API)
-    match /lula_feedbacks/{feedbackId} {
-      allow read: if true;
-      allow create, update, delete: if false;
-    }
-
-    // 6. Mensagens de Contato (100% Privadas para a API / Admin)
-    match /lula_contatos/{contactId} {
-      allow read, write: if false;
-    }
-
-    // 7. Leaderboards Consolidados Top 300 (Leitura pública)
+    // ── 3. Leaderboards Consolidados Top 300 (Geral, Semanal, Acumulado) ──────
     match /lula_leaderboards_v2/{gameId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // 8. Estatísticas Globais de Visitantes e Países (Leitura pública)
+    // ── 4. Perfis de Usuários ─────────────────────────────────────────────────
+    //   Leitura individual permitida (get); listagem bloqueada (privacidade).
+    match /lula_users_v2/{userId} {
+      allow get:  if true;
+      allow list: if false;
+      allow write: if false;
+
+      // Subcoleção privada de credenciais — 100% bloqueada para clientes
+      match /private/{docId} {
+        allow read, write: if false;
+      }
+    }
+
+    // ── 5. Reservas de Nicknames ──────────────────────────────────────────────
+    match /lula_nick_reservations/{normalizedNick} {
+      allow read, write: if false;
+    }
+
+    // ── 6. Feedbacks & Avaliações ─────────────────────────────────────────────
+    match /lula_feedbacks/{feedbackId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── 7. Mensagens de Contato ───────────────────────────────────────────────
+    match /lula_contatos/{contactId} {
+      allow read, write: if false;
+    }
+
+    // ── 8. Estatísticas Globais de Visitantes e Países ────────────────────────
     match /lula_analytics_v2/{docId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // 9. Amizades (Leitura pública; Gerenciamento exclusivo via API)
-    match /lula_friendships/{friendshipId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // 10. Duelos Assíncronos (Leitura pública; Escrita exclusiva via API)
-    match /lula_duels/{duelId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    // 11. Feed de Atividade Público (Leitura pública para todos os visitantes)
+    // ── 9. Feed de Atividade Público ──────────────────────────────────────────
     match /lula_activity_feed/{feedId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // 12. Sino de Notificações In-App (Acesso seguro via API)
+    // ── 10. Sino de Notificações In-App ───────────────────────────────────────
+    //   Leitura bloqueada no cliente (dados sensíveis; entregues via /api/social)
     match /lula_notifications/{notifId} {
       allow read, write: if false;
     }
 
-    // 13. Torneios Semanais com Chaveamento (Leitura pública; Escrita via API)
+    // ── 11. Torneios Semanais ─────────────────────────────────────────────────
     match /lula_tournaments/{tourneyId} {
       allow read: if true;
       allow write: if false;
     }
 
-    // 14. Coleções de Telemetria Interna (Bloqueadas para clientes)
+    // ── 12. Amizades ──────────────────────────────────────────────────────────
+    match /lula_friendships/{friendshipId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── 13. Duelos Assíncronos ────────────────────────────────────────────────
+    match /lula_duels/{duelId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── 14. Telemetria de Mortes (Interna) ────────────────────────────────────
     match /lula_debug_deaths/{deathId} {
       allow read, write: if false;
     }
 
-    // 15. Histórico de Acessos (Leitura para usuários autenticados; Escrita exclusiva via API)
+    // ── 15. Histórico de Acessos ──────────────────────────────────────────────
+    //   Escrita exclusiva via /api/access-log.js (Admin SDK).
+    //   Leitura bloqueada para clientes (dados de IP/dispositivo são privados).
     match /historico_acessos/{acessoId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if false;
+      allow read, write: if false;
     }
 
+    // ── 16. Rate Limiting de Autenticação (Interno) ───────────────────────────
     match /_auth_rate_limits/{limitId} {
       allow read, write: if false;
     }
