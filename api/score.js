@@ -1,6 +1,8 @@
 // api/score.js — Vercel Serverless Function com Validação de Token de Partida HMAC, Detecção de País/Bandeira e Cache na Edge CDN
+// NOTA: Usa Firebase Admin SDK para gravações (bypassa Firestore Security Rules, igual às demais APIs)
 import crypto from 'crypto';
 import { applyCors } from './_cors.js';
+import { db } from './_firebaseAdmin.js';
 
 function getSessionSecret() {
   const secret = process.env.SESSION_SECRET || process.env.FIREBASE_PRIVATE_KEY;
@@ -79,10 +81,17 @@ function verifySessionToken(token, expectedGame) {
   }
 }
 
+function getISOWeekKey(d = new Date()) {
+  const date = new Date(d.getTime());
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  return `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
 export default async function handler(req, res) {
   if (applyCors(req, res)) return;
-
-  const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
 
   const sanitize = (str, maxLen = 30) => {
     if (!str || typeof str !== 'string') return 'Jogador';
@@ -105,73 +114,6 @@ export default async function handler(req, res) {
     return '';
   };
 
-  const parseLeaderboardDoc = (doc) => {
-    if (!doc || !doc.fields) return [];
-    const rawValues = doc.fields?.scores?.arrayValue?.values || [];
-    const list = rawValues.map(v => {
-      const p = v.mapValue?.fields?.player?.stringValue || 'Anônimo';
-      const s = parseInt(v.mapValue?.fields?.score?.integerValue || '0', 10);
-      const u = v.mapValue?.fields?.updatedAt?.timestampValue || '';
-      const a = v.mapValue?.fields?.avatar?.stringValue || '';
-      const c = v.mapValue?.fields?.country?.stringValue || 'BR';
-      const cn = v.mapValue?.fields?.countryName?.stringValue || getCountryName(c);
-      const f = v.mapValue?.fields?.flag?.stringValue || getFlagEmoji(c);
-      return {
-        player: sanitize(p, 25),
-        score: s,
-        updatedAt: u,
-        avatar: sanitizeAvatar(a),
-        country: c,
-        countryName: cn,
-        flag: f
-      };
-    }).filter(item => !isNaN(item.score) && item.score > 0);
-
-    list.sort((a, b) => b.score - a.score);
-    return list;
-  };
-
-function getISOWeekKey(d = new Date()) {
-  const date = new Date(d.getTime());
-  date.setHours(0, 0, 0, 0);
-  date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-  const week1 = new Date(date.getFullYear(), 0, 4);
-  const weekNum = 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-  return `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
-}
-
-  const formatLeaderboardPayload = (game, scoresList, weekKey = '') => {
-    const fields = {
-      game: { stringValue: game },
-      updatedAt: { timestampValue: new Date().toISOString() },
-      scores: {
-        arrayValue: {
-          values: scoresList.slice(0, 300).map(s => {
-            const f = {
-              player: { stringValue: sanitize(s.player, 25) },
-              score: { integerValue: parseInt(s.score, 10).toString() },
-              updatedAt: { timestampValue: s.updatedAt || new Date().toISOString() },
-              country: { stringValue: s.country || 'BR' },
-              countryName: { stringValue: s.countryName || getCountryName(s.country || 'BR') },
-              flag: { stringValue: s.flag || getFlagEmoji(s.country || 'BR') }
-            };
-            if (s.avatar && typeof s.avatar === 'string') {
-              f.avatar = { stringValue: sanitizeAvatar(s.avatar) };
-            }
-            if (s.equippedMedal && typeof s.equippedMedal === 'string') {
-              f.equippedMedal = { stringValue: s.equippedMedal };
-            }
-            return { mapValue: { fields: f } };
-          })
-        }
-      }
-    };
-    if (weekKey) {
-      fields.weekKey = { stringValue: weekKey };
-    }
-    return { fields };
-  };
-
   // 1. GET: Consulta no documento consolidado Top 300 (Geral, Semanal ou Total Acumulado)
   if (req.method === 'GET') {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
@@ -185,19 +127,25 @@ function getISOWeekKey(d = new Date()) {
     if (isWeekly) docName = `${cleanGame}_weekly`;
     else if (isAccumulated) docName = `${cleanGame}_accumulated`;
 
-    const leaderboardDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
-
     try {
-      const lbRes = await fetch(leaderboardDocUrl);
-      if (lbRes.ok) {
-        const doc = await lbRes.json();
+      const snap = await db.collection('lula_leaderboards_v2').doc(docName).get();
+
+      if (snap.exists) {
+        const data = snap.data();
+
         if (isWeekly) {
-          const docWeek = doc.fields?.weekKey?.stringValue || '';
+          const docWeek = data.weekKey || '';
           if (docWeek !== currentWeekKey) {
             return res.status(200).json({ success: true, count: 0, scores: [], type: 'weekly', weekKey: currentWeekKey });
           }
         }
-        const scores = parseLeaderboardDoc(doc);
+
+        // Admin SDK retorna objetos JS nativos — score é number, não integerValue
+        const rawScores = Array.isArray(data.scores) ? data.scores : [];
+        const scores = rawScores
+          .filter(s => s && typeof s.score === 'number' && s.score > 0)
+          .sort((a, b) => b.score - a.score);
+
         const maxLimit = Math.min(300, Math.max(1, parseInt(limit, 10) || 300));
         return res.status(200).json({
           success: true,
@@ -216,6 +164,7 @@ function getISOWeekKey(d = new Date()) {
         weekKey: isWeekly ? currentWeekKey : undefined
       });
     } catch (err) {
+      console.error('❌ Erro ao ler leaderboard:', err);
       return res.status(200).json({ success: false, scores: [], type });
     }
   }
@@ -272,20 +221,21 @@ function getISOWeekKey(d = new Date()) {
     const detectedCountryName = getCountryName(detectedCountry);
 
     const collectionName = cleanGame === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
-    const docId = encodeURIComponent(cleanPlayer.toLowerCase().replace(/[^a-z0-9_]/g, '_'));
+    const docId = cleanPlayer.toLowerCase().replace(/[^a-z0-9_]/g, '_');
     const currentWeekKey = getISOWeekKey();
 
     try {
-      // 1. Grava / Atualiza documento individual do jogador
-      const userDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}/${docId}`;
-      const userDocRes = await fetch(userDocUrl);
+      // 1. Lê documento individual do jogador via Admin SDK
+      const userRef = db.collection(collectionName).doc(docId);
+      const userSnap = await userRef.get();
+
       let isNewPersonalRecord = true;
       let existingAvatar = '';
 
-      if (userDocRes.ok) {
-        const uDoc = await userDocRes.json();
-        const existingScore = parseInt(uDoc.fields?.score?.integerValue || '0', 10);
-        existingAvatar = sanitizeAvatar(uDoc.fields?.avatar?.stringValue || '');
+      if (userSnap.exists) {
+        const uData = userSnap.data();
+        const existingScore = uData.score || 0;
+        existingAvatar = sanitizeAvatar(uData.avatar || '');
         if (numScore <= existingScore) {
           isNewPersonalRecord = false;
         }
@@ -293,46 +243,45 @@ function getISOWeekKey(d = new Date()) {
 
       const finalAvatar = cleanAvatar || existingAvatar || '';
 
+      // Grava / Atualiza documento individual do jogador
       if (isNewPersonalRecord || (cleanAvatar && cleanAvatar !== existingAvatar)) {
         const userFields = {
-          player: { stringValue: cleanPlayer },
-          score: { integerValue: numScore.toString() },
-          country: { stringValue: detectedCountry },
-          countryName: { stringValue: detectedCountryName },
-          flag: { stringValue: detectedFlag },
-          updatedAt: { timestampValue: new Date().toISOString() }
+          player: cleanPlayer,
+          score: numScore,
+          country: detectedCountry,
+          countryName: detectedCountryName,
+          flag: detectedFlag,
+          updatedAt: new Date().toISOString()
         };
-        if (finalAvatar) {
-          userFields.avatar = { stringValue: finalAvatar };
-        }
+        if (finalAvatar) userFields.avatar = finalAvatar;
 
-        await fetch(userDocUrl, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fields: userFields })
-        });
+        await userRef.set(userFields, { merge: true });
       }
 
       // Função auxiliar para atualizar um documento consolidado de leaderboard (Geral, Semanal ou Acumulado)
       const updateLeaderboardDoc = async (docName, scoreToUse, isWeeklyBoard = false) => {
-        const lbDocUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/lula_leaderboards_v2/${docName}`;
-        const lbRes = await fetch(lbDocUrl);
+        const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
+        const lbSnap = await lbRef.get();
+
         let currentScores = [];
         let docWeek = '';
 
-        if (lbRes.ok) {
-          const lbDoc = await lbRes.json();
-          docWeek = lbDoc.fields?.weekKey?.stringValue || '';
+        if (lbSnap.exists) {
+          const lbData = lbSnap.data();
+          docWeek = lbData.weekKey || '';
+
           if (isWeeklyBoard && docWeek !== currentWeekKey) {
             // Nova semana: reseta a lista semanal iniciando na segunda-feira
             currentScores = [];
           } else {
-            currentScores = parseLeaderboardDoc(lbDoc);
+            currentScores = Array.isArray(lbData.scores)
+              ? lbData.scores.filter(s => s && typeof s.score === 'number' && s.score > 0)
+              : [];
           }
         }
 
         const playerKey = cleanPlayer.toLowerCase();
-        const existingIdx = currentScores.findIndex(s => s.player.toLowerCase() === playerKey);
+        const existingIdx = currentScores.findIndex(s => (s.player || '').toLowerCase() === playerKey);
         let shouldUpdate = false;
 
         if (existingIdx !== -1) {
@@ -369,11 +318,15 @@ function getISOWeekKey(d = new Date()) {
         if (shouldUpdate || (isWeeklyBoard && docWeek !== currentWeekKey)) {
           currentScores.sort((a, b) => b.score - a.score);
           const top300 = currentScores.slice(0, 300);
-          await fetch(lbDocUrl, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formatLeaderboardPayload(cleanGame, top300, isWeeklyBoard ? currentWeekKey : ''))
-          });
+
+          const payload = {
+            game: cleanGame,
+            updatedAt: new Date().toISOString(),
+            scores: top300
+          };
+          if (isWeeklyBoard) payload.weekKey = currentWeekKey;
+
+          await lbRef.set(payload);
         }
       };
 
@@ -400,18 +353,9 @@ function getISOWeekKey(d = new Date()) {
         flag: detectedFlag,
         weekKey: currentWeekKey
       });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Recorde processado com sucesso (Geral & Semanal)',
-        country: detectedCountry,
-        countryName: detectedCountryName,
-        flag: detectedFlag,
-        weekKey: currentWeekKey
-      });
     } catch (e) {
       console.error('❌ Erro no salvamento de score:', e);
-      return res.status(200).json({ success: true, fallback: true });
+      return res.status(500).json({ success: false, error: 'Erro interno ao salvar recorde.' });
     }
   }
 
