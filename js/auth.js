@@ -1,6 +1,7 @@
 // js/auth.js — Sistema de Contas, Perfis com Foto/Avatar Otimizado, Sincronização Cloud de Pablo Marçal e Recordes
 import { firebaseConfig } from './firebase-config.js';
 import { escapeHTML } from './security.js';
+import { getDeviceId } from './device-id.js';
 
 const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
@@ -835,101 +836,76 @@ class AuthManager {
     return { success: false };
   }
 
-  // 1. JOGAR SEM SENHA COM NOME ESCOLHIDO PELO JOGADOR
-  async playWithChosenName(username) {
+  // 1. RESERVAR NICKNAME COM VALIDAÇÃO DE DISPOSITIVO (SEGURANÇA)
+  async reserveNick(username) {
     const cleanName = (username || '').trim();
-    if (!cleanName || cleanName.length < 2) {
-      return { success: false, error: 'Digite um nome de jogador válido (mínimo 2 letras)!' };
+    if (!cleanName || cleanName.length < 2 || cleanName.length > 20) {
+      return { success: false, error: 'O apelido deve ter entre 2 e 20 caracteres!' };
     }
 
-    const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    const localDB = this.getLocalUsersDB();
-
-    if (localDB[normalizedName] && localDB[normalizedName].hasPassword) {
+    if (isDenylisted(cleanName)) {
       return {
         success: false,
-        error: `O nome "${cleanName}" pertence a uma conta protegida por senha! Digite a senha na aba "Entrar" ou escolha outro nome.`
+        error: 'Este apelido é reservado pelo sistema. Escolha um nome exclusivo.'
       };
     }
 
-    let remoteUser = null;
+    const deviceId = getDeviceId();
+    const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
     try {
-      const checkUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const res = await fetch(checkUrl);
-      if (res.ok) {
-        const doc = await res.json();
-        const hasPassword = doc.fields?.hasPassword?.booleanValue;
-        if (hasPassword) {
-          return {
-            success: false,
-            error: `O nome "${cleanName}" já está cadastrado com senha! Faça login na aba "Entrar" ou escolha outro nome.`
-          };
-        }
-        remoteUser = {
-          username: doc.fields?.username?.stringValue || cleanName,
-          hasPassword: false,
-          flappyScore: parseInt(doc.fields?.flappyScore?.integerValue || '0', 10),
-          runnerScore: parseInt(doc.fields?.runnerScore?.integerValue || '0', 10),
-          dilmaScore: parseInt(doc.fields?.dilmaScore?.integerValue || '0', 10),
-          totalPicanhas: parseInt(doc.fields?.totalPicanhas?.integerValue || '0', 10),
-          runnerCoins: parseInt(doc.fields?.runnerCoins?.integerValue || '0', 10),
-          avatar: doc.fields?.avatar?.stringValue || '',
-          createdAt: doc.fields?.createdAt?.timestampValue || new Date().toISOString()
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reserve_nick',
+          username: cleanName,
+          deviceId
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          error: data.error || 'Erro ao reservar apelido.',
+          code: data.code || 'ERROR',
+          hasPassword: Boolean(data.hasPassword)
         };
       }
-    } catch (e) {}
 
-    const localPicanhas = parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10);
-    const localFlappy = parseInt(localStorage.getItem('lula_best') || '0', 10);
-    const localRunner = parseInt(localStorage.getItem('run_best') || '0', 10);
-    const localDilma = parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10);
-    const localRunnerCoins = parseInt(localStorage.getItem('runner_total_coins') || '0', 10);
-
-    let userObj = remoteUser || localDB[normalizedName] || {
-      username: cleanName,
-      hasPassword: false,
-      flappyScore: localFlappy,
-      runnerScore: localRunner,
-      dilmaScore: localDilma,
-      totalPicanhas: localPicanhas,
-      runnerCoins: localRunnerCoins,
-      avatar: '',
-      createdAt: new Date().toISOString()
-    };
-
-    userObj.totalPicanhas = Math.max(userObj.totalPicanhas || 0, localPicanhas);
-    userObj.flappyScore = Math.max(userObj.flappyScore || 0, localFlappy);
-    userObj.runnerScore = Math.max(userObj.runnerScore || 0, localRunner);
-    userObj.dilmaScore = Math.max(userObj.dilmaScore || 0, localDilma);
-    userObj.runnerCoins = Math.max(userObj.runnerCoins || 0, localRunnerCoins);
-
-    localDB[normalizedName] = userObj;
-    this.saveLocalUsersDB(localDB);
-
-    try {
-      const publicDocUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/lula_users_v2/${encodeURIComponent(normalizedName)}`;
-      const publicPayload = {
-        fields: {
-          username: { stringValue: cleanName },
-          hasPassword: { booleanValue: false },
-          flappyScore: { integerValue: (userObj.flappyScore || 0).toString() },
-          runnerScore: { integerValue: (userObj.runnerScore || 0).toString() },
-          dilmaScore: { integerValue: (userObj.dilmaScore || 0).toString() },
-          totalPicanhas: { integerValue: (userObj.totalPicanhas || 0).toString() },
-          runnerCoins: { integerValue: (userObj.runnerCoins || 0).toString() },
-          avatar: { stringValue: userObj.avatar || '' },
-          createdAt: { timestampValue: userObj.createdAt }
-        }
+      const userObj = {
+        username: data.username || cleanName,
+        hasPassword: false,
+        flappyScore: parseInt(localStorage.getItem('lula_best') || '0', 10),
+        runnerScore: parseInt(localStorage.getItem('run_best') || '0', 10),
+        dilmaScore: parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10),
+        totalPicanhas: parseInt(localStorage.getItem(TOTAL_PICANHAS_KEY) || '0', 10),
+        runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10),
+        avatar: '',
+        createdAt: new Date().toISOString()
       };
-      fetch(publicDocUrl, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(publicPayload)
-      }).catch(() => {});
-    } catch (e) {}
 
-    this.setCurrentUser(userObj);
-    return { success: true, user: userObj };
+      const localDB = this.getLocalUsersDB();
+      localDB[normalizedName] = userObj;
+      localStorage.setItem(USERS_DB_KEY, JSON.stringify(localDB));
+
+      this.setCurrentUser(userObj);
+      localStorage.setItem('lula_player', cleanName);
+
+      this.renderProfileBadge();
+      return { success: true, user: userObj };
+    } catch (e) {
+      return {
+        success: false,
+        error: 'Erro de conexão ao reservar apelido. Verifique sua internet.'
+      };
+    }
+  }
+
+  // 1.1 JOGAR SEM SENHA COM NOME ESCOLHIDO (LEGACY - AGORA USA RESERVE NICK)
+  async playWithChosenName(username) {
+    return await this.reserveNick(username);
   }
 
   // 2. REGISTRAR CONTA COM PALAVRA-CHAVE
@@ -1774,6 +1750,152 @@ class AuthManager {
         this.mountAuthModal(() => this.renderProfileBadge(containerSelector));
       };
     }
+  }
+
+  // -------------------------------------------------------------
+  // GUARDIÃO DE ENTRADA OBRIGATÓRIA DE NICKNAME (SEM X / ESC / CLIQUE FORA)
+  // -------------------------------------------------------------
+  requireValidNick(onConfirmed) {
+    const user = this.getCurrentUser();
+    if (user && user.username && user.username.trim().length >= 2 && !isDenylisted(user.username)) {
+      if (onConfirmed) onConfirmed(user);
+      return;
+    }
+
+    let existingModal = document.getElementById('mandatoryNickModalOverlay');
+    if (existingModal) existingModal.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'mandatoryNickModalOverlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(5, 10, 24, 0.94); backdrop-filter: blur(14px);
+      display: flex; align-items: center; justify-content: center; z-index: 99999;
+      padding: 16px; font-family: 'Inter', sans-serif;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        background: #0f172a; border: 3px solid var(--amarelo-brasil, #ffd700);
+        border-radius: 24px; width: 100%; max-width: 440px; padding: 26px 24px;
+        color: #fff; box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(255,215,0,0.3);
+        position: relative; text-align: center; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      ">
+        <div style="font-size: 38px; margin-bottom: 6px;">🎮</div>
+        <h2 style="font-family: 'Bangers', cursive; font-size: 28px; letter-spacing: 1.5px; margin: 0 0 6px 0; color: var(--amarelo-brasil, #ffd700);">
+          ${isEnglishContext() ? 'CHOOSE YOUR NICKNAME TO PLAY' : 'ESCOLHA SEU APELIDO PARA JOGAR'}
+        </h2>
+        <p style="font-size: 13px; color: #94a3b8; margin: 0 0 18px 0; line-height: 1.45;">
+          ${isEnglishContext() ? 'Your nickname will be reserved for this device on the National Leaderboard.' : 'Seu apelido será reservado com exclusividade para este dispositivo no Ranking Nacional.'}
+        </p>
+
+        <div style="text-align: left; margin-bottom: 14px;">
+          <label style="font-size: 11px; font-weight: 700; color: #cbd5e1; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+            ${isEnglishContext() ? 'Nickname (2 to 20 letters/numbers):' : 'Apelido (2 a 20 letras/números):'}
+          </label>
+          <input type="text" id="inputMandatoryNick" maxlength="20" placeholder="${isEnglishContext() ? 'e.g. Victor_99' : 'ex: Victor_99, Daniel_BR'}" style="
+            width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid rgba(255,223,0,0.4);
+            background: rgba(255,255,255,0.06); color: #fff; font-size: 16px; font-weight: 700; box-sizing: border-box;
+            outline: none; transition: border-color 0.2s;
+          ">
+          <div id="mandatoryNickStatus" style="display:none; font-size: 12px; margin-top: 8px; padding: 8px 12px; border-radius: 8px; font-weight: 600; text-align: left;"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <button id="btnMandatoryPlay" style="
+            flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 800; font-size: 16px;
+            background: linear-gradient(135deg, #00c853, #00e676); color: #042410; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+          ">${isEnglishContext() ? '▶ PLAY NOW 🚀' : '▶ JOGAR AGORA 🇧🇷'}</button>
+        </div>
+
+        <button id="btnMandatoryLogin" style="
+          background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8;
+          padding: 8px 16px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+          transition: all 0.2s;
+        ">${isEnglishContext() ? 'Sign In / Register' : 'Entrar / Criar Conta'}</button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('#inputMandatoryNick');
+    const btn = overlay.querySelector('#btnMandatoryPlay');
+    const btnLogin = overlay.querySelector('#btnMandatoryLogin');
+    const statusDiv = overlay.querySelector('#mandatoryNickStatus');
+
+    const showModalError = (msg) => {
+      statusDiv.style.display = 'block';
+      statusDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+      statusDiv.style.border = '1px solid #ef4444';
+      statusDiv.style.color = '#fca5a5';
+      statusDiv.textContent = msg;
+    };
+
+    const handleConfirm = async () => {
+      const val = (input.value || '').trim();
+      if (!val || val.length < 2) {
+        showModalError(isEnglishContext() ? 'Nickname must have at least 2 characters.' : 'O apelido deve ter pelo menos 2 caracteres.');
+        return;
+      }
+      if (val.length > 20) {
+        showModalError(isEnglishContext() ? 'Nickname must have at most 20 characters.' : 'O apelido deve ter no máximo 20 caracteres.');
+        return;
+      }
+      if (isDenylisted(val)) {
+        showModalError(isEnglishContext() ? 'This nickname is reserved by the system.' : 'Este apelido é reservado pelo sistema.');
+        return;
+      }
+
+      btn.innerText = isEnglishContext() ? '⏳ PLAYING...' : '⏳ JOGANDO...';
+      btn.disabled = true;
+
+      const res = await this.reserveNick(val);
+      btn.innerText = isEnglishContext() ? '▶ PLAY NOW 🚀' : '▶ JOGAR AGORA 🇧🇷';
+      btn.disabled = false;
+
+      if (res.success) {
+        overlay.remove();
+        this.renderProfileBadge();
+        if (onConfirmed) onConfirmed(res.user);
+      } else {
+        if (res.hasPassword) {
+          showModalError(res.error || (isEnglishContext() ? 'This account has a password. Click Sign In.' : 'Este apelido já possui senha. Clique em Entrar na Conta.'));
+        } else {
+          showModalError(res.error || (isEnglishContext() ? 'Nickname unavailable.' : 'Apelido indisponível.'));
+        }
+      }
+    };
+
+    btn?.addEventListener('click', handleConfirm);
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirm();
+      }
+    });
+
+    btnLogin?.addEventListener('click', () => {
+      overlay.remove();
+      this.mountAuthModal((loggedUser) => {
+        this.renderProfileBadge();
+        if (onConfirmed) onConfirmed(loggedUser);
+      });
+    });
+
+    // Impede fechar com ESC ou clique fora
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, { once: true });
   }
 }
 

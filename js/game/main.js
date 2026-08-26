@@ -82,35 +82,42 @@ export class Game {
   }
 
   start() {
-    gameAudio.init();
-    gameAudio.stopAllVoiceAudios();
-    gameAudio.playStartVinheta();
-    gameAudio.startAmbience();
-    this.state = this.STATE.PLAYING;
-    startScoreSession('runner');
-    this.speed = this.baseSpeed;
-    this.distance = 0;
-    this.coins = 0;
-    this.picanhas = 0;
-    this.multiplier = 1;
-    this.consecutiveCoins = 0;
-    this.character.reset();
-    this.boss.startRun();
+    // SEGURANÇA: Exige nickname válido antes de entrar em STATE.PLAYING
+    auth.requireValidNick(() => {
+      gameAudio.init();
+      gameAudio.stopAllVoiceAudios();
+      gameAudio.playStartVinheta();
+      gameAudio.startAmbience();
+      this.state = this.STATE.PLAYING;
+      startScoreSession('runner');
+      this.speed = this.baseSpeed;
+      this.distance = 0;
+      this.coins = 0;
+      this.picanhas = 0;
+      this.multiplier = 1;
+      this.consecutiveCoins = 0;
+      this.character.reset();
+      this.boss.startRun();
+    });
   }
 
   restart() {
-    gameAudio.stopAllVoiceAudios();
-    this.ui.hideGameOver();
-    this.environment.reset();
-    this.obstacleManager.reset();
-    this.boss.reset();
+    // SEGURANÇA: Exige nickname válido antes de reiniciar o jogo
+    auth.requireValidNick(() => {
+      gameAudio.stopAllVoiceAudios();
+      this.ui.hideGameOver();
+      this.environment.reset();
+      this.obstacleManager.reset();
+      this.boss.reset();
 
-    for (let i = 2; i < this.environment.segments.length; i++) {
-      const seg = this.environment.segments[i];
-      this.obstacleManager.spawnSegmentEntities(seg, seg.position.z);
-    }
+      for (let i = 2; i < this.environment.segments.length; i++) {
+        const seg = this.environment.segments[i];
+        seg.position.z = (i - 2) * 50;
+        this.obstacleManager.spawnSegmentEntities(seg, seg.position.z);
+      }
 
-    this.start();
+      this.start();
+    });
   }
 
   onStumble(obstacle) {

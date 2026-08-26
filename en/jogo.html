@@ -2908,7 +2908,43 @@
     function handleStart() {
       try { sounds.init(); } catch(e){}
 
-      if (state === STATE.WAITING || state === STATE.DEAD) {
+      // SEGURANÇA: Exige nickname válido antes de entrar em STATE.PLAYING
+      auth.requireValidNick(() => {
+        if (state === STATE.WAITING || state === STATE.DEAD) {
+          if (startOverlay) startOverlay.style.display = 'none';
+          if (gameOverModal) gameOverModal.style.display = 'none';
+          state = STATE.PLAYING;
+          startScoreSession('flappy');
+          pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
+          lastPipeTopH = -1;
+          hasPlayedBesta = false;
+          sessionPlayTime = 0;
+          hasAlerted30s = false;
+          lulaSpawnTimer = 0;
+          lulaSlowTimer = 0;
+          nikolasTripleTimer = 0;
+          applyActiveCharacterModifiers();
+          if (scoreHUD) scoreHUD.textContent = `0 🥩`;
+          isPrisonMode = false;
+          document.body.classList.remove('prison-mode');
+          lula.init();
+          lula.jump();
+
+          // Interrompe qualquer áudio anterior e inicia trilha sutil
+          sounds.stopAllVoiceAndDeathAudios();
+          try { sounds.playBrasilIntro(); } catch(e){}
+        } else if (state === STATE.PLAYING) {
+          lula.jump();
+        }
+      });
+    }
+
+    function restartGame() {
+      try { sounds.init(); } catch(e){}
+      sounds.stopAllVoiceAndDeathAudios();
+
+      // SEGURANÇA: Exige nickname válido antes de reiniciar o jogo
+      auth.requireValidNick(() => {
         if (startOverlay) startOverlay.style.display = 'none';
         if (gameOverModal) gameOverModal.style.display = 'none';
         state = STATE.PLAYING;
@@ -2928,37 +2964,8 @@
         lula.init();
         lula.jump();
 
-        // Interrompe qualquer áudio anterior e inicia trilha sutil
-        sounds.stopAllVoiceAndDeathAudios();
         try { sounds.playBrasilIntro(); } catch(e){}
-      } else if (state === STATE.PLAYING) {
-        lula.jump();
-      }
-    }
-
-    function restartGame() {
-      try { sounds.init(); } catch(e){}
-      sounds.stopAllVoiceAndDeathAudios();
-      if (startOverlay) startOverlay.style.display = 'none';
-      if (gameOverModal) gameOverModal.style.display = 'none';
-      state = STATE.PLAYING;
-      startScoreSession('flappy');
-      pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
-      lastPipeTopH = -1;
-      hasPlayedBesta = false;
-      sessionPlayTime = 0;
-      hasAlerted30s = false;
-      lulaSpawnTimer = 0;
-      lulaSlowTimer = 0;
-      nikolasTripleTimer = 0;
-      applyActiveCharacterModifiers();
-      if (scoreHUD) scoreHUD.textContent = `0 🥩`;
-      isPrisonMode = false;
-      document.body.classList.remove('prison-mode');
-      lula.init();
-      lula.jump();
-
-      try { sounds.playBrasilIntro(); } catch(e){}
+      });
     }
 
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);

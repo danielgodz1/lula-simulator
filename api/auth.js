@@ -205,7 +205,7 @@ export default async function handler(req, res) {
   };
 
   if (req.method === 'POST') {
-    const { action, username, password } = req.body || {};
+    const { action, username, password, deviceId } = req.body || {};
     const cleanName = sanitizeName(username);
     const cleanPass = (password || '').trim();
     const normalizedName = cleanName.toLowerCase().replace(/[^a-z0-9_]/g, '_');
@@ -230,6 +230,7 @@ export default async function handler(req, res) {
     const projectId = process.env.FIREBASE_PROJECT_ID || 'motoai-43ed4';
     const userRef = db ? db.collection('lula_users_v2').doc(normalizedName) : null;
     const credRef = userRef ? userRef.collection('private').doc('credentials') : null;
+    const deviceResRef = db ? db.collection('lula_device_reservations').doc(normalizedName) : null;
 
     const fetchUserData = async () => {
       let userData = null;
@@ -275,6 +276,91 @@ export default async function handler(req, res) {
 
       return { userData, credData, userExists, credExists };
     };
+
+    // =========================================================================
+    // 0. RESERVAR NICKNAME COM VALIDAÇÃO DE DISPOSITIVO (SEGURANÇA)
+    // =========================================================================
+    if (action === 'reserve_nick') {
+      if (!deviceId || typeof deviceId !== 'string' || deviceId.length < 5) {
+        return res.status(400).json({ success: false, error: 'ID de dispositivo inválido.' });
+      }
+
+      const deviceIdHash = crypto.createHash('sha256').update(deviceId).digest('hex');
+
+      try {
+        const { userData, credData, userExists, credExists } = await fetchUserData();
+
+        // Verifica se o nickname já tem senha
+        const hasPassword = credData?.hasPassword || userData?.hasPassword || userData?.passwordHash || userData?.password;
+        if (hasPassword) {
+          return res.status(409).json({
+            success: false,
+            error: 'Este apelido já está protegido com senha. Faça login ou escolha outro nome.',
+            hasPassword: true
+          });
+        }
+
+        // Verifica reserva de dispositivo
+        if (hasAdminCredentials && deviceResRef) {
+          const deviceSnap = await deviceResRef.get();
+          if (deviceSnap.exists) {
+            const deviceData = deviceSnap.data();
+            const isSameDevice = deviceData.deviceIdHash === deviceIdHash;
+            const allowedDevices = Array.isArray(deviceData.allowedDevices) ? deviceData.allowedDevices : [];
+            const isAllowed = allowedDevices.includes(deviceIdHash);
+
+            if (!isSameDevice && !isAllowed) {
+              return res.status(401).json({
+                success: false,
+                error: 'Este apelido já está reservado para outro dispositivo. Escolha outro nome.',
+                code: 'DEVICE_RESERVED'
+              });
+            }
+          } else {
+            // Cria nova reserva de dispositivo
+            await deviceResRef.set({
+              deviceIdHash,
+              allowedDevices: [],
+              username: cleanName,
+              createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+
+        // Cria ou atualiza usuário sem senha
+        if (hasAdminCredentials && userRef) {
+          const existingData = userData || {};
+          await userRef.set({
+            username: cleanName,
+            hasPassword: false,
+            totalPicanhas: Math.max(existingData.totalPicanhas || 0, 0),
+            flappyScore: Math.max(existingData.flappyScore || 0, 0),
+            runnerScore: Math.max(existingData.runnerScore || 0, 0),
+            dilmaScore: Math.max(existingData.dilmaScore || 0, 0),
+            runnerCoins: Math.max(existingData.runnerCoins || 0, 0),
+            avatar: existingData.avatar || '',
+            unlockedCharacters: Array.isArray(existingData.unlockedCharacters) ? existingData.unlockedCharacters : ['lula'],
+            unlockedSkins: Array.isArray(existingData.unlockedSkins) ? existingData.unlockedSkins : [],
+            equippedSkins: (existingData.equippedSkins && typeof existingData.equippedSkins === 'object') ? existingData.equippedSkins : {},
+            prestigeLevel: Math.max(existingData.prestigeLevel || 0, 0),
+            loginStreak: Math.max(1, parseInt(existingData.loginStreak || 1, 10)),
+            lastLoginDate: existingData.lastLoginDate || '',
+            dailyMissions: existingData.dailyMissions || {},
+            createdAt: existingData.createdAt || admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        }
+
+        return res.status(200).json({
+          success: true,
+          username: cleanName,
+          hasPassword: false
+        });
+      } catch (err) {
+        console.error('❌ Erro ao reservar nickname:', err);
+        return res.status(500).json({ success: false, error: 'Erro ao reservar apelido no servidor.' });
+      }
+    }
 
     // =========================================================================
     // 1. REGISTRO SEGURO COM BCRYPT E PROTEÇÃO ANTI-SOBREPOSIÇÃO
