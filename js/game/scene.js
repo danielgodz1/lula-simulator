@@ -336,7 +336,7 @@ export class GameScene {
   createStylizedClouds() {
     // 6 Nuvens Volumétricas Cartoon Estilizadas (Puffy Low-Poly Clouds)
     const cloudGeo = new THREE.DodecahedronGeometry(1, 1);
-    this.cloudMat = new THREE.MeshLambertMaterial({
+    this.cloudMat = new THREE.MeshPhongMaterial({
       color: 0xffffff,
       transparent: true,
       opacity: 0.92,

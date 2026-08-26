@@ -7,6 +7,17 @@ const USERS_DB_KEY = 'lula_users_db_v2';
 const CURRENT_USER_KEY = 'lula_current_user_v2';
 const TOTAL_PICANHAS_KEY = 'flappy_total_accumulated_picanhas';
 
+const DENYLIST = [
+  'visitante', 'visitor', 'jogador', 'player', 'guest', 'anon',
+  'anônimo', 'anonimo', 'anonymous', 'user', 'admin', 'administrador',
+  'null', 'undefined', 'bot', 'system', 'sistema'
+];
+
+function isDenylisted(name) {
+  if (!name || typeof name !== 'string') return true;
+  return DENYLIST.includes(name.toLowerCase().trim());
+}
+
 function isEnglishContext() {
   return typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
 }
