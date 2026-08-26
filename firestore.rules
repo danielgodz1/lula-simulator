@@ -211,5 +211,11 @@ service cloud.firestore {
       allow create: if true;
       allow read, update, delete: if isAdmin();
     }
+
+    // 15. Histórico de Acessos (Leitura para usuários autenticados; Escrita apenas via Cloud Functions)
+    match /historico_acessos/{acessoId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Apenas Cloud Functions podem escrever
+    }
   }
 }
