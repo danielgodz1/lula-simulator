@@ -1,8 +1,19 @@
 // js/analytics-capture.js — Captura de dados de acesso no frontend (sem Cloud Functions)
 // Solução gratuita usando APIs públicas e Firestore direto do cliente
 
-import { db } from './firebase-config.js';
-import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { firebaseConfig } from './firebase-config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Inicializar Firestore
+let db = null;
+function getDB() {
+  if (!db) {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+  }
+  return db;
+}
 
 // Cache para evitar múltiplas chamadas na mesma sessão
 let sessionCaptured = false;
@@ -125,7 +136,7 @@ export async function registrarAcesso(email) {
     };
     
     // Salvar no Firestore
-    await addDoc(collection(db, 'historico_acessos'), acessoData);
+    await addDoc(collection(getDB(), 'historico_acessos'), acessoData);
     
     sessionCaptured = true;
     console.log('Acesso registrado com sucesso:', acessoData);
