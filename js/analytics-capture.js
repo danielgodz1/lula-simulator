@@ -1,19 +1,5 @@
-// js/analytics-capture.js — Captura de dados de acesso no frontend (sem Cloud Functions)
-// Solução gratuita usando APIs públicas e Firestore direto do cliente
-
-import { firebaseConfig } from './firebase-config.js';
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-// Inicializar Firestore
-let db = null;
-function getDB() {
-  if (!db) {
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-  }
-  return db;
-}
+// js/analytics-capture.js — Captura de dados de acesso no frontend (via API)
+// Solução segura usando API backend em vez de escrita direta no Firestore
 
 // Cache para evitar múltiplas chamadas na mesma sessão
 let sessionCaptured = false;
@@ -108,7 +94,7 @@ function loadScript(src) {
   });
 }
 
-// Registrar acesso no Firestore
+// Registrar acesso via API backend (seguro)
 export async function registrarAcesso(email) {
   // Evitar múltiplos registros na mesma sessão
   if (sessionCaptured) {
@@ -125,7 +111,6 @@ export async function registrarAcesso(email) {
     
     const acessoData = {
       email: email || 'unknown@lulasimulator.com.br',
-      timestamp: serverTimestamp(),
       ip: ipGeo.ip,
       geolocalizacao: ipGeo.geo,
       dispositivo: deviceInfo.dispositivo,
@@ -135,11 +120,17 @@ export async function registrarAcesso(email) {
       userAgent: navigator.userAgent
     };
     
-    // Salvar no Firestore
-    await addDoc(collection(getDB(), 'historico_acessos'), acessoData);
+    // Enviar para API backend (seguro)
+    const response = await fetch('/api/access-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(acessoData)
+    });
     
-    sessionCaptured = true;
-    console.log('Acesso registrado com sucesso:', acessoData);
+    if (response.ok) {
+      sessionCaptured = true;
+      console.log('Acesso registrado com sucesso:', acessoData);
+    }
   } catch (error) {
     console.error('Erro ao registrar acesso:', error);
     // Não falhar o login se o registro de acesso falhar
