@@ -63,6 +63,17 @@ export default async function handler(req, res) {
   // ── POST: Executa o repair ─────────────────────────────────────────────────
   if (req.method === 'POST') {
     try {
+      // Jogadores banidos: passados via query ?ban=nome ou body { bannedPlayers: ['nome'] }
+      // Exemplo: ?ban=JonesOPatriotaFacho  ou  ?ban=Jones&ban=Outro
+      const banQuery = req.query.ban
+        ? (Array.isArray(req.query.ban) ? req.query.ban : [req.query.ban])
+        : [];
+      const banBody = Array.isArray(req.body?.bannedPlayers) ? req.body.bannedPlayers : [];
+      const bannedSet = new Set([...banQuery, ...banBody].map(n => n.toLowerCase().trim()));
+
+      if (bannedSet.size > 0) {
+        console.log(`🚫 [repair-leaderboard] Jogadores banidos: ${[...bannedSet].join(', ')}`);
+      }
       console.log('🔧 [repair-leaderboard] Iniciando reconstrução dos rankings...');
 
       // 1. Lê todos os perfis de usuário (Admin SDK ignora a regra allow list: false)
@@ -70,6 +81,16 @@ export default async function handler(req, res) {
 
       const flappyMap = new Map(); // key: username_lower → entry
       const runnerMap = new Map();
+
+      // Helper: só adiciona se o jogador não estiver banido
+      const addIfNotBanned = (map, key, entry) => {
+        if (bannedSet.has(key)) return;
+        const existing = map.get(key);
+        if (!existing || entry.score > existing.score) {
+          map.set(key, entry);
+        }
+      };
+
 
       usersSnap.forEach(doc => {
         const d = doc.data();
@@ -88,18 +109,12 @@ export default async function handler(req, res) {
 
         const flappy = parseInt(d.flappyScore || 0, 10);
         if (flappy > 0) {
-          const existing = flappyMap.get(key);
-          if (!existing || flappy > existing.score) {
-            flappyMap.set(key, { player: username, score: flappy, avatar, country, countryName, flag, prestigeLevel: prestige, updatedAt });
-          }
+          addIfNotBanned(flappyMap, key, { player: username, score: flappy, avatar, country, countryName, flag, prestigeLevel: prestige, updatedAt });
         }
 
         const runner = parseInt(d.runnerScore || 0, 10);
         if (runner > 0) {
-          const existing = runnerMap.get(key);
-          if (!existing || runner > existing.score) {
-            runnerMap.set(key, { player: username, score: runner, avatar, country, countryName, flag, prestigeLevel: prestige, updatedAt });
-          }
+          addIfNotBanned(runnerMap, key, { player: username, score: runner, avatar, country, countryName, flag, prestigeLevel: prestige, updatedAt });
         }
       });
 
@@ -113,19 +128,13 @@ export default async function handler(req, res) {
           const key = d.player.toLowerCase();
           const sc = parseInt(d.score, 10);
           if (sc > 0) {
-            const existing = flappyMap.get(key);
-            if (!existing || sc > existing.score) {
-              flappyMap.set(key, {
-                player: d.player,
-                score: sc,
-                avatar: d.avatar || '',
-                country: d.country || 'BR',
-                countryName: d.countryName || d.country || 'BR',
-                flag: d.flag || getFlagEmoji(d.country || 'BR'),
-                prestigeLevel: parseInt(d.prestigeLevel || 0, 10),
-                updatedAt: d.updatedAt || new Date().toISOString()
-              });
-            }
+            addIfNotBanned(flappyMap, key, {
+              player: d.player, score: sc, avatar: d.avatar || '',
+              country: d.country || 'BR', countryName: d.countryName || d.country || 'BR',
+              flag: d.flag || getFlagEmoji(d.country || 'BR'),
+              prestigeLevel: parseInt(d.prestigeLevel || 0, 10),
+              updatedAt: d.updatedAt || new Date().toISOString()
+            });
           }
         });
 
@@ -136,19 +145,13 @@ export default async function handler(req, res) {
           const key = d.player.toLowerCase();
           const sc = parseInt(d.score, 10);
           if (sc > 0) {
-            const existing = runnerMap.get(key);
-            if (!existing || sc > existing.score) {
-              runnerMap.set(key, {
-                player: d.player,
-                score: sc,
-                avatar: d.avatar || '',
-                country: d.country || 'BR',
-                countryName: d.countryName || d.country || 'BR',
-                flag: d.flag || getFlagEmoji(d.country || 'BR'),
-                prestigeLevel: parseInt(d.prestigeLevel || 0, 10),
-                updatedAt: d.updatedAt || new Date().toISOString()
-              });
-            }
+            addIfNotBanned(runnerMap, key, {
+              player: d.player, score: sc, avatar: d.avatar || '',
+              country: d.country || 'BR', countryName: d.countryName || d.country || 'BR',
+              flag: d.flag || getFlagEmoji(d.country || 'BR'),
+              prestigeLevel: parseInt(d.prestigeLevel || 0, 10),
+              updatedAt: d.updatedAt || new Date().toISOString()
+            });
           }
         });
       } catch (scoreDocErr) {
@@ -164,13 +167,13 @@ export default async function handler(req, res) {
           existingScores.forEach(s => {
             if (!s || !s.player || !s.score) return;
             const key = s.player.toLowerCase();
+            if (bannedSet.has(key)) return; // exclui banidos do leaderboard existente
             const sc = typeof s.score === 'number' ? s.score : parseInt(s.score, 10);
             if (sc <= 0 || isNaN(sc)) return;
             const existing = map.get(key);
             if (!existing || sc > existing.score) {
               map.set(key, {
-                player: s.player,
-                score: sc,
+                player: s.player, score: sc,
                 avatar: s.avatar || existing?.avatar || '',
                 country: s.country || existing?.country || 'BR',
                 countryName: s.countryName || existing?.countryName || s.country || 'BR',
@@ -179,7 +182,6 @@ export default async function handler(req, res) {
                 updatedAt: s.updatedAt || new Date().toISOString()
               });
             } else if (existing && !existing.avatar && s.avatar) {
-              // aproveita avatar do leaderboard se o mapa ainda não tem
               existing.avatar = s.avatar;
             }
           });
