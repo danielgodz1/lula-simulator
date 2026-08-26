@@ -419,46 +419,46 @@
 
     .hero-poster-wrapper {
       position: relative;
-      max-width: 440px;
+      max-width: 480px;
       width: 100%;
       perspective: 1000px;
       animation: heroFloat 3.8s ease-in-out infinite;
     }
 
-    /* Background Poster: 3D Runner Mode */
+    /* Background Poster: 3D Runner Mode (Visible on side) */
     .hero-poster-runner-bg {
       position: absolute;
-      top: -22px;
-      right: -28px;
-      width: 92%;
-      border-radius: 28px;
-      padding: 5px;
+      top: 10px;
+      right: -85px;
+      width: 78%;
+      border-radius: 24px;
+      padding: 4px;
       background: linear-gradient(135deg, #f97316, #ef4444, #facc15);
       box-shadow: 0 16px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(249, 115, 22, 0.45);
-      transform: rotate(6deg) scale(0.96);
+      transform: rotate(7deg) scale(0.95);
       transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 1;
-      opacity: 0.92;
+      opacity: 0.96;
     }
 
     .hero-poster-runner-img {
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 23px;
+      border-radius: 20px;
       object-fit: cover;
     }
 
     .hero-runner-tag {
       position: absolute;
       top: -12px;
-      left: 20px;
+      right: 15px;
       background: linear-gradient(135deg, #dc2626, #991b1b);
       border: 1.5px solid #ffffff;
       padding: 4px 14px;
       border-radius: 50px;
       font-family: 'Bangers', cursive;
-      font-size: 14px;
+      font-size: 13px;
       color: #fff;
       letter-spacing: 0.8px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.7);
@@ -468,23 +468,24 @@
     /* Foreground Poster: Flappy Lula */
     .hero-poster-flappy-fg {
       position: relative;
-      border-radius: 30px;
-      padding: 6px;
+      width: 82%;
+      border-radius: 28px;
+      padding: 5px;
       background: linear-gradient(135deg, var(--amarelo-brasil), #00e676, #0284c7, #ffdf00);
       box-shadow: 0 22px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(255, 223, 0, 0.35);
-      transform: rotate(-2deg);
+      transform: rotate(-3deg);
       transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 2;
     }
 
     .hero-poster-wrapper:hover .hero-poster-runner-bg {
-      transform: rotate(11deg) translate(28px, -15px) scale(1.02);
+      transform: rotate(12deg) translate(35px, -10px) scale(1.04);
       opacity: 1.0;
-      box-shadow: 0 20px 60px rgba(249, 115, 22, 0.65);
+      box-shadow: 0 22px 65px rgba(249, 115, 22, 0.75);
     }
 
     .hero-poster-wrapper:hover .hero-poster-flappy-fg {
-      transform: rotate(-4deg) scale(1.03);
+      transform: rotate(-5deg) translate(-15px, 0) scale(1.02);
     }
 
     @keyframes heroFloat {

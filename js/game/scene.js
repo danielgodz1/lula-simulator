@@ -62,27 +62,21 @@ export class GameScene {
       grad.addColorStop(0.35, '#4338ca');
       grad.addColorStop(0.70, '#f43f5e');
       grad.addColorStop(1.0, '#fed7aa');
-    } else if (t < 0.45) {
-      // 2. Manhã Radiante Tropical (8h - 11h) — Cores vivas estilo Subway Surfers
-      grad.addColorStop(0.0, '#0284c7');
-      grad.addColorStop(0.35, '#38bdf8');
-      grad.addColorStop(0.75, '#7dd3fc');
-      grad.addColorStop(1.0, '#bae6fd');
     } else if (t < 0.70) {
-      // 3. Meio-Dia Solar Carioca (12h - 15h)
-      grad.addColorStop(0.0, '#0284c7');
-      grad.addColorStop(0.40, '#38bdf8');
-      grad.addColorStop(0.80, '#bae6fd');
-      grad.addColorStop(1.0, '#e0f2fe');
+      // 2. Candy Favela Golden Noon / Late Morning (8h - 15h) — Zenith Azul Celeste e Horizonte Pêssego Dourado
+      grad.addColorStop(0.0, '#3ba7ff');
+      grad.addColorStop(0.35, '#64b5f6');
+      grad.addColorStop(0.75, '#93c5fd');
+      grad.addColorStop(1.0, '#ffd9a8');
     } else if (t < 0.85) {
-      // 4. Pôr do Sol Dourado (16h - 19h)
+      // 3. Pôr do Sol Dourado (16h - 19h)
       grad.addColorStop(0.0, '#1e1b4b');
       grad.addColorStop(0.30, '#7c2d12');
       grad.addColorStop(0.55, '#ea580c');
       grad.addColorStop(0.80, '#f59e0b');
       grad.addColorStop(1.0, '#fef08a');
     } else {
-      // 5. Noite Estrelada (20h - 4h)
+      // 4. Noite Estrelada (20h - 4h)
       grad.addColorStop(0.0, '#020617');
       grad.addColorStop(0.45, '#0f172a');
       grad.addColorStop(0.80, '#1e293b');
@@ -113,11 +107,10 @@ export class GameScene {
     const center = size / 2;
 
     const grad = ctx.createRadialGradient(center, center, 0, center, center, center);
-    grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
-    grad.addColorStop(0.15, 'rgba(255, 250, 200, 0.95)');
-    grad.addColorStop(0.32, 'rgba(255, 215, 0, 0.80)');
-    grad.addColorStop(0.55, 'rgba(251, 146, 60, 0.45)');
-    grad.addColorStop(0.80, 'rgba(249, 115, 22, 0.15)');
+    grad.addColorStop(0.0, '#ffe566');
+    grad.addColorStop(0.20, '#ffb020');
+    grad.addColorStop(0.48, '#ff7a18');
+    grad.addColorStop(0.78, 'rgba(255, 122, 24, 0.25)');
     grad.addColorStop(1.0, 'rgba(234, 88, 12, 0.0)');
 
     ctx.fillStyle = grad;
@@ -200,9 +193,9 @@ export class GameScene {
 
     this.perfCheckTimer = 0;
 
-    // Mapeamento de Tons ACES Filmic com Maior Saturação e Contraste Pop
+    // Mapeamento de Tons ACES Filmic Calibrado Cartoon (Zero washed-out, alto contraste de cores)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.35;
+    this.renderer.toneMappingExposure = 0.92;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -233,30 +226,30 @@ export class GameScene {
     // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Iluminação Solar Golden Hour de Fim de Tarde Radiante (Estilo Subway Surfers)
-    // A. Luz Hemisférica (Céu Azul Real / Solo Terroso Quente)
-    this.hemiLight = new THREE.HemisphereLight(0x0284c7, 0x9a3412, 0.85);
+    // 6. Iluminação Pixar / Subway Surfers Candy Favela
+    // A. Luz Hemisférica (Céu Azul Celeste 0x7ec8ff / Solo Terroso 0x5b4a3a)
+    this.hemiLight = new THREE.HemisphereLight(0x7ec8ff, 0x5b4a3a, 0.55);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Solar Direcional Principal (Sol Dourado Quente Lateral a 45º com Luz Âmbar)
-    this.sunLight = new THREE.DirectionalLight(0xffa834, 2.1);
-    this.sunLight.position.set(45, 38, 35);
+    // B. Luz Solar Direcional Principal (Sol Dourado Quente 0xffd089, Intensidade 1.15)
+    this.sunLight = new THREE.DirectionalLight(0xffd089, 1.15);
+    this.sunLight.position.set(40, 48, 30);
     this.scene.add(this.sunLight);
 
-    // C. Luz Secundária de Preenchimento Oposta (Azul Celeste Elétrico para Contraste e Sombras Vivas)
-    this.fillLight = new THREE.DirectionalLight(0x0284c7, 0.68);
-    this.fillLight.position.set(-45, 28, -20);
+    // C. Luz Secundária de Preenchimento Oposta (Cool Blue Rim 0x5aa9ff, Intensidade 0.22)
+    this.fillLight = new THREE.DirectionalLight(0x5aa9ff, 0.22);
+    this.fillLight.position.set(-40, 25, -15);
     this.scene.add(this.fillLight);
 
-    // D. Luz Noturna de Pista
-    this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.0, 35, 1.5);
-    this.playerSpotLight.position.set(0, 5.2, 2.0);
+    // D. Luz de Preenchimento Sutil do Player
+    this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.25, 30, 1.5);
+    this.playerSpotLight.position.set(0, 4.8, 2.0);
     this.scene.add(this.playerSpotLight);
 
-    // 7. Sol Dourado-Alaranjado no Horizonte (Late Afternoon Sun)
+    // 7. Sol Dourado Cartoon (Zero Branco no Centro)
     this.sunGroup = new THREE.Group();
-    this.sunGroup.position.set(38, 22, -260);
+    this.sunGroup.position.set(38, 32, -260);
 
     const sunTexture = this.createSunTexture(512);
     const sunRaysTexture = this.createSunRaysTexture(512);
@@ -266,7 +259,7 @@ export class GameScene {
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      color: 0xfffbeb
+      color: 0xffe566
     });
     const sunCoreSprite = new THREE.Sprite(sunCoreMat);
     sunCoreSprite.scale.set(95, 95, 1);

@@ -48,19 +48,19 @@ export class ObstacleManager {
       ],
       goldCoin: new THREE.MeshStandardMaterial({
         map: textureAtlas.goldStarCoinTexture,
-        color: 0xfffbeb,
-        metalness: 0.92,
+        color: 0xffd24d,
+        metalness: 0.90,
         roughness: 0.12,
-        emissive: 0xd97706,
-        emissiveIntensity: 0.5,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 0.55,
         side: THREE.DoubleSide
       }),
       goldCoinRim: new THREE.MeshStandardMaterial({
-        color: 0xfacc15,
+        color: 0xffd24d,
         metalness: 0.95,
-        roughness: 0.15,
-        emissive: 0xb45309,
-        emissiveIntensity: 0.45
+        roughness: 0.12,
+        emissive: 0xf59e0b,
+        emissiveIntensity: 0.55
       }),
       goldParticle: new THREE.MeshStandardMaterial({
         color: 0xffd700,
@@ -202,10 +202,9 @@ export class ObstacleManager {
           break;
 
         case 3:
-          this.createClotheslineObstacle(parent, LANES[chosenLane], localZ);
-          if (Math.random() > 0.3) {
-            this.createPicanhaCollectible(parent, LANES[chosenLane], localZ);
-          }
+          // Barreira Suspensa com Picanha: elevada com vão livre de 1.25m no chão para slide perfeito!
+          this.createOverheadBarrierObstacle(parent, LANES[chosenLane], localZ);
+          this.createPicanhaCollectible(parent, LANES[chosenLane], localZ);
           break;
 
         case 4:
@@ -313,15 +312,27 @@ export class ObstacleManager {
     const train = new THREE.Group();
     train.position.set(laneX, 1.7, localZ);
 
-    // Seleção Dinâmica entre 3 Pinturas Realistas (Metrô Rio, Metrô SP, Expresso Brasil)
+    // Seleção de Pintura com EMERALD BRASIL como padrão vibrante (Pixar / Subway Surfers)
     const trainThemes = [
       {
-        id: 'rio',
-        name: 'Trem do Metrô Rio',
-        sideTex: textureAtlas.trainSideRio,
-        frontTex: textureAtlas.trainFrontRio,
-        accentColor: 0x0284c7,
-        roofColor: 0x94a3b8
+        id: 'br',
+        name: 'Expresso Brasil 3D',
+        sideTex: textureAtlas.trainSideBR,
+        frontTex: textureAtlas.trainFrontBR,
+        accentColor: 0x1F7A4A,
+        darkPanelColor: 0x145C38,
+        stripeColor: 0xE8C547,
+        roofColor: 0x145C38
+      },
+      {
+        id: 'br',
+        name: 'Expresso Brasil 3D',
+        sideTex: textureAtlas.trainSideBR,
+        frontTex: textureAtlas.trainFrontBR,
+        accentColor: 0x1F7A4A,
+        darkPanelColor: 0x145C38,
+        stripeColor: 0xE8C547,
+        roofColor: 0x145C38
       },
       {
         id: 'sp',
@@ -329,15 +340,19 @@ export class ObstacleManager {
         sideTex: textureAtlas.trainSideSP,
         frontTex: textureAtlas.trainFrontSP,
         accentColor: 0xdc2626,
-        roofColor: 0x94a3b8
+        darkPanelColor: 0x991b1b,
+        stripeColor: 0xfacc15,
+        roofColor: 0x475569
       },
       {
-        id: 'br',
-        name: 'Expresso Brasil 3D',
-        sideTex: textureAtlas.trainSideBR,
-        frontTex: textureAtlas.trainFrontBR,
-        accentColor: 0x16a34a,
-        roofColor: 0x334155
+        id: 'rio',
+        name: 'Trem do Metrô Rio',
+        sideTex: textureAtlas.trainSideRio,
+        frontTex: textureAtlas.trainFrontRio,
+        accentColor: 0x0284c7,
+        darkPanelColor: 0x0369a1,
+        stripeColor: 0xfacc15,
+        roofColor: 0x475569
       }
     ];
 
@@ -916,6 +931,55 @@ export class ObstacleManager {
         this._aabb.maxY = 1.65;
         this._aabb.minZ = pz - 0.40;
         this._aabb.maxZ = pz + 0.40;
+        return this._aabb;
+      }
+    });
+  }
+
+  // 4B. BARREIRA SUSPENSA COM VÃO LIVRE NO SOLO (Passa por baixo com Slide perfeito!)
+  createOverheadBarrierObstacle(parent, laneX, localZ) {
+    const barrierGroup = new THREE.Group();
+    barrierGroup.position.set(laneX, 1.85, localZ);
+
+    const metalMat = new THREE.MeshLambertMaterial({ color: 0x475569, roughness: 0.5 });
+    [-1.0, 1.0].forEach(px => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 8), metalMat);
+      pole.position.set(px, -0.65, 0);
+      pole.castShadow = true;
+      barrierGroup.add(pole);
+    });
+
+    // Placa de Alerta Suspensa (Fica a Y=1.45m a 2.25m do chão -> 1.45m de vão livre para Slide!)
+    const signGeo = new THREE.BoxGeometry(2.1, 0.70, 0.12);
+    const signMat = new THREE.MeshLambertMaterial({
+      map: textureAtlas.subwayChevronBarrierTexture,
+      side: THREE.DoubleSide,
+      roughness: 0.35
+    });
+    const signMesh = new THREE.Mesh(signGeo, signMat);
+    signMesh.position.set(0, 0, 0);
+    signMesh.castShadow = true;
+    barrierGroup.add(signMesh);
+
+    parent.add(barrierGroup);
+
+    this.obstacles.push({
+      name: 'Barreira Aérea (Deslize!)',
+      type: 'clothesline',
+      mesh: barrierGroup,
+      parent: parent,
+      laneX: laneX,
+      localZ: localZ,
+      isOverhead: true,
+      _aabb: { minX: 0, maxX: 0, minY: 0, maxY: 0, minZ: 0, maxZ: 0 },
+      getAABB() {
+        const pz = parent.position.z + barrierGroup.position.z;
+        this._aabb.minX = laneX - 1.05;
+        this._aabb.maxX = laneX + 1.05;
+        this._aabb.minY = 1.35;
+        this._aabb.maxY = 2.45;
+        this._aabb.minZ = pz - 0.35;
+        this._aabb.maxZ = pz + 0.35;
         return this._aabb;
       }
     });

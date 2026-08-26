@@ -239,16 +239,16 @@ export class Character {
       hairColor = 0x334155; // Cabelo Escuro Característico
       hasSash = true;
     } else {
-      // Empresário Faria Lima
-      suitColor = 0x1e293b;
-      tieColor = 0xef4444;
+      // Empresário 3D (Pixar / Subway Surfers Cover Art: Terno Azul Royal 0x2B6CFF, Gravata 0xE11D2E)
+      suitColor = 0x2B6CFF;
+      tieColor = 0xE11D2E;
       hasGlasses = true;
     }
 
-    const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.5 });
+    const suitMat = new THREE.MeshStandardMaterial({ color: suitColor, roughness: 0.45, metalness: 0.1 });
     const shirtMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 });
-    const tieMat = new THREE.MeshStandardMaterial({ color: tieColor, roughness: 0.3 });
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xfcd34d, roughness: 0.6 });
+    const tieMat = new THREE.MeshStandardMaterial({ color: tieColor, roughness: 0.25 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xE8B489, roughness: 0.55 });
     const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, roughness: 0.8 });
     const shoeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3 });
 

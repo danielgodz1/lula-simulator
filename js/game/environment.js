@@ -101,7 +101,7 @@ export class Environment {
 
     // Materiais Compartilhados Globais
     this.sharedMaterials = {
-      asphalt: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
+      asphalt: new THREE.MeshLambertMaterial({ color: 0x4b5568 }),
       gravel: new THREE.MeshLambertMaterial({
         map: textureAtlas.warmTracksGroundTexture,
         color: 0xffffff
@@ -112,12 +112,10 @@ export class Environment {
         map: textureAtlas.woodTieTexture,
         color: 0xffffff
       }),
-      steelRail: new THREE.MeshStandardMaterial({
-        color: 0xf8fafc,
-        metalness: 0.95,
-        roughness: 0.12,
-        emissive: 0x38bdf8,
-        emissiveIntensity: 0.1
+      steelRail: new THREE.MeshPhongMaterial({
+        color: 0xc9d3dc,
+        specular: 0x7dd3fc,
+        shininess: 45
       }),
       concreteWall: new THREE.MeshLambertMaterial({ color: 0x94a3b8 }),
       graffitiWall: new THREE.MeshLambertMaterial({ map: textureAtlas.atlasTexture }),
@@ -128,9 +126,9 @@ export class Environment {
       dumpster: new THREE.MeshLambertMaterial({ color: 0x16a34a }),
       rebar: new THREE.MeshLambertMaterial({ map: textureAtlas.rebarTexture, color: 0x9a3412 }),
       concreteSlab: new THREE.MeshLambertMaterial({ map: textureAtlas.concreteSlabTexture, color: 0x94a3b8 }),
-      brickHouse: new THREE.MeshLambertMaterial({ map: textureAtlas.brickRedTexture, color: 0xffffff }),
+      brickHouse: new THREE.MeshLambertMaterial({ map: textureAtlas.brickRedTexture, color: 0xc45c26 }),
       tileHouse: new THREE.MeshLambertMaterial({ map: textureAtlas.tileFacadeTexture }),
-      houseBase: new THREE.MeshLambertMaterial(),
+      houseBase: new THREE.MeshPhongMaterial({ shininess: 14, specular: 0x222222 }),
       windowMat: new THREE.MeshBasicMaterial({ map: textureAtlas.facadeWindowTexture }),
       windowGrilleMat: new THREE.MeshBasicMaterial({ map: textureAtlas.windowGrilleTexture }),
       modernWindowMat: new THREE.MeshBasicMaterial({ map: textureAtlas.modernWindowTexture }),
@@ -225,19 +223,17 @@ export class Environment {
       npcCupMat: new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.85 })
     };
 
+    // Paleta Candy Favela (Pixar / Subway Surfers)
     this.houseColors = [
-      0xf59e0b, // Amarelo Solar Dourado
-      0xea580c, // Laranja Queimado
-      0x0284c7, // Azul Royal Carioca
-      0x10b981, // Verde Esmeralda Tropical
-      0xec4899, // Rosa Pink Carioca
-      0x8b5cf6, // Roxo Açaí
-      0xf43f5e, // Vermelho Coral
-      0x06b6d4, // Ciano Turquesa
-      0xca8a04, // Ocre Solar
-      0x14b8a6, // Menta Tropical
-      0x38bdf8, // Azul Celeste
-      0xc2410c  // Terracota
+      0xFF6B7A, // Coral Pink
+      0x4EE0C4, // Turquesa Claro
+      0x2EC4B6, // Verde Menta Tropical
+      0xF5C542, // Amarelo Solar Dourado
+      0xB9A6FF, // Lilás Candy
+      0x5AA9FF, // Azul Celeste Vibrante
+      0xFFB07A, // Pêssego Quente
+      0x8BD44A, // Verde Limão
+      0xFF7AA2  // Rosa Carioca
     ];
 
     this.init();
