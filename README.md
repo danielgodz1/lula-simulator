@@ -177,14 +177,85 @@
   - **Painel de Métricas de Debug em Tempo Real**: Ativável via tecla `D` ou botão `⚡ FPS`.
 - **📅 Placar Geral vs Placar Semanal Rotativo ([ranking.html](ranking.html) & [/api/score.js](api/score.js))**:
   - Classificação rotativa por Semana ISO (`YYYY-Www`) com medalhas de honra equipáveis.
+- **🔒 Correção Crítica de Segurança do Sistema de Rankings (26/08/2026)**:
+  - `api/score.js` migrado de REST API sem autenticação para **Firebase Admin SDK** (igual a todas as outras APIs), corrigindo gravação de scores bloqueada pelas Firestore Security Rules.
+  - `api/sync.js` agora também atualiza `lula_leaderboards_v2/flappy` e `/runner` a cada sincronização de perfil — criando **dupla redundância** com o `score.js`.
+  - Criado `api/repair-leaderboard.js`: endpoint administrativo protegido que reconstrói os rankings a partir de múltiplas fontes (perfis + score docs + leaderboard existente), com suporte a banimento de jogadores trapaceiros via `?ban=`.
+  - 108 jogadores do Flappy Lula e 66 do Empresário 3D recuperados. Score injetado por trapaceiro removido.
+
+---
+
+## 🔒 Arquitetura de Segurança — Rankings & Anti-Cheat
+
+### Zero Client Writes
+O browser **nunca** escreve diretamente no Firestore. Todas as gravações ocorrem exclusivamente pelas rotas serverless `/api/*` usando o **Firebase Admin SDK**, que bypassa as Security Rules por privilégio de servidor.
+
+```
+Firestore Rules: allow write: if false  (todas as coleções)
+                       ↓
+         Nenhum cliente consegue escrever
+                       ↓
+         Apenas Admin SDK nas rotas /api/* grava
+```
+
+### Proteção Anti-Score Injection
+| Camada | Proteção |
+|---|---|
+| **Firestore Rules** | `allow write: if false` — cliente não escreve diretamente |
+| **HMAC Session Token** | Cada partida exige token assinado com `SESSION_SECRET` pelo servidor |
+| **Token expira em 10 min** | Impossível pré-gerar tokens |
+| **Anti-spam 300ms** | Token usado < 300ms após criação é rejeitado |
+| **Limite de score: 50.000** | Valores absurdos são rejeitados pelo servidor |
+
+### Rotas de Escrita (Admin SDK)
+| Rota | Coleções gravadas |
+|---|---|
+| `/api/score.js` | `lula_scores_v2`, `lula_runner_scores_v2`, `lula_leaderboards_v2` |
+| `/api/auth.js` | `lula_users_v2`, `lula_nick_reservations`, `_auth_rate_limits` |
+| `/api/sync.js` | `lula_users_v2`, `lula_leaderboards_v2`, `lula_activity_feed` |
+| `/api/social.js` | `lula_activity_feed`, `lula_notifications`, `lula_tournaments`, `lula_friendships`, `lula_duels` |
+| `/api/feedback.js` | `lula_feedbacks` |
+| `/api/contact.js` | `lula_contatos` |
+| `/api/analytics.js` | `lula_analytics_v2` |
+| `/api/access-log.js` | `historico_acessos` |
+| `/api/shop.js` | `lula_users_v2` |
+
+### Fluxo de Gravação de Score (Dupla Redundância)
+```
+Partida termina
+      │
+      ├─► /api/score → Admin SDK → lula_leaderboards_v2/flappy (geral + semanal + acumulado)
+      │
+      └─► /api/sync  → Admin SDK → lula_leaderboards_v2/flappy (geral)
+                                 → lula_leaderboards_v2/runner (geral)
+```
+
+## 🛠️ Ferramenta de Reparo de Rankings
+
+### Endpoint de Repair Administrativo
+`/api/repair-leaderboard` — protegido pela variável de ambiente `REPAIR_SECRET`.
+
+```js
+// Dry-run (só lê, não modifica):
+// GET /api/repair-leaderboard?key=SUA_CHAVE
+
+// Repair completo (reconstrói leaderboard preservando todos os dados):
+fetch('/api/repair-leaderboard?key=SUA_CHAVE', { method: 'POST' })
+
+// Banir jogador trapaceiro:
+fetch('/api/repair-leaderboard?key=SUA_CHAVE&ban=NomeDoTrapaceiro', { method: 'POST' })
+```
+
+> **Documentação completa:** [`CORRECAO_RANKINGS_2026-08-26.md`](CORRECAO_RANKINGS_2026-08-26.md)
 
 ---
 
 ## 💻 Tecnologias Utilizadas
 
 - **Frontend Core**: HTML5, Vanilla JavaScript (ES6+ Modules), Vanilla CSS3 (Design System próprio, Glassmorphism, Micro-animações).
-- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL) com Shaders GLSL customizados para animação fisiológica de corrida.
-- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`).
+- **Gráficos 3D**: [Three.js r128](https://threejs.org/) (WebGL) with Shaders GLSL customizados e Otimização de Garbage Collection (Object Pooling).
+- **Backend Serverless**: Node.js 18+ em Vercel Functions (`/api/auth`, `/api/score`, `/api/shop`, `/api/social`, `/api/contact`, `/api/feedback`, `/api/sync`).
+- **Comunicação Transacional**: [Resend](https://resend.com) SDK para disparo de e-mails em HTML.
 - **Banco de Dados & Autenticação**: Google Cloud Firestore & Firebase Admin SDK.
 - **Deploy & CI/CD**: [Vercel](https://vercel.com) com deploy automático a cada push no GitHub.
 
