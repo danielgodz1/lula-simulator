@@ -308,11 +308,8 @@
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="index.html" class="nav-brand">
-      <span>🇧🇷</span>
-      <span>Lula Simulator</span>
-    </a>
-    <button class="nav-toggle-btn" id="navToggle" aria-label="Abrir Menu">☰ Menu</button>
+    <a href="index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
+    <button class="nav-toggle-btn" id="navToggle" aria-label="Menu de Navegação">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
       <li><a href="index.html">Início</a></li>
       <li><a href="jogo.html">🐦 Flappy Lula</a></li>
@@ -321,9 +318,9 @@
       <li><a href="loja.html">🛍️ Loja de Skins</a></li>
       <li><a href="conquistas.html">🏅 Conquistas</a></li>
       <li><a href="ranking.html" class="active">🏆 Ranking</a></li>
-      <li><a href="feedback.html">⭐ Avaliações</a></li>
-      <li><a href="visitantes.html">📊 Tráfego</a></li>
-      <li><a href="contato.html">✉️ Contato</a></li>
+      <li><a href="visitantes.html">🌍 Visitantes</a></li>
+      <li><a href="feedback.html">⭐ Feedbacks</a></li>
+      <li><a href="contato.html">📬 Contato</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
       <div id="notifBellHeaderContainer"></div>
@@ -333,14 +330,14 @@
 
   <div class="page">
     <div class="page-header">
-      <h1>🏆 RANKING NACIONAL</h1>
-      <p>Confira a classificação dos jogadores em tempo real nos modos Geral, Semanal e Invictos!</p>
+      <h1>🏆 RANKING NACIONAL AO VIVO 🇧🇷</h1>
+      <p>Veja os melhores jogadores de Flappy Lula e do modo Empresário 3D em tempo real!</p>
     </div>
 
     <!-- ABAS FLAPPY vs RUNNER 3D -->
     <div class="tab-buttons">
       <button class="tab-btn active" id="tabFlappy">🐦 Flappy Lula (Picanhas)</button>
-      <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (KM)</button>
+      <button class="tab-btn" id="tabRunner">🏃 Empresário 3D (Metros)</button>
     </div>
 
     <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO vs INVICTOS -->
@@ -349,6 +346,16 @@
       <button class="period-btn" id="periodWeekly">📅 Recorde Semanal</button>
       <button class="period-btn" id="periodAccumulated">💰 Total Acumulado</button>
       <button class="period-btn" id="periodInvictos" style="border-color: rgba(239, 68, 68, 0.4);">🔥 Invictos (Win Streak)</button>
+    </div>
+
+    <!-- CONTADOR REGRESSIVO DA TEMPORADA SEMANAL (Segunda 00h -> Domingo 23h59) -->
+    <div id="weeklyCountdownBanner" style="display:none; background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(239, 68, 68, 0.15)); border: 1.5px solid var(--amarelo-brasil); border-radius: 14px; padding: 12px 18px; margin: 14px auto 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+      <div style="font-family:'Bangers',cursive; font-size:20px; color:var(--amarelo-brasil); letter-spacing:1px; margin-bottom:4px;">
+        ⏳ TEMPORADA SEMANAL EM ANDAMENTO
+      </div>
+      <div style="font-size:13.5px; color:#e2e8f0;">
+        O ranking semanal encerra todo <strong style="color:#facc15;">domingo às 23:59</strong>. Tempo restante: <strong id="weeklyTimerDisplay" style="color:#22c55e; font-family:'Bangers',cursive; font-size:18px; letter-spacing:1px; margin-left:4px;">--d --h --m --s</strong>
+      </div>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -405,9 +412,46 @@
       document.getElementById('periodWeekly').className = `period-btn ${period === 'weekly' ? 'active' : ''}`;
       document.getElementById('periodAccumulated').className = `period-btn ${period === 'accumulated' ? 'active' : ''}`;
       document.getElementById('periodInvictos').className = `period-btn ${period === 'invictos' ? 'active' : ''}`;
+      
+      const weeklyBanner = document.getElementById('weeklyCountdownBanner');
+      if (weeklyBanner) {
+        weeklyBanner.style.display = period === 'weekly' ? 'block' : 'none';
+      }
+
       document.getElementById('searchRankingInput').value = '';
       loadRankingData();
     }
+
+    // Atualização em Tempo Real do Cronômetro Semanal (Encerramento todo domingo às 23:59:59)
+    function updateWeeklyCountdown() {
+      const timerEl = document.getElementById('weeklyTimerDisplay');
+      if (!timerEl) return;
+
+      const now = new Date();
+      const day = now.getDay(); // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+      const daysUntilSunday = (7 - day) % 7;
+      
+      const target = new Date(now);
+      target.setDate(now.getDate() + daysUntilSunday);
+      target.setHours(23, 59, 59, 999);
+
+      const diffMs = target.getTime() - now.getTime();
+      if (diffMs <= 0) {
+        timerEl.textContent = '00d 00h 00m 00s';
+        return;
+      }
+
+      const totalSec = Math.floor(diffMs / 1000);
+      const d = Math.floor(totalSec / 86400);
+      const h = Math.floor((totalSec % 86400) / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+
+      timerEl.textContent = `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+    }
+
+    setInterval(updateWeeklyCountdown, 1000);
+    updateWeeklyCountdown();
 
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');

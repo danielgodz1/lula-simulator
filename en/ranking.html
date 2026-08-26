@@ -307,11 +307,9 @@
 <body>
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
+  <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
-    <a href="/en/index.html" class="nav-brand">
-      <span>🇧🇷</span>
-      <span>Flappy Lula</span>
-    </a>
+    <a href="/en/index.html" class="nav-brand">🇧🇷 LULA SIMULATOR</a>
     <button class="nav-toggle-btn" id="navToggle" aria-label="Navigation Menu">☰ Menu</button>
     <ul class="nav-links" id="navLinksList">
       <li><a href="/en/index.html">Home</a></li>
@@ -321,8 +319,8 @@
       <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
       <li><a href="/en/conquistas.html">🏅 Achievements</a></li>
       <li><a href="/en/ranking.html" class="active">🏆 Leaderboard</a></li>
-      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
       <li><a href="/en/visitantes.html">🌍 Visitors</a></li>
+      <li><a href="/en/feedback.html">⭐ Feedback</a></li>
       <li><a href="/en/contato.html">📬 Contact</a></li>
     </ul>
     <div style="display: flex; align-items: center; gap: 8px;">
@@ -333,14 +331,14 @@
 
   <div class="page">
     <div class="page-header">
-      <h1>🏆 GLOBAL LEADERBOARD</h1>
+      <h1>🏆 GLOBAL LEADERBOARD LIVE 🌍</h1>
       <p>Check real-time player rankings across All-Time, Weekly, and Win Streak leaderboards!</p>
     </div>
 
     <!-- ABAS FLAPPY vs RUNNER 3D -->
     <div class="tab-buttons">
       <button class="tab-btn active" id="tabFlappy">🐦 Flappy Lula (Steaks)</button>
-      <button class="tab-btn" id="tabRunner">🏃 3D Runner (km)</button>
+      <button class="tab-btn" id="tabRunner">🏃 3D Runner (Meters)</button>
     </div>
 
     <!-- SELETOR DE PERÍODO: GERAL vs SEMANAL vs ACUMULADO vs INVICTOS -->
@@ -349,6 +347,16 @@
       <button class="period-btn" id="periodWeekly">📅 Weekly Leaderboard</button>
       <button class="period-btn" id="periodAccumulated">💰 Total Accumulated</button>
       <button class="period-btn" id="periodInvictos" style="border-color: rgba(239, 68, 68, 0.4);">🔥 Win Streak Champions</button>
+    </div>
+
+    <!-- WEEKLY COUNTDOWN BANNER (Monday 00:00 -> Sunday 23:59) -->
+    <div id="weeklyCountdownBanner" style="display:none; background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(239, 68, 68, 0.15)); border: 1.5px solid var(--amarelo-brasil); border-radius: 14px; padding: 12px 18px; margin: 14px auto 16px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+      <div style="font-family:'Bangers',cursive; font-size:20px; color:var(--amarelo-brasil); letter-spacing:1px; margin-bottom:4px;">
+        ⏳ ACTIVE WEEKLY SEASON
+      </div>
+      <div style="font-size:13.5px; color:#e2e8f0;">
+        Weekly leaderboard resets every <strong style="color:#facc15;">Sunday at 23:59</strong>. Time remaining: <strong id="weeklyTimerDisplay" style="color:#22c55e; font-family:'Bangers',cursive; font-size:18px; letter-spacing:1px; margin-left:4px;">--d --h --m --s</strong>
+      </div>
     </div>
 
     <!-- BANNER DE MONETIZAÇÃO RANKING 320x50 (AUTO-REFRESH) -->
@@ -405,9 +413,46 @@
       document.getElementById('periodWeekly').className = `period-btn ${period === 'weekly' ? 'active' : ''}`;
       document.getElementById('periodAccumulated').className = `period-btn ${period === 'accumulated' ? 'active' : ''}`;
       document.getElementById('periodInvictos').className = `period-btn ${period === 'invictos' ? 'active' : ''}`;
+      
+      const weeklyBanner = document.getElementById('weeklyCountdownBanner');
+      if (weeklyBanner) {
+        weeklyBanner.style.display = period === 'weekly' ? 'block' : 'none';
+      }
+
       document.getElementById('searchRankingInput').value = '';
       loadRankingData();
     }
+
+    // Live Weekly Countdown Timer (Resets every Sunday at 23:59:59)
+    function updateWeeklyCountdown() {
+      const timerEl = document.getElementById('weeklyTimerDisplay');
+      if (!timerEl) return;
+
+      const now = new Date();
+      const day = now.getDay();
+      const daysUntilSunday = (7 - day) % 7;
+      
+      const target = new Date(now);
+      target.setDate(now.getDate() + daysUntilSunday);
+      target.setHours(23, 59, 59, 999);
+
+      const diffMs = target.getTime() - now.getTime();
+      if (diffMs <= 0) {
+        timerEl.textContent = '00d 00h 00m 00s';
+        return;
+      }
+
+      const totalSec = Math.floor(diffMs / 1000);
+      const d = Math.floor(totalSec / 86400);
+      const h = Math.floor((totalSec % 86400) / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+
+      timerEl.textContent = `${d}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
+    }
+
+    setInterval(updateWeeklyCountdown, 1000);
+    updateWeeklyCountdown();
 
     async function loadRankingData(force = false) {
       const container = document.getElementById('rankingList');

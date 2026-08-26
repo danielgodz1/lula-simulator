@@ -23,24 +23,34 @@
 
 ---
 
-### 2. 🏃 O Empresário vs CLT (Endless Runner 3D)
-- **Engine**: **Three.js (WebGL)** com renderização a 60 FPS cravados, iluminação dinâmica, sombras suaves projetadas, névoa volumétrica e ciclo dia/noite em tempo real.
+### 2. 🏃 O Empresário vs CLT (Endless Runner 3D — Estilo Subway Surfers)
+- **Engine**: **Three.js (WebGL)** com renderização a 60-120 FPS cravados, iluminação Pixar / Candy Favela, sombras suaves, névoa volumétrica e ciclo dia/noite em tempo real.
+- **Chefe Furioso — Carteira de Trabalho (Boss CLT)**:
+  - Modelo 3D da **CTPS Azul** com brasão dourado da República, rosto furioso expressivo, perninhas e bracinhos articulados correndo em perseguição direta atrás do Empresário.
+  - **Mecânica de Tropeço Lateral (*Stumble*) & Camera Shake**: Se o jogador raspar na lateral de um trem ou obstáculo, o personagem tropeça, a tela treme com camera shake e a CLT avança colando na traseira com aviso na tela — concedendo uma chance de recuperação sem morte instantânea.
+  - **Mecânica de Pouso Rápido (*Fast Drop*)**: Ao pressionar **Seta para Baixo** durante o pulo, o personagem mergulha rapidamente para pousar com precisão sobre tetos de vagões ou barreiras.
+- **Obstáculos & Ambientação Brasileira Autêntica**:
+  - **Trens Subway Surfers**: Livery padrão **Emerald Brasil** (`0x1F7A4A`), Metrô SP e Metrô Rio com janelas de vidro emissivas ciano vibrante e frisos em relevo 3D.
+  - **Barreira Chevron Ferroviária**: Painel com listras diagonais em V vermelho/branco, amortecedores de borracha, pés de madeira e semáforo no topo.
+  - **Barreira Aérea com Vão Livre**: Vão inferior de 1.35m para passar deslizando por baixo (*Slide*) e coletar a Picanha no topo.
+  - **Impostos Voadores & Fiscal da Receita**: Guias DARF, notas de R$ 100 voando e auditor fiscal com prancheta.
+  - **Dormentes & Balastro Quente**: Trilhos de trem com dormentes de madeira maciça, cascalho terracota e reflexos especulares solares.
+  - **Moedas 3D Encorpadas**: Geometria volumosa com relevo de estrela dourada e brilho emissivo.
+- **Equipamentos e Acessórios 3D Acoplados**:
+  - **👟 Sapatos Dourados Alados**: Fixados diretamente nos pés do modelo 3D, acompanhando perfeitamente a animação de corrida.
+  - **🧲 Ímã em Ferradura 3D**: Acoplado na mão do personagem para atração de moedas.
+  - **Contadores de Habilidades no Topo**: Badges no HUD com contagem regressiva em segundos (`🧲 IMÃ: 8.5s`, `👟 SUPER PULO: 9.0s`).
+- **Novo Painel de Game Over Arcade (Estilo Dashboard)**:
+  - Visor duplo com **Estatísticas da Rodada** (Distância exata em metros, Recorde Pessoal, Moedas e Picanhas).
+  - **Top 5 Placar Nacional ao Vivo** carregado em tempo real com bandeiras e identificação do jogador.
+  - Botão de **Troca Rápida de Personagem**, **Compartilhar Recorde**, **Jogar Novamente** (suporte a `Enter` e `Espaço`) e **+10 Picanhas Bônus**.
 - **Arquitetura de Alta Performance (Zero-Allocation & InstancedMesh)**:
   - **Zero-Allocation Game Loop**: Bounding boxes (`AABB`) e estruturas de colisão pré-alocadas e recicladas, eliminando o *Garbage Collector thrashing* e os picos de atraso de frame (*stutters*).
   - **THREE.InstancedMesh em Toda a Infraestrutura**: Postes de concreto, cruzetas, isoladores, luminárias públicas, caçambas e centenas de casas da favela agrupados em matrizes de instância únicas, reduzindo Draw Calls de ~195 para ~28.
-  - **Carregamento Seletivo Sob Demanda (Lazy Loading)**: O jogo inicia em menos de 1.5s carregando exclusivamente o modelo 3D equipado (economia de 59MB no boot inicial).
+  - **Carregamento Seletivo Sob Demanda (Lazy Loading)**: O jogo inicia em menos de 1.5s carregando exclusivamente o modelo 3D equipado.
   - **Calibração Inteligente de Pixel Ratio**: 1.50x no mobile e 1.75x no desktop, assegurando nitidez sem sobreaquecer a GPU em telas 1440p/Retina.
 - **Engine Profiler Integrado (`?debug=1`)**:
   - Telemetria em tempo real ativável via URL com monitoramento de FPS, Min FPS, Frame Spikes, CPU (JS Logic) vs GPU (WebGL Render), Draw Calls, Triângulos e Heap de Memória.
-- **Ambientação Brasileira & Favela Urbana**:
-  - **Morro da Favela em Parallax Contínuo**: Cenário panorâmico com centenas de casinhas empilhadas na encosta, postes com fiação suspensa, caixas d'água cilíndricas, varais de roupa e lajes com vergalhões.
-  - **Ciclo Dinâmico de 24 Horas**: Começa às 5h da manhã (Alvorecer) e progride suavemente para Manhã Radiante, Meio-Dia Tropical, Pôr do Sol (*Golden Hour*) e Noite Estrelada com janelas e postes que se acendem dinamicamente.
-- **Mecânicas de Jogabilidade & Power-ups 3D**:
-  - **👟 Sapatos Sociais Dourados Alados (Super Pulo)**: Ícone 3D reluzente na pista que equipa nos pés do empresário, batendo asinhas no ar para saltos altos.
-  - **🧲 Ímã 3D em Ferradura (Magnet)**: Modelo 3D em formato U que o personagem segura na mão esquerda para atrair todas as moedas e picanhas.
-  - **📄 Documentos e Obstáculos Brasileiros**: Carteira de Trabalho CLT 44H, Cartão Bolsa Família e Cartão Auxílio Brasil em cards estilizados flutuantes com UV Mapping.
-  - **Deslize Realista de 90º (Slide)**: O personagem deita rente ao chão para passar sob varais de roupa, reduzindo a hitbox pela metade.
-  - **🔊 Áudio Espacial**: Efeito Doppler realista na passagem dos trens de metrô e buzina de alerta na mesma faixa.
 
 ---
 
@@ -55,6 +65,7 @@
 | 🏍️ **Jair Bolsonaro** | *O Capitão Patriota* | **60 Picanhas** 🥩 | **Voo Patriota**: Espaço entre os canos 15% mais aberto para desvios fáceis e seguros. |
 | 🥔 **Dilma Rousseff** | *Coração Valente* | **100 Picanhas** 🥩 | **Estocando Vento**: Gravidade 10% mais suave permitindo planeios controlados com facilidade. |
 | 💵 **Pablo Marçal** | *O Homem do Código* | **Liberar Nikolas + Fazer 900 pts com ele** 🏆 | **Mindset Quântico 3X**: Velocidade 1.35x maior, **triplica todos os pontos obtidos (3X score)** e joga chuva de notas de dinheiro e dólares (`💵`, `💸`, `💰`, `🤑`) pelo ar. |
+| 💼 **Empresário 3D** | *O Faria Limer* | **Disponível no Modo 3D** 🏃 | Terno Azul Royal Cartoon com gravata vermelha, sapato social e maleta de dinheiro fugindo da CLT. |
 
 ---
 
@@ -69,26 +80,28 @@
   - **Dilma**: *Mandiocósmica Dourada*, *Estocadora do Vento Galáctica*.
   - **Marçal**: *Marçal Black Card Bilionário*, *Holográfico Quântico 3X*.
   - **Empresário 3D**: *Faria Lima Colete Puffer*, *Empresário Cyberpunk Neon*.
-- **Seleção & Equipamento In-Game ([jogo.html](jogo.html))**: Seletor visual integrado no modal de personagens do Flappy Lula, permitindo alternar livremente entre o visual *Padrão* e qualquer skin desbloqueada.
-- **Renderização com Alfa Transparente Puro**: Sprites com canal alfa de 32 bits, alinhamento anatômico de voo e animação de capas ondulantes temáticas.
+- **Seleção & Equipamento In-Game ([jogo.html](jogo.html) e [correr.html](correr.html))**: Seletor visual integrado no modal de personagens do Flappy Lula e Empresário 3D.
 - **Nível de Prestígio**: Reinicie seu saldo de picanhas em troca de insígnias permanentes de prestígio exibidas no Perfil e no Ranking Nacional.
 
 ---
 
 ## 🏅 Sistema de Conquistas & Badges ([conquistas.html](conquistas.html))
 
-- **Galeria Visual Completa**: Acompanhe seu progresso de picanhas, quilômetros corridos e recordes para desbloquear cada figura histórica.
-- **Barra de Progresso Combinada**: Percentuais calculados em tempo real com metas específicas por personagem e missões multi-jogo (ex: requisito duplo de Flappy + Corredor 3D).
+- **Galeria Visual Completa**: Acompanhe seu progresso de picanhas, metros corridos e recordes para desbloquear cada figura histórica.
+- **Barra de Progresso Combinada**: Percentuais calculados em tempo real com metas específicas por personagem e missões multi-jogo.
 - **Modal de Zoom**: Inspecione o avatar em alta definição e leia a descrição detalhada da habilidade.
 
 ---
 
 ## 🏆 Placar Global & Ranking de Líderes ([ranking.html](ranking.html))
 
-- **Classificação Dupla**: Abas para o **Flappy Lula** (pontos em picanhas 🥩) e **Empresário 3D** (distância em km 🏃).
-- **Abas de Recorde de Partida vs Total Acumulado**: Disputa tanto pelo maior recorde de uma única corrida quanto pelo volume total acumulado de picanhas e moedas.
-- **Classificação Semanal Rotativa**: Início automático a cada segunda-feira com cálculo baseado em semana ISO (`YYYY-Www`), permitindo que novos jogadores cheguem ao Topo da Semana.
-- **Consolidação Otimizada**: Utiliza documento consolidado Top 50 com 1 única leitura por consulta e cache local TTL (90s).
+- **Classificação Dupla**: Abas para o **Flappy Lula** (pontos em picanhas 🥩) e **Empresário 3D** (distância em metros 🏃).
+- **Abas de Recorde Geral, Semanal, Total Acumulado e Invictos**: Disputa pelo maior recorde de uma única corrida, pelo volume total acumulado ou por vitórias consecutivas em duelos.
+- **Temporada Semanal Rotativa com Cronômetro ao Vivo**:
+  - Início automático a cada **segunda-feira às 00:00** e encerramento no **domingo às 23:59:59**.
+  - **Contador regressivo ao vivo** exibindo dias, horas, minutos e segundos restantes para o fim da temporada semanal.
+  - Invalidação instantânea de cache para atualização em tempo real de novos recordes.
+- **Consolidação Otimizada**: Utiliza documento consolidado Top 300 com cache local inteligente.
 
 ---
 
