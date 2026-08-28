@@ -43,6 +43,8 @@ export class UIManager {
     this.btnShareScore = document.getElementById('btnShareScore');
     this.btnRewardPicanhasGO = document.getElementById('btnRewardPicanhasGO');
     this.btnOpenCharSelectGO = document.getElementById('btnOpenCharSelectGO');
+    this.goReviveContainer = document.getElementById('goReviveContainer');
+    this.btnRevive2ndChance = document.getElementById('btnRevive2ndChance');
 
     // Modal de Seleção de Personagens
     this.charSelectModal = document.getElementById('charSelectModal');
@@ -739,7 +741,7 @@ export class UIManager {
     return list[Math.floor(Math.random() * list.length)];
   }
 
-  showGameOver(obstacle, distanceMeters, coins, picanhas, onRestart, customReason, bestDistance = 0) {
+  showGameOver(obstacle, distanceMeters, coins, picanhas, onRestart, customReason, bestDistance = 0, onRevive = null, reviveUsed = false) {
     if (!this.gameOverModal) return;
 
     const funnyMsg = customReason || this.getFunnyDeathMessage(obstacle);
@@ -775,6 +777,24 @@ export class UIManager {
     const playerName = user ? user.username : (localStorage.getItem('lula_player') || 'Visitante');
     if (this.goYouName) this.goYouName.textContent = `VOCÊ (${playerName})`;
     if (this.goYouScore) this.goYouScore.textContent = `${finalBest.toLocaleString()} m`;
+
+    // Botão de Segunda Chance (Revive Recompensado 1x por partida)
+    if (this.goReviveContainer) {
+      if (!reviveUsed && typeof onRevive === 'function') {
+        this.goReviveContainer.style.display = 'flex';
+        if (this.btnRevive2ndChance) {
+          this.btnRevive2ndChance.onclick = (e) => {
+            if (e) e.stopPropagation();
+            AdsManager.showRewardedRevive(() => {
+              this.showToast('💖 SEGUNDA CHANCE ATIVADA! 3s INVULNERÁVEL');
+              onRevive();
+            });
+          };
+        }
+      } else {
+        this.goReviveContainer.style.display = 'none';
+      }
+    }
 
     this.gameOverModal.style.display = 'flex';
 

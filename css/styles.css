@@ -829,17 +829,20 @@ nav {
   pointer-events: auto;
 }
 
-@media (max-width: 900px) {
+@media (min-width: 1080px) {
+  .ad-sidebar-desktop {
+    display: block;
+  }
+}
+
+@media (max-width: 1079px) {
+  .ad-sidebar-desktop {
+    display: none !important;
+  }
   .ad-mobile-fixed-footer {
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-}
-
-@media (max-width: 1250px) {
-  .ad-sidebar-desktop {
-    display: none !important;
   }
 }
 
@@ -869,4 +872,42 @@ nav {
 .btn-rewarded-smartlink:hover {
   transform: scale(1.04);
   box-shadow: 0 6px 20px rgba(255, 223, 0, 0.6);
+}
+
+/* BOTÃO DE SEGUNDA CHANCE (REVIVE COM ANÚNCIO) */
+.btn-rewarded-revive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  color: #ffffff;
+  font-family: 'Bangers', cursive;
+  font-size: 16px;
+  letter-spacing: 1.2px;
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: 2px solid #34d399;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.45);
+  transition: all 0.25s ease;
+  user-select: none;
+  animation: revivePulse 1.8s infinite ease-in-out;
+}
+
+.btn-rewarded-revive:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(52, 211, 153, 0.8);
+  border-color: #6ee7b7;
+}
+
+@keyframes revivePulse {
+  0%, 100% {
+    transform: scale(1.0);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 25px rgba(52, 211, 153, 0.7);
+  }
 }

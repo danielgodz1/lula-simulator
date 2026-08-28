@@ -61,6 +61,9 @@ export class Game {
     this.superJumpActive = false;
     this.superJumpTimer = 0;
 
+    // Segunda Chance (Revive)
+    this.reviveUsed = false;
+
     this.clock = new THREE.Clock();
     this.init();
   }
@@ -96,6 +99,7 @@ export class Game {
       this.picanhas = 0;
       this.multiplier = 1;
       this.consecutiveCoins = 0;
+      this.reviveUsed = false;
       this.character.reset();
       this.boss.startRun();
     });
@@ -138,6 +142,7 @@ export class Game {
 
   onCrash(obstacle, customReason) {
     if (this.state !== this.STATE.PLAYING) return;
+    if (this.character && this.character.isInvulnerable) return;
 
     this.state = this.STATE.GAMEOVER;
     this.character.die();
@@ -165,8 +170,42 @@ export class Game {
     const finalReason = customReason || punchlines[Math.floor(Math.random() * punchlines.length)];
 
     setTimeout(() => {
-      this.ui.showGameOver(obstacle, finalDistanceMeters, this.coins, this.picanhas, () => this.restart(), finalReason, this.bestDistance);
+      this.ui.showGameOver(
+        obstacle,
+        finalDistanceMeters,
+        this.coins,
+        this.picanhas,
+        () => this.restart(),
+        finalReason,
+        this.bestDistance,
+        () => this.revive(),
+        this.reviveUsed
+      );
     }, 650);
+  }
+
+  revive() {
+    if (this.reviveUsed) return;
+    this.reviveUsed = true;
+    this.state = this.STATE.PLAYING;
+    this.character.isDead = false;
+    this.character.y = 0;
+    this.character.currentLane = 1;
+    this.character.targetX = 0;
+    this.character.x = 0;
+    this.character.isInvulnerable = true;
+    this.character.invulnerableTimer = 3.0;
+    this.character.jumpVelocity = 0;
+    this.character.isJumping = false;
+    this.character.isSliding = false;
+    this.character.isStumbling = false;
+    this.boss.x = 0;
+    this.boss.y = 0;
+    this.boss.z = 8;
+    this.boss.isAggressive = false;
+    if (this.ui.gameOverModal) this.ui.gameOverModal.style.display = 'none';
+    gameAudio.startAmbience();
+    gameAudio.playSwipe();
   }
 
   onCollectCoin(value) {

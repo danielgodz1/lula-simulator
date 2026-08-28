@@ -18,26 +18,36 @@ export class Character {
 
     this.currentLane = 1;
     this.targetX = 0;
+    this.laneStartX = 0;
+    this.isChangingLane = false;
+    this.laneChangeTimer = 0;
+    this.laneBufferDirection = null;
+    this.laneBufferTimer = 0;
     this.x = 0;
     this.y = 0;
     this.z = 0;
     this.groundY = 0;
 
-    // Física e Agilidade Escalável
+    // Física e Agilidade Escalável (Subway Surfers Realista)
     this.baseSpeed = 32;
     this.isJumping = false;
     this.jumpVelocity = 0;
-    this.gravity = -38;
-    this.jumpForce = 17.5;
-    this.fallMultiplier = 1.15;
+    this.gravity = -44;
+    this.jumpForce = 18.2;
+    this.fallMultiplier = 1.30;
     this.jumpBufferTimer = 0;
+    this.slideBufferTimer = 0;
     this.wasAirborne = false;
     this.landingImpact = 0.0;
 
     // Slide
     this.isSliding = false;
     this.slideTimer = 0;
-    this.slideDuration = 0.58;
+    this.slideDuration = 0.55;
+
+    // Invulnerabilidade (Pós-Revive Segunda Chance)
+    this.isInvulnerable = false;
+    this.invulnerableTimer = 0;
 
     // Morte Física 3D
     this.isDead = false;
@@ -53,12 +63,19 @@ export class Character {
     this.isStumbling = false;
     this.stumbleTimer = 0;
 
-    // Uniforms do Shader para Animação Realista das Pernas
+    // Uniforms do Shader para Animação Realista de Pernas e Braços
     this.uniforms = {
       uRunTime: { value: 0.0 },
       uLegSwing: { value: 0.72 },
       uJumpProgress: { value: 0.0 }
     };
+
+    // Luz Noturna do Personagem (Luz Suave no Rig para Visibilidade à Noite)
+    this.nightLight = new THREE.PointLight(0xffedd5, 0, 7.5, 1.8);
+    this.nightLight.position.set(0.2, 1.3, 0.4);
+    this.nightLight.castShadow = false;
+    this.nightLight.visible = false;
+    this.mesh.add(this.nightLight);
 
     // Itens Equipáveis de Power-up
     this.lShoeGolden = null;
@@ -145,15 +162,15 @@ export class Character {
               '#include <begin_vertex>',
               `
               #include <begin_vertex>
-              // Animação Fisiológica das Pernas (Vértices abaixo do quadril: position.y < 0.04)
+              // 1. Animação Fisiológica das Pernas (Vértices abaixo do quadril: position.y < 0.04)
               if (position.y < 0.04) {
                 float legWeight = clamp((-position.y + 0.04) / 0.92, 0.0, 1.0);
                 float legSide = position.x < 0.0 ? -1.0 : 1.0;
 
-                // 1. Balanço das Pernas na Corrida (Passadas Alternadas)
+                // Balanço das Pernas na Corrida (Passadas Alternadas)
                 float swing = sin(uRunTime + (legSide > 0.0 ? 3.14159 : 0.0)) * uLegSwing * legWeight;
 
-                // 2. Modificação no Pulo: Esticar no ar ou amortecer no pouso
+                // Modificação no Pulo: Esticar no ar ou amortecer no pouso
                 if (uJumpProgress > 0.1) {
                   swing = -0.28 * legWeight;
                 } else if (uJumpProgress < -0.1) {
@@ -171,6 +188,32 @@ export class Character {
                 if (swing < -0.04) {
                   transformed.y += (-swing) * 0.18 * legWeight;
                 }
+              }
+              // 2. Correção de T-Pose e Balanço dos Braços (Vértices dos Braços: position.y > 0.08 e abs(position.x) > 0.18)
+              else if (position.y > 0.08 && abs(position.x) > 0.16) {
+                float armWeight = clamp((abs(position.x) - 0.16) / 0.42, 0.0, 1.0);
+                float armSide = position.x < 0.0 ? -1.0 : 1.0;
+
+                // Abaixa os braços da T-pose horizontal para a postura atlética natural
+                float lowerAngle = -1.10 * armWeight;
+                float cosL = cos(lowerAngle);
+                float sinL = sin(lowerAngle);
+                float tx = transformed.x;
+                float ty = transformed.y;
+                transformed.x = tx * cosL - ty * sinL * armSide * 0.35;
+                transformed.y = tx * sinL * armSide * 0.35 + ty * cosL;
+
+                // Balanço alternado dos braços na corrida
+                float armSwing = sin(uRunTime + (armSide > 0.0 ? 0.0 : 3.14159)) * 0.55 * armWeight;
+                if (uJumpProgress > 0.1) {
+                  armSwing = -0.40 * armWeight; // Braços para trás no salto
+                }
+                float cosS = cos(armSwing);
+                float sinS = sin(armSwing);
+                float pyA = transformed.y;
+                float pzA = transformed.z;
+                transformed.y = pyA * cosS - pzA * sinS;
+                transformed.z = pyA * sinS + pzA * cosS;
               }
               `
             );
@@ -519,8 +562,14 @@ export class Character {
     if (this.isDead) return;
     if (this.currentLane > 0) {
       this.currentLane--;
+      this.laneStartX = this.x;
       this.targetX = LANES[this.currentLane];
+      this.isChangingLane = true;
+      this.laneChangeTimer = 0;
       gameAudio.playSwipe();
+    } else {
+      this.laneBufferDirection = 'left';
+      this.laneBufferTimer = 0.13;
     }
   }
 
@@ -528,8 +577,14 @@ export class Character {
     if (this.isDead) return;
     if (this.currentLane < LANES.length - 1) {
       this.currentLane++;
+      this.laneStartX = this.x;
       this.targetX = LANES[this.currentLane];
+      this.isChangingLane = true;
+      this.laneChangeTimer = 0;
       gameAudio.playSwipe();
+    } else {
+      this.laneBufferDirection = 'right';
+      this.laneBufferTimer = 0.13;
     }
   }
 
@@ -538,7 +593,7 @@ export class Character {
     if (!this.isJumping && Math.abs(this.y - this.groundY) < 0.15) {
       this.isJumping = true;
       this.wasAirborne = true;
-      this.jumpVelocity = this.superJump ? this.jumpForce * 1.35 : this.jumpForce;
+      this.jumpVelocity = this.superJump ? this.jumpForce * 1.32 : this.jumpForce;
       this.isSliding = false;
       this.slideTimer = 0;
       gameAudio.playJump(this.superJump);
@@ -551,7 +606,7 @@ export class Character {
     if (this.isDead) return;
     if (this.isJumping || this.y > this.groundY + 0.1) {
       // Fast Drop instantâneo acelerado para pousar rápido no solo ou sobre obstáculos/trens
-      this.jumpVelocity = -34;
+      this.jumpVelocity = -38;
       this.isSliding = true;
       this.slideTimer = this.slideDuration * 0.75;
       gameAudio.playSlide();
@@ -607,18 +662,39 @@ export class Character {
       return;
     }
 
-    // 1. Interpolação Linear nas 3 Faixas com Rolagem e Direcionamento Realista
-    const speedFactor = Math.max(1.0, speed / this.baseSpeed);
-    const lerpRate = 18.0 + (speedFactor - 1.0) * 3.8;
-    this.x += (this.targetX - this.x) * Math.min(1.0, lerpRate * dt);
+    // 1. Interpolação Suave nas 3 Faixas com Curva Cúbica Ease-in-Out
+    if (this.isChangingLane) {
+      const speedFactor = Math.max(1.0, speed / this.baseSpeed);
+      this.laneChangeTimer += dt * (13.5 * speedFactor);
+      const t = Math.min(1.0, this.laneChangeTimer);
+      const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      this.x = this.laneStartX + (this.targetX - this.laneStartX) * ease;
+      if (t >= 1.0) {
+        this.x = this.targetX;
+        this.isChangingLane = false;
+
+        // Processa buffer de comando de troca de faixa
+        if (this.laneBufferTimer > 0 && this.laneBufferDirection) {
+          const dir = this.laneBufferDirection;
+          this.laneBufferDirection = null;
+          this.laneBufferTimer = 0;
+          if (dir === 'left') this.moveLeft();
+          else if (dir === 'right') this.moveRight();
+        }
+      }
+    } else {
+      this.x += (this.targetX - this.x) * Math.min(1.0, 22.0 * dt);
+    }
     this.mesh.position.x = this.x;
+
+    if (this.laneBufferTimer > 0) this.laneBufferTimer -= dt;
 
     const laneDiff = (this.targetX - this.x);
     // Inclinação ágil do corpo nas curvas (banking roll) e direcionamento da cabeça/ombros
     this.mesh.rotation.z = -laneDiff * 0.16;
     this.mesh.rotation.y = -laneDiff * 0.20;
 
-    // 2. Atualização Visual dos Power-ups Equipados
+    // 2. Atualização Visual dos Power-ups Equipados e Luz Noturna
     const isSuper = this.superJump;
     if (this.lShoeGolden) this.lShoeGolden.visible = isSuper;
     if (this.rShoeGolden) this.rShoeGolden.visible = isSuper;
@@ -627,7 +703,26 @@ export class Character {
       this.handMagnet.visible = this.magnetActive;
     }
 
-    // 3. Física do Pulo, Gravidade e Amortecimento de Pouso
+    if (this.nightLight) {
+      const isNight = typeof arguments[2] !== 'undefined' ? arguments[2] : false;
+      this.nightLight.visible = isNight;
+      this.nightLight.intensity = isNight ? 0.95 : 0;
+    }
+
+    // Efeito Visual de Invulnerabilidade (Piscar)
+    if (this.isInvulnerable) {
+      this.invulnerableTimer -= dt;
+      if (this.invulnerableTimer <= 0) {
+        this.isInvulnerable = false;
+        this.mesh.visible = true;
+      } else {
+        this.mesh.visible = Math.floor(this.invulnerableTimer * 12) % 2 === 0;
+      }
+    } else {
+      this.mesh.visible = true;
+    }
+
+    // 3. Física do Pulo, Gravidade e Amortecimento de Pouso (Sensação Subway Surfers)
     const isAirborne = this.isJumping || this.y > this.groundY;
     if (isAirborne) {
       this.wasAirborne = true;
@@ -642,7 +737,7 @@ export class Character {
 
         // Amortecimento elástico da queda com as pernas ao tocar o piso
         if (this.wasAirborne) {
-          this.landingImpact = 0.28;
+          this.landingImpact = 0.32;
           this.wasAirborne = false;
         }
 

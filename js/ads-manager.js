@@ -81,8 +81,18 @@ class AdsManagerService {
 
     if (typeof document !== 'undefined') {
       this.bindVisibilityEvents();
+      this.bindResizeEvent();
     }
   }
+
+  /**
+   * PLANO DE COEXISTÊNCIA FUTURA COM GOOGLE ADSENSE:
+   * O Google AdSense (ca-pub-7823595523903839) está com domínio aprovado ("preparando anúncios").
+   * Quando estiver liberado e veiculando ativamente, AdSense e Adsterra ocuparão slots visuais distintos:
+   * - Google AdSense: Banners de cabeçalho e rodapé em páginas informativas (ranking, conquistas, visitantes, feedback).
+   * - Adsterra: Skyscraper lateral fixo (160x600) e Smartlinks interativos de Segunda Chance (Revive) e Picanhas bônus.
+   * Ambas as redes não concorrerão pelo mesmo container HTML.
+   */
 
   /**
    * Monitora a Page Visibility API para pausar o refresh quando a aba do jogo não estiver visível.
@@ -104,6 +114,23 @@ class AdsManagerService {
 
     window.addEventListener('blur', () => {
       // Quando a janela perde o foco
+    });
+  }
+
+  /**
+   * Monitora o redimensionamento da tela com debounce para carregar banners laterais quando a tela crescer
+   */
+  bindResizeEvent() {
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        this.registeredSlots.forEach((slot, id) => {
+          if (slot.element && slot.element.offsetWidth > 0 && !slot.element.querySelector('iframe')) {
+            this.renderSlot(id);
+          }
+        });
+      }, 250);
     });
   }
 
@@ -152,50 +179,73 @@ class AdsManagerService {
     iframe.style.overflow = 'hidden';
     iframe.style.display = 'block';
     iframe.style.margin = '0 auto';
-    iframe.scrolling = 'no';
-    iframe.title = `Ad ${slot.formatType}`;
+    iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms allow-same-origin');
+    iframe.title = 'Publicidade';
     iframe.setAttribute('loading', 'lazy');
 
-    // Permissões completas para o script de anúncios carregar sem bloqueio do navegador
-    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms');
+    let key = AD_CONFIG.BANNER_320x50.key;
+    let scriptUrl = AD_CONFIG.BANNER_320x50.scriptUrl;
 
-    const isEn = window.location.hostname.includes('flappylula.com') || window.location.pathname.startsWith('/en/');
-    const langParam = isEn ? '&lang=en' : '&lang=pt';
+    if (slot.formatType === '160x600') {
+      const isEnglish = window.location.pathname.startsWith('/en/');
+      key = isEnglish ? AD_CONFIG.SKYSCRAPER_160x600.key_en : AD_CONFIG.SKYSCRAPER_160x600.key_pt;
+      scriptUrl = `https://grannyreproof.com/${key}/invoke.js`;
+    } else if (slot.formatType === '300x250') {
+      key = AD_CONFIG.MEDIUM_RECTANGLE_300x250.key;
+      scriptUrl = AD_CONFIG.MEDIUM_RECTANGLE_300x250.scriptUrl;
+    }
 
-    // Carrega o documento dedicado via src (com timestamp para cache-busting suave no auto-refresh)
-    iframe.src = `/ad-frame.html?format=${slot.formatType}${langParam}&v=${Date.now()}`;
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+          }
+        </style>
+      </head>
+      <body>
+        <script type="text/javascript">
+          atOptions = {
+            'key' : '${key}',
+            'format' : 'iframe',
+            'height' : ${height},
+            'width' : ${width},
+            'params' : {}
+          };
+        <\/script>
+        <script type="text/javascript" src="${scriptUrl}"><\/script>
+      </body>
+      </html>
+    `;
 
     slot.element.appendChild(iframe);
+    iframe.srcdoc = htmlContent;
     slot.lastRender = Date.now();
   }
 
   /**
-   * Recarrega todos os slots visíveis registrados
-   */
-  refreshAllVisibleSlots() {
-    if (!this.isTabActive) return;
-
-    this.registeredSlots.forEach((slot, containerId) => {
-      // Verifica se o elemento está visível no DOM
-      if (slot.element && slot.element.offsetParent !== null) {
-        this.renderSlot(containerId);
-      }
-    });
-  }
-
-  /**
-   * Inicia o ciclo de Auto-Refresh Inteligente
+   * Inicia o timer de refresh periódico inteligente
    */
   startAutoRefresh() {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
 
     this.refreshTimer = setInterval(() => {
-      if (this.isTabActive) {
-        this.secondsActive++;
-        if (this.secondsActive >= AD_CONFIG.REFRESH_INTERVAL_SEC) {
-          this.secondsActive = 0;
-          this.refreshAllVisibleSlots();
-        }
+      if (!this.isTabActive) return;
+
+      this.secondsActive++;
+      if (this.secondsActive >= AD_CONFIG.REFRESH_INTERVAL_SEC) {
+        this.secondsActive = 0;
+        this.refreshAllSlots();
       }
     }, 1000);
   }
@@ -206,6 +256,17 @@ class AdsManagerService {
 
   resumeAutoRefresh() {
     // Retoma contagem ativa
+  }
+
+  /**
+   * Recarrega todos os slots visíveis no momento
+   */
+  refreshAllSlots() {
+    this.registeredSlots.forEach((slot, containerId) => {
+      if (slot.element && slot.element.offsetWidth > 0 && slot.element.offsetHeight > 0) {
+        this.renderSlot(containerId);
+      }
+    });
   }
 
   /**
@@ -311,6 +372,24 @@ class AdsManagerService {
   }
 
   /**
+   * Sistema de Segunda Chance (Revive Recompensado):
+   * Abre o Smartlink/anúncio em nova aba e aciona o callback para reviver o jogador
+   */
+  showRewardedRevive(onSuccess, onCancel) {
+    try {
+      window.open(AD_CONFIG.SMARTLINK_URL, '_blank', 'noopener,noreferrer');
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+      }
+    } catch(e) {
+      console.warn('Erro ao abrir anúncio de Segunda Chance:', e);
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+      }
+    }
+  }
+
+  /**
    * Botão de Recompensa (Rewarded / Smartlink)
    * Abre o Smartlink em nova aba e concede recompensa em picanhas no retorno
    */
@@ -328,6 +407,13 @@ class AdsManagerService {
     } catch(e) {
       console.error('Erro ao abrir Smartlink:', e);
     }
+  }
+
+  /**
+   * Alias de compatibilidade para acionar recompensa
+   */
+  triggerSmartlinkReward(callback) {
+    this.openRewardedLink(callback);
   }
 }
 

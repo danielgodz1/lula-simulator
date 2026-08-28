@@ -1018,6 +1018,11 @@
             </div>
           </div>
 
+        <!-- SECOND CHANCE REWARDED REVIVE BUTTON -->
+        <div id="goReviveContainerFlappy" style="display:flex; justify-content:center; margin-bottom:10px;">
+          <button id="btnReviveFlappy" class="btn-rewarded-revive">
+            🎬 SECOND CHANCE (Watch Ad to Revive)
+          </button>
         </div>
 
         <div class="go-buttons-row">
@@ -1819,7 +1824,12 @@
       }
     }
 
+    let reviveUsed = false;
+    let invulnerableTimer = 0;
+
     function checkCollision() {
+      if (invulnerableTimer > 0) return false;
+
       const hw = (H * (gameState.HITBOX_WIDTH_RATIO || 0.082)) * 0.5;
       const hh = (H * (gameState.HITBOX_HEIGHT_RATIO || 0.042)) * 0.5;
       const GH = H * GH_RATIO;
@@ -2600,6 +2610,9 @@
 
       if (spriteToDraw) {
         ctx.save();
+        if (invulnerableTimer > 0) {
+          ctx.globalAlpha = Math.floor(invulnerableTimer * 12) % 2 === 0 ? 0.25 : 0.95;
+        }
         // No modo prisão, adiciona iluminação de contorno para o personagem destacar no escuro
         if (isPrisonMode) {
           ctx.shadowColor = '#ffd700';
@@ -2630,8 +2643,6 @@
         for (let i = 0; i < 3; i++) {
           const ang = dizzyAngle + (i * Math.PI * 2 / 3);
           const sx = headX + Math.cos(ang) * (targetW * 0.28);
-          const sy = headY + Math.sin(ang) * (targetH * 0.15);
-
           ctx.fillStyle = '#ffdf00';
           ctx.beginPath();
           ctx.arc(sx, sy, 4, 0, Math.PI * 2);
@@ -2654,6 +2665,10 @@
     let accumulatedTime = 0;
 
     function step(dt) {
+      if (invulnerableTimer > 0) {
+        invulnerableTimer -= dt;
+      }
+
       if (state === STATE.PLAYING) {
         sessionPlayTime += dt;
         if (sessionPlayTime >= 30 && !hasAlerted30s) {
@@ -2992,14 +3007,43 @@
       });
     }
 
+    function reviveFlappyGame() {
+      if (reviveUsed) return;
+      reviveUsed = true;
+      state = STATE.PLAYING;
+      gameOverModal.style.display = 'none';
+
+      // Reposition bird at safe flying altitude
+      lula.y = H * 0.42;
+      lula.vy = 0;
+      lula.rotation = 0;
+
+      // Remove nearby pipes
+      pipes = pipes.filter(p => (p.x < lula.x - 70 || p.x > lula.x + 220));
+
+      // 3s invulnerability
+      invulnerableTimer = 3.0;
+
+      showBannerAlert('💖 SECOND CHANCE ACTIVATED! 3s INVULNERABLE', false);
+      try { sounds.playBrasilIntro(); } catch(e){}
+    }
+
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
     document.getElementById('btnRestartGame')?.addEventListener('click', restartGame);
     
-    // Botão de Recompensa (Rewarded / Smartlink)
+    // Second chance revive button
+    document.getElementById('btnReviveFlappy')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      AdsManager.showRewardedRevive(() => {
+        reviveFlappyGame();
+      });
+    });
+
+    // Smartlink reward
     document.getElementById('btnRewardPicanhasGO')?.addEventListener('click', (e) => {
       e.stopPropagation();
       AdsManager.openRewardedLink((bonus) => {
-        showBannerAlert(`🎁 RECOMPENSA COLETADA: +${bonus} PICANHAS!`, false);
+        showBannerAlert(`🎁 REWARD COLLECTED: +${bonus} STEAKS!`, false);
         try { sounds.playPowerup(); } catch(e){}
         if (scoreHUD) scoreHUD.textContent = `${score} 🥩`;
       });
