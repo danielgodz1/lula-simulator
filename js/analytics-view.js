@@ -15,6 +15,9 @@
     customDateFrom: null,      // 'YYYY-MM-DD'
     customDateTo: null,        // 'YYYY-MM-DD'
     weekday: 'all',            // 'all', 'weekdays', 'weekend', '0', '1', '2', '3', '4', '5', '6'
+    device: 'all',             // 'all', 'desktop', 'mobile', 'tablet'
+    os: 'all',                 // 'all', 'Windows', 'Android', 'iOS', 'macOS', 'Linux'
+    browser: 'all',            // 'all', 'Chrome', 'Safari', 'Firefox', 'Edge', 'Opera'
     radarSearchQuery: '',
     pageLimit: 25
   };
@@ -53,8 +56,42 @@
     filterDateTo: document.getElementById('filterDateTo'),
     btnApplyCustomDate: document.getElementById('btnApplyCustomDate'),
     weekdayFilterPills: document.getElementById('weekdayFilterPills'),
+    deviceFilterPills: document.getElementById('deviceFilterPills'),
+    osFilterPills: document.getElementById('osFilterPills'),
+    browserFilterPills: document.getElementById('browserFilterPills'),
     btnLoadMoreVisits: document.getElementById('btnLoadMoreVisits')
   };
+
+  // Helper de ícone de Dispositivo
+  function getDeviceIcon(deviceType, model) {
+    const t = (deviceType || '').toLowerCase();
+    const m = (model || '').toLowerCase();
+    if (t.includes('tablet') || t.includes('ipad') || m.includes('ipad')) return '📲 Tablet';
+    if (t.includes('mobile') || t.includes('celular') || t.includes('phone') || m.includes('iphone') || m.includes('galaxy') || m.includes('moto') || m.includes('xiaomi')) return '📱 Mobile';
+    return '🖥️ Desktop';
+  }
+
+  // Helper de ícone de Sistema Operacional
+  function getOSIcon(osName) {
+    const o = (osName || '').toLowerCase();
+    if (o.includes('android')) return '🤖 Android';
+    if (o.includes('ios') || o.includes('iphone') || o.includes('ipad')) return '🍏 iOS';
+    if (o.includes('windows') || o.includes('win')) return '🪟 Windows';
+    if (o.includes('mac') || o.includes('darwin')) return '🍎 macOS';
+    if (o.includes('linux')) return '🐧 Linux';
+    return osName ? `⚙️ ${osName}` : '⚙️ Web';
+  }
+
+  // Helper de ícone de Navegador
+  function getBrowserIcon(browserName) {
+    const b = (browserName || '').toLowerCase();
+    if (b.includes('chrome') || b.includes('crios')) return '🌐 Chrome';
+    if (b.includes('safari')) return '🧭 Safari';
+    if (b.includes('firefox') || b.includes('fxios')) return '🦊 Firefox';
+    if (b.includes('edge') || b.includes('edg')) return '🔷 Edge';
+    if (b.includes('opera') || b.includes('opr')) return '🎭 Opera';
+    return browserName ? `🌐 ${browserName}` : '🌐 Web';
+  }
 
   // Converte código de país em bandeira gráfica HD (compatível com todos os navegadores e Windows)
   function renderFlag(countryCode, fallbackEmoji = '', size = 'normal') {
@@ -179,7 +216,7 @@
         { code: 'BR', name: 'Brasil', flag: '🇧🇷', count: 1, percentage: 100 }
       ],
       recentVisits: [
-        { country: 'BR', countryName: 'Brasil', flag: '🇧🇷', city: 'Sua Conexão', timestamp: new Date().toISOString() }
+        { country: 'BR', countryName: 'Brasil', flag: '🇧🇷', city: 'Sua Conexão', deviceType: 'desktop', os: 'Windows', browser: 'Chrome', timestamp: new Date().toISOString() }
       ]
     };
     rawAnalyticsData = mock;
@@ -304,12 +341,10 @@
         const flag = card.getAttribute('data-country-flag');
 
         if (filterState.selectedCountryCode === code) {
-          // Desmarca o país se já estiver selecionado
           filterState.selectedCountryCode = null;
           filterState.selectedCountryName = null;
           filterState.selectedCountryFlag = null;
         } else {
-          // Seleciona o novo país
           filterState.selectedCountryCode = code;
           filterState.selectedCountryName = name;
           filterState.selectedCountryFlag = flag;
@@ -338,14 +373,17 @@
       return true;
     });
 
-    // 2. Filtragem por Busca Textual no Radar (Cidade, País)
+    // 2. Filtragem por Busca Textual no Radar (Cidade, País, SO, Navegador)
     const radarQuery = filterState.radarSearchQuery.trim().toLowerCase();
     if (radarQuery) {
       filtered = filtered.filter(v => {
         const cityMatch = (v.city || '').toLowerCase().includes(radarQuery);
         const nameMatch = (v.countryName || '').toLowerCase().includes(radarQuery);
         const codeMatch = (v.country || '').toLowerCase().includes(radarQuery);
-        return cityMatch || nameMatch || codeMatch;
+        const osMatch = (v.os || '').toLowerCase().includes(radarQuery);
+        const browserMatch = (v.browser || '').toLowerCase().includes(radarQuery);
+        const deviceMatch = (v.device || v.deviceType || '').toLowerCase().includes(radarQuery);
+        return cityMatch || nameMatch || codeMatch || osMatch || browserMatch || deviceMatch;
       });
     }
 
@@ -406,15 +444,39 @@
       });
     }
 
-    // 5. Atualiza Badge de Contagem
+    // 5. Filtragem por Dispositivo
+    if (filterState.device !== 'all') {
+      filtered = filtered.filter(v => {
+        const d = (v.deviceType || v.device || 'desktop').toLowerCase();
+        return d.includes(filterState.device.toLowerCase());
+      });
+    }
+
+    // 6. Filtragem por Sistema Operacional
+    if (filterState.os !== 'all') {
+      filtered = filtered.filter(v => {
+        const o = (v.os || '').toLowerCase();
+        return o.includes(filterState.os.toLowerCase());
+      });
+    }
+
+    // 7. Filtragem por Navegador
+    if (filterState.browser !== 'all') {
+      filtered = filtered.filter(v => {
+        const b = (v.browser || '').toLowerCase();
+        return b.includes(filterState.browser.toLowerCase());
+      });
+    }
+
+    // 8. Atualiza Badge de Contagem
     if (elements.filteredCountBadge) {
       elements.filteredCountBadge.textContent = `${filtered.length} de ${allVisits.length} conexões`;
     }
 
-    // 6. Atualiza Banner de Filtros Ativos
+    // 9. Atualiza Banner de Filtros Ativos
     updateActiveFilterBanner(filtered.length);
 
-    // 7. Renderiza Lista de Conexões (com Paginação / Limite)
+    // 10. Renderiza Lista de Conexões (com Paginação / Limite)
     if (filtered.length === 0) {
       elements.recentVisitsList.innerHTML = `
         <div class="empty-state">
@@ -447,18 +509,27 @@
       const weekdayName = WEEKDAYS_PT[vDate.getDay()] || '';
       const isWeekend = vDate.getDay() === 0 || vDate.getDay() === 6;
 
+      const deviceLabel = getDeviceIcon(visit.deviceType || visit.device, visit.device);
+      const osLabel = getOSIcon(visit.os);
+      const browserLabel = getBrowserIcon(visit.browser);
+
       html += `
         <div class="feed-item">
           <div class="feed-pulse-indicator"></div>
           <div class="feed-flag">${renderFlag(visit.country, visit.flag)}</div>
-          <div class="feed-details">
+          <div class="feed-details" style="flex: 1; min-width: 0;">
             <div class="feed-location">
               ${visit.city || 'Desconhecida'}, <strong>${visit.countryName || 'Brasil'}</strong>
             </div>
-            <div class="feed-meta-row">
+            <div class="feed-meta-row" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 3px;">
               <span class="feed-badge-day ${isWeekend ? 'weekend' : ''}">${weekdayName}</span>
               <span class="feed-badge-exact">• ${exactTime}</span>
               <span class="feed-time">(${timeStr})</span>
+            </div>
+            <div class="feed-hardware-row" style="display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+              <span style="font-size: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 2px 7px; border-radius: 6px; color: #cbd5e1;">${deviceLabel}</span>
+              <span style="font-size: 10px; background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); padding: 2px 7px; border-radius: 6px; color: #7dd3fc;">${osLabel}</span>
+              <span style="font-size: 10px; background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.2); padding: 2px 7px; border-radius: 6px; color: #fef08a;">${browserLabel}</span>
             </div>
           </div>
         </div>
@@ -467,7 +538,7 @@
 
     elements.recentVisitsList.innerHTML = html;
 
-    // 8. Botão de Carregar Mais Conexões
+    // 11. Botão de Carregar Mais Conexões
     if (elements.btnLoadMoreVisits) {
       if (filtered.length > filterState.pageLimit) {
         elements.btnLoadMoreVisits.style.display = 'flex';
@@ -515,6 +586,18 @@
       parts.push(`Dia: <strong>${weekdayLabels[filterState.weekday] || filterState.weekday}</strong>`);
     }
 
+    if (filterState.device !== 'all') {
+      parts.push(`Dispositivo: <strong>${filterState.device}</strong>`);
+    }
+
+    if (filterState.os !== 'all') {
+      parts.push(`SO: <strong>${filterState.os}</strong>`);
+    }
+
+    if (filterState.browser !== 'all') {
+      parts.push(`Navegador: <strong>${filterState.browser}</strong>`);
+    }
+
     if (filterState.radarSearchQuery) {
       parts.push(`Busca: <strong>"${filterState.radarSearchQuery}"</strong>`);
     }
@@ -536,6 +619,9 @@
     filterState.customDateFrom = null;
     filterState.customDateTo = null;
     filterState.weekday = 'all';
+    filterState.device = 'all';
+    filterState.os = 'all';
+    filterState.browser = 'all';
     filterState.radarSearchQuery = '';
     filterState.pageLimit = 25;
 
@@ -555,6 +641,27 @@
     if (elements.weekdayFilterPills) {
       elements.weekdayFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
         pill.classList.toggle('active', pill.getAttribute('data-weekday') === 'all');
+      });
+    }
+
+    // Atualiza pills visuais de dispositivo
+    if (elements.deviceFilterPills) {
+      elements.deviceFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.getAttribute('data-device') === 'all');
+      });
+    }
+
+    // Atualiza pills visuais de SO
+    if (elements.osFilterPills) {
+      elements.osFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.getAttribute('data-os') === 'all');
+      });
+    }
+
+    // Atualiza pills visuais de Navegador
+    if (elements.browserFilterPills) {
+      elements.browserFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.classList.toggle('active', pill.getAttribute('data-browser') === 'all');
       });
     }
 
@@ -629,12 +736,60 @@
       });
     }
 
-    // 6. Botão de Limpar Filtros
+    // 6. Filtro de Dispositivo (Pills)
+    if (elements.deviceFilterPills) {
+      elements.deviceFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const dev = pill.getAttribute('data-device');
+          filterState.device = dev;
+          filterState.pageLimit = 25;
+
+          elements.deviceFilterPills.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          renderRecentVisits();
+        });
+      });
+    }
+
+    // 7. Filtro de Sistema Operacional (Pills)
+    if (elements.osFilterPills) {
+      elements.osFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const osVal = pill.getAttribute('data-os');
+          filterState.os = osVal;
+          filterState.pageLimit = 25;
+
+          elements.osFilterPills.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          renderRecentVisits();
+        });
+      });
+    }
+
+    // 8. Filtro de Navegador (Pills)
+    if (elements.browserFilterPills) {
+      elements.browserFilterPills.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const browserVal = pill.getAttribute('data-browser');
+          filterState.browser = browserVal;
+          filterState.pageLimit = 25;
+
+          elements.browserFilterPills.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+
+          renderRecentVisits();
+        });
+      });
+    }
+
+    // 9. Botão de Limpar Filtros
     if (elements.btnClearAllFilters) {
       elements.btnClearAllFilters.addEventListener('click', clearAllFilters);
     }
 
-    // 7. Botão Carregar Mais
+    // 10. Botão Carregar Mais
     if (elements.btnLoadMoreVisits) {
       elements.btnLoadMoreVisits.addEventListener('click', () => {
         filterState.pageLimit += 25;
@@ -642,14 +797,14 @@
       });
     }
 
-    // 8. Botão Atualizar Agora
+    // 11. Botão Atualizar Agora
     if (elements.refreshBtn) {
       elements.refreshBtn.addEventListener('click', () => {
         fetchAnalytics(true);
       });
     }
 
-    // 9. Auto-refresh a cada 25 segundos (preserva os filtros do usuário)
+    // 12. Auto-refresh a cada 25 segundos (preserva os filtros do usuário)
     autoRefreshInterval = setInterval(() => {
       fetchAnalytics(false);
     }, 25000);

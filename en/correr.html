@@ -104,6 +104,17 @@
       -webkit-user-select: none !important;
     }
 
+    body.is-fullscreen nav {
+      display: none !important;
+    }
+
+    body.is-fullscreen .game-wrapper {
+      margin-top: 0 !important;
+      height: 100dvh !important;
+      height: 100vh !important;
+      width: 100vw !important;
+    }
+
     nav {
       position: fixed;
       top: 0;
@@ -756,7 +767,7 @@
     }
   </style>
 </head>
-<body>
+<body class="game-body">
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
@@ -1118,38 +1129,49 @@
       }
     }, { passive: false });
 
-    // Alternar modo Tela Cheia (com suporte para iOS)
+    // Alternar modo Tela Cheia (com suporte a Pseudo-Fullscreen Imersivo para iPhone/iOS)
     const btnFullscreen = document.getElementById('btnFullscreenToggle');
+    function isFullscreenActive() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement || document.body.classList.contains('is-fullscreen'));
+    }
+
+    function toggleFullscreen() {
+      const isFs = isFullscreenActive();
+      if (!isFs) {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
+        // Ativa modo imersivo via CSS (compatível com iOS/iPhone)
+        document.body.classList.add('is-fullscreen');
+        if (btnFullscreen) btnFullscreen.textContent = '🗗';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        document.body.classList.remove('is-fullscreen');
+        if (btnFullscreen) btnFullscreen.textContent = '⛶';
+      }
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 100);
+    }
+
     if (btnFullscreen) {
       btnFullscreen.addEventListener('click', (e) => {
         e.stopPropagation();
-        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement;
-        if (!isFullscreen) {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) {
-            elem.requestFullscreen();
-          } else if (elem.webkitRequestFullscreen) {
-            elem.webkitRequestFullscreen();
-          } else if (elem.webkitEnterFullscreen) {
-            elem.webkitEnterFullscreen();
-          }
-          btnFullscreen.textContent = '🗗';
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          } else if (document.webkitExitFullScreen) {
-            document.webkitExitFullScreen();
-          }
-          btnFullscreen.textContent = '⛶';
-        }
+        toggleFullscreen();
       });
 
-      // Atualizar ícone ao mudar estado de fullscreen
       const updateFullscreenIcon = () => {
-        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement;
-        btnFullscreen.textContent = isFullscreen ? '🗗' : '⛶';
+        const isFs = isFullscreenActive();
+        btnFullscreen.textContent = isFs ? '🗗' : '⛶';
+        document.body.classList.toggle('is-fullscreen', isFs);
+        window.dispatchEvent(new Event('resize'));
       };
       document.addEventListener('fullscreenchange', updateFullscreenIcon);
       document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
@@ -1168,10 +1190,21 @@
       btnSound.addEventListener('click', (e) => {
         e.stopPropagation();
         gameAudio.init();
-        const info = gameAudio.cycleAudioMode();
+        gameAudio.cycleAudioMode();
         updateSoundUI();
       });
     }
+
+    // Inicialização do AudioContext no primeiro toque/clique do usuário
+    const initAudioOnFirstTouch = () => {
+      try { gameAudio.init(); } catch (_) {}
+      window.removeEventListener('click', initAudioOnFirstTouch);
+      window.removeEventListener('touchstart', initAudioOnFirstTouch);
+      window.removeEventListener('pointerdown', initAudioOnFirstTouch);
+    };
+    window.addEventListener('click', initAudioOnFirstTouch, { once: true });
+    window.addEventListener('touchstart', initAudioOnFirstTouch, { once: true, passive: true });
+    window.addEventListener('pointerdown', initAudioOnFirstTouch, { once: true });
 
     // Inicializa o motor do jogo modular 3D e AdsManager
     initGame();

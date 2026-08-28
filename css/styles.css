@@ -49,7 +49,7 @@ body {
   position: relative;
 }
 
-/* Camada 1: Estrelas Pequenas e Médias Cintilantes */
+/* Camada 1: Estrelas Pequenas e Médias Cósmicas (Estáticas para Zero Oscilação de Brilho no iPhone) */
 body::before {
   content: "";
   position: fixed;
@@ -59,6 +59,7 @@ body::before {
   height: 100vh;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.85;
   background-image: 
     radial-gradient(1.5px 1.5px at 12% 14%, #ffffff 100%, transparent),
     radial-gradient(1px 1px at 28% 36%, rgba(255, 255, 255, 0.85) 100%, transparent),
@@ -74,10 +75,9 @@ body::before {
     radial-gradient(2px 2px at 95% 92%, rgba(56, 189, 248, 0.9) 100%, transparent),
     radial-gradient(1px 1px at 6% 94%, rgba(255, 255, 255, 0.75) 100%, transparent);
   background-size: 100vw 100vh;
-  animation: cosmicTwinkleSlow 7s ease-in-out infinite alternate;
 }
 
-/* Camada 2: Estrelas Cintilantes com Brilho Suave e Ritmo Alternado */
+/* Camada 2: Estrelas Cósmicas Adicionais (Sem animações pesadas de repaints) */
 body::after {
   content: "";
   position: fixed;
@@ -87,6 +87,7 @@ body::after {
   height: 100vh;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.75;
   background-image: 
     radial-gradient(1.5px 1.5px at 20% 24%, rgba(255, 255, 255, 0.95) 100%, transparent),
     radial-gradient(2px 2px at 38% 48%, rgba(255, 255, 255, 0.9) 100%, transparent),
@@ -100,19 +101,14 @@ body::after {
     radial-gradient(1.5px 1.5px at 78% 62%, rgba(255, 255, 255, 0.95) 100%, transparent),
     radial-gradient(2px 2px at 93% 16%, rgba(255, 223, 0, 0.9) 100%, transparent);
   background-size: 100vw 100vh;
-  animation: cosmicTwinkleMedium 10s ease-in-out infinite alternate;
 }
 
-@keyframes cosmicTwinkleSlow {
-  0% { opacity: 0.35; transform: scale(0.98); }
-  50% { opacity: 0.98; transform: scale(1.01); }
-  100% { opacity: 0.40; transform: scale(0.99); }
-}
-
-@keyframes cosmicTwinkleMedium {
-  0% { opacity: 0.90; transform: scale(1.01); }
-  50% { opacity: 0.30; transform: scale(0.98); }
-  100% { opacity: 0.95; transform: scale(1.0); }
+/* Desativa pseudo-elementos pesados em telas de jogo para máxima performance 60fps no iPhone */
+body.game-body::before,
+body.game-body::after,
+body.is-fullscreen::before,
+body.is-fullscreen::after {
+  display: none !important;
 }
 
 /* 3. BARRA DE NAVEGAÇÃO SUPERIOR RESPONSIVA */

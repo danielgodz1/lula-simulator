@@ -820,7 +820,7 @@
     }
   </style>
 </head>
-<body>
+<body class="game-body">
 
   <!-- BARRA DE NAVEGAÇÃO SUPERIOR -->
   <nav>
@@ -1171,7 +1171,7 @@
     let SPAWN_FREQ = 120;
 
     function isFullscreenActive() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement);
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement || document.body.classList.contains('is-fullscreen'));
     }
 
     function calcSize() {
@@ -1509,18 +1509,29 @@
     if (btnFullscreen) {
       btnFullscreen.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!isFullscreenActive()) {
+        const isFs = isFullscreenActive();
+        if (!isFs) {
           const el = document.documentElement;
-          if (el.requestFullscreen) el.requestFullscreen();
-          else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-          else if (el.webkitEnterFullscreen) el.webkitEnterFullscreen();
+          if (el.requestFullscreen) {
+            el.requestFullscreen().catch(() => {});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          }
+          document.body.classList.add('is-fullscreen');
           btnFullscreen.textContent = '🗗';
         } else {
-          if (document.exitFullscreen) document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-          else if (document.webkitExitFullScreen) document.webkitExitFullScreen();
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+          document.body.classList.remove('is-fullscreen');
           btnFullscreen.textContent = '⛶';
         }
+        setTimeout(() => {
+          resizeGame();
+          if (btnFullscreen) btnFullscreen.textContent = isFullscreenActive() ? '🗗' : '⛶';
+        }, 100);
       });
     }
 
@@ -3059,6 +3070,8 @@
 
     document.addEventListener('fullscreenchange', () => {
       setTimeout(() => {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement);
+        if (isFs) document.body.classList.add('is-fullscreen');
         const res = calcSize();
         W = res.W;
         H = res.H;
@@ -3068,6 +3081,8 @@
 
     document.addEventListener('webkitfullscreenchange', () => {
       setTimeout(() => {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement);
+        if (isFs) document.body.classList.add('is-fullscreen');
         const res = calcSize();
         W = res.W;
         H = res.H;

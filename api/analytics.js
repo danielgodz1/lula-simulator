@@ -69,6 +69,49 @@ export default async function handler(req, res) {
           if (docSnap.exists) {
             analyticsData = docSnap.data();
           }
+
+          // Enriquece com dados detalhados recentes de historico_acessos
+          try {
+            const histSnap = await db.collection('historico_acessos').orderBy('timestamp', 'desc').limit(60).get();
+            if (!histSnap.empty) {
+              const histVisits = histSnap.docs.map(d => {
+                const item = d.data();
+                const code = (item.geolocalizacao?.codigoPais || 'BR').toUpperCase();
+                return {
+                  country: code,
+                  countryName: item.geolocalizacao?.pais || COUNTRY_NAMES[code] || 'Brasil',
+                  flag: getFlagEmoji(code),
+                  city: item.geolocalizacao?.cidade || 'Desconhecida',
+                  device: item.dispositivo?.modelo || '',
+                  deviceType: item.dispositivo?.tipo || 'desktop',
+                  os: item.sistemaOperacional?.nome || '',
+                  browser: item.navegador?.nome || '',
+                  timestamp: item.timestamp || new Date().toISOString()
+                };
+              });
+
+              const existing = analyticsData?.recentVisits || [];
+              const combined = [...histVisits, ...existing];
+              const seen = new Set();
+              const uniqueVisits = combined.filter(x => {
+                const key = `${x.country}_${x.city}_${x.timestamp}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+              }).slice(0, 200);
+
+              if (analyticsData) {
+                analyticsData.recentVisits = uniqueVisits;
+              } else {
+                analyticsData = {
+                  totalVisits: Math.max(1, uniqueVisits.length),
+                  countries: { BR: 1 },
+                  recentVisits: uniqueVisits,
+                  updatedAt: new Date().toISOString()
+                };
+              }
+            }
+          } catch (_) {}
         } catch (adminErr) {
           console.warn('Fallback para Firestore REST API no GET:', adminErr.message);
         }
@@ -96,6 +139,10 @@ export default async function handler(req, res) {
               countryName: f.countryName?.stringValue || 'Brasil',
               flag: f.flag?.stringValue || '🇧🇷',
               city: f.city?.stringValue || 'Desconhecida',
+              device: f.device?.stringValue || f.dispositivo?.stringValue || '',
+              deviceType: f.deviceType?.stringValue || f.dispositivoTipo?.stringValue || 'desktop',
+              os: f.os?.stringValue || f.sistemaOperacional?.stringValue || '',
+              browser: f.browser?.stringValue || f.navegador?.stringValue || '',
               timestamp: f.timestamp?.stringValue || new Date().toISOString()
             };
           });
@@ -263,11 +310,42 @@ export default async function handler(req, res) {
         }
       }
 
+      const ua = req.headers['user-agent'] || '';
+      let detectedDeviceType = req.body?.deviceType || 'desktop';
+      let detectedOS = req.body?.os || '';
+      let detectedBrowser = req.body?.browser || '';
+      let detectedDevice = req.body?.device || '';
+
+      if (!detectedOS) {
+        if (/android/i.test(ua)) detectedOS = 'Android';
+        else if (/iphone|ipad|ipod/i.test(ua)) detectedOS = 'iOS';
+        else if (/windows/i.test(ua)) detectedOS = 'Windows';
+        else if (/macintosh|mac os/i.test(ua)) detectedOS = 'macOS';
+        else if (/linux/i.test(ua)) detectedOS = 'Linux';
+      }
+
+      if (!detectedBrowser) {
+        if (/edg/i.test(ua)) detectedBrowser = 'Edge';
+        else if (/opr|opera/i.test(ua)) detectedBrowser = 'Opera';
+        else if (/firefox|fxios/i.test(ua)) detectedBrowser = 'Firefox';
+        else if (/chrome|crios/i.test(ua)) detectedBrowser = 'Chrome';
+        else if (/safari/i.test(ua)) detectedBrowser = 'Safari';
+      }
+
+      if (!detectedDeviceType || detectedDeviceType === 'desktop') {
+        if (/mobile|iphone|ipod|android/i.test(ua)) detectedDeviceType = 'mobile';
+        else if (/tablet|ipad/i.test(ua)) detectedDeviceType = 'tablet';
+      }
+
       const visitRecord = {
         country: countryCode,
         countryName,
         flag,
         city,
+        device: detectedDevice,
+        deviceType: detectedDeviceType,
+        os: detectedOS,
+        browser: detectedBrowser,
         timestamp: new Date().toISOString()
       };
 
@@ -345,6 +423,10 @@ export default async function handler(req, res) {
               countryName: rf.countryName?.stringValue || 'Brasil',
               flag: rf.flag?.stringValue || '🇧🇷',
               city: rf.city?.stringValue || 'Desconhecida',
+              device: rf.device?.stringValue || '',
+              deviceType: rf.deviceType?.stringValue || 'desktop',
+              os: rf.os?.stringValue || '',
+              browser: rf.browser?.stringValue || '',
               timestamp: rf.timestamp?.stringValue || new Date().toISOString()
             };
           });
@@ -363,11 +445,15 @@ export default async function handler(req, res) {
         const recentValues = recentVisits.map(r => ({
           mapValue: {
             fields: {
-              country: { stringValue: r.country },
-              countryName: { stringValue: r.countryName },
-              flag: { stringValue: r.flag },
-              city: { stringValue: r.city },
-              timestamp: { stringValue: r.timestamp }
+              country: { stringValue: r.country || 'BR' },
+              countryName: { stringValue: r.countryName || 'Brasil' },
+              flag: { stringValue: r.flag || '🇧🇷' },
+              city: { stringValue: r.city || 'Desconhecida' },
+              device: { stringValue: r.device || '' },
+              deviceType: { stringValue: r.deviceType || 'desktop' },
+              os: { stringValue: r.os || '' },
+              browser: { stringValue: r.browser || '' },
+              timestamp: { stringValue: r.timestamp || new Date().toISOString() }
             }
           }
         }));

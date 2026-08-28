@@ -40,14 +40,14 @@ export const PRESET_AVATARS = [
 class AuthManager {
   constructor() {
     this.currentUser = this.loadCurrentUser();
-    // Inicia sincronização em background se houver usuário conectado ou nome salvo
-    if (this.currentUser) {
+    // Inicia sincronização com o Firestore se houver usuário conectado ou nome salvo
+    if (this.currentUser && this.currentUser.username) {
       this.syncFromCloud().then(() => {
         this.renderProfileBadge();
         this.checkDailyLoginStreak();
       }).catch(() => {});
-    } else {
-      setTimeout(() => this.checkDailyLoginStreak(), 500);
+      // Registrar acesso para usuário recorrente na inicialização da página
+      registrarAcesso(this.currentUser.email || `${this.currentUser.username}@lulasimulator.com.br`).catch(() => {});
     }
   }
 
@@ -70,6 +70,12 @@ class AuthManager {
           if (!parsed.prestigeLevel) {
             parsed.prestigeLevel = parseInt(localStorage.getItem('lula_prestige_level') || '0', 10);
           }
+          if (!parsed.loginStreak) {
+            parsed.loginStreak = parseInt(localStorage.getItem('lula_login_streak') || '1', 10);
+          }
+          if (!parsed.lastLoginDate) {
+            parsed.lastLoginDate = localStorage.getItem('lula_last_login_date') || '';
+          }
           return parsed;
         }
       }
@@ -85,6 +91,8 @@ class AuthManager {
           dilmaScore: parseInt(localStorage.getItem('flappy_dilma_record_score') || '0', 10),
           runnerCoins: parseInt(localStorage.getItem('runner_total_coins') || '0', 10),
           prestigeLevel: parseInt(localStorage.getItem('lula_prestige_level') || '0', 10),
+          loginStreak: parseInt(localStorage.getItem('lula_login_streak') || '1', 10),
+          lastLoginDate: localStorage.getItem('lula_last_login_date') || '',
           unlockedSkins: JSON.parse(localStorage.getItem('lula_unlocked_skins') || '[]'),
           equippedSkins: JSON.parse(localStorage.getItem('lula_equipped_skins') || '{}')
         };
@@ -908,6 +916,11 @@ class AuthManager {
       this.setCurrentUser(userObj);
       localStorage.setItem('lula_player', cleanName);
 
+      // Sincroniza dados com o servidor, registra acesso do convidado e checa streak
+      await this.syncUserDataNow().catch(() => {});
+      registrarAcesso(userObj.email || `${cleanName}@lulasimulator.com.br`).catch(() => {});
+      this.checkDailyLoginStreak();
+
       this.renderProfileBadge();
       return { success: true, user: userObj };
     } catch (e) {
@@ -987,8 +1000,10 @@ class AuthManager {
 
       this.setCurrentUser(userObj);
 
-      // Registrar acesso no Firestore (frontend)
+      // Sincroniza dados com o servidor, registra acesso e checa streak
+      await this.syncUserDataNow().catch(() => {});
       registrarAcesso(userObj.email || `${cleanName}@lulasimulator.com.br`).catch(() => {});
+      this.checkDailyLoginStreak();
 
       return { success: true, user: userObj };
     } catch (err) {
@@ -1041,11 +1056,10 @@ class AuthManager {
       this.saveLocalUsersDB(localDB);
       this.setCurrentUser(userObj);
 
-      // Sincroniza dados com o servidor após o login
-      this.syncUserDataNow().catch(() => {});
-
-      // Registrar acesso no Firestore (frontend)
+      // Sincroniza dados com o servidor após o login, registra acesso e checa streak
+      await this.syncUserDataNow().catch(() => {});
       registrarAcesso(userObj.email || `${cleanName}@lulasimulator.com.br`).catch(() => {});
+      this.checkDailyLoginStreak();
 
       return { success: true, user: userObj };
     } catch (err) {
