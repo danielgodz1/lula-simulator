@@ -26,7 +26,7 @@ export class UIManager {
     this.stumbleAlertBanner = document.getElementById('stumbleAlertBanner');
     this.stumbleAlertTimer = null;
     this.btnSoundToggle = document.getElementById('btnSoundToggle');
-    this.btnGraphicsToggle = document.getElementById('btnGraphicsToggle');
+    this.btnFullscreenToggle = document.getElementById('btnFullscreenToggle');
 
     this.startOverlay = document.getElementById('startOverlay');
     this.gameOverModal = document.getElementById('gameOverModal');
@@ -72,35 +72,61 @@ export class UIManager {
     this.onStartGameRequest = null;
 
     this.setupSoundButton();
-    this.setupGraphicsButton();
+    this.setupFullscreenButton();
     this.setupCharacterSelect();
   }
 
-  setupGraphicsButton() {
-    if (this.btnGraphicsToggle) {
-      const updateBtn = () => {
-        const isHigh = this.sceneManager ? this.sceneManager.postProcessingEnabled : (localStorage.getItem('runner_graphics') !== 'low');
-        this.btnGraphicsToggle.textContent = isHigh ? '🌟' : '⚡';
-        this.btnGraphicsToggle.title = isHigh ? 'Gráficos: Altos (Bloom + Vinheta)' : 'Gráficos: 60 FPS Puro (Rápido)';
+  setupFullscreenButton() {
+    this.btnFullscreenToggle = document.getElementById('btnFullscreenToggle');
+    if (this.btnFullscreenToggle) {
+      const updateFullscreenIcon = () => {
+        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        this.btnFullscreenToggle.textContent = isFull ? '🗗' : '⛶';
+        this.btnFullscreenToggle.title = isFull ? 'Sair da Tela Cheia' : 'Tela Cheia';
       };
-      updateBtn();
 
-      this.btnGraphicsToggle.addEventListener('click', (e) => {
+      this.btnFullscreenToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (this.sceneManager) {
-          const next = this.sceneManager.toggleGraphicsQuality();
-          updateBtn();
-          if (next === 'high') {
-            this.showToast('🌟 Gráficos Altos Ativados (Bloom + Vinheta)');
-          } else {
-            this.showToast('⚡ Modo 60 FPS Puro Ativado (Desempenho Máximo)');
+        const doc = document;
+        const docEl = document.documentElement;
+
+        const isFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+        if (!isFull) {
+          if (docEl.requestFullscreen) {
+            docEl.requestFullscreen().catch(() => {});
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          } else if (docEl.mozRequestFullScreen) {
+            docEl.mozRequestFullScreen();
+          } else if (docEl.msRequestFullscreen) {
+            docEl.msRequestFullscreen();
           }
+          this.showToast('⛶ Modo Tela Cheia Ativado');
+        } else {
+          if (doc.exitFullscreen) {
+            doc.exitFullscreen().catch(() => {});
+          } else if (doc.webkitExitFullscreen) {
+            doc.webkitExitFullscreen();
+          } else if (doc.mozCancelFullScreen) {
+            doc.mozCancelFullScreen();
+          } else if (doc.msExitFullscreen) {
+            doc.msExitFullscreen();
+          }
+          this.showToast('🗗 Tela Cheia Desativada');
         }
+        setTimeout(updateFullscreenIcon, 100);
       });
+
+      document.addEventListener('fullscreenchange', updateFullscreenIcon);
+      document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
+      document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
+      document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+      updateFullscreenIcon();
     }
   }
 
   setupSoundButton() {
+    this.btnSoundToggle = document.getElementById('btnSoundToggle');
     if (this.btnSoundToggle) {
       const updateSoundUI = () => {
         const info = gameAudio.getModeInfo();
@@ -114,6 +140,7 @@ export class UIManager {
         gameAudio.init();
         const info = gameAudio.cycleAudioMode();
         updateSoundUI();
+        this.showToast(info.label);
       });
     }
   }

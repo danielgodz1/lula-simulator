@@ -109,13 +109,6 @@ export class ObstacleManager {
         roughness: 0.3,
         metalness: 0.15,
         side: THREE.DoubleSide
-      }),
-      // Sombra de Contato Suave ("Blob Shadow")
-      blobShadow: new THREE.MeshBasicMaterial({
-        map: textureAtlas.softShadowTexture,
-        transparent: true,
-        opacity: 0.65,
-        depthWrite: false
       })
     };
 
@@ -123,8 +116,7 @@ export class ObstacleManager {
       coinCore: new THREE.CylinderGeometry(0.48, 0.48, 0.22, 24),
       coinRim: new THREE.TorusGeometry(0.48, 0.085, 8, 24),
       particle: new THREE.BoxGeometry(0.12, 0.12, 0.12),
-      train: new THREE.BoxGeometry(2.4, 3.4, 18.0),
-      blobShadowGeo: new THREE.PlaneGeometry(1, 1)
+      train: new THREE.BoxGeometry(2.4, 3.4, 18.0)
     };
 
     // Marca geometrias e materiais compartilhados para não serem destruídos
@@ -133,18 +125,6 @@ export class ObstacleManager {
       else if (m) m._isShared = true;
     });
     Object.values(this.geometries).forEach(g => { if (g) g._isShared = true; });
-  }
-
-  /**
-   * Helper para criar sombra de contato projetada suavemente no solo
-   */
-  createBlobShadow(width = 2.0, length = 2.0, opacity = 0.65) {
-    const shadow = new THREE.Mesh(this.geometries.blobShadowGeo, this.materials.blobShadow);
-    shadow.rotation.x = -Math.PI / 2;
-    shadow.position.y = 0.025;
-    shadow.scale.set(width, length, 1);
-    shadow.renderOrder = 1;
-    return shadow;
   }
 
   clearSegmentEntities(parent) {
@@ -291,10 +271,6 @@ export class ObstacleManager {
       beam.rotation.x = -Math.PI / 2;
       beam.position.set(0, 1.0, 10.25);
       truck.add(beam);
-
-      // Sombra de contato do caminhão
-      const truckShadow = this.createBlobShadow(2.6, 9.8, 0.70);
-      truck.add(truckShadow);
 
       parent.add(truck);
 
@@ -705,11 +681,6 @@ export class ObstacleManager {
       }
     }
 
-    // Sombra de contato suave do trem no solo
-    const trainShadow = this.createBlobShadow(2.8, 19.5, 0.75);
-    trainShadow.position.y = -1.675;
-    train.add(trainShadow);
-
     parent.add(train);
 
     const obstacleObj = {
@@ -793,11 +764,6 @@ export class ObstacleManager {
     stand.position.y = -1.0;
     cardGroup.add(stand);
 
-    // Sombra de contato no solo
-    const cardShadow = this.createBlobShadow(1.8, 1.3, 0.55);
-    cardShadow.position.y = -1.025;
-    cardGroup.add(cardShadow);
-
     parent.add(cardGroup);
 
     this.obstacles.push({
@@ -838,11 +804,6 @@ export class ObstacleManager {
     const stand = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.12, 0.4), new THREE.MeshLambertMaterial({ color: 0x334155 }));
     stand.position.y = -1.1;
     cardGroup.add(stand);
-
-    // Sombra de contato no solo
-    const benefitShadow = this.createBlobShadow(1.8, 1.3, 0.55);
-    benefitShadow.position.y = -1.125;
-    cardGroup.add(benefitShadow);
 
     parent.add(cardGroup);
 
@@ -951,12 +912,6 @@ export class ObstacleManager {
     greenLight.position.set(0.72, 1.05, 0.08);
 
     barrierGroup.add(signalBox, redLight, greenLight);
-
-    // Sombra de contato da barreira
-    const barrierShadow = this.createBlobShadow(2.2, 0.9, 0.60);
-    barrierShadow.position.y = -1.125;
-    barrierGroup.add(barrierShadow);
-
     parent.add(barrierGroup);
 
     this.obstacles.push({
@@ -1006,11 +961,6 @@ export class ObstacleManager {
     signMesh.castShadow = true;
     barrierGroup.add(signMesh);
 
-    // Sombra de contato nos pés dos postes
-    const overheadShadow = this.createBlobShadow(2.2, 0.9, 0.60);
-    overheadShadow.position.y = -1.825;
-    barrierGroup.add(overheadShadow);
-
     parent.add(barrierGroup);
 
     this.obstacles.push({
@@ -1057,8 +1007,6 @@ export class ObstacleManager {
     if (this.coinPool.length > 0) {
       coinGroup = this.coinPool.pop();
       coinGroup.visible = true;
-      const sh = coinGroup.getObjectByName('coinBlobShadow');
-      if (sh) sh.position.y = -y + 0.025;
     } else {
       coinGroup = new THREE.Group();
       const core = new THREE.Mesh(this.geometries.coinCore, this.materials.goldCoin);
@@ -1070,11 +1018,7 @@ export class ObstacleManager {
       rim.castShadow = true;
       rim.receiveShadow = true;
 
-      const shadow = this.createBlobShadow(0.85, 0.85, 0.40);
-      shadow.name = 'coinBlobShadow';
-      shadow.position.y = -y + 0.025;
-
-      coinGroup.add(core, rim, shadow);
+      coinGroup.add(core, rim);
     }
 
     coinGroup.position.set(laneX, y, localZ);
@@ -1202,12 +1146,6 @@ export class ObstacleManager {
     picanhaGroup.add(ring);
 
     picanhaGroup.rotation.set(0.25, 0, 0.15);
-
-    // Sombra de contato no solo
-    const picanhaShadow = this.createBlobShadow(1.2, 1.2, 0.50);
-    picanhaShadow.position.y = -1.025;
-    picanhaGroup.add(picanhaShadow);
-
     parent.add(picanhaGroup);
 
     this.coins.push({
@@ -1239,11 +1177,6 @@ export class ObstacleManager {
   createPowerupItem(parent, laneX, localZ, type = 'magnet') {
     const pGroup = new THREE.Group();
     pGroup.position.set(laneX, 1.15, localZ);
-
-    // Sombra de contato no solo
-    const pupShadow = this.createBlobShadow(1.2, 1.2, 0.55);
-    pupShadow.position.y = -1.125;
-    pGroup.add(pupShadow);
 
     if (type === 'superjump') {
       // MODELO 3D DE SAPATOS SOCIAIS DOURADOS ALADOS (SUPER PULO)
@@ -1594,11 +1527,6 @@ export class ObstacleManager {
       taxGroup.add(note);
     });
 
-    // Sombra de contato no solo
-    const darfShadow = this.createBlobShadow(1.8, 1.8, 0.50);
-    darfShadow.position.y = -taxGroup.position.y + 0.025;
-    taxGroup.add(darfShadow);
-
     parent.add(taxGroup);
 
     this.obstacles.push({
@@ -1664,11 +1592,6 @@ export class ObstacleManager {
     board.rotation.y = -0.3;
 
     auditor.add(body, tie, head, glasses, lLeg, rLeg, board);
-
-    // Sombra de contato do Fiscal no solo
-    const auditorShadow = this.createBlobShadow(1.2, 1.2, 0.65);
-    auditor.add(auditorShadow);
-
     parent.add(auditor);
 
     this.obstacles.push({

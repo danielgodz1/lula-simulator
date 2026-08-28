@@ -1,38 +1,6 @@
 // js/game/scene.js — Céu Contínuo Sem Artefatos, Panorama Parallax Densa da Favela e Ciclo Dia/Noite Otimizado
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
-import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/ShaderPass.js';
 import { textureAtlas } from './textures.js';
-
-const VignetteShader = {
-  uniforms: {
-    tDiffuse: { value: null },
-    offset: { value: 1.02 },
-    darkness: { value: 1.18 }
-  },
-  vertexShader: `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform sampler2D tDiffuse;
-    uniform float offset;
-    uniform float darkness;
-    varying vec2 vUv;
-    void main() {
-      vec4 texel = texture2D(tDiffuse, vUv);
-      vec2 uv = (vUv - vec2(0.5)) * vec2(offset);
-      float dist = length(uv);
-      float vig = clamp(1.0 - dist * darkness, 0.0, 1.0);
-      gl_FragColor = vec4(texel.rgb * vig, texel.a);
-    }
-  `
-};
 
 export class GameScene {
   constructor(containerId = 'canvasContainer') {
@@ -40,9 +8,6 @@ export class GameScene {
     this.scene = null;
     this.camera = null;
     this.renderer = null;
-    this.composer = null;
-    this.bloomPass = null;
-    this.vignettePass = null;
     this.sunLight = null;
     this.fillLight = null;
     this.hemiLight = null;
@@ -60,15 +25,6 @@ export class GameScene {
 
     this.timeOfDay = 0.38; // Começa de dia com sol radiante e alta visibilidade (10h da manhã)
     this.cycleDuration = 180; // 180 segundos para um ciclo suave
-
-    // Sistema de FOV Dinâmico (Zoom-in Heroico ao pegar power-ups)
-    this.baseFov = 60;
-    this.targetFov = 60;
-    this.fovPulseTimer = 0;
-
-    // Sistema de Qualidade Gráfica (Alta = Bloom + Vignette / Baixa = 60 FPS Puro)
-    this.graphicsQuality = localStorage.getItem('runner_graphics') || (window.innerWidth <= 768 ? 'low' : 'high');
-    this.postProcessingEnabled = this.graphicsQuality === 'high';
 
     // Monitor de Performance
     this.fpsHistory = [];
@@ -101,30 +57,30 @@ export class GameScene {
     const grad = ctx.createLinearGradient(0, 0, 0, size);
 
     if (t < 0.15) {
-      // 1. Madrugada / Alvorecer (5h - 7h) — Índigo e Rosa Dourado
-      grad.addColorStop(0.0, '#0f172a');
-      grad.addColorStop(0.35, '#312e81');
-      grad.addColorStop(0.70, '#be185d');
-      grad.addColorStop(1.0, '#fb923c');
-    } else if (t < 0.70) {
-      // 2. Candy Favela Golden Noon (8h - 15h) — Azul Céu Profundo e Cyan Saturado
-      grad.addColorStop(0.0, '#1d4ed8');
-      grad.addColorStop(0.35, '#2563eb');
-      grad.addColorStop(0.75, '#38bdf8');
-      grad.addColorStop(1.0, '#60a5fa');
-    } else if (t < 0.85) {
-      // 3. Pôr do Sol Dourado Quente (16h - 19h)
+      // 1. Madrugada / Alvorecer (5h - 7h)
       grad.addColorStop(0.0, '#1e1b4b');
-      grad.addColorStop(0.30, '#9a3412');
-      grad.addColorStop(0.55, '#c2410c');
-      grad.addColorStop(0.80, '#d97706');
-      grad.addColorStop(1.0, '#fde047');
+      grad.addColorStop(0.35, '#4338ca');
+      grad.addColorStop(0.70, '#f43f5e');
+      grad.addColorStop(1.0, '#fed7aa');
+    } else if (t < 0.70) {
+      // 2. Candy Favela Golden Noon / Late Morning (8h - 15h) — Zenith Azul Celeste e Horizonte Pêssego Dourado
+      grad.addColorStop(0.0, '#3ba7ff');
+      grad.addColorStop(0.35, '#64b5f6');
+      grad.addColorStop(0.75, '#93c5fd');
+      grad.addColorStop(1.0, '#ffd9a8');
+    } else if (t < 0.85) {
+      // 3. Pôr do Sol Dourado (16h - 19h)
+      grad.addColorStop(0.0, '#1e1b4b');
+      grad.addColorStop(0.30, '#7c2d12');
+      grad.addColorStop(0.55, '#ea580c');
+      grad.addColorStop(0.80, '#f59e0b');
+      grad.addColorStop(1.0, '#fef08a');
     } else {
-      // 4. Noite Estrelada Profunda (20h - 4h)
+      // 4. Noite Estrelada (20h - 4h)
       grad.addColorStop(0.0, '#020617');
-      grad.addColorStop(0.45, '#0b1120');
-      grad.addColorStop(0.80, '#0f172a');
-      grad.addColorStop(1.0, '#020617');
+      grad.addColorStop(0.45, '#0f172a');
+      grad.addColorStop(0.80, '#1e293b');
+      grad.addColorStop(1.0, '#090d16');
     }
 
     ctx.fillStyle = grad;
@@ -202,10 +158,10 @@ export class GameScene {
   init() {
     if (!this.container) return;
 
-    // 1. Cena com Fog Atmosférico Afastado para Máximo Contraste (Zero Névoa no Primeiro Plano)
+    // 1. Cena com Fog Atmosférico Suave de Alta Visibilidade (Longe da Pista)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1d4ed8);
-    this.scene.fog = new THREE.Fog(0x1d4ed8, 190, 520);
+    this.scene.background = new THREE.Color(0x38bdf8);
+    this.scene.fog = new THREE.Fog(0xbae6fd, 130, 380);
 
     // 2. Câmera em 3ª Pessoa Elevada (Visão Ampla e Clara das 3 Pistas)
     const aspect = this.container.clientWidth / this.container.clientHeight;
@@ -213,18 +169,18 @@ export class GameScene {
     this.camera.position.set(0, 4.7, 7.2);
     this.camera.lookAt(0, 1.4, -18);
 
-    // 3. Renderizador WebGL em Alta Resolução Retina / HD com Anti-Aliasing
+    // 3. Renderizador WebGL em Alta Resolução Retina / HD com Anti-Aliasing (Adequado para S23 Ultra e Todos os Celulares)
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: true, // Garante bordas 100% lisas e sem serrilhamento
       alpha: false,
       powerPreference: 'high-performance',
-      precision: 'highp',
+      precision: 'highp', // Garante precisão máxima sem artefatos ou pixelização
       stencil: false,
       depth: true
     });
     this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
 
-    // Resolução Inteligente Calibrada
+    // Resolução Inteligente Calibrada (1.50x no mobile e 1.75x no desktop para nitidez sem aquecer GPU)
     const isMobile = typeof window !== 'undefined' && (
       window.innerWidth <= 768 ||
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '')
@@ -237,9 +193,9 @@ export class GameScene {
 
     this.perfCheckTimer = 0;
 
-    // Mapeamento de Tons ACES Filmic Calibrado (Alto contraste, pretos profundos e saturação rica)
+    // Mapeamento de Tons ACES Filmic Calibrado Cartoon (Zero washed-out, alto contraste de cores)
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
+    this.renderer.toneMappingExposure = 0.92;
     this.renderer.outputEncoding = THREE.sRGBEncoding;
     if ('outputColorSpace' in this.renderer && THREE.SRGBColorSpace) {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -270,24 +226,24 @@ export class GameScene {
     // 5. Morro de Favela Densa em Parallax
     this.createFavelaParallaxBackdrop();
 
-    // 6. Iluminação Pixar / Subway Surfers Candy Favela com Alto Contraste
-    // A. Luz Hemisférica (Céu Azul Real 0x60a5fa / Solo Escuro 0x1e293b — profundidade nas sombras)
-    this.hemiLight = new THREE.HemisphereLight(0x60a5fa, 0x1e293b, 0.38);
+    // 6. Iluminação Pixar / Subway Surfers Candy Favela
+    // A. Luz Hemisférica (Céu Azul Celeste 0x7ec8ff / Solo Terroso 0x5b4a3a)
+    this.hemiLight = new THREE.HemisphereLight(0x7ec8ff, 0x5b4a3a, 0.55);
     this.hemiLight.position.set(0, 80, 0);
     this.scene.add(this.hemiLight);
 
-    // B. Luz Solar Direcional Principal (Sol Dourado Quente 0xfffaed, Intensidade 1.35)
-    this.sunLight = new THREE.DirectionalLight(0xfffaed, 1.35);
+    // B. Luz Solar Direcional Principal (Sol Dourado Quente 0xffd089, Intensidade 1.15)
+    this.sunLight = new THREE.DirectionalLight(0xffd089, 1.15);
     this.sunLight.position.set(40, 48, 30);
     this.scene.add(this.sunLight);
 
-    // C. Luz Secundária de Preenchimento Oposta (Sutil Cool Blue Rim 0x3b82f6, Intensidade 0.14)
-    this.fillLight = new THREE.DirectionalLight(0x3b82f6, 0.14);
+    // C. Luz Secundária de Preenchimento Oposta (Cool Blue Rim 0x5aa9ff, Intensidade 0.22)
+    this.fillLight = new THREE.DirectionalLight(0x5aa9ff, 0.22);
     this.fillLight.position.set(-40, 25, -15);
     this.scene.add(this.fillLight);
 
     // D. Luz de Preenchimento Sutil do Player
-    this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.10, 30, 1.5);
+    this.playerSpotLight = new THREE.PointLight(0xffedd5, 0.25, 30, 1.5);
     this.playerSpotLight.position.set(0, 4.8, 2.0);
     this.scene.add(this.playerSpotLight);
 
@@ -349,10 +305,7 @@ export class GameScene {
     this.createStylizedClouds();
     this.createBirdFlock();
 
-    // 9. Pipeline de Pós-Processamento Cinemático (Bloom + Vignette)
-    this.setupPostProcessing();
-
-    // 10. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
+    // 9. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
     this.isDebugVisible = new URLSearchParams(window.location.search).get('debug') === '1';
     this.debugOverlay = null;
     this.minFpsSeen = 60;
@@ -361,47 +314,6 @@ export class GameScene {
     }
 
     window.addEventListener('resize', () => this.onResize());
-  }
-
-  /**
-   * Configuração do Pipeline de Pós-Processamento com EffectComposer (Altamente Otimizado)
-   */
-  setupPostProcessing() {
-    try {
-      const width = this.container.clientWidth || window.innerWidth;
-      const height = this.container.clientHeight || window.innerHeight;
-
-      this.composer = new EffectComposer(this.renderer);
-      const renderPass = new RenderPass(this.scene, this.camera);
-      this.composer.addPass(renderPass);
-
-      // UnrealBloomPass Ultrasseletivo (Threshold 0.98 para NUNCA clarear o dia ou texturas, apenas postes acesos)
-      const bloomRes = new THREE.Vector2(width, height);
-      this.bloomPass = new UnrealBloomPass(bloomRes, 0.08, 0.20, 0.98);
-      this.composer.addPass(this.bloomPass);
-
-      // Vignette Shader para foco cinematográfico
-      this.vignettePass = new ShaderPass(VignetteShader);
-      this.vignettePass.uniforms.offset.value = 1.05;
-      this.vignettePass.uniforms.darkness.value = 1.12;
-      this.composer.addPass(this.vignettePass);
-    } catch(e) {
-      console.warn('[PostProcessing] Erro ao inicializar EffectComposer, usando renderizador padrão:', e);
-      this.postProcessingEnabled = false;
-    }
-  }
-
-  setGraphicsQuality(quality) {
-    this.graphicsQuality = quality === 'high' ? 'high' : 'low';
-    this.postProcessingEnabled = this.graphicsQuality === 'high';
-    localStorage.setItem('runner_graphics', this.graphicsQuality);
-    this.onResize();
-  }
-
-  toggleGraphicsQuality() {
-    const next = this.graphicsQuality === 'high' ? 'low' : 'high';
-    this.setGraphicsQuality(next);
-    return next;
   }
 
   /**
@@ -549,74 +461,73 @@ export class GameScene {
 
     if (t < 0.15) {
       // 5h - Alvorecer
-      this.scene.fog.color.setHex(0x1e1b4b);
-      this.hemiLight.color.setHex(0x818cf8);
-      this.hemiLight.groundColor.setHex(0x0f172a);
-      this.hemiLight.intensity = 0.35;
-      this.sunLight.color.setHex(0xfb923c);
-      this.sunLight.intensity = 1.10;
-      if (this.cloudMat) this.cloudMat.color.setHex(0xfb923c);
+      this.scene.fog.color.setHex(0x312e81);
+      this.hemiLight.color.setHex(0xc7d2fe);
+      this.hemiLight.groundColor.setHex(0x1e1b4b);
+      this.hemiLight.intensity = 0.70;
+      this.sunLight.color.setHex(0xfecdd3);
+      this.sunLight.intensity = 1.05;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xfecdd3);
       if (this.fillLight) {
-        this.fillLight.color.setHex(0x4338ca);
-        this.fillLight.intensity = 0.15;
+        this.fillLight.color.setHex(0xa5b4fc);
+        this.fillLight.intensity = 0.30;
       }
-      this.playerSpotLight.intensity = 0.50;
+      this.playerSpotLight.intensity = 0.85;
     } else if (t < 0.45) {
-      // Manhã (Cores Vivas e Alto Contraste)
-      this.scene.fog.color.setHex(0x2563eb);
-      this.hemiLight.color.setHex(0x60a5fa);
-      this.hemiLight.groundColor.setHex(0x1e293b);
-      this.hemiLight.intensity = 0.38;
+      // Manhã
+      this.scene.fog.color.setHex(0xbae6fd);
+      this.hemiLight.color.setHex(0xffedd5);
+      this.hemiLight.groundColor.setHex(0x475569);
+      this.hemiLight.intensity = 0.85;
       this.sunLight.color.setHex(0xfffbeb);
-      this.sunLight.intensity = 1.30;
-      if (this.cloudMat) this.cloudMat.color.setHex(0xffffff);
-      if (this.fillLight) {
-        this.fillLight.color.setHex(0x3b82f6);
-        this.fillLight.intensity = 0.14;
-      }
-      this.playerSpotLight.intensity = 0.0;
-    } else if (t < 0.65) {
-      // Meio-Dia (Máximo Contraste de Cores Brasileiras)
-      this.scene.fog.color.setHex(0x1d4ed8);
-      this.hemiLight.color.setHex(0x93c5fd);
-      this.hemiLight.groundColor.setHex(0x1e293b);
-      this.hemiLight.intensity = 0.40;
-      this.sunLight.color.setHex(0xffffff);
       this.sunLight.intensity = 1.35;
       if (this.cloudMat) this.cloudMat.color.setHex(0xffffff);
       if (this.fillLight) {
-        this.fillLight.color.setHex(0x2563eb);
-        this.fillLight.intensity = 0.14;
+        this.fillLight.color.setHex(0x93c5fd);
+        this.fillLight.intensity = 0.40;
+      }
+      this.playerSpotLight.intensity = 0.0;
+    } else if (t < 0.65) {
+      // Meio-Dia
+      this.scene.fog.color.setHex(0xe0f2fe);
+      this.hemiLight.color.setHex(0xffffff);
+      this.hemiLight.intensity = 0.95;
+      this.sunLight.color.setHex(0xffffff);
+      this.sunLight.intensity = 1.45;
+      if (this.cloudMat) this.cloudMat.color.setHex(0xffffff);
+      if (this.fillLight) {
+        this.fillLight.color.setHex(0xbfdbfe);
+        this.fillLight.intensity = 0.35;
       }
       this.playerSpotLight.intensity = 0.0;
     } else if (t < 0.85) {
-      // Pôr do Sol Dourado
-      this.scene.fog.color.setHex(0xb45309);
-      this.hemiLight.color.setHex(0xf97316);
-      this.hemiLight.groundColor.setHex(0x1e1b4b);
-      this.hemiLight.intensity = 0.35;
+      // Pôr do Sol
+      this.scene.fog.color.setHex(0xfcd34d);
+      this.hemiLight.color.setHex(0xfb923c);
+      this.hemiLight.groundColor.setHex(0x334155);
+      this.hemiLight.intensity = 0.80;
       this.sunLight.color.setHex(0xf97316);
-      this.sunLight.intensity = 1.20;
+      this.sunLight.intensity = 1.25;
       if (this.cloudMat) this.cloudMat.color.setHex(0xfdba74);
       if (this.fillLight) {
-        this.fillLight.color.setHex(0x7c2d12);
-        this.fillLight.intensity = 0.15;
+        this.fillLight.color.setHex(0xfdba74);
+        this.fillLight.intensity = 0.35;
       }
-      this.playerSpotLight.intensity = 0.25;
+      this.playerSpotLight.intensity = 0.35;
     } else {
-      // Noite Estrelada
-      this.scene.fog.color.setHex(0x020617);
-      this.hemiLight.color.setHex(0x1e3a8a);
+      // Noite
+      this.scene.fog.color.setHex(0x0f172a);
+      this.hemiLight.color.setHex(0x38bdf8);
       this.hemiLight.groundColor.setHex(0x020617);
-      this.hemiLight.intensity = 0.22;
-      this.sunLight.color.setHex(0x38bdf8);
-      this.sunLight.intensity = 0.25;
-      if (this.cloudMat) this.cloudMat.color.setHex(0x1e293b);
+      this.hemiLight.intensity = 0.45;
+      this.sunLight.color.setHex(0x60a5fa);
+      this.sunLight.intensity = 0.35;
+      if (this.cloudMat) this.cloudMat.color.setHex(0x334155);
       if (this.fillLight) {
-        this.fillLight.color.setHex(0x1e1b4b);
-        this.fillLight.intensity = 0.15;
+        this.fillLight.color.setHex(0x2563eb);
+        this.fillLight.intensity = 0.38; // Leve aumento para tirar os obstáculos do apagão total sem perder o clima noturno
       }
-      this.playerSpotLight.intensity = 1.20;
+      this.playerSpotLight.intensity = 1.45;
     }
 
     return isNight;
@@ -725,27 +636,7 @@ export class GameScene {
     this.cameraShakeTimer = duration;
   }
 
-  /**
-   * Pulso Heroico de Zoom-In ao coletar Power-ups e Picanhas
-   */
-  triggerFovPulse(targetFov = 53, duration = 0.45) {
-    this.targetFov = targetFov;
-    this.fovPulseTimer = duration;
-  }
-
   updateCamera(targetX, targetY, isDead = false, dt = 0.016, elapsedTime = 0) {
-    // Interpolação suave do FOV Dinâmico (Zoom-In de Power-up)
-    if (this.fovPulseTimer > 0) {
-      this.fovPulseTimer -= dt;
-      if (this.fovPulseTimer <= 0) {
-        this.targetFov = this.baseFov;
-      }
-    }
-    if (Math.abs(this.camera.fov - this.targetFov) > 0.05) {
-      this.camera.fov += (this.targetFov - this.camera.fov) * Math.min(1.0, 9.0 * dt);
-      this.camera.updateProjectionMatrix();
-    }
-
     if (isDead) {
       this.camera.position.x += (targetX - this.camera.position.x) * (2.5 * dt);
       this.camera.position.y += (3.2 - this.camera.position.y) * (2.5 * dt);
@@ -787,10 +678,6 @@ export class GameScene {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
 
-    if (this.composer) {
-      this.composer.setSize(width, height);
-    }
-
     const isMobile = window.innerWidth <= 768 ||
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
     const dpr = window.devicePixelRatio || 1;
@@ -801,9 +688,7 @@ export class GameScene {
 
   render() {
     this.monitorPerformance();
-    if (this.postProcessingEnabled && this.composer) {
-      this.composer.render();
-    } else if (this.renderer && this.scene && this.camera) {
+    if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }

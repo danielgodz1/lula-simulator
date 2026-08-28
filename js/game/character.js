@@ -775,17 +775,6 @@ export class Character {
         this.bodyPivot.rotation.x = 0.12;
       }
     }
-
-    // Atualiza Sombra de Contato ("Blob Shadow") no Solo (permanece no chão ao pular)
-    if (this.shadow) {
-      this.shadow.position.y = -this.y + 0.03;
-      const heightAboveGround = Math.max(0, this.y - this.groundY);
-      const shadowScale = Math.max(0.40, 1.0 - heightAboveGround * 0.18);
-      this.shadow.scale.set(shadowScale, shadowScale, 1.0);
-      if (this.shadow.material) {
-        this.shadow.material.opacity = Math.max(0.20, 0.75 - heightAboveGround * 0.12);
-      }
-    }
   }
 
   die() {
