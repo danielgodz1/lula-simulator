@@ -79,48 +79,85 @@ export class UIManager {
   setupFullscreenButton() {
     this.btnFullscreenToggle = document.getElementById('btnFullscreenToggle');
     if (this.btnFullscreenToggle) {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
       const updateFullscreenIcon = () => {
-        const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        const isNativeFull = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+        const isCssFull = document.body.classList.contains('is-fullscreen');
+        const isFull = isNativeFull || isCssFull;
         this.btnFullscreenToggle.textContent = isFull ? '🗗' : '⛶';
         this.btnFullscreenToggle.title = isFull ? 'Sair da Tela Cheia' : 'Tela Cheia';
       };
 
-      this.btnFullscreenToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
+      const toggleFullscreen = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
         const doc = document;
         const docEl = document.documentElement;
+        const isNativeFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
+        const isCssFull = doc.body.classList.contains('is-fullscreen');
+        const isFull = isNativeFull || isCssFull;
 
-        const isFull = !!(doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement);
         if (!isFull) {
-          if (docEl.requestFullscreen) {
-            docEl.requestFullscreen().catch(() => {});
-          } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen();
-          } else if (docEl.mozRequestFullScreen) {
-            docEl.mozRequestFullScreen();
-          } else if (docEl.msRequestFullscreen) {
-            docEl.msRequestFullscreen();
+          doc.body.classList.add('is-fullscreen');
+          if (!isIOS) {
+            try {
+              if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(() => {});
+              } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen();
+              } else if (docEl.mozRequestFullScreen) {
+                docEl.mozRequestFullScreen();
+              } else if (docEl.msRequestFullscreen) {
+                docEl.msRequestFullscreen();
+              }
+            } catch(err) {}
           }
           this.showToast('⛶ Modo Tela Cheia Ativado');
         } else {
-          if (doc.exitFullscreen) {
-            doc.exitFullscreen().catch(() => {});
-          } else if (doc.webkitExitFullscreen) {
-            doc.webkitExitFullscreen();
-          } else if (doc.mozCancelFullScreen) {
-            doc.mozCancelFullScreen();
-          } else if (doc.msExitFullscreen) {
-            doc.msExitFullscreen();
+          doc.body.classList.remove('is-fullscreen');
+          if (!isIOS && isNativeFull) {
+            try {
+              if (doc.exitFullscreen) {
+                doc.exitFullscreen().catch(() => {});
+              } else if (doc.webkitExitFullscreen) {
+                doc.webkitExitFullscreen();
+              } else if (doc.mozCancelFullScreen) {
+                doc.mozCancelFullScreen();
+              } else if (doc.msExitFullscreen) {
+                doc.msExitFullscreen();
+              }
+            } catch(err) {}
           }
           this.showToast('🗗 Tela Cheia Desativada');
         }
-        setTimeout(updateFullscreenIcon, 100);
-      });
 
-      document.addEventListener('fullscreenchange', updateFullscreenIcon);
-      document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
-      document.addEventListener('mozfullscreenchange', updateFullscreenIcon);
-      document.addEventListener('MSFullscreenChange', updateFullscreenIcon);
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'));
+          updateFullscreenIcon();
+        }, 80);
+      };
+
+      this.btnFullscreenToggle.addEventListener('click', toggleFullscreen);
+      this.btnFullscreenToggle.addEventListener('touchend', (e) => {
+        toggleFullscreen(e);
+      }, { passive: false });
+
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+          document.body.classList.remove('is-fullscreen');
+        }
+        updateFullscreenIcon();
+      });
+      document.addEventListener('webkitfullscreenchange', () => {
+        if (!document.webkitFullscreenElement) {
+          document.body.classList.remove('is-fullscreen');
+        }
+        updateFullscreenIcon();
+      });
       updateFullscreenIcon();
     }
   }
@@ -135,13 +172,21 @@ export class UIManager {
       };
       updateSoundUI();
 
-      this.btnSoundToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
+      const handleSoundToggle = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         gameAudio.init();
         const info = gameAudio.cycleAudioMode();
         updateSoundUI();
         this.showToast(info.label);
-      });
+      };
+
+      this.btnSoundToggle.addEventListener('click', handleSoundToggle);
+      this.btnSoundToggle.addEventListener('touchend', (e) => {
+        handleSoundToggle(e);
+      }, { passive: false });
     }
   }
 
@@ -152,20 +197,35 @@ export class UIManager {
       document.getElementById('btnOpenCharSelectGO')
     ];
 
+    const handleOpenChar = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      this.openCharacterModal();
+    };
+
     openBtns.forEach(btn => {
       if (btn) {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.openCharacterModal();
-        });
+        btn.addEventListener('click', handleOpenChar);
+        btn.addEventListener('touchend', (e) => {
+          handleOpenChar(e);
+        }, { passive: false });
       }
     });
 
     if (this.btnCloseCharSelect) {
-      this.btnCloseCharSelect.addEventListener('click', (e) => {
-        e.stopPropagation();
+      const handleCloseChar = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         this.closeCharacterModal();
-      });
+      };
+      this.btnCloseCharSelect.addEventListener('click', handleCloseChar);
+      this.btnCloseCharSelect.addEventListener('touchend', (e) => {
+        handleCloseChar(e);
+      }, { passive: false });
     }
 
     // Botão Direto: Jogar com o Personagem Selecionado no 3D Preview
