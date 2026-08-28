@@ -11,6 +11,18 @@ export class Environment {
     this.scene = scene;
     this.segments = [];
 
+    // Pool Otimizado de 3 PointLights Noturnos nos Postes (Zero impacto no FPS mobile, sem sombras dinâmicas)
+    this.lampPointLights = [];
+    if (this.scene) {
+      for (let i = 0; i < 3; i++) {
+        const pl = new THREE.PointLight(0xffedd5, 0, 15, 1.4);
+        pl.castShadow = false;
+        pl.visible = false;
+        this.scene.add(pl);
+        this.lampPointLights.push(pl);
+      }
+    }
+
     // Geometrias Unitárias Reutilizáveis (Zero Memory Leak / Zero GC)
     this.unitBoxGeo = new THREE.BoxGeometry(1, 1, 1);
     this.unitTankGeo = new THREE.CylinderGeometry(1.15, 1.05, 1.4, 10);
@@ -2243,10 +2255,48 @@ export class Environment {
     }
   }
 
-  updateNightLights(isNight, timeOfDay) {
-    const intensity = isNight ? 0.95 : 0.0;
+  updateNightLights(isNight, timeOfDay, playerZ = 0) {
     if (this.sharedMaterials.streetLampMat) {
       this.sharedMaterials.streetLampMat.color.setHex(isNight ? 0xffedd5 : 0x94a3b8);
+    }
+
+    if (!isNight) {
+      for (let i = 0; i < this.lampPointLights.length; i++) {
+        this.lampPointLights[i].intensity = 0;
+        this.lampPointLights[i].visible = false;
+      }
+      return;
+    }
+
+    // Coleta posições mundiais das luminárias de postes nos segmentos ativos
+    const lampPositions = [];
+    const stepZ = 28;
+    for (let s = 0; s < this.segments.length; s++) {
+      const segZ = this.segments[s].position.z;
+      [-7.8, 7.8].forEach((px, sideIdx) => {
+        const lx = px + (sideIdx === 0 ? 1.7 : -1.7);
+        for (let pz = -SEGMENT_LENGTH / 2 + 14; pz < SEGMENT_LENGTH / 2; pz += stepZ) {
+          const worldZ = segZ + pz;
+          // Pega postes na faixa em frente e ao redor do jogador
+          const dist = Math.abs(worldZ - (playerZ - 10));
+          lampPositions.push({ x: lx, y: 8.5, z: worldZ, dist });
+        }
+      });
+    }
+
+    // Ordena pelas luminárias mais próximas à frente do jogador
+    lampPositions.sort((a, b) => a.dist - b.dist);
+
+    for (let i = 0; i < this.lampPointLights.length; i++) {
+      const light = this.lampPointLights[i];
+      if (i < lampPositions.length) {
+        const pos = lampPositions[i];
+        light.position.set(pos.x, pos.y, pos.z);
+        light.intensity = 1.35;
+        light.visible = true;
+      } else {
+        light.visible = false;
+      }
     }
   }
 

@@ -524,8 +524,8 @@ export class GameScene {
       this.sunLight.intensity = 0.35;
       if (this.cloudMat) this.cloudMat.color.setHex(0x334155);
       if (this.fillLight) {
-        this.fillLight.color.setHex(0x1e3a8a);
-        this.fillLight.intensity = 0.20;
+        this.fillLight.color.setHex(0x2563eb);
+        this.fillLight.intensity = 0.38; // Leve aumento para tirar os obstáculos do apagão total sem perder o clima noturno
       }
       this.playerSpotLight.intensity = 1.45;
     }

@@ -226,7 +226,8 @@ export class Game {
 
     // 1. Atualização do Ciclo Dia/Noite com base no tempo decorrido total
     const isNight = this.sceneManager.updateDayNightCycle(elapsedTime);
-    this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay);
+    const playerZ = (this.character && this.character.mesh) ? this.character.mesh.position.z : 0;
+    this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay, playerZ);
 
     if (this.state === this.STATE.PLAYING) {
       // 2. Distância e Aceleração Progressiva em Ritmo Realista
