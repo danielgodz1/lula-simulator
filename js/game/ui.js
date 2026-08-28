@@ -9,7 +9,8 @@ import { auth } from '../auth.js';
 import { escapeHTML } from '../security.js';
 
 export class UIManager {
-  constructor() {
+  constructor(sceneManager = null) {
+    this.sceneManager = sceneManager;
     this.distDisplay = document.getElementById('distDisplay');
     this.bestDisplay = document.getElementById('bestDisplay');
     this.speedDisplay = document.getElementById('speedDisplay');
@@ -25,6 +26,7 @@ export class UIManager {
     this.stumbleAlertBanner = document.getElementById('stumbleAlertBanner');
     this.stumbleAlertTimer = null;
     this.btnSoundToggle = document.getElementById('btnSoundToggle');
+    this.btnGraphicsToggle = document.getElementById('btnGraphicsToggle');
 
     this.startOverlay = document.getElementById('startOverlay');
     this.gameOverModal = document.getElementById('gameOverModal');
@@ -70,7 +72,32 @@ export class UIManager {
     this.onStartGameRequest = null;
 
     this.setupSoundButton();
+    this.setupGraphicsButton();
     this.setupCharacterSelect();
+  }
+
+  setupGraphicsButton() {
+    if (this.btnGraphicsToggle) {
+      const updateBtn = () => {
+        const isHigh = this.sceneManager ? this.sceneManager.postProcessingEnabled : (localStorage.getItem('runner_graphics') !== 'low');
+        this.btnGraphicsToggle.textContent = isHigh ? '🌟' : '⚡';
+        this.btnGraphicsToggle.title = isHigh ? 'Gráficos: Altos (Bloom + Vinheta)' : 'Gráficos: 60 FPS Puro (Rápido)';
+      };
+      updateBtn();
+
+      this.btnGraphicsToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.sceneManager) {
+          const next = this.sceneManager.toggleGraphicsQuality();
+          updateBtn();
+          if (next === 'high') {
+            this.showToast('🌟 Gráficos Altos Ativados (Bloom + Vinheta)');
+          } else {
+            this.showToast('⚡ Modo 60 FPS Puro Ativado (Desempenho Máximo)');
+          }
+        }
+      });
+    }
   }
 
   setupSoundButton() {

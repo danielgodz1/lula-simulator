@@ -20,7 +20,7 @@ export class Game {
     this.boss = new CtpsBoss(this.sceneManager.scene);
     this.environment = new Environment(this.sceneManager.scene);
     this.obstacleManager = new ObstacleManager(this.sceneManager.scene);
-    this.ui = new UIManager();
+    this.ui = new UIManager(this.sceneManager);
 
     profiler.attach(this.sceneManager.renderer, this.sceneManager.scene);
 
@@ -136,7 +136,7 @@ export class Game {
 
     this.character.triggerStumble();
     this.boss.triggerStumbleChase();
-    this.sceneManager.triggerCameraShake(0.55, 0.45);
+    this.sceneManager.triggerCameraShake(0.50, 0.40);
     this.speed = Math.max(this.baseSpeed * 0.85, this.speed * 0.72);
     this.ui.showStumbleAlert();
   }
@@ -149,6 +149,7 @@ export class Game {
     this.state = this.STATE.GAMEOVER;
     this.character.die();
     this.boss.triggerKillStamp(this.character.x, this.character.y);
+    this.sceneManager.triggerCameraShake(0.65, 0.50);
     gameAudio.playCrash();
     gameAudio.stopAmbience();
 
@@ -216,10 +217,12 @@ export class Game {
   onCollectPicanha() {
     this.picanhas += 1;
     RunnerInventory.addPicanhas(1);
+    this.sceneManager.triggerFovPulse(54, 0.40);
     this.updateHUD();
   }
 
   onCollectPowerup(type) {
+    this.sceneManager.triggerFovPulse(52, 0.45);
     if (type === 'magnet') {
       this.magnetActive = true;
       this.magnetTimer = 10.0;

@@ -1,6 +1,38 @@
 // js/game/scene.js — Céu Contínuo Sem Artefatos, Panorama Parallax Densa da Favela e Ciclo Dia/Noite Otimizado
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+import { EffectComposer } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/postprocessing/ShaderPass.js';
 import { textureAtlas } from './textures.js';
+
+const VignetteShader = {
+  uniforms: {
+    tDiffuse: { value: null },
+    offset: { value: 1.02 },
+    darkness: { value: 1.18 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float offset;
+    uniform float darkness;
+    varying vec2 vUv;
+    void main() {
+      vec4 texel = texture2D(tDiffuse, vUv);
+      vec2 uv = (vUv - vec2(0.5)) * vec2(offset);
+      float dist = length(uv);
+      float vig = clamp(1.0 - dist * darkness, 0.0, 1.0);
+      gl_FragColor = vec4(texel.rgb * vig, texel.a);
+    }
+  `
+};
 
 export class GameScene {
   constructor(containerId = 'canvasContainer') {
@@ -8,6 +40,9 @@ export class GameScene {
     this.scene = null;
     this.camera = null;
     this.renderer = null;
+    this.composer = null;
+    this.bloomPass = null;
+    this.vignettePass = null;
     this.sunLight = null;
     this.fillLight = null;
     this.hemiLight = null;
@@ -25,6 +60,15 @@ export class GameScene {
 
     this.timeOfDay = 0.38; // Começa de dia com sol radiante e alta visibilidade (10h da manhã)
     this.cycleDuration = 180; // 180 segundos para um ciclo suave
+
+    // Sistema de FOV Dinâmico (Zoom-in Heroico ao pegar power-ups)
+    this.baseFov = 60;
+    this.targetFov = 60;
+    this.fovPulseTimer = 0;
+
+    // Sistema de Qualidade Gráfica (Alta = Bloom + Vignette / Baixa = 60 FPS Puro)
+    this.graphicsQuality = localStorage.getItem('runner_graphics') || (window.innerWidth <= 768 ? 'low' : 'high');
+    this.postProcessingEnabled = this.graphicsQuality === 'high';
 
     // Monitor de Performance
     this.fpsHistory = [];
@@ -305,7 +349,10 @@ export class GameScene {
     this.createStylizedClouds();
     this.createBirdFlock();
 
-    // 9. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
+    // 9. Pipeline de Pós-Processamento Cinemático (Bloom + Vignette)
+    this.setupPostProcessing();
+
+    // 10. Painel de Debug de Performance em Tempo Real (Apenas com ?debug=1 na URL)
     this.isDebugVisible = new URLSearchParams(window.location.search).get('debug') === '1';
     this.debugOverlay = null;
     this.minFpsSeen = 60;
@@ -314,6 +361,47 @@ export class GameScene {
     }
 
     window.addEventListener('resize', () => this.onResize());
+  }
+
+  /**
+   * Configuração do Pipeline de Pós-Processamento com EffectComposer
+   */
+  setupPostProcessing() {
+    try {
+      const width = this.container.clientWidth || window.innerWidth;
+      const height = this.container.clientHeight || window.innerHeight;
+
+      this.composer = new EffectComposer(this.renderer);
+      const renderPass = new RenderPass(this.scene, this.camera);
+      this.composer.addPass(renderPass);
+
+      // UnrealBloomPass para iluminação noturna, moedas de ouro e néon RGB
+      const bloomRes = new THREE.Vector2(width, height);
+      this.bloomPass = new UnrealBloomPass(bloomRes, 0.42, 0.35, 0.72);
+      this.composer.addPass(this.bloomPass);
+
+      // Vignette Shader para bordas cinematográficas
+      this.vignettePass = new ShaderPass(VignetteShader);
+      this.vignettePass.uniforms.offset.value = 1.02;
+      this.vignettePass.uniforms.darkness.value = 1.18;
+      this.composer.addPass(this.vignettePass);
+    } catch(e) {
+      console.warn('[PostProcessing] Erro ao inicializar EffectComposer, usando renderizador padrão:', e);
+      this.postProcessingEnabled = false;
+    }
+  }
+
+  setGraphicsQuality(quality) {
+    this.graphicsQuality = quality === 'high' ? 'high' : 'low';
+    this.postProcessingEnabled = this.graphicsQuality === 'high';
+    localStorage.setItem('runner_graphics', this.graphicsQuality);
+    this.onResize();
+  }
+
+  toggleGraphicsQuality() {
+    const next = this.graphicsQuality === 'high' ? 'low' : 'high';
+    this.setGraphicsQuality(next);
+    return next;
   }
 
   /**
@@ -636,7 +724,27 @@ export class GameScene {
     this.cameraShakeTimer = duration;
   }
 
+  /**
+   * Pulso Heroico de Zoom-In ao coletar Power-ups e Picanhas
+   */
+  triggerFovPulse(targetFov = 53, duration = 0.45) {
+    this.targetFov = targetFov;
+    this.fovPulseTimer = duration;
+  }
+
   updateCamera(targetX, targetY, isDead = false, dt = 0.016, elapsedTime = 0) {
+    // Interpolação suave do FOV Dinâmico (Zoom-In de Power-up)
+    if (this.fovPulseTimer > 0) {
+      this.fovPulseTimer -= dt;
+      if (this.fovPulseTimer <= 0) {
+        this.targetFov = this.baseFov;
+      }
+    }
+    if (Math.abs(this.camera.fov - this.targetFov) > 0.05) {
+      this.camera.fov += (this.targetFov - this.camera.fov) * Math.min(1.0, 9.0 * dt);
+      this.camera.updateProjectionMatrix();
+    }
+
     if (isDead) {
       this.camera.position.x += (targetX - this.camera.position.x) * (2.5 * dt);
       this.camera.position.y += (3.2 - this.camera.position.y) * (2.5 * dt);
@@ -678,6 +786,10 @@ export class GameScene {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
 
+    if (this.composer) {
+      this.composer.setSize(width, height);
+    }
+
     const isMobile = window.innerWidth <= 768 ||
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
     const dpr = window.devicePixelRatio || 1;
@@ -688,7 +800,9 @@ export class GameScene {
 
   render() {
     this.monitorPerformance();
-    if (this.renderer && this.scene && this.camera) {
+    if (this.postProcessingEnabled && this.composer) {
+      this.composer.render();
+    } else if (this.renderer && this.scene && this.camera) {
       this.renderer.render(this.scene, this.camera);
     }
   }
