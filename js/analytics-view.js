@@ -509,6 +509,13 @@
       const weekdayName = WEEKDAYS_PT[vDate.getDay()] || '';
       const isWeekend = vDate.getDay() === 0 || vDate.getDay() === 6;
 
+      let cCode = (visit.country || '').toUpperCase();
+      if (!cCode || cCode === 'UNKNOWN') cCode = 'BR';
+      let cName = visit.countryName || '';
+      if (!cName || cName.toLowerCase() === 'unknown') cName = 'Brasil';
+      let cCity = visit.city || '';
+      if (!cCity || cCity.toLowerCase() === 'unknown' || cCity === 'Desconhecida') cCity = (cCode === 'BR' ? 'Brasil' : 'Conexão Global');
+
       const deviceLabel = getDeviceIcon(visit.deviceType || visit.device, visit.device);
       const osLabel = getOSIcon(visit.os);
       const browserLabel = getBrowserIcon(visit.browser);
@@ -516,10 +523,10 @@
       html += `
         <div class="feed-item">
           <div class="feed-pulse-indicator"></div>
-          <div class="feed-flag">${renderFlag(visit.country, visit.flag)}</div>
+          <div class="feed-flag">${renderFlag(cCode, visit.flag)}</div>
           <div class="feed-details" style="flex: 1; min-width: 0;">
             <div class="feed-location">
-              ${visit.city || 'Desconhecida'}, <strong>${visit.countryName || 'Brasil'}</strong>
+              ${cCity}, <strong>${cName}</strong>
             </div>
             <div class="feed-meta-row" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 3px;">
               <span class="feed-badge-day ${isWeekend ? 'weekend' : ''}">${weekdayName}</span>

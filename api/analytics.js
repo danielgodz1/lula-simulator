@@ -76,12 +76,18 @@ export default async function handler(req, res) {
             if (!histSnap.empty) {
               const histVisits = histSnap.docs.map(d => {
                 const item = d.data();
-                const code = (item.geolocalizacao?.codigoPais || 'BR').toUpperCase();
+                let code = (item.geolocalizacao?.codigoPais || '').toUpperCase();
+                if (!code || code === 'UNKNOWN' || code.length !== 2) code = 'BR';
+                let pais = item.geolocalizacao?.pais || '';
+                if (!pais || pais.toLowerCase() === 'unknown') pais = COUNTRY_NAMES[code] || 'Brasil';
+                let cidade = item.geolocalizacao?.cidade || '';
+                if (!cidade || cidade.toLowerCase() === 'unknown') cidade = (code === 'BR' ? 'Brasil' : 'Global');
+
                 return {
                   country: code,
-                  countryName: item.geolocalizacao?.pais || COUNTRY_NAMES[code] || 'Brasil',
+                  countryName: pais,
                   flag: getFlagEmoji(code),
-                  city: item.geolocalizacao?.cidade || 'Desconhecida',
+                  city: cidade,
                   device: item.dispositivo?.modelo || '',
                   deviceType: item.dispositivo?.tipo || 'desktop',
                   os: item.sistemaOperacional?.nome || '',
@@ -134,11 +140,18 @@ export default async function handler(req, res) {
 
           const recentVisits = (fields.recentVisits?.arrayValue?.values || []).map(v => {
             const f = v.mapValue?.fields || {};
+            let c = (f.country?.stringValue || '').toUpperCase();
+            if (!c || c === 'UNKNOWN' || c.length !== 2) c = 'BR';
+            let cName = f.countryName?.stringValue || '';
+            if (!cName || cName.toLowerCase() === 'unknown') cName = COUNTRY_NAMES[c] || 'Brasil';
+            let city = f.city?.stringValue || '';
+            if (!city || city.toLowerCase() === 'unknown' || city === 'Desconhecida') city = (c === 'BR' ? 'Brasil' : 'Global');
+
             return {
-              country: f.country?.stringValue || 'BR',
-              countryName: f.countryName?.stringValue || 'Brasil',
-              flag: f.flag?.stringValue || '🇧🇷',
-              city: f.city?.stringValue || 'Desconhecida',
+              country: c,
+              countryName: cName,
+              flag: f.flag?.stringValue || getFlagEmoji(c),
+              city: city,
               device: f.device?.stringValue || f.dispositivo?.stringValue || '',
               deviceType: f.deviceType?.stringValue || f.dispositivoTipo?.stringValue || 'desktop',
               os: f.os?.stringValue || f.sistemaOperacional?.stringValue || '',

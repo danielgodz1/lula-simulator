@@ -35,12 +35,21 @@ export default async function handler(req, res) {
     // Sanitização do user-agent
     const cleanUserAgent = (userAgent || navigator.userAgent || 'unknown').toString().slice(0, 500);
 
+    // Fallback de geolocalização pelo servidor Vercel / Cloudflare
+    const vercelCountry = (req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'] || req.headers['x-country-code'] || 'BR').toUpperCase().slice(0, 2);
+    let vercelCity = (req.headers['x-vercel-ip-city'] || '').slice(0, 60);
+    try { vercelCity = decodeURIComponent(vercelCity); } catch (_) {}
+
     // Estrutura dos dados de geolocalização
     const geoData = geolocalizacao || {};
+    const cleanCodigoPais = (geoData.codigoPais && geoData.codigoPais !== 'unknown') ? geoData.codigoPais.toUpperCase().slice(0, 10) : vercelCountry;
+    const cleanPais = (geoData.pais && geoData.pais !== 'unknown') ? geoData.pais.slice(0, 60) : (cleanCodigoPais === 'BR' ? 'Brasil' : cleanCodigoPais);
+    const cleanCidade = (geoData.cidade && geoData.cidade !== 'unknown') ? geoData.cidade.slice(0, 60) : (vercelCity || (cleanCodigoPais === 'BR' ? 'Brasil' : 'Global'));
+
     const cleanGeo = {
-      cidade: (geoData.cidade || 'unknown').toString().slice(0, 60),
-      pais: (geoData.pais || 'unknown').toString().slice(0, 60),
-      codigoPais: (geoData.codigoPais || 'unknown').toString().slice(0, 10),
+      cidade: cleanCidade,
+      pais: cleanPais,
+      codigoPais: cleanCodigoPais,
       lat: typeof geoData.lat === 'number' ? geoData.lat : 0,
       lon: typeof geoData.lon === 'number' ? geoData.lon : 0
     };
