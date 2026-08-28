@@ -188,17 +188,7 @@ export class Game {
     if (this.reviveUsed) return;
     this.reviveUsed = true;
     this.state = this.STATE.PLAYING;
-    this.character.isDead = false;
-    this.character.y = 0;
-    this.character.currentLane = 1;
-    this.character.targetX = 0;
-    this.character.x = 0;
-    this.character.isInvulnerable = true;
-    this.character.invulnerableTimer = 3.0;
-    this.character.jumpVelocity = 0;
-    this.character.isJumping = false;
-    this.character.isSliding = false;
-    this.character.isStumbling = false;
+    this.character.revive();
     this.boss.x = 0;
     this.boss.y = 0;
     this.boss.z = 8;

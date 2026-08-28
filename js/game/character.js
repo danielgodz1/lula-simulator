@@ -140,84 +140,11 @@ export class Character {
       // Gira 180° para ficar de costas para o jogador (correndo para a frente / horizonte)
       glbModel.rotation.y = Math.PI;
 
-      // Injeta o shader de animação fisiológica de pernas em todas as malhas do modelo
+      // Habilita sombras limpas em todas as malhas do modelo GLB sem distorções de shader
       glbModel.traverse((child) => {
-        if (child.isMesh && child.material) {
+        if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
-
-          child.material = child.material.clone();
-          child.material.onBeforeCompile = (shader) => {
-            shader.uniforms.uRunTime = this.uniforms.uRunTime;
-            shader.uniforms.uLegSwing = this.uniforms.uLegSwing;
-            shader.uniforms.uJumpProgress = this.uniforms.uJumpProgress;
-
-            shader.vertexShader = `
-              uniform float uRunTime;
-              uniform float uLegSwing;
-              uniform float uJumpProgress;
-            ` + shader.vertexShader;
-
-            shader.vertexShader = shader.vertexShader.replace(
-              '#include <begin_vertex>',
-              `
-              #include <begin_vertex>
-              // 1. Animação Fisiológica das Pernas (Vértices abaixo do quadril: position.y < 0.04)
-              if (position.y < 0.04) {
-                float legWeight = clamp((-position.y + 0.04) / 0.92, 0.0, 1.0);
-                float legSide = position.x < 0.0 ? -1.0 : 1.0;
-
-                // Balanço das Pernas na Corrida (Passadas Alternadas)
-                float swing = sin(uRunTime + (legSide > 0.0 ? 3.14159 : 0.0)) * uLegSwing * legWeight;
-
-                // Modificação no Pulo: Esticar no ar ou amortecer no pouso
-                if (uJumpProgress > 0.1) {
-                  swing = -0.28 * legWeight;
-                } else if (uJumpProgress < -0.1) {
-                  swing = 0.24 * legWeight;
-                }
-
-                float cosA = cos(swing);
-                float sinA = sin(swing);
-
-                float py = transformed.y;
-                float pz = transformed.z;
-                transformed.y = py * cosA - pz * sinA;
-                transformed.z = py * sinA + pz * cosA;
-
-                if (swing < -0.04) {
-                  transformed.y += (-swing) * 0.18 * legWeight;
-                }
-              }
-              // 2. Correção de T-Pose e Balanço dos Braços (Vértices dos Braços: position.y > 0.08 e abs(position.x) > 0.18)
-              else if (position.y > 0.08 && abs(position.x) > 0.16) {
-                float armWeight = clamp((abs(position.x) - 0.16) / 0.42, 0.0, 1.0);
-                float armSide = position.x < 0.0 ? -1.0 : 1.0;
-
-                // Abaixa os braços da T-pose horizontal para a postura atlética natural
-                float lowerAngle = -1.10 * armWeight;
-                float cosL = cos(lowerAngle);
-                float sinL = sin(lowerAngle);
-                float tx = transformed.x;
-                float ty = transformed.y;
-                transformed.x = tx * cosL - ty * sinL * armSide * 0.35;
-                transformed.y = tx * sinL * armSide * 0.35 + ty * cosL;
-
-                // Balanço alternado dos braços na corrida
-                float armSwing = sin(uRunTime + (armSide > 0.0 ? 0.0 : 3.14159)) * 0.55 * armWeight;
-                if (uJumpProgress > 0.1) {
-                  armSwing = -0.40 * armWeight; // Braços para trás no salto
-                }
-                float cosS = cos(armSwing);
-                float sinS = sin(armSwing);
-                float pyA = transformed.y;
-                float pzA = transformed.z;
-                transformed.y = pyA * cosS - pzA * sinS;
-                transformed.z = pyA * sinS + pzA * cosS;
-              }
-              `
-            );
-          };
         }
       });
 
@@ -792,9 +719,6 @@ export class Character {
 
     if (this.isGLB && this.bodyPivot) {
       if (this.isSliding) {
-        // Deslize com perfil baixo e postura ágil
-        this.uniforms.uLegSwing.value = 0.0;
-        this.uniforms.uJumpProgress.value = 0.0;
         this.mesh.rotation.x = -Math.PI / 2.15;
         this.mesh.position.y = this.y + 0.26;
         this.bodyPivot.position.set(0, 0, 0);
@@ -802,62 +726,23 @@ export class Character {
         this.bodyPivot.scale.set(1.0, 1.0, 1.0);
         if (this.shadow) this.shadow.scale.set(1.6, 0.9, 1);
       } else if (this.isJumping || this.y > this.groundY + 0.05) {
-        // Dinâmica de Pulo no Ar: Estica no salto e flexiona na queda
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
-
-        const isAscending = this.jumpVelocity > 0;
-        if (isAscending) {
-          // Subindo: estica as pernas para trás com postura atlética
-          this.uniforms.uJumpProgress.value = 1.0;
-          this.uniforms.uLegSwing.value = 0.0;
-          this.bodyPivot.rotation.x = -0.22;
-          this.bodyPivot.position.set(0, 0.05, 0);
-          this.bodyPivot.scale.set(0.94, 1.10, 0.94);
-        } else {
-          // Descendo: pernas alcançam o solo e antecipam o pouso
-          this.uniforms.uJumpProgress.value = -1.0;
-          this.uniforms.uLegSwing.value = 0.0;
-          this.bodyPivot.rotation.x = 0.16;
-          this.bodyPivot.position.set(0, 0, 0);
-          this.bodyPivot.scale.set(1.04, 0.96, 1.04);
-        }
-        this.bodyPivot.rotation.y = 0;
-        this.bodyPivot.rotation.z = 0;
-
+        this.bodyPivot.position.set(0, 0, 0);
+        this.bodyPivot.rotation.set(0, 0, 0);
+        this.bodyPivot.scale.set(1.0, 1.0, 1.0);
         if (this.superJump && this.lWing && this.rWing) {
           const wingFlap = Math.sin(this.animTime * 16) * 0.40;
           this.lWing.rotation.x = wingFlap;
           this.rWing.rotation.x = -wingFlap;
         }
       } else {
-        // Corrida com Passadas Fisiológicas nas Pernas, Bobbing e Amortecimento
+        // Modelo 3D GLB Limpo e Estável sem distorções
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
-
-        this.uniforms.uJumpProgress.value = 0.0;
-        this.uniforms.uLegSwing.value = 0.72;
-        this.uniforms.uRunTime.value = this.animTime * 2.2;
-
-        const runBounce = Math.sin(this.animTime * 2.2);
-        const runTwist = Math.sin(this.animTime * 1.1);
-
-        // Sprint e torção do tronco
-        this.bodyPivot.rotation.x = 0.15;
-        this.bodyPivot.rotation.y = runTwist * 0.12;
-        this.bodyPivot.rotation.z = runTwist * 0.04;
-
-        // Amortecimento dinâmico de pouso (mola amortecedora com pernas flexionando)
-        let squashY = 0;
-        if (this.landingImpact > 0) {
-          squashY = this.landingImpact * 0.45;
-          this.landingImpact = Math.max(0, this.landingImpact - dt * 3.2);
-        }
-
-        this.bodyPivot.position.y = Math.max(0, runBounce * 0.07) - squashY;
-        const stretch = (1.0 + runBounce * 0.03) - squashY * 0.8;
-        const squash = (1.0 - runBounce * 0.02) + squashY * 0.4;
-        this.bodyPivot.scale.set(squash, stretch, squash);
+        this.bodyPivot.position.set(0, 0, 0);
+        this.bodyPivot.rotation.set(0, 0, 0);
+        this.bodyPivot.scale.set(1.0, 1.0, 1.0);
       }
     } else if (!this.isGLB && this.bodyPivot) {
       if (this.isSliding) {
@@ -899,9 +784,48 @@ export class Character {
     this.deathY = this.y;
   }
 
+  revive() {
+    this.isDead = false;
+    this.deathAnimTime = 0;
+    this.deathVy = 0;
+    this.deathY = 0;
+    this.isJumping = false;
+    this.jumpVelocity = 0;
+    this.isSliding = false;
+    this.slideTimer = 0;
+    this.isStumbling = false;
+    this.stumbleTimer = 0;
+    this.isChangingLane = false;
+    this.currentLane = 1;
+    this.targetX = 0;
+    this.laneStartX = 0;
+    this.x = 0;
+    this.y = 0;
+    this.z = 0;
+    this.isInvulnerable = true;
+    this.invulnerableTimer = 3.0;
+
+    if (this.bodyPivot) {
+      this.bodyPivot.position.set(0, 0, 0);
+      this.bodyPivot.rotation.set(0, 0, 0);
+      this.bodyPivot.scale.set(1, 1, 1);
+    }
+
+    this.mesh.position.set(0, 0, 0);
+    this.mesh.rotation.set(0, 0, 0);
+    this.mesh.visible = true;
+
+    if (this.shadow) {
+      this.shadow.scale.set(1.0, 1.0, 1);
+      this.shadow.material.opacity = 0.75;
+    }
+  }
+
   reset() {
     this.currentLane = 1;
     this.targetX = 0;
+    this.laneStartX = 0;
+    this.isChangingLane = false;
     this.x = 0;
     this.y = 0;
     this.z = 0;
@@ -917,6 +841,8 @@ export class Character {
     this.landingImpact = 0.0;
     this.superJump = false;
     this.magnetActive = false;
+    this.isInvulnerable = false;
+    this.invulnerableTimer = 0;
 
     if (this.bodyPivot) {
       this.bodyPivot.position.set(0, 0, 0);
@@ -935,5 +861,6 @@ export class Character {
 
     this.mesh.position.set(0, 0, 0);
     this.mesh.rotation.set(0, 0, 0);
+    this.mesh.visible = true;
   }
 }
