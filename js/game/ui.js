@@ -783,9 +783,13 @@ export class UIManager {
       if (!reviveUsed && typeof onRevive === 'function') {
         this.goReviveContainer.style.display = 'flex';
         if (this.btnRevive2ndChance) {
+          const originalText = this.btnRevive2ndChance.textContent;
           this.btnRevive2ndChance.onclick = (e) => {
             if (e) e.stopPropagation();
+            this.btnRevive2ndChance.textContent = '⏳ RETORNE À ABA DO JOGO PARA REVIVER...';
+            this.showToast('ℹ️ Retorne a esta aba para reviver na mesma velocidade!');
             AdsManager.showRewardedRevive(() => {
+              this.btnRevive2ndChance.textContent = originalText;
               this.showToast('💖 SEGUNDA CHANCE ATIVADA! 3s INVULNERÁVEL');
               onRevive();
             });

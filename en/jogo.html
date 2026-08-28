@@ -3034,7 +3034,12 @@
     // Second chance revive button
     document.getElementById('btnReviveFlappy')?.addEventListener('click', (e) => {
       e.stopPropagation();
+      const btn = document.getElementById('btnReviveFlappy');
+      const origText = btn ? btn.textContent : '';
+      if (btn) btn.textContent = '⏳ RETURN TO GAME TAB TO REVIVE...';
+      showBannerAlert('ℹ️ Return to this game tab to revive!', false);
       AdsManager.showRewardedRevive(() => {
+        if (btn) btn.textContent = origText;
         reviveFlappyGame();
       });
     });

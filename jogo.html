@@ -3040,7 +3040,12 @@
     // Botão de Segunda Chance (Revive)
     document.getElementById('btnReviveFlappy')?.addEventListener('click', (e) => {
       e.stopPropagation();
+      const btn = document.getElementById('btnReviveFlappy');
+      const origText = btn ? btn.textContent : '';
+      if (btn) btn.textContent = '⏳ RETORNE À ABA PARA REVIVER...';
+      showBannerAlert('ℹ️ Retorne a esta aba do jogo para reviver!', false);
       AdsManager.showRewardedRevive(() => {
+        if (btn) btn.textContent = origText;
         reviveFlappyGame();
       });
     });

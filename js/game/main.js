@@ -40,10 +40,11 @@ export class Game {
     this.STATE = { WAITING: 0, PLAYING: 1, GAMEOVER: 2 };
     this.state = this.STATE.WAITING;
 
-    // Velocidade Calibrada Realista (Estilo Subway Surfers)
+    // Velocidade Calibrada (Progressão suave até 6x em 20.000m / 20km)
     this.baseSpeed = 22;
     this.speed = this.baseSpeed;
-    this.maxSpeed = 95;
+    this.maxSpeed = this.baseSpeed * 6.0; // 132 (6x max)
+    this.savedSpeedOnDeath = this.baseSpeed;
     this.distance = 0;
     this.coins = 0;
     this.picanhas = 0;
@@ -144,6 +145,7 @@ export class Game {
     if (this.state !== this.STATE.PLAYING) return;
     if (this.character && this.character.isInvulnerable) return;
 
+    this.savedSpeedOnDeath = this.speed;
     this.state = this.STATE.GAMEOVER;
     this.character.die();
     this.boss.triggerKillStamp(this.character.x, this.character.y);
@@ -188,6 +190,8 @@ export class Game {
     if (this.reviveUsed) return;
     this.reviveUsed = true;
     this.state = this.STATE.PLAYING;
+    // Restaura a velocidade rápida exata de quando morreu (sem reiniciar lento)
+    this.speed = Math.max(this.baseSpeed, this.savedSpeedOnDeath || this.baseSpeed);
     this.character.revive();
     this.boss.x = 0;
     this.boss.y = 0;
@@ -200,13 +204,10 @@ export class Game {
 
   onCollectCoin(value) {
     this.consecutiveCoins++;
-    if (this.consecutiveCoins > 50) this.multiplier = 6;
-    else if (this.consecutiveCoins > 30) this.multiplier = 4;
-    else if (this.consecutiveCoins > 15) this.multiplier = 3;
-    else if (this.consecutiveCoins > 5) this.multiplier = 2;
-    else this.multiplier = 1;
+    // Multiplicador equilibrado: 2x a cada 25 moedas consecutivas (máx 2x)
+    this.multiplier = this.consecutiveCoins >= 25 ? 2 : 1;
 
-    const earned = value * this.multiplier;
+    const earned = 1 * this.multiplier;
     this.coins += earned;
     RunnerInventory.addCoins(earned);
     this.updateHUD();
@@ -259,15 +260,12 @@ export class Game {
     this.environment.updateNightLights(isNight, this.sceneManager.timeOfDay, playerZ);
 
     if (this.state === this.STATE.PLAYING) {
-      // 2. Distância e Aceleração Progressiva em Ritmo Realista
-      // O avanço em metros acompanha a velocidade real de corrida do personagem
+      // 2. Distância e Aceleração Progressiva até 6x em 20.000m (20km)
       this.distance += (this.speed * 0.45) * dt;
 
-      if (this.speed < this.maxSpeed) {
-        // Aceleração suave conforme avança na corrida
-        const accel = 0.12 + Math.min(this.distance / 10000, 0.28);
-        this.speed += accel * dt;
-      }
+      const speedProgress = Math.min(1.0, this.distance / 20000);
+      const targetSpeed = this.baseSpeed * (1.0 + 5.0 * Math.pow(speedProgress, 0.85));
+      this.speed = Math.min(this.maxSpeed, targetSpeed);
 
       // 3. Timers de Power-up
       if (this.magnetActive) {

@@ -29,7 +29,6 @@ export const AD_CONFIG = {
       smartlink: 'https://grannyreproof.com/h6xu2jgbbn?key=513c68ca4f57b334e0bce004c067ea2b'
     },
     monetag: {
-      // Modelo alternativo para troca rápida caso desejar
       nativeBanner: {
         containerId: 'container-monetag-native',
         scriptUrl: 'https://alwingulla.com/88/tag.min.js'
@@ -37,7 +36,6 @@ export const AD_CONFIG = {
       smartlink: 'https://alwingulla.com/link?id=monetag_fallback'
     },
     propellerads: {
-      // Modelo alternativo para troca rápida
       nativeBanner: {
         containerId: 'container-propeller-native',
         scriptUrl: 'https://propellerads.com/sdk.js'
@@ -307,7 +305,6 @@ class AdsManagerService {
    * @param {string} [targetContainerId]
    */
   loadNativeBanner(targetContainerId) {
-    // DESATIVAÇÃO IMEDIATA: Bloqueia qualquer execução de Native Banner
     if (!AD_CONFIG.ENABLE_NATIVE_BANNER) {
       const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
       const container = document.getElementById(id);
@@ -334,7 +331,6 @@ class AdsManagerService {
       iframe.style.overflow = 'hidden';
       iframe.style.display = 'block';
       iframe.style.margin = '0 auto';
-      // ISOLAMENTO RIGOROSO: SEM 'allow-same-origin'
       iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
       iframe.title = 'Publicidade Patrocinada';
       iframe.setAttribute('loading', 'lazy');
@@ -373,20 +369,45 @@ class AdsManagerService {
 
   /**
    * Sistema de Segunda Chance (Revive Recompensado):
-   * Abre o Smartlink/anúncio em nova aba e aciona o callback para reviver o jogador
+   * Abre o Smartlink em nova aba e aguarda o jogador retornar para a aba do jogo para revivê-lo
    */
-  showRewardedRevive(onSuccess, onCancel) {
+  showRewardedRevive(onSuccess, onCancel, onOpening) {
+    if (typeof onOpening === 'function') {
+      onOpening();
+    }
+
     try {
       window.open(AD_CONFIG.SMARTLINK_URL, '_blank', 'noopener,noreferrer');
-      if (typeof onSuccess === 'function') {
-        onSuccess();
-      }
     } catch(e) {
       console.warn('Erro ao abrir anúncio de Segunda Chance:', e);
+    }
+
+    let rewarded = false;
+    const triggerReward = () => {
+      if (rewarded) return;
+      rewarded = true;
+      window.removeEventListener('focus', triggerReward);
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (typeof onSuccess === 'function') {
         onSuccess();
       }
-    }
+    };
+
+    const handleVisibility = () => {
+      if (!document.hidden) {
+        triggerReward();
+      }
+    };
+
+    window.addEventListener('focus', triggerReward);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Fallback de segurança: se a aba nunca perdeu o foco (ex: bloqueador de popup)
+    setTimeout(() => {
+      if (!rewarded && !document.hidden) {
+        triggerReward();
+      }
+    }, 1200);
   }
 
   /**
