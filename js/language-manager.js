@@ -1,12 +1,38 @@
-// js/language-manager.js — Gerenciador Inteligente de Idiomas, Banner de Sugestão e Seletor Permanente
+// js/language-manager.js — Gerenciador Inteligente de Idiomas, Blindagem Anti-Bot/AdSense e Roteamento Dual-Domain
 // Suporta separação de domínios: lulasimulator.com.br (PT-BR) e flappylula.com (EN)
 
 (function () {
   'use strict';
 
-  const STORAGE_DISMISS_KEY = 'lula_lang_banner_dismissed';
+  const STORAGE_LANG_PREF_KEY = 'user_lang_pref';
   const DOMAIN_PT = 'lulasimulator.com.br';
   const DOMAIN_EN = 'flappylula.com';
+
+  /**
+   * 1. WHITELIST DE CRAWLERS E ROBÔS (CRÍTICO PARA GOOGLE ADSENSE E SEO)
+   * Detecta Googlebot, Mediapartners-Google, AdsBot, Lighthouse, Bingbot e outros.
+   * Robôs NUNCA sofrem redirecionamento automático nem recebem modais bloqueantes.
+   */
+  function isSearchOrAdBot() {
+    try {
+      if (typeof navigator === 'undefined') return false;
+
+      // Automação / Headless browser (Lighthouse, Puppeteer, Selenium)
+      if (navigator.webdriver) return true;
+
+      const ua = navigator.userAgent || '';
+      const botPattern = /bot|googlebot|mediapartners|adsbot|lighthouse|pagespeed|bingbot|crawler|spider|slurp|facebookexternalhit|whatsapp|duckduckbot|yandex|baidu/i;
+      if (botPattern.test(ua)) return true;
+
+      // Verificação de plugins vazios típica de bots headless
+      if (navigator.plugins && navigator.plugins.length === 0 && !/mobile/i.test(ua)) {
+        // Pode ser um crawler em headless mode
+      }
+    } catch (e) {
+      // Falha silenciosa
+    }
+    return false;
+  }
 
   function isEnglishContext() {
     const host = window.location.hostname.toLowerCase();
@@ -32,16 +58,110 @@
     const host = window.location.hostname.toLowerCase();
     const isProductionHost = host.includes(DOMAIN_PT) || host.includes(DOMAIN_EN);
 
+    // Mapeamento de nomes de páginas traduzidas caso existam
+    let targetPage = page;
+    if (targetLang === 'en') {
+      if (page === 'privacidade.html') targetPage = 'privacy.html';
+      if (page === 'termos.html') targetPage = 'terms.html';
+    } else {
+      if (page === 'privacy.html') targetPage = 'privacidade.html';
+      if (page === 'terms.html') targetPage = 'termos.html';
+    }
+
     if (targetLang === 'en') {
       if (isProductionHost) {
-        return `https://${DOMAIN_EN}/en/${page === 'index.html' ? '' : page}`;
+        return `https://${DOMAIN_EN}/${targetPage === 'index.html' ? '' : targetPage}`;
       }
-      return `/en/${page === 'index.html' ? 'index.html' : page}`;
+      return `/en/${targetPage === 'index.html' ? 'index.html' : targetPage}`;
     } else {
       if (isProductionHost) {
-        return `https://${DOMAIN_PT}/${page === 'index.html' ? '' : page}`;
+        return `https://${DOMAIN_PT}/${targetPage === 'index.html' ? '' : targetPage}`;
       }
-      return `/${page === 'index.html' ? 'index.html' : page}`;
+      return `/${targetPage === 'index.html' ? 'index.html' : targetPage}`;
+    }
+  }
+
+  /**
+   * Salva preferência explícita do usuário
+   */
+  function setUserLangPreference(lang) {
+    try {
+      localStorage.setItem(STORAGE_LANG_PREF_KEY, lang);
+    } catch (e) {}
+  }
+
+  function getUserLangPreference() {
+    try {
+      return localStorage.getItem(STORAGE_LANG_PREF_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function isFromBrazil() {
+    try {
+      const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (userLang.includes('pt') || userLang.includes('br')) return true;
+      if (Array.isArray(navigator.languages) && navigator.languages.some(l => l.toLowerCase().includes('pt') || l.toLowerCase().includes('br'))) return true;
+
+      const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
+      const brazilTimezones = ['sao_paulo', 'recife', 'belem', 'fortaleza', 'manaus', 'cuiaba', 'porto_velho', 'boa_vista', 'campo_grande', 'maceio', 'noronha', 'rio_branco', 'santarem', 'araguaina', 'bahia'];
+      if (brazilTimezones.some(b => tz.includes(b))) return true;
+
+      const savedCountry = (localStorage.getItem('lula_country') || '').toUpperCase();
+      if (savedCountry === 'BR' || savedCountry === 'BRAZIL' || savedCountry === 'BRASIL') return true;
+    } catch (e) {}
+    return false;
+  }
+
+  /**
+   * Roteamento Dual-Domain e detecção inteligente sem quebrar bots
+   */
+  function handleSmartRouting() {
+    // SE FOR UM BOT, NUNCA REDIRECIONAR AUTOMATICAMENTE!
+    if (isSearchOrAdBot()) {
+      return;
+    }
+
+    const host = window.location.hostname.toLowerCase();
+    const isEnHost = host.includes(DOMAIN_EN);
+    const isPtHost = host.includes(DOMAIN_PT);
+    const isEn = isEnglishContext();
+    const savedPref = getUserLangPreference();
+
+    // 1. Se o usuário estiver no domínio oficial em inglês flappylula.com
+    if (isEnHost) {
+      // Se não estiver na pasta /en/ nem reescrita (caso local ou proxy), garantir sem loop
+      return;
+    }
+
+    // 2. Se o usuário já possui preferência salva no navegador, respeitar integralmente
+    if (savedPref) {
+      if (savedPref === 'en' && !isEn) {
+        // Usuário optou por inglês anteriormente
+        const target = getTargetUrl('en');
+        if (target && target !== window.location.href) {
+          window.location.replace(target);
+        }
+      }
+      return;
+    }
+
+    // 3. Usuário novo (sem preferência salva) acessando lulasimulator.com.br ou raiz PT:
+    // Se estiver fora do Brasil OU com locale em inglês primário:
+    if (!isEn && !isFromBrazil()) {
+      const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      const isEnglishUser = userLang.startsWith('en');
+
+      if (isEnglishUser) {
+        // Redireciona suavemente para a versão em inglês
+        const target = getTargetUrl('en');
+        if (target && target !== window.location.href) {
+          // Marca parâmetro para alertar no destino com a opção de voltar
+          const separator = target.includes('?') ? '&' : '?';
+          window.location.replace(`${target}${separator}auto_routed=1`);
+        }
+      }
     }
   }
 
@@ -61,13 +181,13 @@
     link.className = 'nav-lang-switch';
     link.title = isEn ? 'Mudar para Português (lulasimulator.com.br)' : 'Switch to English (flappylula.com)';
     link.innerHTML = isEn
-      ? '<span style="font-size:20px; line-height:1; font-family: \'Segoe UI Emoji\', \'Apple Color Emoji\', \'Noto Color Emoji\', sans-serif;">🇧🇷</span>'
-      : '<span style="font-size:20px; line-height:1; font-family: \'Segoe UI Emoji\', \'Apple Color Emoji\', \'Noto Color Emoji\', sans-serif;">🇺🇸</span>';
+      ? '<span style="font-size:18px; line-height:1; font-family: \'Segoe UI Emoji\', \'Apple Color Emoji\', \'Noto Color Emoji\', sans-serif;">🇧🇷 PT</span>'
+      : '<span style="font-size:18px; line-height:1; font-family: \'Segoe UI Emoji\', \'Apple Color Emoji\', \'Noto Color Emoji\', sans-serif;">🇺🇸 EN</span>';
 
-    // Estilização retrô moderna compatível com o tema
     link.style.cssText = `
       display: inline-flex;
       align-items: center;
+      gap: 4px;
       padding: 5px 10px;
       margin-left: 6px;
       background: rgba(255, 255, 255, 0.08);
@@ -75,6 +195,8 @@
       border-radius: 8px;
       color: #ffffff;
       text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
       font-family: inherit;
       transition: all 0.2s ease;
       cursor: pointer;
@@ -89,48 +211,65 @@
       link.style.borderColor = 'rgba(255, 255, 255, 0.2)';
     });
 
-    nav.appendChild(link);
+    link.addEventListener('click', () => {
+      setUserLangPreference(targetLang);
+    });
+
+    // Insere no grupo direito da nav se existir, ou no nav
+    const rightGroup = nav.querySelector('.nav-right-group') || nav;
+    rightGroup.appendChild(link);
   }
 
-  function isFromBrazil() {
-    try {
-      const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-      if (userLang.includes('pt') || userLang.includes('br')) return true;
-      if (Array.isArray(navigator.languages) && navigator.languages.some(l => l.toLowerCase().includes('pt') || l.toLowerCase().includes('br'))) return true;
-
-      const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || '').toLowerCase();
-      const brazilTimezones = ['sao_paulo', 'recife', 'belem', 'fortaleza', 'manaus', 'cuiaba', 'porto_velho', 'boa_vista', 'campo_grande', 'maceio', 'noronha', 'rio_branco', 'santarem', 'araguaina', 'bahia'];
-      if (brazilTimezones.some(b => tz.includes(b))) return true;
-
-      const savedCountry = (localStorage.getItem('lula_country') || '').toUpperCase();
-      if (savedCountry === 'BR' || savedCountry === 'BRAZIL' || savedCountry === 'BRASIL') return true;
-    } catch (e) {}
-    return false;
-  }
-
+  /**
+   * Banner/Toast não-intrusivo de sugestão de idioma
+   */
   function mountSuggestionBanner() {
+    // BOTS NÃO VEEM BANNER NEM INTERFERÊNCIAS VISUAIS
+    if (isSearchOrAdBot()) return;
+
     const isEn = isEnglishContext();
     const fromBrazil = isFromBrazil();
-    const userLang = (navigator.language || navigator.userLanguage || '').toLowerCase();
-    const isUserPortuguese = userLang.startsWith('pt');
+    const urlParams = new URLSearchParams(window.location.search);
+    const wasAutoRouted = urlParams.get('auto_routed') === '1';
+    const savedPref = getUserLangPreference();
 
     let shouldShow = false;
     let bannerHtml = '';
-    let targetUrl = '';
 
-    if (isEn && (fromBrazil || isUserPortuguese)) {
-      // Usuário do Brasil acessando flappylula.com (versão em inglês)
-      // Mostra a notificação em destaque convidando para a versão nacional
+    // Caso A: Usuário estava em lulasimulator.com.br e foi auto-roteado para EN (ou acessou direto com IP internacional)
+    if (isEn && wasAutoRouted && !savedPref) {
       shouldShow = true;
-      targetUrl = getTargetUrl('pt');
+      const ptUrl = getTargetUrl('pt');
       bannerHtml = `
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <span>🇧🇷 <b>Identificamos que você está no Brasil! Deseja jogar a versão oficial em português?</b></span>
-          <a href="${targetUrl}" id="btnAcceptLangSwitch" style="
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; text-align:center;">
+          <span>🌍 <b>Playing from outside Brazil?</b> Switch to our official English domain <b>FlappyLula.com</b> for the best global experience, or</span>
+          <button id="btnStayLulaSimulator" style="
             background: linear-gradient(135deg, #22c55e, #16a34a);
             color: #ffffff;
             font-weight: 800;
-            padding: 4px 14px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid #4ade80;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+          ">🇧🇷 Stay here on LulaSimulator.com.br</button>
+        </div>
+      `;
+    }
+    // Caso B: Usuário do Brasil acessando versão em inglês
+    else if (isEn && fromBrazil && !savedPref) {
+      shouldShow = true;
+      const ptUrl = getTargetUrl('pt');
+      bannerHtml = `
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; text-align:center;">
+          <span>🇧🇷 <b>Identificamos que você está no Brasil! Deseja jogar a versão oficial em português?</b></span>
+          <a href="${ptUrl}" id="btnGoToPortuguese" style="
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: #ffffff;
+            font-weight: 800;
+            padding: 5px 14px;
             border-radius: 8px;
             text-decoration: none;
             font-size: 12px;
@@ -139,22 +278,31 @@
             gap: 5px;
             box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
             border: 1px solid #4ade80;
-            transition: transform 0.15s ease;
           ">🎮 Jogar em Português (lulasimulator.com.br)</a>
+          <button id="btnStayEnglish" style="
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11.5px;
+          ">Manter em Inglês</button>
         </div>
       `;
-    } else if (!isEn && !fromBrazil && !isUserPortuguese && userLang.length >= 2) {
-      // Usuário internacional em lulasimulator.com.br (PT)
+    }
+    // Caso C: Usuário internacional acessando a raiz PT diretamente
+    else if (!isEn && !fromBrazil && !savedPref) {
       shouldShow = true;
-      targetUrl = getTargetUrl('en');
+      const enUrl = getTargetUrl('en');
       bannerHtml = `
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
-          <span>🇺🇸 <b>Prefer to play in English?</b></span>
-          <a href="${targetUrl}" id="btnAcceptLangSwitch" style="
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; text-align:center;">
+          <span>🌍 <b>Playing from outside Brazil?</b> Prefer to play in English on <b>FlappyLula.com</b>?</span>
+          <a href="${enUrl}" id="btnGoToEnglish" style="
             background: linear-gradient(135deg, #38bdf8, #0284c7);
             color: #ffffff;
             font-weight: 800;
-            padding: 4px 14px;
+            padding: 5px 14px;
             border-radius: 8px;
             text-decoration: none;
             font-size: 12px;
@@ -163,15 +311,22 @@
             gap: 5px;
             box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
             border: 1px solid #7dd3fc;
-            transition: transform 0.15s ease;
-          ">🎮 Play in English (flappylula.com)</a>
+          ">🎮 Switch to FlappyLula.com</a>
+          <button id="btnStayLulaSimulator" style="
+            background: transparent;
+            color: #cbd5e1;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11.5px;
+          ">Stay on LulaSimulator.com.br</button>
         </div>
       `;
     }
 
     if (!shouldShow) return;
 
-    // Se já existe um banner, remove antes de recriar
     const existing = document.getElementById('langSuggestionBanner');
     if (existing) existing.remove();
 
@@ -185,14 +340,13 @@
       background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 50%, #1e1b4b 100%);
       border-bottom: 2px solid #22c55e;
       color: #ffffff;
-      padding: 9px 16px;
+      padding: 8px 16px;
       font-size: 12.5px;
       z-index: 100000;
       display: flex;
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.7);
-      animation: slideDownBanner 0.3s ease-out forwards;
       box-sizing: border-box;
     `;
 
@@ -217,18 +371,7 @@
       cursor: pointer;
       margin-left: 12px;
       font-weight: bold;
-      transition: all 0.2s;
     `;
-    closeBtn.addEventListener('mouseenter', () => {
-      closeBtn.style.background = 'rgba(239, 68, 68, 0.3)';
-      closeBtn.style.color = '#fff';
-      closeBtn.style.borderColor = '#ef4444';
-    });
-    closeBtn.addEventListener('mouseleave', () => {
-      closeBtn.style.background = 'rgba(255, 255, 255, 0.1)';
-      closeBtn.style.color = '#cbd5e1';
-      closeBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-    });
 
     const dismiss = () => {
       banner.style.display = 'none';
@@ -239,9 +382,45 @@
     banner.appendChild(contentDiv);
     banner.appendChild(closeBtn);
     document.body.insertBefore(banner, document.body.firstChild);
+
+    // Bindings de ações nos botões do banner
+    const btnStayLula = banner.querySelector('#btnStayLulaSimulator');
+    if (btnStayLula) {
+      btnStayLula.addEventListener('click', () => {
+        setUserLangPreference('pt');
+        dismiss();
+        if (isEn) {
+          const ptTarget = getTargetUrl('pt');
+          window.location.href = ptTarget;
+        }
+      });
+    }
+
+    const btnStayEn = banner.querySelector('#btnStayEnglish');
+    if (btnStayEn) {
+      btnStayEn.addEventListener('click', () => {
+        setUserLangPreference('en');
+        dismiss();
+      });
+    }
+
+    const btnGoEn = banner.querySelector('#btnGoToEnglish');
+    if (btnGoEn) {
+      btnGoEn.addEventListener('click', () => {
+        setUserLangPreference('en');
+      });
+    }
+
+    const btnGoPt = banner.querySelector('#btnGoToPortuguese');
+    if (btnGoPt) {
+      btnGoPt.addEventListener('click', () => {
+        setUserLangPreference('pt');
+      });
+    }
   }
 
   function init() {
+    handleSmartRouting();
     mountNavLanguageSwitch();
     mountSuggestionBanner();
   }
@@ -253,7 +432,10 @@
   }
 
   window.LanguageManager = {
+    isSearchOrAdBot,
     isEnglishContext,
-    getTargetUrl
+    getTargetUrl,
+    setUserLangPreference,
+    getUserLangPreference
   };
 })();

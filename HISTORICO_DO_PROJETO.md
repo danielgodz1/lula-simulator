@@ -1,136 +1,70 @@
-# 🇧🇷 Lula Simulator & Flappy Lula — Histórico Completo & Contexto do Projeto
+# 📜 Histórico e Documentação Técnica do Projeto "Lula Simulator"
 
-> **Documento de Referência Técnica e de Negócio**  
-> **Data de Atualização:** 28 de Agosto de 2026  
-> **Desenvolvedor:** Daniel dos Santos (Projeto Interativo SENAI — IA & Engenharia de Software)  
+> **Versão:** 2.5 (Reta Final 2º Turno — 25/10/2026)  
+> **Desenvolvedor:** Daniel dos Santos  
+> **Instituição / Contexto:** SENAI — Curso de Programação com Inteligência Artificial  
 > **Domínios Oficiais:**  
-> - 🇧🇷 Brasil (Português): [lulasimulator.com.br](https://lulasimulator.com.br/)  
-> - 🌍 Global (Inglês): [flappylula.com](https://flappylula.com/)  
+> - Domínio Nacional (PT-BR): `https://lulasimulator.com.br` (arquivos na raiz `/`)  
+> - Domínio Internacional (EN): `https://flappylula.com` (arquivos traduzidos na pasta `/en/`)
 
 ---
 
-## 📌 Visão Geral do Projeto
+## 🎯 1. Visão Geral do Projeto
 
-O **Lula Simulator** é uma plataforma web arcade de paródia política e crítica social satírica sobre a cultura brasileira contemporânea, combinando jogos 2D e 3D em tempo real, inteligência artificial, física interativa, sistema de contas e ranking global em tempo real.
-
----
-
-## 🎮 1. Flappy Lula (Arcade 2D — `jogo.html` e `en/jogo.html`)
-
-- **Motor & Renderização:** HTML5 Canvas 2D de alta performance com suporte a 60-120 FPS.
-- **Física & Jogabilidade:**
-  - Pulo suave com gravidade ajustada (`GRAVITY = 0.35`, `JUMP_POWER = -7.8`).
-  - Hitbox precisa em caixa horizontal com margens de tolerância para jogabilidade justa.
-  - Velocidade progressiva e aumento gradual de dificuldade.
-- **Cenário Dinâmico:**
-  - Fundo em parallax com arquitetura pixel art de Brasília.
-  - Alternância de iluminação e estrelas conforme a pontuação.
-- **Modo Prisão a cada 13 Pontos:**
-  - Transição de tela com sirenes, barras de cadeia e presidiários animados (171).
-  - Tremores dinâmicos de câmera (screen shake) e efeito de terremoto no retorno.
-- **Badges & Conquistas:**
-  - *Selo Lula Solo*: 50 Picanhas.
-  - *Trio Supremo*: 500 Picanhas (Lula, Bolsonaro e Alexandre de Moraes).
-- **Sistema de Revive (Segunda Chance):**
-  - Integração com anúncios recompensados (Rewarded Ads / Smartlink).
-  - Pausa inteligente: aguarda o jogador retornar à aba ativa do navegador antes de disparar o countdown de 3 segundos e escudo de invulnerabilidade.
-- **HUD & Controles:**
-  - Botão de Som: Alterna entre 🔊 Memes + FX, 🎮 Apenas Efeitos e 🔇 Mudo.
-  - Botão de Personagem 🎭: Abre seletor com habilidades e skins cosméticas.
-  - Botão de Tela Cheia ⛶: Suporte nativo em Desktop/Android e Pseudo-Fullscreen no iPhone.
+O **Lula Simulator** é uma aplicação web de jogos satíricos e paródia política brasileira de alta performance, desenvolvida de forma independente com tecnologias modernas:
+- **Flappy Lula 2D:** Arcade clássico de voo com física de gravidade, coleta de picanhas e eventos dinâmicos (Modo Prisão a cada 13 pontos).
+- **Empresário vs CLT 3D:** Endless runner tridimensional desenvolvido com **Three.js** e aceleração **WebGL**, com curvas em ladeiras, obstáculos urbanos e aceleração progressiva até 6.0x (20.000m).
+- **Compliance e Monetização:** Totalmente preparado para aprovação no **Google AdSense** e **Google H5 Games**, operando em modo seguro durante revisões e em estrita conformidade com a LGPD e GDPR.
 
 ---
 
-## 🏃 2. Empresário 3D (Runner 3D Three.js — `correr.html` e `en/correr.html`)
+## 🛡️ 2. Atualizações da Versão 2.5 (Outubro/2026)
 
-- **Arquitetura Modular (`/js/game/`):**
-  - [`main.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/main.js): Loop principal de atualização, ciclo de vida e spawn.
-  - [`scene.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/scene.js): Câmera com ângulo dinâmico, renderizador Three.js e iluminação solar.
-  - [`character.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/character.js): Modelos 3D estilizados, animações de corrida, salto parabólico, rasteira e troca de pistas.
-  - [`environment.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/environment.js): Morros da favela com curvas dinâmicas, trilhos de trem e iluminação noturna por postes (`THREE.PointLight`).
-  - [`obstacles.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/obstacles.js): Trens em movimento, cancelas de pedágio, placas PARE, boletos voadores, CLT e Bolsa Família.
-  - [`audio.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/audio.js): Áudio posicional, vozes de memes e feedback sonoro.
-  - [`ui.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/game/ui.js): Overlay, pontuação em km, moedas, modais e preview 3D de rotação de skins.
-- **Visual Nítido & Otimização de Performance:**
-  - Cores vivas e tropicais sem efeitos pesados de pós-processamento (sem bloom excessivo ou névoa opaca), garantindo 60 FPS cravados em celulares modestos.
-- **Balanceamento de Economia & Dificuldade:**
-  - Redução da densidade exagerada de moedas para valorizar a coleta.
-  - Velocidade progressiva calibrada para atingir até **6x** em distâncias acima de 20.000 km.
-- **Revive Aprimorado:**
-  - Retorno imediato na mesma velocidade e posição da colisão após retorno à aba.
+### 1. Blindagem de Roteamento e Anti-Bloqueio de Bots ([`js/language-manager.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/language-manager.js))
+- **Whitelist de Crawlers (`isSearchOrAdBot`):** Detecta `Googlebot`, `Mediapartners-Google`, `AdsBot-Google`, `Lighthouse`, `PageSpeed`, `Bingbot`, `crawler`, `spider`, etc., e `navigator.webdriver`.
+- **Zero Redirecionamentos para Bots:** Bots nunca sofrem `window.location.replace` nem recebem modais bloqueantes, permitindo indexação e auditoria limpa em ambos os domínios.
+- **Persistência Humana:** Usuários com preferência salva em `localStorage.getItem('user_lang_pref')` navegam sem redirecionamentos forçados. Toast/Banner flutuante não-intrusivo para visitantes internacionais.
 
----
+### 2. Compliance Legal AdSense, LGPD & GDPR
+- **Páginas Legais:** Criadas [`privacidade.html`](file:///c:/Users/NT118/antigravity/lula-simulator/privacidade.html), [`en/privacy.html`](file:///c:/Users/NT118/antigravity/lula-simulator/en/privacy.html), [`termos.html`](file:///c:/Users/NT118/antigravity/lula-simulator/termos.html) e [`en/terms.html`](file:///c:/Users/NT118/antigravity/lula-simulator/en/terms.html).
+- **Cláusulas Obrigatórias AdSense:** Detalhamento do Cookie DART do Google, links de opt-out ([`https://adssettings.google.com`](https://adssettings.google.com)), armazenamento de dados no Firebase Firestore e anonimização de IP.
+- **Cookie Consent Banner ([`js/cookie-consent.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/cookie-consent.js)):** Banner leve LGPD/GDPR no primeiro acesso com persistência em `localStorage`.
+- **Rodapé Semântico com 4 Colunas:** Padronizado em todas as 20 páginas (Modos de Jogo, Comunidade, Legal & Transparência, Idiomas Oficiais).
+- **Robots e Sitemaps:** [`robots.txt`](file:///c:/Users/NT118/antigravity/lula-simulator/robots.txt), [`robots-en.txt`](file:///c:/Users/NT118/antigravity/lula-simulator/robots-en.txt), [`sitemap.xml`](file:///c:/Users/NT118/antigravity/lula-simulator/sitemap.xml) e [`sitemap-en.xml`](file:///c:/Users/NT118/antigravity/lula-simulator/sitemap-en.xml) atualizados com liberação expressa para `Mediapartners-Google` e `Googlebot`.
 
-## 📱 3. Suporte Mobile & iPhone (iOS Safari)
+### 3. Modo "AdSense Review Safe" ([`js/ads-manager.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/ads-manager.js))
+- `ADSENSE_REVIEW_MODE = true`: Desativa completamente scripts da Adsterra e auto-refresh de iframes.
+- Oculta automaticamente containers vazios com `display: none` para prevenir layout shifts e espaços vazios.
+- Sistema de Revive (Segunda Chance) aciona modal interno com contagem de 5 segundos (Rewarded Ad Break oficial) ou a API do Google H5 Games (`adBreak`), pausando e retomando áudios sem smartlinks externos em nova aba.
 
-- **Desafio do iOS:** O Safari no iPhone não implementa a API padrão `requestFullscreen()` em elementos HTML arbitrários.
-- **Solução (Pseudo-Fullscreen CSS):**
-  - Ativação da classe `body.is-fullscreen`.
-  - Ocultamento da `<nav>` superior e fixação do canvas em `position: fixed; inset: 0; width: 100vw; height: 100dvh; z-index: 99999;`.
-  - Redimensionamento automático via `calcSize()` / `scene.onResize()`.
-- **Eventos de Toque:**
-  - `pointer-events: auto !important;` e `z-index: 105;` nas pílulas de ação do HUD.
-  - Ouvintes com suporte a `click` e `touchend` com `{ passive: false }` para eliminação de delay de toque no mobile.
+### 4. Enriquecimento Editorial Denso (Anti-Conteúdo Insuficiente)
+- **Home (`index.html` e `en/index.html`):** Inserida a seção *"Guia Oficial de Estratégia, Mecânicas e Enciclopédia de Personagens"* com mais de 600 palavras em HTML semântico explicando a física do Flappy 2D, o Modo Prisão (13 pontos), antecipação de curvas nos morros no 3D Runner e cards caricatos de todos os personagens jogáveis.
+- **Páginas de Jogos (`jogo.html` e `correr.html`):** Guias textuais completos abaixo do Canvas com mais de 360 palavras, tabelas de controles, sistema de selos e changelog.
 
----
+### 5. SEO Técnico Máximo, Dados Estruturados & Core Web Vitals
+- Preconnect para `https://fonts.gstatic.com` com atributo `crossorigin`.
+- Inclusão da fonte retro `'Press Start 2P'` com `&display=swap` no Google Fonts.
+- Dimensões explícitas `width="1024" height="1024"` e `fetchpriority="high"` nas imagens principais do Hero.
+- Metatags `og:image:width` (1200) e `og:image:height` (630) para miniaturas instantâneas no WhatsApp.
+- Dados Estruturados Schema.org JSON-LD unificados com `@graph` (`WebSite`, `VideoGame`, `FAQPage`, `BreadcrumbList`).
 
-## 🌐 4. Internacionalização (i18n) & SEO Multi-Idioma
+### 6. Engajamento Viral — Reta Final do 2º Turno (25/10/2026)
+- [`js/election-timer.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/election-timer.js) atualizado: marca o 1º Turno (04/10/2026) como concluído e aciona contagem regressiva para o **2º Turno (25/10/2026)**.
+- Game Over com botão pulsante **"⚔️ Desafiar Amigo no WhatsApp (Duelo 2º Turno)"** gerando links `?duel=ID` com mensagem provocativa.
+- Indicador dinâmico de **"Próxima Conquista"** incentivando o jogador a reviver e buscar novo recorde.
 
-- **Estrutura de Pastas:**
-  - Raiz `/`: Versão em Português do Brasil (`pt-BR`).
-  - Subpasta `/en/`: Versão completa em Inglês (`en`).
-- **Páginas 100% Espelhadas e Sincronizadas:**
-  - `index.html` (Landing Page com Top 3 ao vivo e FAQ)
-  - `jogo.html` (Flappy Lula 2D)
-  - `correr.html` (Empresário 3D)
-  - `ranking.html` (Top 300 Global e Nacional)
-  - `conquistas.html` (Sistema de Badges)
-  - `loja.html` (Loja de Skins)
-  - `social.html` (Duelos PvP e Notificações)
-  - `visitantes.html` (Mapa e contador de países em tempo real)
-  - `feedback.html` (Avaliações e comentários dos jogadores)
-  - `contato.html` (Formulário de contato)
-- **SEO Técnico:**
-  - Tags `<link rel="alternate" hreflang="..." />` bidirecionais entre `lulasimulator.com.br` e `flappylula.com`.
-  - `sitemap.xml` e `sitemap-en.xml` sincronizados.
-  - OpenGraph e Twitter Cards configurados para compartilhamento em redes sociais e WhatsApp.
+### 7. Padronização do Menu Mobile
+- Identificador `id="navToggle"` e listeners JavaScript unificados em todas as páginas PT e EN.
 
 ---
 
-## 👥 5. Sistema Social, Duelos & Nuvem (Firebase Firestore)
-
-- **Autenticação:** Sistema de contas com apelido, avatar SVG personalizável, títulos e bandeiras de países.
-- **Nuvem:** Sincronização em tempo real de scores, desbloqueios e skins cosméticas.
-- **Duelos PvP Assíncronos (`social.html`):**
-  - Desafie amigos gerando links únicos com parâmetro `?duel=ID`.
-  - Ao entrar pelo link, o jogo exibe um banner de duelo e compara as pontuações.
-- **Sistema de Prestígio:** Jogadores de alto desempenho exibem badges `⭐ P1`, `⭐ P2`, etc., nos rankings.
-
----
-
-## 🗳️ 6. Timing Eleitoral 2026, Compliance e Políticas de Anúncios
-
-- **Aquecimento Eleitoral 2026:**
-  - Seção visual destacada na Home (PT e EN) conectando o jogo ao período de eleições como forma de descontração.
-  - Menção às datas oficiais: **1º Turno (04/10/2026)** e **eventual 2º Turno (25/10/2026)**.
-- **Módulo Dinâmico ([`js/election-timer.js`](file:///c:/Users/NT118/antigravity/lula-simulator/js/election-timer.js)):**
-  - Calcula os dias restantes para o 1º e 2º turno automaticamente no cliente, mantendo a página sempre atualizada para algoritmos de busca do Google.
-- **Disclaimer Legal de Paródia & Isenção Partidária:**
-  - Presente no rodapé de todas as páginas e nas telas de início dos jogos.
-  - Declara explicitamente:
-    1. Obra independente de humor, sátira e entretenimento.
-    2. Sem afiliação, patrocínio ou vínculo com candidatos, partidos políticos ou com o Tribunal Superior Eleitoral (TSE).
-    3. **Ausência total de enquetes, pesquisas de intenção de voto ou prognósticos**, protegendo o domínio contra desinformação e garantindo conformidade com o Google AdSense.
-
----
-
-## 🗂️ Mapa de Arquivos Principais
+## 🗂️ Mapa de Arquivos
 
 ```
 lula-simulator/
-├── index.html                  # Home PT-BR (Hero, Top 3 ao vivo, Aquecimento 2026, FAQ)
-├── jogo.html                   # Flappy Lula 2D PT-BR
-├── correr.html                 # Empresário 3D PT-BR
+├── index.html                  # Home PT-BR (Guia Editorial, Hero 1024x1024, Aquecimento 2º Turno, FAQ)
+├── jogo.html                   # Flappy Lula 2D PT-BR (Guia Textual, Duelo WhatsApp, Modo Prisão)
+├── correr.html                 # Empresário 3D PT-BR (Guia Textual, Duelo WhatsApp, Three.js 6x)
 ├── ranking.html                # Ranking Top 300 PT-BR
 ├── loja.html                   # Loja de Skins PT-BR
 ├── conquistas.html             # Badges e Conquistas PT-BR
@@ -138,31 +72,32 @@ lula-simulator/
 ├── visitantes.html             # Visitantes Globais PT-BR
 ├── feedback.html               # Feedbacks da Comunidade PT-BR
 ├── contato.html                # Contato com o Desenvolvedor PT-BR
+├── privacidade.html            # Política de Privacidade & Cookies DART (LGPD/GDPR)
+├── termos.html                 # Termos de Uso e Declaração de Paródia
 │
 ├── en/                         # Versão espelhada em Inglês (flappylula.com)
 │   ├── index.html
 │   ├── jogo.html
 │   ├── correr.html
+│   ├── privacy.html
+│   ├── terms.html
 │   └── ... (demais páginas traduzidas)
 │
 ├── js/
-│   ├── game/                   # Módulos do Empresário 3D (Three.js)
-│   │   ├── main.js
-│   │   ├── scene.js
-│   │   ├── character.js
-│   │   ├── environment.js
-│   │   ├── obstacles.js
-│   │   ├── audio.js
-│   │   └── ui.js
-│   ├── election-timer.js       # Contador dinâmico de datas das Eleições 2026
+│   ├── language-manager.js     # Gerenciador Dual-Domain e Blindagem Anti-Bot
+│   ├── ads-manager.js          # AdSense Review Safe e Rewarded Ad Modal H5 Games
+│   ├── cookie-consent.js       # Banner leve de consentimento LGPD/GDPR
+│   ├── election-timer.js       # Contagem regressiva do 2º Turno (25/10/2026)
+│   ├── game/                   # Módulos Three.js do Empresário 3D
 │   ├── audio.js                # Sistema de áudio do Flappy 2D
 │   ├── auth.js                 # Autenticação e perfil Firebase
-│   ├── firebase-config.js      # Conexão Firestore e Scores
-│   ├── ads-manager.js          # Gerenciamento de Anúncios e Smartlinks
-│   └── social-manager.js       # Gerenciamento de Duelos e Notificações
+│   └── firebase-config.js      # Conexão Firestore e Scores
 │
-├── sitemap.xml                 # Sitemap PT-BR
-├── sitemap-en.xml              # Sitemap EN
-├── HISTORICO_DO_PROJETO.md     # Este documento de referência
-└── README.md                   # Documentação pública do repositório
+├── css/
+│   └── styles.css              # Design System cósmico/neon, rodapé semântico e animações
+├── robots.txt                  # Robots PT com permissão expressa para Googlebot/Mediapartners
+├── robots-en.txt               # Robots EN com permissão expressa para Googlebot/Mediapartners
+├── sitemap.xml                 # Sitemap PT-BR indexando todas as páginas incluindo legais
+├── sitemap-en.xml              # Sitemap EN indexando todas as páginas incluindo legais
+└── HISTORICO_DO_PROJETO.md     # Este documento de referência
 ```

@@ -40,31 +40,97 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
-  <!-- Schema.org / JSON-LD Structured Data -->
+  <!-- Schema.org / JSON-LD Structured Data (@graph: WebSite, VideoGame, FAQPage) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "Lula Simulator",
-    "alternateName": ["Jogo do Lula", "Simulador do Lula", "Flappy Lula", "Lula Game"],
-    "url": "https://lulasimulator.com.br/",
-    "description": "Simulador arcade e 3D satírico brasileiro onde você joga como o Lula coletando picanhas, desviando de canos e fugindo da CLT nos morros.",
-    "genre": ["Arcade", "Runner", "Satire", "Casual Game"],
-    "playMode": "SinglePlayer",
-    "inLanguage": "en",
-    "applicationCategory": "Game",
-    "operatingSystem": "Any (Web Browser)",
-    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
-    "author": {
-      "@type": "Person",
-      "name": "Daniel dos Santos"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://flappylula.com/#website",
+        "url": "https://flappylula.com/",
+        "name": "Flappy Lula",
+        "description": "Flappy Lula — Brazilian Election Parody Game, Political Satire Browser Arcade, 3D Tax Evasion Runner Game. Free Unblocked HTML5 Meme Game.",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://flappylula.com/#game",
+        "name": "Flappy Lula",
+        "alternateName": [
+          "Brazilian Election Parody Game",
+          "Political Satire Browser Arcade",
+          "3D Tax Evasion Runner Game",
+          "Free Unblocked HTML5 Meme Game",
+          "Lula Simulator"
+        ],
+        "url": "https://flappylula.com/",
+        "description": "Play Flappy Lula online for free! Satirical Brazilian election arcade where you fly through obstacles as Lula, dodge tax enforcement, and compete on the global leaderboard.",
+        "genre": ["Arcade", "Runner", "Satire", "Casual Game", "3D Game"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "en",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (Web Browser, Android, iOS, Windows, Mac)",
+        "image": "https://flappylula.com/img/flappy_lula_hero.jpg",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel dos Santos"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://flappylula.com/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Flappy Lula / Lula Simulator?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Flappy Lula is a 100% free satirical Brazilian election web arcade game featuring classic 2D obstacle flight and the high-speed 3D Entrepreneur Runner."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do you play Flappy Lula?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "In Flappy Lula, click or tap spacebar to fly between Brasília government pipes and collect steaks. In the 3D Runner, swipe or use arrow keys to dodge tax bills and trains."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which satirical characters can I play?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You can play as Lula, Jair Bolsonaro, Alexandre de Moraes, Janja, Nikolas Ferreira, Dilma Rousseff, and unlock the legendary Pablo Marçal (3X Quantum Mindset)!"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I need to download or install an app?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No! The game runs instantly inside any modern web browser (Chrome, Safari, Firefox, Edge) on iOS, Android, or PC at smooth 60 FPS."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is this game affiliated with Brazilian election authorities?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Flappy Lula is an independent work of political satire and parody. It has no affiliation with political campaigns, candidates, or government agencies like the Brazilian Electoral Court (TSE)."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -78,7 +144,8 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
   <link rel="stylesheet" href="/css/styles.css?v=2.1">
@@ -821,7 +888,7 @@
           </div>
           <!-- Flappy Lula Poster in Front -->
           <div class="hero-poster-flappy-fg">
-            <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Official" class="hero-poster-img">
+            <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Official" class="hero-poster-img" width="1024" height="1024" fetchpriority="high" decoding="async">
             <div class="hero-badge-tag">⭐ FLAPPY LULA ⭐</div>
           </div>
         </div>
@@ -916,32 +983,132 @@
           <span style="font-size: 36px;">🗳️</span>
           <div>
             <h2 style="font-family: 'Bangers', cursive; font-size: 32px; color: var(--amarelo-brasil); letter-spacing: 1px; margin: 0; line-height: 1.1;">
-              2026 BRAZILIAN ELECTION COUNTDOWN
+              2026 ELECTION SPECIAL: 2nd ROUND FINAL SPRINT!
             </h2>
-            <div id="electionWarmupStatus" style="color: var(--verde-neon); font-size: 13px; font-weight: 700; margin-top: 2px;">
-              🔥 Take a Break from Campaign Stress with Brazil's Favorite Satirical Game!
+            <div id="electionWarmupStatus" style="color: var(--verde-neon); font-size: 13.5px; font-weight: 700; margin-top: 2px;">
+              🔥 1st Round Concluded! Join the Final Sprint to the 2nd Round (Oct 25, 2026) in Brazil's #1 Meme Game!
             </div>
           </div>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <span id="electionTimerRound1" class="hero-badge-pill" style="background: rgba(34, 197, 94, 0.2); border-color: #22c55e; color: #86efac; font-size: 12px; padding: 6px 14px;">
-            ⏳ Days to 1st Round (Oct 4, 2026)
+            ✅ 1st Round Concluded (Oct 4)
           </span>
-          <span id="electionTimerRound2" class="hero-badge-pill" style="background: rgba(234, 179, 8, 0.2); border-color: #eab308; color: #fef08a; font-size: 12px; padding: 6px 14px;">
-            ⏳ Eventual 2nd Round (Oct 25, 2026)
+          <span id="electionTimerRound2" class="hero-badge-pill" style="background: rgba(234, 179, 8, 0.25); border-color: #eab308; color: #fef08a; font-size: 12.5px; padding: 6px 14px; animation: heroPulseCta 2s infinite;">
+            🔥 Final Sprint: 2nd Round (Oct 25, 2026)
           </span>
         </div>
       </div>
 
       <p style="color: var(--text-main); font-size: 14.5px; line-height: 1.7; margin-bottom: 14px;">
-        The official dates for Brazil's Presidential Election are set: <strong>Round 1 takes place on October 4, 2026</strong>, and the <strong>eventual Round 2 on October 25, 2026</strong>. As the political heat turns up worldwide, <strong>Flappy Lula & Businessman 3D</strong> offer the ultimate humorous escape to enjoy cultural memes, dodge obstacles, and compete on global leaderboards!
+        With the 1st Round officially concluded on October 4, we have entered the thrilling <strong>Final Sprint towards the 2nd Round of the 2026 Brazilian Presidential Election on October 25, 2026</strong>! As the international spotlight shines on South America, <strong>Flappy Lula</strong> delivers the definitive political satire game to blow off steam, challenge your friends in multiplayer duels, and see who can survive longest in <strong>Flappy Lula 2D</strong> and the <strong>3D Runner</strong>!
       </p>
 
       <div style="background: rgba(0, 0, 0, 0.45); border: 1px dashed rgba(255, 223, 0, 0.35); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-        🎭 <strong>Satire & Parody Notice:</strong> This website is an independent parody game created strictly for comedy and casual entertainment. We have no political affiliation, candidate endorsement, or connection to official electoral authorities (TSE). We do not conduct voting polls or election forecasts. Our focus is 100% on fun, memes, and arcade gameplay!
+        🎭 <strong>Satire & Parody Disclaimer:</strong> This game is an independent work of political satire, humor, and social commentary. It has no affiliation with political parties, electoral candidates, or official government institutions (such as the TSE). We do not conduct voter intention polling or election forecasts. 100% pure comedic arcade gaming!
       </div>
     </div>
   </section>
+
+  
+  
+  <!-- OFFICIAL STRATEGY GUIDE, MECHANICS & CHARACTER ENCYCLOPEDIA -->
+  <section class="game-guide-section" style="max-width: 1100px; margin: 40px auto; padding: 0 24px;">
+    <article class="card" style="border: 2px solid var(--verde-neon); background: linear-gradient(135deg, rgba(16, 25, 46, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 40px rgba(0, 230, 118, 0.2); padding: 36px 30px;">
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap;">
+        <span style="font-size: 42px;">📖</span>
+        <div>
+          <h2 style="font-family: 'Bangers', cursive; font-size: 38px; color: var(--amarelo-brasil); letter-spacing: 1.5px; margin: 0; line-height: 1.1;">
+            OFFICIAL STRATEGY GUIDE, MECHANICS & SATIRICAL CHARACTER ENCYCLOPEDIA
+          </h2>
+          <p style="color: var(--verde-neon); font-size: 14px; font-weight: 700; margin-top: 4px;">
+            Master flight gravity dynamics, hill obstacle anticipation, and discover the satirical secrets of Flappy Lula and 3D Runner
+          </p>
+        </div>
+      </div>
+
+      <div style="color: var(--text-main); font-size: 15px; line-height: 1.85;">
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: var(--verde-neon); letter-spacing: 1px; margin-top: 18px; margin-bottom: 10px;">
+          🎮 Advanced Flight Physics & Gravity Timing in Flappy Lula 2D
+        </h3>
+        <p>
+          <strong>Flappy Lula 2D</strong> is engineered upon a responsive vector physics model that balances constant downward gravitational acceleration with aerodynamic drag on every flap impulse. Achieving top placement on the global competitive leaderboard requires understanding micro-timing: rapid, controlled taps produce smooth sinusoidal flight arcs that keep your avatar safely in the vertical sweet spot between government pipe obstacles. Panic flapping causes vertical overshooting, sending the character straight into the concrete pipe borders of Brasília.
+        </p>
+        <p>
+          The avatar's hitbox geometry is calibrated with millimeter accuracy to reward surgical precision. The quintessential dynamic hazard is the high-stakes <strong>Prison Mode (Modo Prisão)</strong>, triggered automatically every 13 steaks collected. When the emergency sirens sound, the environment contracts, prison cell bars slide into view, and horizontal flight velocity surges by 20% for 10 challenging seconds. The key strategy to surviving Prison Mode is anticipating each flap well ahead of the obstacle threshold, avoiding sudden downward plunges, and keeping your eyes focused on the upcoming gap. Conquering the 13-point threshold clears the prison and awards golden steak score multipliers!
+        </p>
+
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: var(--amarelo-brasil); letter-spacing: 1px; margin-top: 24px; margin-bottom: 10px;">
+          🏃 3D Runner Mechanics: Hill Curves, Train Anticipation & 6.0x Velocity Sprint
+        </h3>
+        <p>
+          In the WebGL-accelerated <strong>3D Entrepreneur vs Bureaucracy Runner</strong> (powered by Three.js), players step into the polished shoes of a Brazilian entrepreneur fleeing high taxation, overdue bills, labor union paperwork, and traffic STOP signs along the vibrant railway hills of Rio de Janeiro. Unlike flat-plane infinite runners, this three-dimensional engine features authentic elevation shifts, steep declines, and blind hill crests that conceal oncoming trains and suspended clotheslines until the final fraction of a second.
+        </p>
+        <p>
+          To anticipate high-speed hill curves, focus your vision along the track horizon rather than directly in front of the avatar's feet. Snatch up the <strong>Super Jump Sneakers</strong> to launch over complete train cars and trigger the <strong>Super Magnet</strong> to vacuum coins and steaks across all three lanes without breaking your optimal survival path. Past <strong>20,000 meters (20 km)</strong>, continuous speed scaling peaks at an extreme <strong>6.0x multiplier</strong>. At this terminal velocity, lateral lane swipes must be executed with reflex anticipation in fractions of a second, separating casual players from top global contenders!
+        </p>
+
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: #38bdf8; letter-spacing: 1px; margin-top: 24px; margin-bottom: 14px;">
+          🎭 Satirical Character Encyclopedia & Parody Traits
+        </h3>
+        <p>
+          Each playable character in the Flappy Lula universe is crafted as an affectionate comedic caricature of contemporary Brazilian political culture, possessing distinct personality traits and thematic audio lines:
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 18px 0;">
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: var(--amarelo-brasil); font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🥩 Lula (The Classic Statesman)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              The founding meme hero of the simulator. Fueled by his legendary passion for barbecue picanha steaks and cold beer, he boasts a balanced flight curve and passive steak magnet attraction in Flappy Lula 2D.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #22c55e; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🏍️ Jair Bolsonaro (The Motorcade Captain)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Driven by thunderous motorcycle rallies. In the 3D runner, he features rapid initial burst acceleration and strong resilience against corporate audit bills on the hillside tracks.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #cbd5e1; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">⚖️ Alexandre de Moraes (Xandão)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              The supreme guardian of the 48-hour judicial inquiries. His black robe creates temporary shield fields against institutional obstacles and barricades.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #f43f5e; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🐕 Janja & Resistência</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              High diplomatic energy and passionate animal rescue advocacy. Accompanied by her faithful stray dog companion Resistência, she illuminates track paths and generates bonus steak multipliers.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #38bdf8; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">📢 Nikolas Ferreira (Viral Megaphone)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              The youth social media powerhouse. His viral live broadcasts stun auditory barriers, accelerate coin spawn frequencies, and create social duel excitement across platforms.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #ec4899; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🍠 Dilma Rousseff (Wind Storage Master)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Celebrated pioneer of cassava salutations and quantum atmospheric wind storage. Her unique aerodynamics allow prolonged gliding through the tightest vertical pipe openings.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; grid-column: 1 / -1;">
+            <h4 style="color: #eab308; font-family: 'Bangers', cursive; font-size: 22px; margin-bottom: 6px;">🚀 Pablo Marçal (3X Quantum Mindset Coach)</h4>
+            <p style="font-size: 13.5px; color: #fef08a; margin: 0; line-height: 1.6;">
+              The high-octane motivational unlocked mindset reality coach. Multiplies coins and steaks by 3X through pure mental willpower and motivational drive, conquering mountain peaks and dodging taxes with zero fear!
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </section>
+
 
   <!-- FREQUENTLY ASKED QUESTIONS (FAQ) -->
   <section style="max-width: 1100px; margin: 40px auto; padding: 0 24px;">
@@ -1010,13 +1177,53 @@
   <div id="adBannerFooter" class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 20px;"></div>
 
   <!-- RODAPÉ COM DISCLAIMER TRANSPARENTE DE PARÓDIA -->
-  <footer style="padding: 24px 20px; border-top: 1px solid rgba(255,255,255,0.1); background: #080914; text-align: center;">
-    <div style="max-width: 900px; margin: 0 auto 12px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px;">
-      ⚠️ <strong>Legal Disclaimer & Parody Notice:</strong> <em>Flappy Lula</em> / <em>Lula Simulator</em> is an independent satirical parody and humor game. It has no affiliation, endorsement, sponsorship, or association with any political party, candidate, government entity, or official electoral authority. This website does not conduct voting polls, election forecasts, or political predictions.
+  <!-- SEMANTIC FOOTER & ADSENSE COMPLIANCE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ GAME MODES</h4>
+          <ul>
+            <li><a href="/en/jogo.html">🐦 Flappy Lula 2D</a></li>
+            <li><a href="/en/correr.html">🏃 3D Runner</a></li>
+            <li><a href="/en/social.html">⚔️ Social & Duels</a></li>
+            <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMMUNITY</h4>
+          <ul>
+            <li><a href="/en/ranking.html">🥇 Global Leaderboard</a></li>
+            <li><a href="/en/conquistas.html">🏅 Achievements Gallery</a></li>
+            <li><a href="/en/visitantes.html">🌍 Global Visitors</a></li>
+            <li><a href="/en/feedback.html">⭐ Reviews & Feedback</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARENCY</h4>
+          <ul>
+            <li><a href="/en/privacy.html">🛡️ Privacy Policy</a></li>
+            <li><a href="/en/terms.html">📜 Terms of Service</a></li>
+            <li><a href="/en/contato.html">📬 Contact & Support</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 OFFICIAL DOMAINS</h4>
+          <ul>
+            <li><a href="https://flappylula.com/">🇺🇸 English (Global)</a></li>
+            <li><a href="https://lulasimulator.com.br/">🇧🇷 Português (Brasil)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Legal Parody Disclaimer:</strong> <em>Flappy Lula</em> / <em>Lula Simulator</em> is an independent satirical entertainment project. It has no affiliation, endorsement, or relationship with political parties, electoral candidates, or government agencies.
+      </div>
+
+      <div class="footer-credits">
+        🇺🇸 <strong>Flappy Lula</strong> — Developed by <strong>Daniel dos Santos</strong> (AI Programming Project) · 2026
+      </div>
     </div>
-    <p style="color: var(--text-muted); font-size: 13px; margin: 0;">
-      🇧🇷 <strong>Lula Simulator</strong> — Developed by <strong>Daniel dos Santos</strong> at <strong>SENAI</strong> (AI & Software Engineering) · 2026
-    </p>
   </footer>
 
   <script src="/js/election-timer.js" type="module"></script>
@@ -1032,9 +1239,9 @@
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
-    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navToggle = document.getElementById('navToggle') || document.getElementById('btnNavToggle');
     const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
+    navToggle?.addEventListener('click', (e) => {
       e.stopPropagation();
       navLinksList?.classList.toggle('open');
     });

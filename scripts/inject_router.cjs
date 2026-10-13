@@ -5,7 +5,8 @@ const files = ['index.html', 'jogo.html', 'correr.html', 'ranking.html', 'conqui
 
 const scriptTag = `  <!-- Roteador Instantâneo para Domínio Internacional flappylula.com -->
   <script>
-    if (window.location.hostname.toLowerCase().includes('flappylula.com') && !window.location.pathname.startsWith('/en/')) {
+    var isBot = /bot|googlebot|mediapartners|adsbot|lighthouse|pagespeed|bingbot/i.test(navigator.userAgent) || navigator.webdriver;
+    if (!isBot && window.location.hostname.toLowerCase().includes('flappylula.com') && !window.location.pathname.startsWith('/en/')) {
       var p = window.location.pathname;
       if (p === '/' || p === '') p = '/index.html';
       var clean = p.endsWith('.html') ? p : (p + '.html');

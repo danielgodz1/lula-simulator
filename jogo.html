@@ -17,6 +17,7 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -27,6 +28,8 @@
   <meta property="og:title" content="Flappy Lula — Jogo do Lula 2D Arcade Online">
   <meta property="og:description" content="Voe com o Lula, desvie de canos, pegue picanhas e dispute o Top 1 do Ranking Nacional!">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Lula Simulator">
   <meta property="og:locale" content="pt_BR">
 
@@ -37,30 +40,57 @@
   <meta name="twitter:description" content="Jogue Flappy Lula direto no navegador! Voe, pegue picanhas e desbloqueie personagens!">
   <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
-  <!-- Schema.org / JSON-LD Structured Data -->
+  <!-- Schema.org / JSON-LD Structured Data (@graph: VideoGame, BreadcrumbList) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "Flappy Lula",
-    "alternateName": ["Flappy Lula 2D", "Jogo do Lula Flappy", "Lula Bird Arcade"],
-    "url": "https://lulasimulator.com.br/jogo.html",
-    "description": "Modo de jogo arcade 2D do Lula Simulator. Voe entre os canos, colete picanhas, desbloqueie personagens e entre no modo prisão aos 13 pontos.",
-    "genre": ["Arcade", "Flappy", "Satire", "Casual Game"],
-    "playMode": "SinglePlayer",
-    "inLanguage": "pt-BR",
-    "applicationCategory": "Game",
-    "operatingSystem": "Any (Web Browser)",
-    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
-    "author": {
-      "@type": "Person",
-      "name": "Daniel dos Santos"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL"
-    }
+    "@graph": [
+      {
+        "@type": "VideoGame",
+        "@id": "https://lulasimulator.com.br/jogo.html#game",
+        "name": "Flappy Lula 2D",
+        "alternateName": [
+          "Jogo do Lula",
+          "Flappy Lula Online Grátis",
+          "Flappy Bird do Lula",
+          "Meme Eleições 2026 Segundo Turno"
+        ],
+        "url": "https://lulasimulator.com.br/jogo.html",
+        "description": "Jogue Flappy Lula 2D online grátis no navegador! Voe pelos canos de Brasília, colete picanhas e sobreviva ao temido Modo Prisão dinâmico.",
+        "genre": ["Arcade", "Casual Game", "Satire", "2D Game"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "pt-BR",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (Web Browser, Android, iOS, Windows, Mac)",
+        "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel dos Santos"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Início",
+            "item": "https://lulasimulator.com.br/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Flappy Lula 2D",
+            "item": "https://lulasimulator.com.br/jogo.html"
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -74,6 +104,7 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
@@ -1079,6 +1110,122 @@
     </div>
   </div>
 
+  <!-- GUIA OFICIAL DE JOGABILIDADE, CONTROLES & CHANGELOG (FLAPPY LULA) -->
+  <section class="game-guide-section" style="max-width: 900px; margin: 30px auto; padding: 0 20px;">
+    <article class="card" style="border: 1.5px solid var(--amarelo-brasil); background: linear-gradient(135deg, rgba(16, 25, 46, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(255, 223, 0, 0.15); padding: 32px 28px;">
+      <h2 style="font-family: 'Bangers', cursive; font-size: 32px; color: var(--amarelo-brasil); letter-spacing: 1px; margin-bottom: 12px; display:flex; align-items:center; gap:8px;">
+        🕹️ GUIA OFICIAL DO FLAPPY LULA: REGRAS, CONTROLES & CONQUISTAS
+      </h2>
+      <p style="color: #cbd5e1; font-size: 14.5px; line-height: 1.8; margin-bottom: 18px;">
+        O <strong>Flappy Lula</strong> é uma paródia arcade política onde o jogador controla o Lula voando por Brasília, desviando dos obstáculos e coletando carnes nobres para acumular pontos no Placar Nacional. Desenvolvido em HTML5 Canvas de alta performance, o jogo atinge 60 FPS estáveis tanto em computadores quanto em dispositivos móveis Android e iOS.
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🎮 Como Jogar e Sobreviver ao Modo Prisão
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        • <strong>Voo e Sustentação:</strong> A cada toque ou clique, o personagem ganha um impulso ascendente. A gravidade constante puxa o personagem para baixo. O segredo é manter toques regulares para passar pelo centro dos canos.<br>
+        • <strong>Itens Coletáveis:</strong> Cada Picanha normal concede <strong>+1 ponto</strong>. Picanhas Douradas garantem <strong>+5 pontos</strong> e as Cervejinhas concedem <strong>+10 pontos</strong> instantâneos.<br>
+        • <strong>Evento do Modo Prisão:</strong> A cada ciclo de 13 pontos, o alarme soa e o <em>Modo Prisão</em> é ativado por 10 segundos! As grades se fecham, o cenário escurece e a velocidade aumenta. Sobreviver a esse ciclo concede invulnerabilidade e picanhas bônus!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        ⌨️ Tabela de Controles (Desktop e Mobile/iOS)
+      </h3>
+      <div style="overflow-x:auto; margin-bottom: 20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:13.5px; text-align:left; color:#cbd5e1;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--amarelo-brasil); color:var(--amarelo-brasil); font-family:'Bangers',cursive; font-size:16px;">
+              <th style="padding:8px 10px;">Plataforma</th>
+              <th style="padding:8px 10px;">Ação / Voo</th>
+              <th style="padding:8px 10px;">Tela Cheia</th>
+              <th style="padding:8px 10px;">Controle de Som</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Computador / PC</td>
+              <td style="padding:8px 10px;">Barra de Espaço, Seta ↑ ou Clique do Mouse</td>
+              <td style="padding:8px 10px;">Botão ⛶ no HUD ou tecla F</td>
+              <td style="padding:8px 10px;">Botão 🔊 no HUD ou tecla M</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Mobile (Android / iPhone)</td>
+              <td style="padding:8px 10px;">Toque na tela (Tap em qualquer área do Canvas)</td>
+              <td style="padding:8px 10px;">Botão ⛶ no HUD (Pseudo-Fullscreen iOS)</td>
+              <td style="padding:8px 10px;">Botão 🔊 no HUD superior</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🏅 Sistema de Conquistas e Selos Oficiais
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        Suas carnes coletadas acumulam permanentemente em sua conta. Ao atingir <strong>50 picanhas</strong>, você desbloqueia o <em>Selo Lula Solo</em>. Ao atingir <strong>500 picanhas</strong>, você conquista o cobiçado <em>Trio Polêmico Supremo</em>, concedendo destaque dourado no Placar de Líderes Nacional e desbloqueando novos personagens na Loja de Skins!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🚀 Notas da Versão (Changelog Oficial v2.5)
+      </h3>
+      <ul style="color: #cbd5e1; font-size: 13.5px; line-height: 1.8; margin-left: 20px;">
+        <li><strong>v2.5 (Outubro/2026):</strong> Especial Reta Final do 2º Turno (25/10/2026); botão de Duelo viral no WhatsApp com parâmetros dinâmicos; conformidade AdSense H5 Games com Rewarded Ads limpos.</li>
+        <li><strong>v2.4:</strong> Calibração de física de sustentação suave e redução de latência de áudio no Safari/iOS.</li>
+        <li><strong>v2.3:</strong> Lançamento do Modo Prisão dinâmico a cada 13 pontos com sirenes e grades de contenção.</li>
+      </ul>
+    </article>
+  </section>
+
+  <!-- RODAPÉ COM NAVEGAÇÃO SEMÂNTICA & COMPLIANCE ADSENSE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ MODOS DE JOGO</h4>
+          <ul>
+            <li><a href="jogo.html" style="color:var(--amarelo-brasil); font-weight:700;">🐦 Flappy Lula 2D</a></li>
+            <li><a href="correr.html">🏃 Empresário 3D</a></li>
+            <li><a href="social.html">⚔️ Social & Duelos</a></li>
+            <li><a href="loja.html">🛍️ Loja de Skins</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMUNIDADE</h4>
+          <ul>
+            <li><a href="ranking.html">🥇 Placar Nacional</a></li>
+            <li><a href="conquistas.html">🏅 Galeria de Conquistas</a></li>
+            <li><a href="visitantes.html">🌍 Visitantes Globais</a></li>
+            <li><a href="feedback.html">⭐ Avaliações</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARÊNCIA</h4>
+          <ul>
+            <li><a href="privacidade.html">🛡️ Política de Privacidade</a></li>
+            <li><a href="termos.html">📜 Termos de Uso</a></li>
+            <li><a href="contato.html">📬 Contato & Suporte</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 IDIOMAS OFICIAIS</h4>
+          <ul>
+            <li><a href="https://lulasimulator.com.br/jogo.html">🇧🇷 Português (Brasil)</a></li>
+            <li><a href="https://flappylula.com/jogo.html">🇺🇸 English (Global)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Aviso Legal & Paródia Independente:</strong> O <em>Lula Simulator</em> / <em>Flappy Lula</em> é um projeto satírico de entretenimento humorístico desenvolvido de forma independente. Não possui vínculo partidário, ideológico ou institucional com candidatos, governos ou com a Justiça Eleitoral (TSE).
+      </div>
+
+      <div class="footer-credits">
+        🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026
+      </div>
+    </div>
+  </footer>
+
   <script type="module">
     import { savePlayerScore, getTopScores, startScoreSession } from '/js/firebase-config.js';
     import { sounds } from '/js/audio.js';
@@ -1498,7 +1645,7 @@
       charSelectModal.style.display = 'none';
       if (wasGameOverOpenBeforeCharModal && gameOverModal) {
         updateEquippedHUD();
-        gameOverModal.style.display = 'flex';
+        gameOverModal.style.display = 'flex'; updateNextAchievementBadge();
       }
     }
 
@@ -3108,6 +3255,33 @@
 
     document.getElementById('btnStartGameAction')?.addEventListener('click', handleStart);
     document.getElementById('btnRestartGame')?.addEventListener('click', restartGame);
+    // Botão de Duelo WhatsApp Reta Final 2º Turno
+    document.getElementById('btnDuelWhatsAppGO')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const duelId = 'duel_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+      const shareUrl = `${window.location.origin}${window.location.pathname}?duel=${duelId}`;
+      const msg = `⚔️ Duelo do 2º Turno das Eleições 2026! Fiz ${score} picanhas no Flappy Lula Simulator! Duvido você bater meu recorde: ${shareUrl}`;
+      if (navigator.share) {
+        navigator.share({ title: 'Duelo do 2º Turno — Flappy Lula', text: msg, url: shareUrl }).catch(() => {});
+      } else {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+    });
+
+    // Atualiza indicador da Próxima Conquista na tela de Game Over
+    function updateNextAchievementBadge() {
+      const el = document.getElementById('goNextAchievementIndicator');
+      if (!el) return;
+      const total = CharacterInventory.getTotalPicanhas();
+      if (total < 50) {
+        el.textContent = `🏅 Faltam apenas ${50 - total} picanhas para desbloquear o Selo Lula Solo!`;
+      } else if (total < 500) {
+        el.textContent = `🏅 Faltam apenas ${500 - total} picanhas para desbloquear o Trio Polêmico Supremo!`;
+      } else {
+        el.textContent = '⭐ Você desbloqueou todos os selos principais! Dispute o Top 1 do Brasil!';
+      }
+    }
+
     
     // Botão de Segunda Chance (Revive)
     document.getElementById('btnReviveFlappy')?.addEventListener('click', (e) => {

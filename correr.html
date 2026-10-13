@@ -17,6 +17,7 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -27,6 +28,8 @@
   <meta property="og:title" content="Empresário Fugindo 3D — Jogo do Lula Simulator">
   <meta property="og:description" content="Corra nos morros do Rio fugindo dos boletos e da CLT no motor 3D do Lula Simulator!">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Lula Simulator">
   <meta property="og:locale" content="pt_BR">
 
@@ -37,30 +40,57 @@
   <meta name="twitter:description" content="Corra em 3D fugindo da CLT e impostos no Lula Simulator!">
   <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
-  <!-- Schema.org / JSON-LD Structured Data -->
+  <!-- Schema.org / JSON-LD Structured Data (@graph: VideoGame, BreadcrumbList) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "Empresário Fugindo 3D",
-    "alternateName": ["Empresário vs CLT 3D", "Lula Simulator 3D", "Empresário 3D Endless Runner"],
-    "url": "https://lulasimulator.com.br/correr.html",
-    "description": "Modo de jogo 3D Endless Runner do Lula Simulator. Corra nos morros do Rio fugindo da CLT, impostos e boletos em Three.js.",
-    "genre": ["Endless Runner", "Action", "3D", "Satire", "Casual Game"],
-    "playMode": "SinglePlayer",
-    "inLanguage": "pt-BR",
-    "applicationCategory": "Game",
-    "operatingSystem": "Any (Web Browser)",
-    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
-    "author": {
-      "@type": "Person",
-      "name": "Daniel dos Santos"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL"
-    }
+    "@graph": [
+      {
+        "@type": "VideoGame",
+        "@id": "https://lulasimulator.com.br/correr.html#game",
+        "name": "Empresário Fugindo 3D",
+        "alternateName": [
+          "Empresário vs CLT 3D",
+          "Lula Simulator 3D Runner",
+          "Fuja da CLT Jogo 3D",
+          "Meme Eleições 2026 Segundo Turno"
+        ],
+        "url": "https://lulasimulator.com.br/correr.html",
+        "description": "Corra nos morros do Rio em Three.js 3D fugindo de boletos, carteira de trabalho e trens. Jogo 3D do Lula Simulator grátis no navegador.",
+        "genre": ["Endless Runner", "Action", "3D", "Satire", "Casual Game"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "pt-BR",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (Web Browser, Android, iOS, Windows, Mac)",
+        "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel dos Santos"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Início",
+            "item": "https://lulasimulator.com.br/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Empresário Fugindo 3D",
+            "item": "https://lulasimulator.com.br/correr.html"
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -74,6 +104,7 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
@@ -1072,6 +1103,17 @@
         </div>
 
         <!-- LINHA DE BOTÕES DE AÇÃO -->
+        <!-- BOTÃO PULSANTE DUELO VIRAL WHATSAPP (2º TURNO) -->
+        <div style="display:flex; justify-content:center; margin: 10px 0;">
+          <button id="btnDuelWhatsAppRunnerGO" class="btn-viral-duel" title="Desafiar Amigo no WhatsApp">
+            ⚔️ Desafiar Amigo no WhatsApp (Duelo 2º Turno)
+          </button>
+        </div>
+
+        <!-- INDICADOR VISUAL DE PRÓXIMA CONQUISTA -->
+        <div id="goNextAchievementRunnerIndicator" class="next-achievement-badge">
+          🏅 Faltam metros para atingir o próximo recorde do Empresário 3D!
+        </div>
         <div class="go-buttons-row">
           <button class="btn-pixel-play" id="btnRestart">
             ▶ JOGAR NOVAMENTE
@@ -1096,6 +1138,129 @@
       </div>
     </div>
   </div>
+
+  <!-- GUIA OFICIAL DE JOGABILIDADE, CONTROLES & CHANGELOG (EMPRESÁRIO 3D) -->
+  <section class="game-guide-section" style="max-width: 900px; margin: 30px auto; padding: 0 20px;">
+    <article class="card" style="border: 1.5px solid var(--amarelo-brasil); background: linear-gradient(135deg, rgba(16, 25, 46, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(255, 223, 0, 0.15); padding: 32px 28px;">
+      <h2 style="font-family: 'Bangers', cursive; font-size: 32px; color: var(--amarelo-brasil); letter-spacing: 1px; margin-bottom: 12px; display:flex; align-items:center; gap:8px;">
+        🕹️ GUIA OFICIAL DO EMPRESÁRIO 3D: REGRAS, CONTROLES & RECORDES
+      </h2>
+      <p style="color: #cbd5e1; font-size: 14.5px; line-height: 1.8; margin-bottom: 18px;">
+        O <strong>Empresário Fugindo 3D</strong> é o aclamado modo Endless Runner em terceira pessoa do Lula Simulator. Desenvolvido com renderização WebGL em <strong>Three.js</strong>, o jogo coloca você na pele do empresário correndo pelas ladeiras da favela do Rio de Janeiro, desviando de boletos, trens de metrô, placas de trânsito e da temida carteira de trabalho da CLT de 44 horas semanais!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🏃 Como Jogar, Curvas nos Morros e Velocidade 6.0x
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        • <strong>Mudança de Faixas:</strong> O cenário possui 3 faixas paralelas. Use movimentos rápidos para desviar de trens parados e barreiras de contenção.<br>
+        • <strong>Salto e Deslize:</strong> Pule por cima de boletos baixos e deslize (slide) por baixo de varais de roupa e placas elevadas.<br>
+        • <strong>Power-Ups Estratégicos:</strong> Colete o <strong>Super Ímã (🧲)</strong> para atrair todas as moedas e picanhas sem sair do centro da pista e os <strong>Tênis de Super Pulo (👟)</strong> para saltar por cima de vagões inteiros de metrô!<br>
+        • <strong>Aceleração Contínua:</strong> Conforme você avança, a velocidade sobe progressivamente de 1.0x até o limite extremo de <strong>6.0x após 20.000 metros (20 km)</strong>, exigindo antecipação de reflexos puros!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        ⌨️ Tabela de Controles (Desktop e Mobile/iOS)
+      </h3>
+      <div style="overflow-x:auto; margin-bottom: 20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:13.5px; text-align:left; color:#cbd5e1;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--amarelo-brasil); color:var(--amarelo-brasil); font-family:'Bangers',cursive; font-size:16px;">
+              <th style="padding:8px 10px;">Ação</th>
+              <th style="padding:8px 10px;">Computador / PC</th>
+              <th style="padding:8px 10px;">Mobile (Swipe)</th>
+              <th style="padding:8px 10px;">Mobile (Botões Touch)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Mudar de Faixa</td>
+              <td style="padding:8px 10px;">Setas ← → ou teclas A / D</td>
+              <td style="padding:8px 10px;">Deslizar p/ Esquerda ou Direita</td>
+              <td style="padding:8px 10px;">Botões ◀ e ▶</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Pular Obstáculo</td>
+              <td style="padding:8px 10px;">Seta ↑, tecla W ou Barra de Espaço</td>
+              <td style="padding:8px 10px;">Deslizar para Cima (Swipe Up)</td>
+              <td style="padding:8px 10px;">Botão ▲</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Deslizar / Slide</td>
+              <td style="padding:8px 10px;">Seta ↓ ou tecla S</td>
+              <td style="padding:8px 10px;">Deslizar para Baixo (Swipe Down)</td>
+              <td style="padding:8px 10px;">Botão ▼</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🏅 Conquistas e Desbloqueio de Personagens 3D
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        Colete moedas brilhantes nos trilhos para desbloquear skins 3D exclusivas no menu de personagens: <strong>Jair Bolsonaro (Motociata)</strong>, <strong>Alexandre de Moraes (Xandão)</strong>, <strong>Pablo Marçal (Mindset 3X)</strong>, <strong>Janja</strong> e <strong>Dilma</strong>! Ao superar <strong>5.000 metros</strong>, você conquista o <em>Selo Faria Lima</em>; e acima de <strong>20.000 metros</strong>, recebe o troféu de <em>Mestre dos Trilhos 6.0x</em>!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🚀 Notas da Versão (Changelog Oficial v2.5)
+      </h3>
+      <ul style="color: #cbd5e1; font-size: 13.5px; line-height: 1.8; margin-left: 20px;">
+        <li><strong>v2.5 (Outubro/2026):</strong> Especial Reta Final do 2º Turno (25/10/2026); botão de Duelo viral no WhatsApp com recorde em metros; suporte a Rewarded Ad breaks seguros do Google AdSense.</li>
+        <li><strong>v2.4:</strong> Otimização de procedural generation em Three.js reduzindo consumo de memória RAM em 40%.</li>
+        <li><strong>v2.3:</strong> Adição de novos modelos 3D poligonais e iluminação tropical dinâmica.</li>
+      </ul>
+    </article>
+  </section>
+
+  <!-- RODAPÉ COM NAVEGAÇÃO SEMÂNTICA & COMPLIANCE ADSENSE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ MODOS DE JOGO</h4>
+          <ul>
+            <li><a href="jogo.html">🐦 Flappy Lula 2D</a></li>
+            <li><a href="correr.html" style="color:var(--amarelo-brasil); font-weight:700;">🏃 Empresário 3D</a></li>
+            <li><a href="social.html">⚔️ Social & Duelos</a></li>
+            <li><a href="loja.html">🛍️ Loja de Skins</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMUNIDADE</h4>
+          <ul>
+            <li><a href="ranking.html">🥇 Placar Nacional</a></li>
+            <li><a href="conquistas.html">🏅 Galeria de Conquistas</a></li>
+            <li><a href="visitantes.html">🌍 Visitantes Globais</a></li>
+            <li><a href="feedback.html">⭐ Avaliações</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARÊNCIA</h4>
+          <ul>
+            <li><a href="privacidade.html">🛡️ Política de Privacidade</a></li>
+            <li><a href="termos.html">📜 Termos de Uso</a></li>
+            <li><a href="contato.html">📬 Contato & Suporte</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 IDIOMAS OFICIAIS</h4>
+          <ul>
+            <li><a href="https://lulasimulator.com.br/correr.html">🇧🇷 Português (Brasil)</a></li>
+            <li><a href="https://flappylula.com/correr.html">🇺🇸 English (Global)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Aviso Legal & Paródia Independente:</strong> O <em>Lula Simulator</em> / <em>Flappy Lula</em> é um projeto satírico de entretenimento humorístico desenvolvido de forma independente. Não possui vínculo partidário, ideológico ou institucional com candidatos, governos ou com a Justiça Eleitoral (TSE).
+      </div>
+
+      <div class="footer-credits">
+        🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026
+      </div>
+    </div>
+  </footer>
 
   <script type="module">
     import { initGame } from '/js/game/main.js';

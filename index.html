@@ -27,6 +27,8 @@
   <meta property="og:title" content="Flappy Lula - O Jogo Meme das Eleições 2026">
   <meta property="og:description" content="Voe pelos obstáculos neste jogo satírico do Flappy Lula. Sobreviva ao cenário político brasileiro! Jogue grátis no navegador, sem baixar nada.">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Flappy Lula - Jogo Meme das Eleições 2026">
   <meta property="og:site_name" content="Flappy Lula Simulator">
   <meta property="og:locale" content="pt_BR">
@@ -40,31 +42,97 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
-  <!-- Schema.org / JSON-LD Structured Data -->
+  <!-- Schema.org / JSON-LD Structured Data (@graph: WebSite, VideoGame, FAQPage) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "Lula Simulator",
-    "alternateName": ["Jogo do Lula", "Simulador do Lula", "Flappy Lula", "Lula Game"],
-    "url": "https://lulasimulator.com.br/",
-    "description": "Simulador arcade e 3D satírico brasileiro onde você joga como o Lula coletando picanhas, desviando de canos e fugindo da CLT nos morros.",
-    "genre": ["Arcade", "Runner", "Satire", "Casual Game"],
-    "playMode": "SinglePlayer",
-    "inLanguage": "pt-BR",
-    "applicationCategory": "Game",
-    "operatingSystem": "Any (Web Browser)",
-    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
-    "author": {
-      "@type": "Person",
-      "name": "Daniel dos Santos"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL"
-    }
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://lulasimulator.com.br/#website",
+        "url": "https://lulasimulator.com.br/",
+        "name": "Lula Simulator",
+        "description": "Jogo do Lula Online Grátis — Simulador do Lula 3D, Flappy Lula e Empresário vs CLT. Paródia das Eleições 2026 Segundo Turno.",
+        "inLanguage": "pt-BR"
+      },
+      {
+        "@type": "VideoGame",
+        "@id": "https://lulasimulator.com.br/#game",
+        "name": "Lula Simulator",
+        "alternateName": [
+          "Jogo do Lula Online Grátis",
+          "Simulador do Lula 3D",
+          "Flappy Lula",
+          "Empresário vs CLT Jogo",
+          "Meme Eleições 2026 Segundo Turno"
+        ],
+        "url": "https://lulasimulator.com.br/",
+        "description": "Simulador arcade e 3D satírico brasileiro onde você joga como o Lula coletando picanhas, desviando de canos e fugindo da CLT nos morros do Rio.",
+        "genre": ["Arcade", "Runner", "Satire", "Casual Game", "3D Game"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "pt-BR",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (Web Browser, Android, iOS, Windows, Mac)",
+        "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel dos Santos"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://lulasimulator.com.br/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "O que é o Lula Simulator?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "O Lula Simulator é um jogo arcade satírico brasileiro e 100% gratuito para jogar no navegador (PC e Celular), com modos como o clássico Flappy Lula e o frenético Empresário vs CLT 3D."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Como jogar o Jogo do Lula?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No Flappy Lula, clique na tela ou aperte Barra de Espaço para voar desviando dos canos e coletar picanhas. No Empresário 3D, use as setas ou deslize no celular para desviar de boletos, CLT e Bolsa Família."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quais personagens posso jogar?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Você pode jogar com o Lula, Janja, Alexandre de Moraes, Nikolas Ferreira, Jair Bolsonaro, Dilma Rousseff e desbloquear o lendário Pablo Marçal (Mindset Quântico 3X)!"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Preciso baixar ou instalar algum aplicativo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Não! O jogo roda instantaneamente em qualquer navegador moderno (Chrome, Safari, Edge, Firefox) no Android, iPhone ou PC com suporte a 60 FPS e WebGL 3D."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "O jogo tem relação com as Eleições 2026 ou candidatos?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Não. O Lula Simulator é um jogo independente de paródia e sátira bem-humorada. Não possui qualquer vínculo partidário, político ou eleitoral com órgãos como o TSE. As menções às datas do 1º Turno (04/10/2026) e 2º Turno (25/10/2026) servem exclusivamente como contexto temático para descontrair durante a época de eleições."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -78,7 +146,8 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
   <link rel="stylesheet" href="/css/styles.css?v=2.1">
@@ -812,12 +881,12 @@
         <div class="hero-poster-wrapper">
           <!-- Poster Modo Empresário 3D Atrás -->
           <div class="hero-poster-runner-bg">
-            <img src="/img/empresario_runner_hero.jpg" alt="Modo Empresário 3D - Fuja da CLT" class="hero-poster-runner-img">
+            <img src="/img/empresario_runner_hero.jpg" alt="Modo Empresário 3D - Fuja da CLT" class="hero-poster-runner-img" width="1024" height="1024" decoding="async">
             <div class="hero-runner-tag">🏃 MODO 3D: FUJA DA CLT!</div>
           </div>
           <!-- Poster Flappy Lula na Frente -->
           <div class="hero-poster-flappy-fg">
-            <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Oficial" class="hero-poster-img">
+            <img src="/img/flappy_lula_hero.jpg" alt="Flappy Lula Oficial" class="hero-poster-img" width="1024" height="1024" fetchpriority="high" decoding="async">
             <div class="hero-badge-tag">⭐ FLAPPY LULA ⭐</div>
           </div>
         </div>
@@ -912,31 +981,129 @@
           <span style="font-size: 36px;">🗳️</span>
           <div>
             <h2 style="font-family: 'Bangers', cursive; font-size: 32px; color: var(--amarelo-brasil); letter-spacing: 1px; margin: 0; line-height: 1.1;">
-              AQUECIMENTO ELEITORAL 2026
+              ESPECIAL ELEIÇÕES 2026: RETA FINAL DO 2º TURNO!
             </h2>
-            <div id="electionWarmupStatus" style="color: var(--verde-neon); font-size: 13px; font-weight: 700; margin-top: 2px;">
-              🔥 Descontraia da Corrida Eleitoral com os Memes Mais Engraçados do Brasil!
+            <div id="electionWarmupStatus" style="color: var(--verde-neon); font-size: 13.5px; font-weight: 700; margin-top: 2px;">
+              🔥 1º Turno Concluído! Acompanhe a Grande Decisão do 2º Turno (25/10/2026) com os Memes Mais Engraçados do Brasil!
             </div>
           </div>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <span id="electionTimerRound1" class="hero-badge-pill" style="background: rgba(34, 197, 94, 0.2); border-color: #22c55e; color: #86efac; font-size: 12px; padding: 6px 14px;">
-            ⏳ Faltam dias p/ 1º Turno (04/10/2026)
+            ✅ 1º Turno Concluído (04/10)
           </span>
-          <span id="electionTimerRound2" class="hero-badge-pill" style="background: rgba(234, 179, 8, 0.2); border-color: #eab308; color: #fef08a; font-size: 12px; padding: 6px 14px;">
-            ⏳ Eventual 2º Turno (25/10/2026)
+          <span id="electionTimerRound2" class="hero-badge-pill" style="background: rgba(234, 179, 8, 0.25); border-color: #eab308; color: #fef08a; font-size: 12.5px; padding: 6px 14px; animation: heroPulseCta 2s infinite;">
+            🔥 Reta Final: 2º Turno (25/10/2026)
           </span>
         </div>
       </div>
 
       <p style="color: var(--text-main); font-size: 14.5px; line-height: 1.7; margin-bottom: 14px;">
-        O calendário eleitoral oficial do Brasil já tem datas marcadas: o <strong>1º Turno ocorre em 04 de Outubro de 2026</strong> e o <strong>eventual 2º Turno em 25 de Outubro de 2026</strong>. Enquanto as campanhas esquentam, o <strong>Lula Simulator</strong> é o refúgio perfeito para aliviar a tensão, rir dos memes políticos e disputar quem é o verdadeiro campeão dos recordes no <strong>Flappy Lula</strong> e no <strong>Empresário 3D</strong>!
+        Com a conclusão do 1º Turno em 04 de Outubro, entramos oficialmente na <strong>Reta Final para o 2º Turno das Eleições 2026 em 25 de Outubro de 2026</strong>! Enquanto o clima eleitoral ferve pelo país, o <strong>Lula Simulator</strong> é a válvula de escape ideal para transformar o debate em diversão sadia, rir dos memes políticos e duelar contra amigos para ver quem sobrevive mais tempo no <strong>Flappy Lula</strong> e no <strong>Empresário 3D</strong>!
       </p>
 
       <div style="background: rgba(0, 0, 0, 0.45); border: 1px dashed rgba(255, 223, 0, 0.35); border-radius: 12px; padding: 10px 14px; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
         🎭 <strong>Aviso de Sátira e Paródia:</strong> Este site é uma obra de humor, entretenimento satírico e crítica social independente. Não temos filiação partidária, apoio a campanhas ou vínculo com candidatos e órgãos oficiais (como o TSE). Não realizamos pesquisas de intenção de voto nem projeções eleitorais. Nosso foco é 100% diversão, memes e jogabilidade arcade!
       </div>
     </div>
+  </section>
+
+  
+  <!-- GUIA OFICIAL DE ESTRATÉGIA, MECÂNICAS & ENCICLOPÉDIA DE PERSONAGENS -->
+  <section class="game-guide-section" style="max-width: 1100px; margin: 40px auto; padding: 0 24px;">
+    <article class="card" style="border: 2px solid var(--verde-neon); background: linear-gradient(135deg, rgba(16, 25, 46, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 40px rgba(0, 230, 118, 0.2); padding: 36px 30px;">
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap;">
+        <span style="font-size: 42px;">📖</span>
+        <div>
+          <h2 style="font-family: 'Bangers', cursive; font-size: 38px; color: var(--amarelo-brasil); letter-spacing: 1.5px; margin: 0; line-height: 1.1;">
+            GUIA OFICIAL DE ESTRATÉGIA, MECÂNICAS E ENCICLOPÉDIA DE PERSONAGENS
+          </h2>
+          <p style="color: var(--verde-neon); font-size: 14px; font-weight: 700; margin-top: 4px;">
+            Aprenda a física avançada, antecipação de obstáculos e domine os segredos do Lula Simulator e Empresário 3D
+          </p>
+        </div>
+      </div>
+
+      <div style="color: var(--text-main); font-size: 15px; line-height: 1.85;">
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: var(--verde-neon); letter-spacing: 1px; margin-top: 18px; margin-bottom: 10px;">
+          🎮 Física Avançada e Dinâmica de Gravidade no Flappy Lula 2D
+        </h3>
+        <p>
+          O <strong>Flappy Lula 2D</strong> foi construído sobre uma simulação de física vetorial que combina aceleração gravitacional linear e amortecimento aerodinâmico a cada clique ou toque na tela. Para obter altas pontuações e disputar o topo do Placar Nacional, o jogador precisa dominar o <em>micro-timing</em> da elevação: pequenos impulsos rítmicos mantêm o personagem nivelado no centro da tela, minimizando oscilações bruscas que causam colisão nas bordas dos canos de Brasília.
+        </p>
+        <p>
+          A hitbox do personagem foi calibrada milimetricamente para recompensar a precisão cirúrgica. O maior desafio dinâmico ocorre no temido <strong>Modo Prisão</strong>, ativado automaticamente a cada 13 pontos coletados. Durante este evento dinâmico de 10 segundos, as paredes se estreitam, grades carcerárias de contenção surgem no cenário e a velocidade horizontal aumenta em 20%. A chave estratégica para sobreviver ao evento é antecipar o salto antes do ponto de entrada do vão e manter a calma: ao completar os 13 pontos do ciclo, o modo encerra concedendo bônus multiplicador de picanhas douradas!
+        </p>
+
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: var(--amarelo-brasil); letter-spacing: 1px; margin-top: 24px; margin-bottom: 10px;">
+          🏃 Mecânicas do Modo Empresário 3D: Curvas nos Morros, Trens e Velocidade 6x
+        </h3>
+        <p>
+          No revolucionário modo <strong>Empresário vs CLT 3D</strong> (desenvolvido em Three.js com aceleração gráfica WebGL), o jogador assume a pele de um empresário fugindo de encargos tributários, boletos atrasados, carteira de trabalho assinada e placas de PARE nas curvas sinuosas da favela do Rio de Janeiro. Diferente de runners convencionais, a pista 3D possui declives verticais acentuados e elevações modulares que ocultam obstáculos no horizonte.
+        </p>
+        <p>
+          Para antecipar curvas nos morros e evitar ser atropelado por composições de metrô ou varais de roupa em áreas residenciais, utilize a visão periférica nas faixas laterais. Colete os power-ups de <strong>Super Pulo (Tênis Turbinado)</strong> para saltar por cima de vagões inteiros e o <strong>Super Ímã</strong> para atrair moedas e picanhas sem desviar da trajetória segura. Após ultrapassar a marca de <strong>20.000 metros (20 km)</strong>, o jogo ativa o estágio extremo de aceleração contínua, elevando a velocidade para <strong>6.0x</strong>. Nessa fase, cada mudança de faixa (swipe lateral) deve ser executada com antecipação de frações de segundo, garantindo reflexos de elite para cravar seu nome no pódio brasileiro.
+        </p>
+
+        <h3 style="font-family: 'Bangers', cursive; font-size: 26px; color: #38bdf8; letter-spacing: 1px; margin-top: 24px; margin-bottom: 14px;">
+          🎭 Enciclopédia Satírica dos Personagens Jogáveis
+        </h3>
+        <p>
+          Cada personagem jogável do Lula Simulator foi concebido como uma sátira caricata e bem-humorada do ecossistema político e sociocultural brasileiro, trazendo características temáticas exclusivas:
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 18px 0;">
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: var(--amarelo-brasil); font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🥩 Lula (O Clássico)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              O protagonista do meme. Equipado com sua lendária fome por picanha e cervejinha, possui curva de voo balanceada e bônus de atração magnética passiva de carnes no Flappy Lula.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #22c55e; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🏍️ Jair Bolsonaro (O Mito)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Velocidade patriótica impulsionada pela motociata. No modo 3D, possui arrancada veloz e resistência contra boletos de cartão corporativo.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #cbd5e1; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">⚖️ Alexandre de Moraes (Xandão)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              O guardião dos inquéritos de 48 horas. Sua toga confere imunidade temporária e escudo protetor contra barreiras institucionais nos trilhos.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #f43f5e; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🐕 Janja & Resistência</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Carisma diplomático e defesa dos animais. Acompanhada da mascote vira-lata Resistência, gera brilho estético e bônus em picanhas bônus.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #38bdf8; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">📢 Nikolas Ferreira (Chupetinha)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              O fenômeno das redes sociais. Seus vídeos virais atordoam obstáculos sonoros e aceleram a recarga de moedas nas pistas.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px;">
+            <h4 style="color: #ec4899; font-family: 'Bangers', cursive; font-size: 20px; margin-bottom: 6px;">🍠 Dilma Rousseff (Estocadora de Vento)</h4>
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Mestre da saudação à mandioca e armazenamento eólico quântico. Sua aerodinâmica permite planar por mais tempo nos vãos mais apertados.
+            </p>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; grid-column: 1 / -1;">
+            <h4 style="color: #eab308; font-family: 'Bangers', cursive; font-size: 22px; margin-bottom: 6px;">🚀 Pablo Marçal (Mindset Quântico 3X)</h4>
+            <p style="font-size: 13.5px; color: #fef08a; margin: 0; line-height: 1.6;">
+              O coach desbloqueador de códigos mentais. Multiplica moedas e picanhas por 3X através de pura energia mental, dispensando CLT e escalando montanhas com fé inabalável!
+            </p>
+          </div>
+        </div>
+      </div>
+    </article>
   </section>
 
   <!-- SEÇÃO DE PERGUNTAS FREQUENTES & SEO (FAQ) -->
@@ -1005,14 +1172,53 @@
   <!-- BANNER DE MONETIZAÇÃO ESTÁTICO 320x50 (AUTO-REFRESH ISOLADO) -->
   <div id="adBannerFooter" class="ad-banner-container-320x50" style="margin-top: 10px; margin-bottom: 20px;"></div>
 
-  <!-- RODAPÉ COM DISCLAIMER TRANSPARENTE DE PARÓDIA -->
-  <footer style="padding: 24px 20px; border-top: 1px solid rgba(255,255,255,0.1); background: #080914; text-align: center;">
-    <div style="max-width: 900px; margin: 0 auto 12px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 14px;">
-      ⚠️ <strong>Aviso Legal & Paródia:</strong> O <em>Lula Simulator</em> / <em>Flappy Lula</em> é um projeto de entretenimento satírico e humorístico desenvolvido de forma independente. Não possui vínculo, patrocínio ou afiliação com qualquer partido político, candidato, instituição governamental ou com a Justiça Eleitoral (TSE). Este site não realiza pesquisas de intenção de voto, projeções ou prognósticos eleitorais.
+  <!-- RODAPÉ COM NAVEGAÇÃO SEMÂNTICA & COMPLIANCE ADSENSE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ MODOS DE JOGO</h4>
+          <ul>
+            <li><a href="jogo.html">🐦 Flappy Lula 2D</a></li>
+            <li><a href="correr.html">🏃 Empresário 3D</a></li>
+            <li><a href="social.html">⚔️ Social & Duelos</a></li>
+            <li><a href="loja.html">🛍️ Loja de Skins</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMUNIDADE</h4>
+          <ul>
+            <li><a href="ranking.html">🥇 Placar Nacional</a></li>
+            <li><a href="conquistas.html">🏅 Galeria de Conquistas</a></li>
+            <li><a href="visitantes.html">🌍 Visitantes Globais</a></li>
+            <li><a href="feedback.html">⭐ Avaliações</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARÊNCIA</h4>
+          <ul>
+            <li><a href="privacidade.html">🛡️ Política de Privacidade</a></li>
+            <li><a href="termos.html">📜 Termos de Uso</a></li>
+            <li><a href="contato.html">📬 Contato & Suporte</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 IDIOMAS OFICIAIS</h4>
+          <ul>
+            <li><a href="https://lulasimulator.com.br/">🇧🇷 Português (Brasil)</a></li>
+            <li><a href="https://flappylula.com/">🇺🇸 English (Global)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Aviso Legal & Paródia Independente:</strong> O <em>Lula Simulator</em> / <em>Flappy Lula</em> é um projeto satírico de entretenimento humorístico desenvolvido de forma independente. Não possui vínculo partidário, ideológico ou institucional com candidatos, governos ou com a Justiça Eleitoral (TSE).
+      </div>
+
+      <div class="footer-credits">
+        🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026
+      </div>
     </div>
-    <p style="color: var(--text-muted); font-size: 13px; margin: 0;">
-      🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026
-    </p>
   </footer>
 
   <script src="/js/election-timer.js" type="module"></script>
@@ -1028,9 +1234,9 @@
     auth.renderProfileBadge('nav');
     social.mountNotificationBell(document.getElementById('notifBellHeaderContainer'));
 
-    const btnNavToggle = document.getElementById('btnNavToggle');
+    const navToggle = document.getElementById('navToggle') || document.getElementById('btnNavToggle');
     const navLinksList = document.getElementById('navLinksList');
-    btnNavToggle?.addEventListener('click', (e) => {
+    navToggle?.addEventListener('click', (e) => {
       e.stopPropagation();
       navLinksList?.classList.toggle('open');
     });

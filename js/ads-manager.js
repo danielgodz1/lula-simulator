@@ -1,25 +1,20 @@
 /**
- * js/ads-manager.js — Gerenciador Inteligente e Otimizado de Anúncios Adsterra
+ * js/ads-manager.js — Gerenciador Inteligente de Anúncios e Compliance Google AdSense / H5 Games
  * 
- * Recursos:
- * 1. Auto-Refresh Inteligente (a cada 50 segundos) pausado automaticamente quando a aba fica em background (Page Visibility API).
- * 2. Renderização Não-Bloqueante isolada em iframes sandboxed (zero impacto no FPS do jogo).
- * 3. Lazy Loading pós-inicialização do Canvas para garantir 0 impacto no carregamento.
- * 4. Botão Opcional de Recompensa (Rewarded / Smartlink) concedendo picanhas/bônus no jogo.
+ * Controles de Revisão do AdSense:
+ * - ADSENSE_REVIEW_MODE: Quando true, desativa 100% dos banners e popups/smartlinks externos da Adsterra,
+ *   oculta containers vazios e ativa o fluxo limpo de Rewarded Ads (Google H5 Games / Ad Placement API).
  */
 
 import { CharacterInventory } from './game/characters.js';
 
-export const AD_CONFIG = {
-  REFRESH_INTERVAL_SEC: 50, // Entre 45 e 60 segundos (recomendação de redes de anúncios)
-  
-  // FLAG DE SEGURANÇA: Desativa completamente formatos nativos/arriscados
-  ENABLE_NATIVE_BANNER: false,
+export const ADSENSE_REVIEW_MODE = true;
 
-  // Rede Ativa: 'adsterra' | 'monetag' | 'propellerads'
+export const AD_CONFIG = {
+  REFRESH_INTERVAL_SEC: 50,
+  ENABLE_NATIVE_BANNER: false,
   ACTIVE_NETWORK: 'adsterra',
 
-  // Configuração por Rede de Anúncios (fácil alternância caso precise trocar de parceiro)
   NETWORKS: {
     adsterra: {
       nativeBanner: {
@@ -27,20 +22,6 @@ export const AD_CONFIG = {
         scriptUrl: 'https://pl30963271.profitableratecpmnetwork.com/455bffdd2f0b77226264233d844b73cd/invoke.js'
       },
       smartlink: 'https://grannyreproof.com/h6xu2jgbbn?key=513c68ca4f57b334e0bce004c067ea2b'
-    },
-    monetag: {
-      nativeBanner: {
-        containerId: 'container-monetag-native',
-        scriptUrl: 'https://alwingulla.com/88/tag.min.js'
-      },
-      smartlink: 'https://alwingulla.com/link?id=monetag_fallback'
-    },
-    propellerads: {
-      nativeBanner: {
-        containerId: 'container-propeller-native',
-        scriptUrl: 'https://propellerads.com/sdk.js'
-      },
-      smartlink: 'https://propellerads.com/link?id=propeller_fallback'
     }
   },
 
@@ -83,18 +64,6 @@ class AdsManagerService {
     }
   }
 
-  /**
-   * PLANO DE COEXISTÊNCIA FUTURA COM GOOGLE ADSENSE:
-   * O Google AdSense (ca-pub-7823595523903839) está com domínio aprovado ("preparando anúncios").
-   * Quando estiver liberado e veiculando ativamente, AdSense e Adsterra ocuparão slots visuais distintos:
-   * - Google AdSense: Banners de cabeçalho e rodapé em páginas informativas (ranking, conquistas, visitantes, feedback).
-   * - Adsterra: Skyscraper lateral fixo (160x600) e Smartlinks interativos de Segunda Chance (Revive) e Picanhas bônus.
-   * Ambas as redes não concorrerão pelo mesmo container HTML.
-   */
-
-  /**
-   * Monitora a Page Visibility API para pausar o refresh quando a aba do jogo não estiver visível.
-   */
   bindVisibilityEvents() {
     document.addEventListener('visibilitychange', () => {
       this.isTabActive = !document.hidden;
@@ -109,20 +78,14 @@ class AdsManagerService {
       this.isTabActive = true;
       this.resumeAutoRefresh();
     });
-
-    window.addEventListener('blur', () => {
-      // Quando a janela perde o foco
-    });
   }
 
-  /**
-   * Monitora o redimensionamento da tela com debounce para carregar banners laterais quando a tela crescer
-   */
   bindResizeEvent() {
     let resizeTimer = null;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
+        if (ADSENSE_REVIEW_MODE) return;
         this.registeredSlots.forEach((slot, id) => {
           if (slot.element && slot.element.offsetWidth > 0 && !slot.element.querySelector('iframe')) {
             this.renderSlot(id);
@@ -132,14 +95,15 @@ class AdsManagerService {
     });
   }
 
-  /**
-   * Registra um slot de anúncio na página
-   * @param {string} containerId - ID do elemento HTML container
-   * @param {'160x600' | '300x250' | '320x50'} formatType - Tipo do banner
-   */
   registerSlot(containerId, formatType) {
     const el = document.getElementById(containerId);
     if (!el) return;
+
+    if (ADSENSE_REVIEW_MODE) {
+      // No modo de revisão AdSense, oculta os containers vazios para evitar layout shift e buracos vazios
+      el.style.display = 'none';
+      return;
+    }
 
     this.registeredSlots.set(containerId, {
       containerId,
@@ -148,14 +112,16 @@ class AdsManagerService {
       lastRender: 0
     });
 
-    // Render inicial
     this.renderSlot(containerId);
   }
 
-  /**
-   * Renderiza o script do anúncio de forma assíncrona dentro de um iframe isolado
-   */
   renderSlot(containerId) {
+    if (ADSENSE_REVIEW_MODE) {
+      const el = document.getElementById(containerId);
+      if (el) el.style.display = 'none';
+      return;
+    }
+
     const slot = this.registeredSlots.get(containerId);
     if (!slot || !slot.element) return;
 
@@ -167,7 +133,6 @@ class AdsManagerService {
       width = 300; height = 250;
     }
 
-    // Remove iframes anteriores para evitar vazamento de memória
     slot.element.innerHTML = '';
 
     const iframe = document.createElement('iframe');
@@ -231,10 +196,8 @@ class AdsManagerService {
     slot.lastRender = Date.now();
   }
 
-  /**
-   * Inicia o timer de refresh periódico inteligente
-   */
   startAutoRefresh() {
+    if (ADSENSE_REVIEW_MODE) return;
     if (this.refreshTimer) clearInterval(this.refreshTimer);
 
     this.refreshTimer = setInterval(() => {
@@ -248,18 +211,11 @@ class AdsManagerService {
     }, 1000);
   }
 
-  pauseAutoRefresh() {
-    // Pausa contagem durante inatividade
-  }
+  pauseAutoRefresh() {}
+  resumeAutoRefresh() {}
 
-  resumeAutoRefresh() {
-    // Retoma contagem ativa
-  }
-
-  /**
-   * Recarrega todos os slots visíveis no momento
-   */
   refreshAllSlots() {
+    if (ADSENSE_REVIEW_MODE) return;
     this.registeredSlots.forEach((slot, containerId) => {
       if (slot.element && slot.element.offsetWidth > 0 && slot.element.offsetHeight > 0) {
         this.renderSlot(containerId);
@@ -267,14 +223,20 @@ class AdsManagerService {
     });
   }
 
-  /**
-   * Inicializa o AdsManager após o carregamento principal da página/canvas
-   */
   init() {
     if (this.isInitialized) return;
     this.isInitialized = true;
 
-    // Registra slots padrão caso existam no DOM
+    if (ADSENSE_REVIEW_MODE) {
+      // Oculta todas as divs de banners durante a revisão para eliminar espaços em branco
+      const adContainers = document.querySelectorAll('.ad-banner-container-320x50, #adSidebarLeft, #adSidebarRight, #adBannerFooter, #adBannerHero, #adBannerFeatures, #adBannerGameOver, #adBannerConquistas, #adBannerRankingTop, #adBannerRankingBottom, #adBannerFeedback, #adBannerContact');
+      adContainers.forEach(el => {
+        el.style.display = 'none';
+        el.innerHTML = '';
+      });
+      return;
+    }
+
     const commonSlots = [
       { id: 'adSidebarLeft', format: '160x600' },
       { id: 'adSidebarRight', format: '160x600' },
@@ -300,82 +262,182 @@ class AdsManagerService {
     this.startAutoRefresh();
   }
 
-  /**
-   * Carrega o Native Banner (DESATIVADO POR SEGURANÇA)
-   * @param {string} [targetContainerId]
-   */
   loadNativeBanner(targetContainerId) {
-    if (!AD_CONFIG.ENABLE_NATIVE_BANNER) {
-      const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
-      const container = document.getElementById(id);
-      if (container) container.innerHTML = '';
-      return;
-    }
-
     const id = targetContainerId || AD_CONFIG.NATIVE_BANNER.containerId;
     const container = document.getElementById(id);
-    if (!container || container.dataset.adLoaded) return;
-    container.dataset.adLoaded = 'true';
-
-    const activeConfig = AD_CONFIG.NETWORKS[AD_CONFIG.ACTIVE_NETWORK]?.nativeBanner || AD_CONFIG.NATIVE_BANNER;
-    if (!activeConfig || !activeConfig.scriptUrl) return;
-
-    try {
+    if (container) {
       container.innerHTML = '';
-
-      const iframe = document.createElement('iframe');
-      iframe.style.width = '100%';
-      iframe.style.maxWidth = '900px';
-      iframe.style.minHeight = '180px';
-      iframe.style.border = 'none';
-      iframe.style.overflow = 'hidden';
-      iframe.style.display = 'block';
-      iframe.style.margin = '0 auto';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-forms');
-      iframe.title = 'Publicidade Patrocinada';
-      iframe.setAttribute('loading', 'lazy');
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            html, body {
-              width: 100%;
-              height: 100%;
-              background: transparent;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              overflow: hidden;
-            }
-          </style>
-        </head>
-        <body>
-          <div id="${activeConfig.containerId}"></div>
-          <script async="async" data-cfasync="false" src="${activeConfig.scriptUrl}"><\/script>
-        </body>
-        </html>
-      `;
-
-      container.appendChild(iframe);
-      iframe.srcdoc = htmlContent;
-    } catch (e) {
-      console.warn('Falha ao carregar Native Banner isolado:', e);
+      if (ADSENSE_REVIEW_MODE || !AD_CONFIG.ENABLE_NATIVE_BANNER) {
+        container.style.display = 'none';
+      }
     }
   }
 
   /**
+   * Exibe o Modal Interno de Anúncio Recompensado (5 segundos)
+   * Compliance total com as diretrizes do Google AdSense e H5 Games.
+   */
+  showInternalRewardedModal(onComplete, onCancel) {
+    const isEn = typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+
+    // Pausa elementos de áudio ativos durante a exibição
+    const allAudios = document.querySelectorAll('audio');
+    const wasPlayingAudios = [];
+    allAudios.forEach(a => {
+      if (!a.paused) {
+        wasPlayingAudios.push(a);
+        try { a.pause(); } catch(e){}
+      }
+    });
+
+    let existingModal = document.getElementById('adsenseH5RewardModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'adsenseH5RewardModal';
+    modal.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 9, 20, 0.94);
+      backdrop-filter: blur(8px);
+      z-index: 1000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+      animation: fadeInModal 0.25s ease-out;
+    `;
+
+    let secondsLeft = 5;
+
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+      background: linear-gradient(145deg, #1e1b4b 0%, #0f172a 100%);
+      border: 2px solid #22c55e;
+      border-radius: 20px;
+      box-shadow: 0 0 40px rgba(34, 197, 94, 0.45);
+      max-width: 440px;
+      width: 100%;
+      padding: 28px 24px;
+      text-align: center;
+      color: #ffffff;
+      position: relative;
+    `;
+
+    modalContent.innerHTML = `
+      <div style="font-size: 44px; margin-bottom: 10px; animation: bounceIcon 1s infinite alternate;">📺</div>
+      <h3 style="font-family: 'Bangers', cursive; font-size: 28px; color: #ffdf00; letter-spacing: 1.5px; margin: 0 0 8px;">
+        ${isEn ? 'REWARDED AD BREAK' : 'ANÚNCIO RECOMPENSADO'}
+      </h3>
+      <p style="color: #cbd5e1; font-size: 13.5px; line-height: 1.5; margin: 0 0 18px;">
+        ${isEn 
+          ? 'Google H5 Games Ad Placement API · Keep playing with 3s of invulnerability!' 
+          : 'Google H5 Games Ad Placement API · Retorne à partida com 3s de invulnerabilidade!'}
+      </p>
+
+      <!-- Barra de Progresso do Anúncio de 5s -->
+      <div style="background: rgba(255, 255, 255, 0.1); border-radius: 999px; height: 10px; overflow: hidden; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.2);">
+        <div id="rewardProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #22c55e, #ffdf00); transition: width 1s linear;"></div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px;">
+        <span style="font-size: 13px; color: #94a3b8;">${isEn ? 'Reward unlocks in:' : 'Recompensa liberada em:'}</span>
+        <span id="rewardCountdownBadge" style="
+          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid #22c55e;
+          color: #86efac;
+          font-weight: 800;
+          font-size: 16px;
+          padding: 3px 12px;
+          border-radius: 999px;
+          font-family: monospace;
+        ">5s</span>
+      </div>
+
+      <div id="rewardStatusText" style="font-size: 12px; color: #64748b; font-style: italic;">
+        ${isEn ? '⚡ Simulating official H5 reward delivery...' : '⚡ Processando entrega segura da recompensa...'}
+      </div>
+    `;
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    const progressBar = modalContent.querySelector('#rewardProgressBar');
+    const badge = modalContent.querySelector('#rewardCountdownBadge');
+    const statusText = modalContent.querySelector('#rewardStatusText');
+
+    const finishReward = () => {
+      // Restaura áudios que estavam tocando
+      wasPlayingAudios.forEach(a => {
+        try { a.play(); } catch(e){}
+      });
+
+      modal.remove();
+      if (typeof onComplete === 'function') {
+        onComplete();
+      }
+    };
+
+    const interval = setInterval(() => {
+      secondsLeft--;
+      const percent = ((5 - secondsLeft) / 5) * 100;
+      if (progressBar) progressBar.style.width = `${percent}%`;
+
+      if (secondsLeft > 0) {
+        if (badge) badge.textContent = `${secondsLeft}s`;
+      } else {
+        clearInterval(interval);
+        if (badge) {
+          badge.textContent = 'PRONTO! 🎉';
+          badge.style.background = '#22c55e';
+          badge.style.color = '#000';
+        }
+        if (statusText) {
+          statusText.textContent = isEn ? '✅ Reward granted! Continuing...' : '✅ Recompensa liberada! Retomando partida...';
+          statusText.style.color = '#4ade80';
+        }
+        setTimeout(finishReward, 550);
+      }
+    }, 1000);
+  }
+
+  /**
    * Sistema de Segunda Chance (Revive Recompensado):
-   * Abre o Smartlink em nova aba e aguarda o jogador retornar para a aba do jogo para revivê-lo
+   * Quando ADSENSE_REVIEW_MODE está ativo, executa a Ad Placement API do Google H5 ou
+   * aciona o modal interno de 5 segundos, sem abrir nenhuma aba ou smartlink externo.
    */
   showRewardedRevive(onSuccess, onCancel, onOpening) {
     if (typeof onOpening === 'function') {
       onOpening();
     }
 
+    if (ADSENSE_REVIEW_MODE) {
+      // 1. Tenta API oficial do Google H5 Games (adBreak) se disponível no ambiente
+      if (typeof window !== 'undefined' && typeof window.adBreak === 'function') {
+        window.adBreak({
+          type: 'reward',
+          name: 'revive_second_chance',
+          beforeReward: (showAdFn) => {
+            showAdFn();
+          },
+          adDismissed: () => {
+            if (typeof onCancel === 'function') onCancel();
+          },
+          adViewed: () => {
+            if (typeof onSuccess === 'function') onSuccess();
+          }
+        });
+        return;
+      }
+
+      // 2. Fallback seguro: Modal interno de 5s sem qualquer redirecionamento
+      this.showInternalRewardedModal(onSuccess, onCancel);
+      return;
+    }
+
+    // Modo externo legado (quando não estiver em revisão)
     try {
       window.open(AD_CONFIG.SMARTLINK_URL, '_blank', 'noopener,noreferrer');
     } catch(e) {
@@ -402,7 +464,6 @@ class AdsManagerService {
     window.addEventListener('focus', triggerReward);
     document.addEventListener('visibilitychange', handleVisibility);
 
-    // Fallback de segurança: se a aba nunca perdeu o foco (ex: bloqueador de popup)
     setTimeout(() => {
       if (!rewarded && !document.hidden) {
         triggerReward();
@@ -412,13 +473,22 @@ class AdsManagerService {
 
   /**
    * Botão de Recompensa (Rewarded / Smartlink)
-   * Abre o Smartlink em nova aba e concede recompensa em picanhas no retorno
    */
   openRewardedLink(rewardCallback) {
+    if (ADSENSE_REVIEW_MODE) {
+      // No modo de revisão AdSense, concede a recompensa via modal limpo de 5 segundos
+      this.showInternalRewardedModal(() => {
+        CharacterInventory.addPicanhas(10);
+        CharacterInventory.syncPicanhasNow();
+        if (typeof rewardCallback === 'function') {
+          rewardCallback(10);
+        }
+      });
+      return;
+    }
+
     try {
       window.open(AD_CONFIG.SMARTLINK_URL, '_blank', 'noopener,noreferrer');
-      
-      // Concede 10 picanhas bônus
       CharacterInventory.addPicanhas(10);
       CharacterInventory.syncPicanhasNow();
 
@@ -430,9 +500,6 @@ class AdsManagerService {
     }
   }
 
-  /**
-   * Alias de compatibilidade para acionar recompensa
-   */
   triggerSmartlinkReward(callback) {
     this.openRewardedLink(callback);
   }

@@ -918,12 +918,50 @@ export class UIManager {
 
     // Carrega o Placar Nacional Oficial em Tempo Real
     this.loadGameOverLeaderboard();
+    // Botão Pulsante de Duelo WhatsApp (2º Turno 25/10/2026)
+    const btnDuelWhatsApp = document.getElementById('btnDuelWhatsAppRunnerGO');
+    if (btnDuelWhatsApp) {
+      btnDuelWhatsApp.onclick = (e) => {
+        if (e) e.stopPropagation();
+        const duelId = 'duel_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+        const shareUrl = `${window.location.origin}${window.location.pathname}?duel=${duelId}`;
+        const isEn = typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+        const msg = isEn 
+          ? `⚔️ 2026 Presidential Election Duel! I just ran ${distanceMeters.toLocaleString()}m in the 3D Runner of Flappy Lula! Can you beat my record? Play now: ${shareUrl}`
+          : `⚔️ Duelo do 2º Turno das Eleições 2026! Corri ${distanceMeters.toLocaleString()}m no modo Empresário 3D do Lula Simulator! Duvido você bater meu recorde: ${shareUrl}`;
+        if (navigator.share) {
+          navigator.share({ title: 'Duelo do 2º Turno — Empresário 3D', text: msg, url: shareUrl }).catch(() => {});
+        } else {
+          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+      };
+    }
+
+    // Indicador da Próxima Conquista no Game Over do Empresário 3D
+    const nextAchEl = document.getElementById('goNextAchievementRunnerIndicator');
+    if (nextAchEl) {
+      const isEn = typeof window !== 'undefined' && (window.location.pathname.startsWith('/en/') || window.location.hostname.includes('flappylula.com'));
+      if (distanceMeters < 5000) {
+        nextAchEl.textContent = isEn
+          ? `🏅 Only ${(5000 - distanceMeters).toLocaleString()}m left to unlock the Faria Lima Badge!`
+          : `🏅 Faltam apenas ${(5000 - distanceMeters).toLocaleString()}m para desbloquear o Selo Faria Lima!`;
+      } else if (distanceMeters < 20000) {
+        nextAchEl.textContent = isEn
+          ? `🏅 Only ${(20000 - distanceMeters).toLocaleString()}m left to reach Extreme 6.0x Speed (20 km)!`
+          : `🏅 Faltam apenas ${(20000 - distanceMeters).toLocaleString()}m para atingir a Velocidade Extrema 6.0x (20 km)!`;
+      } else {
+        nextAchEl.textContent = isEn
+          ? `🚀 Extreme 6.0x Speed Master! Compete for #1 on the Global Leaderboard!`
+          : `🚀 Mestre da Velocidade Extrema 6.0x! Dispute o Top 1 do Ranking Nacional!`;
+      }
+    }
+
 
     // Botão de Compartilhar / Copiar Pontuação
     if (this.btnShareScore) {
       this.btnShareScore.onclick = (e) => {
         if (e) e.stopPropagation();
-        const shareText = `🏃 Corri ${distanceMeters.toLocaleString()}m no modo Empresário 3D do Lula Simulator! Consegue bater meu recorde? Jogue grátis em: https://lulasimulator.com/correr.html`;
+        const shareText = `🏃 Corri ${distanceMeters.toLocaleString()}m no modo Empresário 3D do Lula Simulator! Consegue bater meu recorde? Jogue grátis em: ${window.location.origin}${window.location.pathname}`;
         if (navigator.clipboard) {
           navigator.clipboard.writeText(shareText).then(() => {
             this.showToast('✅ Recorde copiado para a área de transferência!');

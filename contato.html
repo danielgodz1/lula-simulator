@@ -17,6 +17,7 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -27,6 +28,8 @@
   <meta property="og:title" content="Contato — Lula Simulator">
   <meta property="og:description" content="Fale diretamente com o desenvolvedor do Lula Simulator!">
   <meta property="og:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Lula Simulator">
   <meta property="og:locale" content="pt_BR">
 
@@ -47,6 +50,7 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
@@ -189,6 +193,56 @@
     <!-- BANNER DE MONETIZAÇÃO CONTATO 320x50 (AUTO-REFRESH) -->
     <div id="adBannerContact" class="ad-banner-container-320x50" style="margin: 24px auto 10px;"></div>
   </div>
+
+  
+  <!-- RODAPÉ COM NAVEGAÇÃO SEMÂNTICA & COMPLIANCE ADSENSE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ MODOS DE JOGO</h4>
+          <ul>
+            <li><a href="jogo.html">🐦 Flappy Lula 2D</a></li>
+            <li><a href="correr.html">🏃 Empresário 3D</a></li>
+            <li><a href="social.html">⚔️ Social & Duelos</a></li>
+            <li><a href="loja.html">🛍️ Loja de Skins</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMUNIDADE</h4>
+          <ul>
+            <li><a href="ranking.html">🥇 Placar Nacional</a></li>
+            <li><a href="conquistas.html">🏅 Galeria de Conquistas</a></li>
+            <li><a href="visitantes.html">🌍 Visitantes Globais</a></li>
+            <li><a href="feedback.html">⭐ Avaliações</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARÊNCIA</h4>
+          <ul>
+            <li><a href="privacidade.html">🛡️ Política de Privacidade</a></li>
+            <li><a href="termos.html">📜 Termos de Uso</a></li>
+            <li><a href="contato.html">📬 Contato & Suporte</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 IDIOMAS OFICIAIS</h4>
+          <ul>
+            <li><a href="https://lulasimulator.com.br/contato.html">🇧🇷 Português (Brasil)</a></li>
+            <li><a href="https://flappylula.com/contato.html">🇺🇸 English (Global)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Aviso Legal & Paródia Independente:</strong> O <em>Lula Simulator</em> / <em>Flappy Lula</em> é um projeto satírico de entretenimento humorístico desenvolvido de forma independente. Não possui vínculo partidário, ideológico ou institucional com candidatos, governos ou com a Justiça Eleitoral (TSE).
+      </div>
+
+      <div class="footer-credits">
+        🇧🇷 <strong>Lula Simulator</strong> — Desenvolvido por <strong>Daniel dos Santos</strong> no <strong>SENAI</strong> (Programação com IA) · 2026
+      </div>
+    </div>
+  </footer>
 
   <script type="module">
     import { auth } from '/js/auth.js';

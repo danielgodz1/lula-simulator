@@ -911,3 +911,134 @@ nav {
     box-shadow: 0 0 25px rgba(52, 211, 153, 0.7);
   }
 }
+
+/* 11. FOOTER COM COLUNAS SEMÂNTICAS & COMPLIANCE ADSENSE */
+.site-footer {
+  background: #060913;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px 20px 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.footer-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 28px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.footer-col h4 {
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--amarelo-brasil);
+  margin-bottom: 12px;
+}
+
+.footer-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.footer-col ul li {
+  margin-bottom: 8px;
+}
+
+.footer-col ul li a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-col ul li a:hover {
+  color: var(--verde-neon);
+}
+
+.footer-disclaimer-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.footer-credits {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 16px;
+}
+
+/* 12. BOTÃO PULSANTE DUELO VIRAL WHATSAPP & PRÓXIMA CONQUISTA */
+.btn-viral-duel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 60%, #15803d 100%);
+  color: #ffffff !important;
+  font-family: 'Bangers', cursive;
+  font-size: 17px;
+  letter-spacing: 1.2px;
+  padding: 11px 22px;
+  border-radius: 12px;
+  border: 2px solid #86efac;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.55);
+  animation: pulseDuelBtn 2s infinite ease-in-out;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.btn-viral-duel:hover {
+  transform: scale(1.05);
+  border-color: #ffffff;
+}
+
+.next-achievement-badge {
+  background: rgba(255, 223, 0, 0.12);
+  border: 1.5px dashed var(--amarelo-brasil);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 10px 0;
+  color: #fef08a;
+  font-size: 12.5px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+@keyframes pulseDuelBtn {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.5), 0 4px 12px rgba(0,0,0,0.5);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.9), 0 6px 16px rgba(0,0,0,0.7);
+  }
+}
+
+@keyframes slideUpCookie {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 40px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

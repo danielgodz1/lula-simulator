@@ -17,6 +17,7 @@
 
   <!-- Script Gerenciador de Idiomas -->
   <script src="/js/language-manager.js" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7823595523903839" crossorigin="anonymous"></script>
@@ -37,30 +38,57 @@
   <meta name="twitter:description" content="Corra em 3D fugindo da CLT e impostos no Lula Simulator!">
   <meta name="twitter:image" content="https://lulasimulator.com.br/img/flappy_lula_hero.jpg">
 
-  <!-- Schema.org / JSON-LD Structured Data -->
+  <!-- Schema.org / JSON-LD Structured Data (@graph: VideoGame, BreadcrumbList) -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "VideoGame",
-    "name": "Empresário Fugindo 3D",
-    "alternateName": ["Empresário vs CLT 3D", "Lula Simulator 3D", "Empresário 3D Endless Runner"],
-    "url": "https://lulasimulator.com.br/correr.html",
-    "description": "Modo de jogo 3D Endless Runner do Lula Simulator. Corra nos morros do Rio fugindo da CLT, impostos e boletos em Three.js.",
-    "genre": ["Endless Runner", "Action", "3D", "Satire", "Casual Game"],
-    "playMode": "SinglePlayer",
-    "inLanguage": "en",
-    "applicationCategory": "Game",
-    "operatingSystem": "Any (Web Browser)",
-    "image": "https://lulasimulator.com.br/img/flappy_lula_hero.jpg",
-    "author": {
-      "@type": "Person",
-      "name": "Daniel dos Santos"
-    },
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "BRL"
-    }
+    "@graph": [
+      {
+        "@type": "VideoGame",
+        "@id": "https://flappylula.com/correr.html#game",
+        "name": "3D Entrepreneur Runner",
+        "alternateName": [
+          "3D Tax Evasion Runner Game",
+          "Brazilian Election Parody Game",
+          "Flappy Lula 3D Runner",
+          "Free Unblocked HTML5 Meme Game"
+        ],
+        "url": "https://flappylula.com/correr.html",
+        "description": "Sprint through Rio's hill tracks in full 3D Three.js WebGL! Dodge tax inspectors, subway trains, and bureaucracy in this political parody runner.",
+        "genre": ["Endless Runner", "Action", "3D", "Satire", "Casual Game"],
+        "playMode": "SinglePlayer",
+        "inLanguage": "en",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any (Web Browser, Android, iOS, Windows, Mac)",
+        "image": "https://flappylula.com/img/flappy_lula_hero.jpg",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel dos Santos"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://flappylula.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "3D Runner",
+            "item": "https://flappylula.com/correr.html"
+          }
+        ]
+      }
+    ]
   }
   </script>
 
@@ -74,6 +102,7 @@
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <!-- Estilos Globais -->
@@ -1072,6 +1101,17 @@
         </div>
 
         <!-- ACTION BUTTONS ROW -->
+        <!-- VIRAL WHATSAPP DUEL BUTTON (2ND ROUND) -->
+        <div style="display:flex; justify-content:center; margin: 10px 0;">
+          <button id="btnDuelWhatsAppRunnerGO" class="btn-viral-duel" title="Challenge a Friend on WhatsApp">
+            ⚔️ Challenge a Friend on WhatsApp (2nd Round Duel)
+          </button>
+        </div>
+
+        <!-- NEXT ACHIEVEMENT INDICATOR -->
+        <div id="goNextAchievementRunnerIndicator" class="next-achievement-badge">
+          🏅 Meters needed to unlock the next 3D Runner milestone!
+        </div>
         <div class="go-buttons-row">
           <button class="btn-pixel-play" id="btnRestart">
             ▶ PLAY AGAIN
@@ -1096,6 +1136,131 @@
       </div>
     </div>
   </div>
+
+  
+  <!-- OFFICIAL GAMEPLAY GUIDE, CONTROLES & CHANGELOG (3D RUNNER) -->
+  <section class="game-guide-section" style="max-width: 900px; margin: 30px auto; padding: 0 20px;">
+    <article class="card" style="border: 1.5px solid var(--amarelo-brasil); background: linear-gradient(135deg, rgba(16, 25, 46, 0.98), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(255, 223, 0, 0.15); padding: 32px 28px;">
+      <h2 style="font-family: 'Bangers', cursive; font-size: 32px; color: var(--amarelo-brasil); letter-spacing: 1px; margin-bottom: 12px; display:flex; align-items:center; gap:8px;">
+        🕹️ OFFICIAL 3D RUNNER GUIDE: RULES, CONTROLS & HIGH SCORES
+      </h2>
+      <p style="color: #cbd5e1; font-size: 14.5px; line-height: 1.8; margin-bottom: 18px;">
+        <strong>3D Entrepreneur Runner</strong> is the high-velocity third-person endless runner of the Flappy Lula universe. Built with hardware-accelerated WebGL in <strong>Three.js</strong>, you dash along Rio de Janeiro's hillside train tracks, escaping relentless tax inspectors, subway trains, traffic signs, and bureaucratic government audits!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🏃 How to Play, Hill Inclines & 6.0x Top Speed Acceleration
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        • <strong>Three-Lane Agility:</strong> The track features 3 parallel lanes. Switch lanes rapidly to bypass parked trains and construction barriers.<br>
+        • <strong>Jump & Slide Precision:</strong> Leap over low hurdles and slide under laundry lines and elevated traffic signs.<br>
+        • <strong>Strategic Power-Ups:</strong> Collect the <strong>Super Magnet (🧲)</strong> to vacuum all coins and steaks without leaving the center track, and <strong>Super Jump Sneakers (👟)</strong> to vault clean over full subway wagons!<br>
+        • <strong>Continuous Acceleration:</strong> Velocity ramps dynamically from 1.0x to a blazing <strong>6.0x top speed beyond 20,000 meters (20 km)</strong>, demanding split-second reflex mastery!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        ⌨️ Comprehensive Controls Table (Desktop, Mobile & Swipe)
+      </h3>
+      <div style="overflow-x:auto; margin-bottom: 20px;">
+        <table style="width:100%; border-collapse:collapse; font-size:13.5px; text-align:left; color:#cbd5e1;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--amarelo-brasil); color:var(--amarelo-brasil); font-family:'Bangers',cursive; font-size:16px;">
+              <th style="padding:8px 10px;">Runner Action</th>
+              <th style="padding:8px 10px;">Desktop Keyboard / PC</th>
+              <th style="padding:8px 10px;">Mobile Touch (Swipe Gesture)</th>
+              <th style="padding:8px 10px;">Mobile On-Screen D-Pad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Change Track Lane</td>
+              <td style="padding:8px 10px;">Left / Right Arrows or A / D keys</td>
+              <td style="padding:8px 10px;">Swipe Left or Swipe Right</td>
+              <td style="padding:8px 10px;">Touch buttons ◀ and ▶</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Jump Over Obstacles</td>
+              <td style="padding:8px 10px;">Up Arrow ↑, W key, or Spacebar</td>
+              <td style="padding:8px 10px;">Swipe Upward (Swipe Up)</td>
+              <td style="padding:8px 10px;">Touch button ▲</td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+              <td style="padding:8px 10px; font-weight:700; color:#fff;">Slide Under Barriers</td>
+              <td style="padding:8px 10px;">Down Arrow ↓ or S key</td>
+              <td style="padding:8px 10px;">Swipe Downward (Swipe Down)</td>
+              <td style="padding:8px 10px;">Touch button ▼</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🏅 Achievements System & 3D Character Roster Unlocks
+      </h3>
+      <p style="color: #cbd5e1; font-size: 14px; line-height: 1.7; margin-bottom: 14px;">
+        Gather shiny track coins to unlock 3D character skins in the roster: <strong>Jair Bolsonaro (Motorcade)</strong>, <strong>Alexandre de Moraes (Xandão)</strong>, <strong>Pablo Marçal (3X Mindset)</strong>, <strong>Janja</strong>, and <strong>Dilma</strong>! Cross <strong>5,000 meters</strong> to earn the <em>Faria Lima Badge</em>; and survive beyond <strong>20,000 meters</strong> to unlock the legendary <em>6.0x Speed Master Trophy</em>!
+      </p>
+
+      <h3 style="color: var(--verde-neon); font-size: 19px; margin-top: 20px; margin-bottom: 10px; font-family: 'Bangers', cursive; letter-spacing: 0.5px;">
+        🚀 Version Release Notes (Official Changelog v2.5)
+      </h3>
+      <ul style="color: #cbd5e1; font-size: 13.5px; line-height: 1.8; margin-left: 20px;">
+        <li><strong>v2.5 (October 2026):</strong> 2026 Presidential Election 2nd Round Special (Oct 25, 2026); WhatsApp distance duel challenges; Google AdSense H5 Rewarded Breaks compliance.</li>
+        <li><strong>v2.4:</strong> Procedural Three.js geometry optimizations cutting device memory consumption by 40%.</li>
+        <li><strong>v2.3:</strong> Dynamic tropical hill lighting and refined camera follow angles on hill crests.</li>
+      </ul>
+    </article>
+  </section>
+
+
+  <!-- SEMANTIC FOOTER & ADSENSE COMPLIANCE -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h4>🕹️ GAME MODES</h4>
+          <ul>
+            <li><a href="/en/jogo.html">🐦 Flappy Lula 2D</a></li>
+            <li><a href="/en/correr.html" style="color:var(--amarelo-brasil); font-weight:700;">🏃 3D Runner</a></li>
+            <li><a href="/en/social.html">⚔️ Social & Duels</a></li>
+            <li><a href="/en/loja.html">🛍️ Skin Shop</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🏆 COMMUNITY</h4>
+          <ul>
+            <li><a href="/en/ranking.html">🥇 Global Leaderboard</a></li>
+            <li><a href="/en/conquistas.html">🏅 Achievements Gallery</a></li>
+            <li><a href="/en/visitantes.html">🌍 Global Visitors</a></li>
+            <li><a href="/en/feedback.html">⭐ Reviews & Feedback</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>⚖️ LEGAL & TRANSPARENCY</h4>
+          <ul>
+            <li><a href="/en/privacy.html">🛡️ Privacy Policy</a></li>
+            <li><a href="/en/terms.html">📜 Terms of Service</a></li>
+            <li><a href="/en/contato.html">📬 Contact & Support</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>🌐 OFFICIAL DOMAINS</h4>
+          <ul>
+            <li><a href="https://flappylula.com/correr.html">🇺🇸 English (Global)</a></li>
+            <li><a href="https://lulasimulator.com.br/correr.html">🇧🇷 Português (Brasil)</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-disclaimer-box">
+        ⚠️ <strong>Legal Parody Disclaimer:</strong> <em>Flappy Lula</em> / <em>Lula Simulator</em> is an independent satirical entertainment project. It has no affiliation, endorsement, or relationship with political parties, electoral candidates, or government agencies.
+      </div>
+
+      <div class="footer-credits">
+        🇺🇸 <strong>Flappy Lula</strong> — Developed by <strong>Daniel dos Santos</strong> (AI Programming Project) · 2026
+      </div>
+    </div>
+  </footer>
 
   <script type="module">
     import { initGame } from '/js/game/main.js';
