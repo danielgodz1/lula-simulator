@@ -439,11 +439,15 @@ export class Character {
 
   setupControls() {
     window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
+      if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD', 'ArrowUp', 'KeyW', 'Space', 'ArrowDown', 'KeyS'].includes(e.code) || [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+      }
       if (this.isDead) return;
-      if (['ArrowLeft', 'KeyA'].includes(e.code)) this.moveLeft();
-      if (['ArrowRight', 'KeyD'].includes(e.code)) this.moveRight();
-      if (['ArrowUp', 'KeyW', 'Space'].includes(e.code)) this.jump();
-      if (['ArrowDown', 'KeyS'].includes(e.code)) this.slide();
+      if (['ArrowLeft', 'KeyA'].includes(e.code) || e.key === 'ArrowLeft') this.moveLeft();
+      if (['ArrowRight', 'KeyD'].includes(e.code) || e.key === 'ArrowRight') this.moveRight();
+      if (['ArrowUp', 'KeyW', 'Space'].includes(e.code) || e.key === 'ArrowUp' || e.key === ' ') this.jump();
+      if (['ArrowDown', 'KeyS'].includes(e.code) || e.key === 'ArrowDown') this.slide();
     });
 
     // Touch Swipes Mobile

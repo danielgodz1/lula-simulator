@@ -93,6 +93,7 @@ export class Game {
       gameAudio.playStartVinheta();
       gameAudio.startAmbience();
       this.state = this.STATE.PLAYING;
+      document.body.classList.add('game-playing');
       startScoreSession('runner');
       this.speed = this.baseSpeed;
       this.distance = 0;
@@ -147,6 +148,7 @@ export class Game {
 
     this.savedSpeedOnDeath = this.speed;
     this.state = this.STATE.GAMEOVER;
+    document.body.classList.remove('game-playing');
     this.character.die();
     this.boss.triggerKillStamp(this.character.x, this.character.y);
     this.sceneManager.triggerCameraShake(0.65, 0.50);
@@ -191,6 +193,7 @@ export class Game {
     if (this.reviveUsed) return;
     this.reviveUsed = true;
     this.state = this.STATE.PLAYING;
+    document.body.classList.add('game-playing');
     // Restaura a velocidade rápida exata de quando morreu (sem reiniciar lento)
     this.speed = Math.max(this.baseSpeed, this.savedSpeedOnDeath || this.baseSpeed);
     this.character.revive();

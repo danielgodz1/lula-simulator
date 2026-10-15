@@ -110,16 +110,25 @@
   <link rel="stylesheet" href="/css/styles.css">
 
   <style>
-    html, body {
+    html {
       width: 100%;
-      height: 100dvh;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100%;
+      background: #080914;
+    }
+
+    body {
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+      margin: 0;
+      padding-top: 60px; /* altura da navbar fixa */
       background: #080914;
-      touch-action: none !important;
-      overscroll-behavior: none !important;
+      width: 100%;
+      box-sizing: border-box;
       user-select: none !important;
       -webkit-user-select: none !important;
     }
@@ -128,7 +137,17 @@
       background: #0f101d;
     }
 
+    body.is-fullscreen {
+      padding-top: 0 !important;
+      overflow: hidden !important;
+    }
+
     body.is-fullscreen nav {
+      display: none !important;
+    }
+
+    body.is-fullscreen .game-guide-section,
+    body.is-fullscreen footer.site-footer {
       display: none !important;
     }
 
@@ -154,8 +173,14 @@
 
     /* BARRA DE NAVEGAÇÃO */
     nav {
-      height: 52px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
       padding: 0 16px;
+      z-index: 1000;
+      box-sizing: border-box;
     }
 
     .nav-brand {
@@ -164,11 +189,11 @@
 
     .game-wrapper {
       position: relative;
-      flex: 1;
-      width: 100vw;
-      height: calc(100dvh - 52px);
-      height: calc(100vh - 52px);
-      margin-top: 52px;
+      width: 100%;
+      max-width: 100vw;
+      height: calc(100vh - 60px);
+      height: calc(100dvh - 60px);
+      margin: 0;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -176,6 +201,7 @@
       touch-action: none !important;
       overscroll-behavior: none !important;
       background: #0b0f19;
+      flex-shrink: 0;
     }
 
     #canvasContainer {
@@ -185,6 +211,8 @@
       justify-content: center;
       width: 100%;
       height: 100%;
+      max-height: 100%;
+      overflow: hidden;
     }
 
     canvas#gameCanvas {
@@ -199,6 +227,10 @@
       -webkit-tap-highlight-color: transparent !important;
       outline: none !important;
       -webkit-touch-callout: none !important;
+      max-height: calc(100vh - 76px);
+      max-height: calc(100dvh - 76px);
+      max-width: calc(100vw - 20px);
+      object-fit: contain;
     }
 
     /* HUD SUPERIOR COMPACTO E FLUIDO EM UMA ÚNICA LINHA */
@@ -245,29 +277,55 @@
       line-height: 1;
     }
 
-    /* BANNER DE AVISO DE CADEIA / LIBERDADE / POWERUPS */
+    /* BANNER DE AVISO DE CADEIA / LIBERDADE / POWERUPS (COMPACTO E FORA DA VISÃO CENTRAL) */
     #prisonBanner {
       position: absolute;
-      top: 60px;
+      top: 48px;
       left: 50%;
-      transform: translateX(-50%) scale(0.8);
-      padding: 6px 18px;
+      transform: translateX(-50%) scale(0.85);
+      padding: 4px 16px;
       border-radius: 50px;
       font-family: 'Bangers', cursive;
-      font-size: 16px;
-      letter-spacing: 1px;
+      font-size: 13.5px;
+      letter-spacing: 0.8px;
       color: #fff;
       z-index: 25;
       pointer-events: none;
       opacity: 0;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.8);
       white-space: nowrap;
     }
 
     #prisonBanner.show {
       opacity: 1;
       transform: translateX(-50%) scale(1);
+    }
+
+    /* OCULTAR ELEMENTOS DISTRATIVOS DURANTE A GAMEPLAY */
+    body.game-playing #cookieConsentBanner,
+    body.game-playing #langSuggestionBanner,
+    body.game-playing .ad-mobile-fixed-footer,
+    body.is-fullscreen #cookieConsentBanner,
+    body.is-fullscreen #langSuggestionBanner,
+    body.is-fullscreen .ad-mobile-fixed-footer {
+      display: none !important;
+    }
+
+    #adMobileFixedFooter {
+      display: none !important;
+    }
+
+    .game-guide-section {
+      width: 100%;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+
+    footer.site-footer {
+      width: 100%;
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
     /* OVERLAYS & MODAIS FIXOS E ROLÁVEIS */
@@ -913,7 +971,7 @@
     </div>
 
     <!-- BANNER DINÂMICO DE AVISO DE TRANSIÇÃO CADEIA/CÉU/POWERUPS -->
-    <div id="prisonBanner">🚨 13 POINTS: PRISON MODE ACTIVATED!</div>
+    <div id="prisonBanner"></div>
 
     <!-- HUD OVERLAY SUPERIOR COMPACTO (1 ÚNICA LINHA LIMPA) -->
     <div id="hudOverlay">
@@ -1382,8 +1440,8 @@
         }
       } else {
         // Modo Janela Padrão (PC ou Mobile): Tamanho compacto tipo celular no centro da tela
-        const availableH = window.innerHeight - 68; // Desconta navbar
-        H = Math.max(520, Math.min(availableH, 780));
+        const availableH = Math.max(360, window.innerHeight - 76); // Desconta navbar (60px) + margem segura
+        H = Math.min(availableH, 740);
         // Largura estreita clássica tipo arcade/smartphone (~460-480px)
         W = Math.min(Math.round(H * 0.62), 480, window.innerWidth - 16);
       }
@@ -2944,6 +3002,7 @@
 
       if (state === STATE.PLAYING && checkCollision()) {
         state = STATE.DEAD;
+        document.body.classList.remove('game-playing');
         screenShake = 18; // Ativa tremedeira intensa da tela
         lula.vy = -3.5; // Salto de impacto ao colidir antes de despencar no chão
         try { sounds.playHit(); } catch(e){}
@@ -3172,6 +3231,7 @@
           if (startOverlay) startOverlay.style.display = 'none';
           if (gameOverModal) gameOverModal.style.display = 'none';
           state = STATE.PLAYING;
+          document.body.classList.add('game-playing');
           startScoreSession('flappy');
           pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
           lastPipeTopH = -1;
@@ -3206,7 +3266,8 @@
         if (startOverlay) startOverlay.style.display = 'none';
         if (gameOverModal) gameOverModal.style.display = 'none';
         state = STATE.PLAYING;
-        startScoreSession('flappy');
+          document.body.classList.add('game-playing');
+          startScoreSession('flappy');
         pipes = []; picanhas = []; likesBonus = []; floatingLulaIcons = []; score = 0;
         lastPipeTopH = -1;
         hasPlayedBesta = false;
@@ -3328,7 +3389,7 @@
     window.addEventListener('keydown', e => {
       // Permite digitação livre em todos os campos de texto e modais
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return;
-      if (e.code === 'Space' || e.key === ' ' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || e.code === 'KeyW' || e.key === 'w') {
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW'].includes(e.code) || [' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
         if (state === STATE.DEAD && gameOverModal.style.display === 'flex') {
           restartGame();

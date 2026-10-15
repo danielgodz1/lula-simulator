@@ -327,21 +327,45 @@
 
     if (!shouldShow) return;
 
+    try {
+      if (localStorage.getItem('lula_lang_banner_dismissed') === 'true') {
+        return;
+      }
+    } catch (e) {}
+
+    const isGamePage = typeof document !== 'undefined' && (
+      document.body.classList.contains('game-body') ||
+      !!document.querySelector('.game-wrapper')
+    );
+
+    // Injeta regras de CSS para não bloquear a gameplay
+    if (!document.getElementById('langBannerStyle')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'langBannerStyle';
+      styleEl.textContent = `
+        body.game-playing #langSuggestionBanner,
+        body.is-fullscreen #langSuggestionBanner {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+
     const existing = document.getElementById('langSuggestionBanner');
     if (existing) existing.remove();
 
     const banner = document.createElement('div');
     banner.id = 'langSuggestionBanner';
     banner.style.cssText = `
-      position: sticky;
+      position: ${isGamePage ? 'relative' : 'sticky'};
       top: 0;
       left: 0;
       width: 100%;
       background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 50%, #1e1b4b 100%);
       border-bottom: 2px solid #22c55e;
       color: #ffffff;
-      padding: 8px 16px;
-      font-size: 12.5px;
+      padding: ${isGamePage ? '6px 12px' : '8px 16px'};
+      font-size: ${isGamePage ? '11.5px' : '12.5px'};
       z-index: 100000;
       display: flex;
       justify-content: space-between;
@@ -375,6 +399,9 @@
 
     const dismiss = () => {
       banner.style.display = 'none';
+      try {
+        localStorage.setItem('lula_lang_banner_dismissed', 'true');
+      } catch (e) {}
     };
 
     closeBtn.addEventListener('click', dismiss);
