@@ -62,41 +62,34 @@
         const isEn = params.get('lang') === 'en' || window.location.hostname.includes('flappylula.com');
 
         const CONFIGS = {
-          '160x600_en': {
-            key: '9db44be4da462195584f4bccadc3f1ae',
-            width: 160,
-            height: 600,
-            scriptUrl: 'https://grannyreproof.com/9db44be4da462195584f4bccadc3f1ae/invoke.js'
-          },
-          '160x600_pt': {
+          '160x600': {
             key: 'ed07225cb34a228aede2dbebc0ca00ef',
             width: 160,
             height: 600,
-            scriptUrl: 'https://grannyreproof.com/ed07225cb34a228aede2dbebc0ca00ef/invoke.js'
+            scriptUrl: 'https://bicea.org/22/ed07225cb34a228aede2dbebc0ca00ef'
           },
-          '300x250_en': {
-            key: '427c59b47a5d07234398bf7f25100c26',
-            width: 300,
-            height: 250,
-            scriptUrl: 'https://grannyreproof.com/427c59b47a5d07234398bf7f25100c26/invoke.js'
-          },
-          '300x250_pt': {
-            key: '427c59b47a5d07234398bf7f25100c26',
-            width: 300,
-            height: 250,
-            scriptUrl: 'https://grannyreproof.com/427c59b47a5d07234398bf7f25100c26/invoke.js'
+          '160x300': {
+            key: '9a20b8895b4fb04fd16d972ead80b4e0',
+            width: 160,
+            height: 300,
+            scriptUrl: 'https://bicea.org/22/9a20b8895b4fb04fd16d972ead80b4e0'
           },
           '320x50': {
             key: '66d34c9bfbb1a19bb44210de393265f9',
             width: 320,
             height: 50,
-            scriptUrl: 'https://grannyreproof.com/66d34c9bfbb1a19bb44210de393265f9/invoke.js'
+            scriptUrl: 'https://bicea.org/22/66d34c9bfbb1a19bb44210de393265f9'
           }
         };
 
         let configKey = '320x50';
-        if (format === '160x600') configKey = isEn ? '160x600_en' : '160x600_pt';
-        else if (format === '300x250') configKey = isEn ? '300x250_en' : '300x250_pt';
+        if (format === '160x600') {
+          configKey = isEn ? '160x300' : '160x600';
+        } else if (format === '160x300') {
+          configKey = '160x300';
+        } else if (format === '300x250') {
+          configKey = '160x300';
+        }
 
         const cfg = CONFIGS[configKey] || CONFIGS['320x50'];
 

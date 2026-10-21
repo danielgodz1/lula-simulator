@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Advertisement</title>
+
+  <!-- MOCK DE PROTEÇÃO ANTES DE QUALQUER SCRIPT EXTERNO: Evita SecurityError em sandbox estrito -->
+  <script>
+    (function() {
+      try {
+        Object.defineProperty(document, 'cookie', {
+          get: () => '',
+          set: () => {},
+          configurable: true
+        });
+      } catch (e) {}
+
+      try {
+        const dummyStorage = {
+          getItem: () => null,
+          setItem: () => {},
+          removeItem: () => {},
+          clear: () => {},
+          key: () => null,
+          length: 0
+        };
+        Object.defineProperty(window, 'localStorage', {
+          get: () => dummyStorage,
+          configurable: true
+        });
+        Object.defineProperty(window, 'sessionStorage', {
+          get: () => dummyStorage,
+          configurable: true
+        });
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (function() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const format = params.get('format') || '320x50';
+        const isEn = true;
+
+        const CONFIGS = {
+          '160x600': {
+            key: 'ed07225cb34a228aede2dbebc0ca00ef',
+            width: 160,
+            height: 600,
+            scriptUrl: 'https://bicea.org/22/ed07225cb34a228aede2dbebc0ca00ef'
+          },
+          '160x300': {
+            key: '9a20b8895b4fb04fd16d972ead80b4e0',
+            width: 160,
+            height: 300,
+            scriptUrl: 'https://bicea.org/22/9a20b8895b4fb04fd16d972ead80b4e0'
+          },
+          '320x50': {
+            key: '66d34c9bfbb1a19bb44210de393265f9',
+            width: 320,
+            height: 50,
+            scriptUrl: 'https://bicea.org/22/66d34c9bfbb1a19bb44210de393265f9'
+          }
+        };
+
+        let configKey = '320x50';
+        if (format === '160x600' || format === '160x300' || format === '300x250') {
+          configKey = '160x300';
+        }
+
+        const cfg = CONFIGS[configKey] || CONFIGS['320x50'];
+
+        window.atOptions = {
+          'key': cfg.key,
+          'format': 'iframe',
+          'height': cfg.height,
+          'width': cfg.width,
+          'params': {}
+        };
+
+        const script = document.createElement('script');
+        script.type = 'text/javascript';
+        script.src = cfg.scriptUrl;
+        document.body.appendChild(script);
+      } catch (err) {
+        console.warn('Falha ao inicializar banner:', err);
+      }
+    })();
+  </script>
+</body>
+</html>

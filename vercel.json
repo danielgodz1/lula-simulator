@@ -53,7 +53,7 @@
     },
 
     {
-      "source": "/:page((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|sitemap.*|robots.*)[^/]+\\.html)",
+      "source": "/:page((?!api/|js/|css/|img/|audios/|3D_MeshyAI/|en/|favicon\\.ico|ads\\.txt|ad-frame.*|sitemap.*|robots.*)[^/]+\\.html)",
       "has": [{ "type": "host", "value": "(.*flappylula\\.com.*)" }],
       "destination": "/en/:page"
     }

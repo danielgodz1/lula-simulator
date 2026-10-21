@@ -846,6 +846,16 @@ nav {
   }
 }
 
+/* Garante que o banner fixo mobile não atrapalhe durante a partida ativa */
+body.game-playing .ad-mobile-fixed-footer {
+  display: none !important;
+}
+
+@keyframes fadeInRewardModal {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 /* BOTÃO REWARDED / SMARTLINK */
 .btn-rewarded-smartlink {
   display: inline-flex;
