@@ -1,7 +1,7 @@
-// js/game/model-loader.js — Gerenciador de Pré-carregamento e Cache de Modelos 3D (.glb)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { SkeletonUtils } from 'three/addons/utils/SkeletonUtils.js';
+import { getRunnerAnimationClips } from './runner-animations.js';
 
 class ModelLoaderManager {
   constructor() {
@@ -50,11 +50,16 @@ class ModelLoaderManager {
 
     const path = this.modelPaths[key] || `/js/game/models/${key}.glb`;
     const promise = new Promise((resolve) => {
+      // Carrega clipes de animação Mixamo em paralelo com o modelo 3D
+      const runnerClipsPromise = getRunnerAnimationClips().catch(() => []);
+
       this.loader.load(
         path,
-        (gltf) => {
+        async (gltf) => {
           const root = gltf.scene;
-          const animations = gltf.animations || [];
+          const runnerClips = await runnerClipsPromise;
+          // Animações de corrida/pulo/caminhada têm prioridade sobre animações originais (ex: dança)
+          const animations = [...(runnerClips || []), ...(gltf.animations || [])];
           root.traverse((child) => {
             if (child.isMesh) {
               child.castShadow = true;

@@ -17,6 +17,7 @@ export class Character {
     this.bodyPivot = null;
     this.mixer = null;
     this.currentAction = null;
+    this.actions = {};
 
     this.currentLane = 1;
     this.targetX = 0;
@@ -112,6 +113,7 @@ export class Character {
       this.mixer = null;
     }
     this.currentAction = null;
+    this.actions = {};
     while (this.mesh.children.length > 0) {
       const obj = this.mesh.children[0];
       this.mesh.remove(obj);
@@ -161,13 +163,27 @@ export class Character {
       // Ativa AnimationMixer se o modelo GLB possuir animações esqueléticas
       if (glbModel.animations && glbModel.animations.length > 0) {
         this.mixer = new THREE.AnimationMixer(glbModel);
-        const clip = glbModel.animations[0];
-        this.currentAction = this.mixer.clipAction(clip);
-        this.currentAction.setLoop(THREE.LoopRepeat);
-        this.currentAction.play();
+        this.actions = {};
+        glbModel.animations.forEach((clip) => {
+          const key = clip.name.toLowerCase();
+          try {
+            this.actions[key] = this.mixer.clipAction(clip);
+          } catch (e) {
+            console.warn('[Character] Erro ao registrar clipe ' + clip.name, e);
+          }
+        });
+
+        // Prioridade 1: Animação de corrida 'run'. Se não houver, 'walk' ou primeira disponível.
+        const runAction = this.actions['run'] || this.actions['walk'] || this.mixer.clipAction(glbModel.animations[0]);
+        if (runAction) {
+          this.currentAction = runAction;
+          this.currentAction.setLoop(THREE.LoopRepeat);
+          this.currentAction.play();
+        }
       } else {
         this.mixer = null;
         this.currentAction = null;
+        this.actions = {};
       }
 
       // Itens de Power-up em 3D
@@ -547,6 +563,19 @@ export class Character {
       this.isSliding = false;
       this.slideTimer = 0;
       gameAudio.playJump(this.superJump);
+
+      // Transição fluida para pose/animação atlética de pulo Mixamo
+      if (this.actions && this.actions['jump']) {
+        const jumpAction = this.actions['jump'];
+        jumpAction.reset();
+        jumpAction.setLoop(THREE.LoopOnce);
+        jumpAction.clampWhenFinished = true;
+        jumpAction.play();
+        if (this.currentAction && this.currentAction !== jumpAction) {
+          jumpAction.crossFadeFrom(this.currentAction, 0.12, true);
+        }
+        this.currentAction = jumpAction;
+      }
     } else {
       this.jumpBufferTimer = 0.15;
     }
@@ -594,6 +623,9 @@ export class Character {
 
   update(dt, speed) {
     if (this.isDead) {
+      if (this.mixer) {
+        this.mixer.stopAllAction();
+      }
       this.deathAnimTime += dt;
       this.deathVy -= 26.0 * dt;
       this.deathY = Math.max(0.12, this.deathY + this.deathVy * dt);
@@ -691,6 +723,16 @@ export class Character {
           this.wasAirborne = false;
         }
 
+        // Retorna suavemente da pose de pulo para a corrida contínua 'run'
+        if (this.actions && this.actions['run'] && this.currentAction !== this.actions['run']) {
+          const runAction = this.actions['run'];
+          runAction.reset().play();
+          if (this.currentAction) {
+            runAction.crossFadeFrom(this.currentAction, 0.15, true);
+          }
+          this.currentAction = runAction;
+        }
+
         if (this.jumpBufferTimer > 0) {
           this.jumpBufferTimer = 0;
           this.jump();
@@ -719,6 +761,16 @@ export class Character {
         this.isSliding = false;
         this.mesh.rotation.x = 0;
         this.mesh.position.y = this.y;
+
+        // Retoma a corrida fluida após o término do deslizamento sob os obstáculos
+        if (this.actions && this.actions['run'] && this.currentAction !== this.actions['run']) {
+          const runAction = this.actions['run'];
+          runAction.reset().play();
+          if (this.currentAction) {
+            runAction.crossFadeFrom(this.currentAction, 0.15, true);
+          }
+          this.currentAction = runAction;
+        }
       }
     }
 
