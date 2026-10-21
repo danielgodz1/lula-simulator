@@ -15,6 +15,8 @@ export class Character {
     this.characterId = RunnerInventory.getSelectedCharacter().id;
     this.isGLB = false;
     this.bodyPivot = null;
+    this.mixer = null;
+    this.currentAction = null;
 
     this.currentLane = 1;
     this.targetX = 0;
@@ -105,6 +107,11 @@ export class Character {
   }
 
   clearMesh() {
+    if (this.mixer) {
+      this.mixer.stopAllAction();
+      this.mixer = null;
+    }
+    this.currentAction = null;
     while (this.mesh.children.length > 0) {
       const obj = this.mesh.children[0];
       this.mesh.remove(obj);
@@ -150,6 +157,18 @@ export class Character {
 
       this.bodyPivot.add(glbModel);
       this.mesh.add(this.bodyPivot);
+
+      // Ativa AnimationMixer se o modelo GLB possuir animações esqueléticas
+      if (glbModel.animations && glbModel.animations.length > 0) {
+        this.mixer = new THREE.AnimationMixer(glbModel);
+        const clip = glbModel.animations[0];
+        this.currentAction = this.mixer.clipAction(clip);
+        this.currentAction.setLoop(THREE.LoopRepeat);
+        this.currentAction.play();
+      } else {
+        this.mixer = null;
+        this.currentAction = null;
+      }
 
       // Itens de Power-up em 3D
       this.buildPowerupAccessories();
@@ -722,6 +741,10 @@ export class Character {
     this.animTime += dt * (speed / 16);
 
     if (this.isGLB && this.bodyPivot) {
+      if (this.mixer) {
+        const animSpeedScale = Math.max(0.9, Math.min(2.5, (speed / 16) * 1.35));
+        this.mixer.update(dt * animSpeedScale);
+      }
       if (this.isSliding) {
         this.mesh.rotation.x = -Math.PI / 2.15;
         this.mesh.position.y = this.y + 0.26;
@@ -808,6 +831,9 @@ export class Character {
     this.z = 0;
     this.isInvulnerable = true;
     this.invulnerableTimer = 3.0;
+    if (this.currentAction) {
+      this.currentAction.reset().play();
+    }
 
     if (this.bodyPivot) {
       this.bodyPivot.position.set(0, 0, 0);

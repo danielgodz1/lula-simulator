@@ -1,6 +1,7 @@
 // js/game/model-loader.js — Gerenciador de Pré-carregamento e Cache de Modelos 3D (.glb)
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { SkeletonUtils } from 'three/addons/utils/SkeletonUtils.js';
 
 class ModelLoaderManager {
   constructor() {
@@ -30,18 +31,18 @@ class ModelLoaderManager {
     return () => set.delete(callback);
   }
 
-  notifyListeners(name, model) {
+  notifyListeners(name) {
     if (this.listeners.has(name)) {
       const set = this.listeners.get(name);
       set.forEach(cb => {
-        try { cb(model.clone(true)); } catch (e) {}
+        try { cb(this.getModel(name)); } catch (e) {}
       });
     }
   }
 
   async loadModel(key) {
     if (this.models.has(key)) {
-      return this.models.get(key);
+      return this.getModel(key);
     }
     if (this.loadingPromises.has(key)) {
       return this.loadingPromises.get(key);
@@ -53,6 +54,7 @@ class ModelLoaderManager {
         path,
         (gltf) => {
           const root = gltf.scene;
+          const animations = gltf.animations || [];
           root.traverse((child) => {
             if (child.isMesh) {
               child.castShadow = true;
@@ -60,17 +62,17 @@ class ModelLoaderManager {
               if (child.material) {
                 child.material.roughness = Math.min(0.85, Math.max(0.2, child.material.roughness || 0.5));
                 child.material.metalness = Math.min(0.8, child.material.metalness || 0.1);
-                child.material.side = THREE.DoubleSide;
               }
             }
           });
-          this.models.set(key, root);
-          this.notifyListeners(key, root);
-          resolve(root);
+          const entry = { scene: root, animations };
+          this.models.set(key, entry);
+          this.notifyListeners(key);
+          resolve(this.getModel(key));
         },
         undefined,
         (err) => {
-          console.warn(`[ModelLoader] Modelo ${key} não disponível via ${path}. Usando procedural.`);
+          console.warn(`[ModelLoader] Modelo ${key} não disponível via ${path}. Usando procedural.`, err);
           resolve(null);
         }
       );
@@ -90,9 +92,17 @@ class ModelLoaderManager {
   }
 
   getModel(name) {
-    const template = this.models.get(name);
-    if (!template) return null;
-    return template.clone(true);
+    const entry = this.models.get(name);
+    if (!entry) return null;
+    const sceneToClone = entry.scene || entry;
+    let cloned;
+    try {
+      cloned = SkeletonUtils.clone(sceneToClone);
+    } catch(e) {
+      cloned = sceneToClone.clone(true);
+    }
+    cloned.animations = entry.animations || [];
+    return cloned;
   }
 
   hasModel(name) {
