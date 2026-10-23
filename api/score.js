@@ -116,7 +116,7 @@ export default async function handler(req, res) {
 
   // 1. GET: Consulta no documento consolidado de Leaderboard (Geral, Semanal ou Total Acumulado)
   if (req.method === 'GET') {
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+    res.setHeader('Cache-Control', 's-maxage=5, stale-while-revalidate=15');
     const { game = 'flappy', limit, page, pageSize, type = 'general' } = req.query;
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const isWeekly = type === 'weekly';
@@ -141,10 +141,63 @@ export default async function handler(req, res) {
         }
 
         // Admin SDK retorna objetos JS nativos — score é number, não integerValue
-        const rawScores = Array.isArray(data.scores) ? data.scores : [];
-        const scores = rawScores
+        let rawScores = Array.isArray(data.scores) ? data.scores : [];
+        let scores = rawScores
           .filter(s => s && typeof s.score === 'number' && s.score > 0)
           .sort((a, b) => b.score - a.score);
+
+        // AUTO-BACKFILL AUTOMÁTICO: se o documento consolidado geral ainda tiver menos de 340 jogadores
+        // (devido ao antigo limite estático de 300), recupera e mescla os scores individuais restantes
+        if (!isWeekly && !isAccumulated && scores.length < 340 && (cleanGame === 'flappy' || cleanGame === 'runner')) {
+          try {
+            const collName = cleanGame === 'runner' ? 'lula_runner_scores_v2' : 'lula_scores_v2';
+            const individualSnap = await db.collection(collName).get();
+            const existingMap = new Map();
+            scores.forEach(s => existingMap.set((s.player || '').toLowerCase(), s));
+
+            let addedCount = 0;
+            individualSnap.forEach(doc => {
+              const d = doc.data();
+              if (!d.player || !d.score) return;
+              const pKey = d.player.toLowerCase();
+              const numSc = parseInt(d.score, 10);
+              if (numSc <= 0) return;
+
+              const existing = existingMap.get(pKey);
+              if (!existing) {
+                const entry = {
+                  player: d.player,
+                  score: numSc,
+                  avatar: (d.avatar && !d.avatar.startsWith('data:')) ? d.avatar : '',
+                  country: d.country || 'BR',
+                  countryName: d.countryName || 'Brasil',
+                  flag: d.flag || '🇧🇷',
+                  prestigeLevel: parseInt(d.prestigeLevel || 0, 10),
+                  updatedAt: d.updatedAt || new Date().toISOString()
+                };
+                existingMap.set(pKey, entry);
+                scores.push(entry);
+                addedCount++;
+              } else if (numSc > existing.score) {
+                existing.score = numSc;
+                existing.updatedAt = d.updatedAt || new Date().toISOString();
+                addedCount++;
+              }
+            });
+
+            if (addedCount > 0) {
+              scores.sort((a, b) => b.score - a.score);
+              const topScores = scores.slice(0, 5000);
+              await db.collection('lula_leaderboards_v2').doc(docName).set({
+                game: cleanGame,
+                updatedAt: new Date().toISOString(),
+                scores: topScores
+              }, { merge: true });
+            }
+          } catch (bfErr) {
+            console.warn('Aviso no auto-backfill de scores:', bfErr.message);
+          }
+        }
 
         // Suporte opcional à paginação no backend (?page=X&pageSize=25)
         if (page !== undefined) {

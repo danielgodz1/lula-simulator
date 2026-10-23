@@ -7,7 +7,7 @@ export const firebaseConfig = {
 };
 
 // 1. GERENCIADOR DE CACHE EM MEMÓRIA COM TTL (TIME-TO-LIVE)
-const LEADERBOARD_CACHE_TTL_MS = 90 * 1000; // 90 segundos de cache no cliente
+const LEADERBOARD_CACHE_TTL_MS = 10 * 1000; // 10 segundos de cache no cliente para resposta imediata
 
 const inMemoryLeaderboardCache = {
   flappy: { data: null, timestamp: 0 },
@@ -38,6 +38,10 @@ export async function startScoreSession(gameType = 'flappy') {
       if (u && u.username) playerName = u.username;
     }
   } catch (e) {}
+
+  if (playerName === 'Jogador') {
+    playerName = localStorage.getItem('lula_player') || 'Jogador';
+  }
 
   try {
     const res = await fetch('/api/start-session', {

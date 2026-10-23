@@ -5,6 +5,63 @@ const path = require('path');
 let ptRanking = fs.readFileSync(path.join(__dirname, '../ranking.html'), 'utf8');
 
 const ptPaginationCSS = `
+    /* BANNER DE POSIÇÃO DO JOGADOR ATUAL */
+    .my-rank-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, rgba(255, 223, 0, 0.14), rgba(0, 230, 118, 0.08));
+      border: 1.5px solid var(--amarelo-brasil);
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      flex-wrap: wrap;
+    }
+
+    .my-rank-banner-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .my-rank-banner-text strong {
+      color: var(--amarelo-brasil);
+    }
+
+    .jump-my-rank-btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      background: var(--amarelo-brasil);
+      border: none;
+      color: #000;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .jump-my-rank-btn:hover {
+      background: #ffe640;
+      transform: translateY(-1px);
+      box-shadow: 0 0 14px rgba(255, 223, 0, 0.55);
+    }
+
+    .ranking-row.highlight-my-row {
+      background: rgba(255, 223, 0, 0.18) !important;
+      border-left: 3px solid var(--amarelo-brasil);
+      animation: pulseHighlight 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseHighlight {
+      0%, 100% { box-shadow: inset 0 0 10px rgba(255, 223, 0, 0.2); }
+      50% { box-shadow: inset 0 0 20px rgba(255, 223, 0, 0.5); }
+    }
+
     /* CONTROLES DE PAGINAÇÃO (25 JOGADORES POR PÁGINA) */
     .pagination-container {
       display: flex;
@@ -139,27 +196,37 @@ const ptPaginationCSS = `
       .pagination-info {
         font-size: 11px;
       }
+      .my-rank-banner {
+        padding: 10px 14px;
+      }
+      .my-rank-banner-text {
+        font-size: 13px;
+      }
     }
   </style>`;
 
-if (!ptRanking.includes('.pagination-container')) {
+// Replace CSS
+if (ptRanking.includes('/* CONTROLES DE PAGINAÇÃO')) {
+  ptRanking = ptRanking.replace(/\/\* CONTROLES DE PAGINAÇÃO[\s\S]*?<\/style>/, ptPaginationCSS.trim() + '\n  </style>');
+} else {
   ptRanking = ptRanking.replace('</style>', ptPaginationCSS);
 }
 
-// Add rankingPagination element after ranking-card
-const ptPaginationHtml = `    </div>
-
-    <!-- CONTROLES DE PAGINAÇÃO (25 JOGADORES POR PÁGINA) -->
-    <div id="rankingPagination" class="pagination-container" style="display: none;"></div>`;
-
-if (!ptRanking.includes('id="rankingPagination"')) {
-  ptRanking = ptRanking.replace(/(\s*<\/div>\s*<!-- BANNER DE MONETIZAÇÃO INFERIOR)/, `\n\n    <!-- CONTROLES DE PAGINAÇÃO (25 JOGADORES POR PÁGINA) -->\n    <div id="rankingPagination" class="pagination-container" style="display: none;"></div>$1`);
+// Add myRankBanner if not present
+if (!ptRanking.includes('id="myRankBanner"')) {
+  ptRanking = ptRanking.replace(
+    '<div class="ranking-card">',
+    '<!-- BANNER DE POSIÇÃO DO JOGADOR ATUAL -->\n    <div id="myRankBanner" class="my-rank-banner" style="display: none;"></div>\n\n    <div class="ranking-card">'
+  );
 }
 
-// Replace script section
-const ptScriptStart = `<script type="module">`;
-const ptScriptEnd = `</script>\r\n  <script src="/js/tracker.js"></script>`;
-const ptScriptEndAlt = `</script>\n  <script src="/js/tracker.js"></script>`;
+// Add rankingPagination element if not present
+if (!ptRanking.includes('id="rankingPagination"')) {
+  ptRanking = ptRanking.replace(
+    '</div>\n\n    <!-- BANNER DE MONETIZAÇÃO INFERIOR',
+    '</div>\n\n    <!-- CONTROLES DE PAGINAÇÃO (25 JOGADORES POR PÁGINA) -->\n    <div id="rankingPagination" class="pagination-container" style="display: none;"></div>\n\n    <!-- BANNER DE MONETIZAÇÃO INFERIOR'
+  );
+}
 
 const newPtScript = `<script type="module">
     import { getTopScores, firebaseConfig } from '/js/firebase-config.js';
@@ -189,7 +256,7 @@ const newPtScript = `<script type="module">
       document.getElementById('tabFlappy').className = \`tab-btn \${tab === 'flappy' ? 'active' : ''}\`;
       document.getElementById('tabRunner').className = \`tab-btn \${tab === 'runner' ? 'active' : ''}\`;
       document.getElementById('searchRankingInput').value = '';
-      loadRankingData();
+      loadRankingData(true);
     }
 
     function switchPeriod(period) {
@@ -200,16 +267,18 @@ const newPtScript = `<script type="module">
       document.getElementById('periodAccumulated').className = \`period-btn \${period === 'accumulated' ? 'active' : ''}\`;
       document.getElementById('periodInvictos').className = \`period-btn \${period === 'invictos' ? 'active' : ''}\`;
       document.getElementById('searchRankingInput').value = '';
-      loadRankingData();
+      loadRankingData(true);
     }
 
-    async function loadRankingData(force = false) {
+    async function loadRankingData(force = true) {
       const container = document.getElementById('rankingList');
       const paginationContainer = document.getElementById('rankingPagination');
       const totalBadge = document.getElementById('totalPlayersBadge');
+      const myBanner = document.getElementById('myRankBanner');
       const periodLabel = currentPeriod === 'weekly' ? 'da semana' : (currentPeriod === 'accumulated' ? 'acumulado' : (currentPeriod === 'invictos' ? 'de invictos' : 'geral'));
       container.innerHTML = \`<div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando placar \${periodLabel}... 🇧🇷</div>\`;
       if (paginationContainer) paginationContainer.style.display = 'none';
+      if (myBanner) myBanner.style.display = 'none';
 
       if (currentPeriod === 'invictos') {
         try {
@@ -234,7 +303,7 @@ const newPtScript = `<script type="module">
           allCurrentScores = [];
         }
       } else {
-        // Busca todos os jogadores pelo documento consolidado (com cache TTL e filtro de período, até 5000 entradas)
+        // Busca todos os jogadores pelo documento consolidado (força dados frescos no carregamento)
         allCurrentScores = await getTopScores(currentTab, 5000, force, currentPeriod);
       }
 
@@ -262,11 +331,42 @@ const newPtScript = `<script type="module">
     function renderFilteredScores() {
       const container = document.getElementById('rankingList');
       const paginationContainer = document.getElementById('rankingPagination');
+      const myBanner = document.getElementById('myRankBanner');
       const searchTerm = (document.getElementById('searchRankingInput').value || '').trim().toLowerCase();
       const unit = currentPeriod === 'accumulated' 
         ? (currentTab === 'runner' ? '💰' : '🥩') 
         : (currentTab === 'runner' ? 'km' : '🥩');
       const curUser = auth.getCurrentUser();
+      const myName = (curUser && curUser.username) ? curUser.username : (localStorage.getItem('lula_player') || '');
+
+      // Atualiza banner de posição do jogador atual
+      if (myBanner && myName) {
+        const myIdx = allCurrentScores.findIndex(s => (s.player || '').toLowerCase() === myName.toLowerCase());
+        if (myIdx !== -1) {
+          const myItem = allCurrentScores[myIdx];
+          const myRank = myIdx + 1;
+          const myPage = Math.ceil(myRank / PAGE_SIZE);
+          myBanner.style.display = 'flex';
+          myBanner.innerHTML = \`
+            <div class="my-rank-banner-text">
+              🎮 <strong>\${escapeHTML(myItem.player)}</strong>: Você está no <strong>#\${myRank}º lugar</strong> (Página \${myPage}) com <strong>\${parseInt(myItem.score, 10).toLocaleString('pt-BR')} \${unit}</strong>!
+            </div>
+            <button id="btnGoToMyRank" class="jump-my-rank-btn">Ir para minha página (\${myPage}) ➜</button>
+          \`;
+          document.getElementById('btnGoToMyRank')?.addEventListener('click', () => {
+            goToPage(myPage, true);
+          });
+        } else {
+          myBanner.style.display = 'flex';
+          myBanner.innerHTML = \`
+            <div class="my-rank-banner-text" style="color: var(--text-muted); font-size: 13px;">
+              👤 Jogando como <strong>\${escapeHTML(myName)}</strong>. Jogue uma partida e pontue para registrar seu nome no ranking oficial!
+            </div>
+          \`;
+        }
+      } else if (myBanner) {
+        myBanner.style.display = 'none';
+      }
 
       let filtered = allCurrentScores;
       if (searchTerm) {
@@ -303,8 +403,10 @@ const newPtScript = `<script type="module">
         const originalRank = allCurrentScores.findIndex(s => s.player === item.player && s.score === item.score);
         const rankIdx = originalRank !== -1 ? originalRank : (startIndex + pageIdx);
 
+        const isThisMe = myName && (item.player || '').toLowerCase() === myName.toLowerCase();
         const row = document.createElement('div');
-        row.className = 'ranking-row';
+        row.className = \`ranking-row \${isThisMe ? 'highlight-my-row' : ''}\`;
+        if (isThisMe) row.id = 'myHighlightedRow';
 
         const rankClass = rankIdx === 0 ? 'rank-1' : rankIdx === 1 ? 'rank-2' : rankIdx === 2 ? 'rank-3' : 'rank-other';
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : \`\${rankIdx + 1}º\`;
@@ -348,6 +450,7 @@ const newPtScript = `<script type="module">
           <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
             <div style="font-weight:700; font-size:15px; color:#fff; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">\${safePlayer}</span>
+              \${isThisMe ? '<span style="font-size:10px; background:var(--amarelo-brasil); color:#000; font-weight:900; padding:1px 6px; border-radius:4px;">VOCÊ</span>' : ''}
               \${prestigeHtml}
               \${medalHtml}
             </div>
@@ -452,9 +555,18 @@ const newPtScript = `<script type="module">
       });
     }
 
-    function goToPage(targetPage) {
+    function goToPage(targetPage, scrollToMyRow = false) {
       currentPage = targetPage;
       renderFilteredScores();
+      if (scrollToMyRow) {
+        setTimeout(() => {
+          const myRow = document.getElementById('myHighlightedRow');
+          if (myRow) {
+            myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        }, 100);
+      }
       const rankingCard = document.querySelector('.ranking-card');
       if (rankingCard) {
         rankingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -466,31 +578,45 @@ const newPtScript = `<script type="module">
       renderFilteredScores();
     });
 
-    loadRankingData();
+    loadRankingData(true);
     import('./js/ads-manager.js').then(m => m.AdsManager.init());
   </script>`;
 
-const sIdx = ptRanking.indexOf(ptScriptStart);
+const sIdx = ptRanking.indexOf('<script type="module">');
 const eIdx = ptRanking.indexOf('</script>\r\n  <script src="/js/tracker.js"></script>') !== -1 
   ? ptRanking.indexOf('</script>\r\n  <script src="/js/tracker.js"></script>')
-  : ptRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>');
+  : (ptRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>') !== -1
+      ? ptRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>')
+      : ptRanking.lastIndexOf('</script>'));
 
 if (sIdx !== -1 && eIdx !== -1) {
   ptRanking = ptRanking.substring(0, sIdx) + newPtScript + ptRanking.substring(eIdx + 9);
 }
 
 fs.writeFileSync(path.join(__dirname, '../ranking.html'), ptRanking, 'utf8');
-console.log('✅ ranking.html updated successfully with pagination!');
+console.log('✅ ranking.html updated with user position banner & instant refresh!');
 
 // 2. UPDATE en/ranking.html
 let enRanking = fs.readFileSync(path.join(__dirname, '../en/ranking.html'), 'utf8');
 
-if (!enRanking.includes('.pagination-container')) {
+if (enRanking.includes('/* CONTROLES DE PAGINAÇÃO')) {
+  enRanking = enRanking.replace(/\/\* CONTROLES DE PAGINAÇÃO[\s\S]*?<\/style>/, ptPaginationCSS.trim() + '\n  </style>');
+} else {
   enRanking = enRanking.replace('</style>', ptPaginationCSS);
 }
 
+if (!enRanking.includes('id="myRankBanner"')) {
+  enRanking = enRanking.replace(
+    '<div class="ranking-card">',
+    '<!-- CURRENT PLAYER POSITION BANNER -->\n    <div id="myRankBanner" class="my-rank-banner" style="display: none;"></div>\n\n    <div class="ranking-card">'
+  );
+}
+
 if (!enRanking.includes('id="rankingPagination"')) {
-  enRanking = enRanking.replace(/(\s*<\/div>\s*<!-- BANNER DE MONETIZAÇÃO INFERIOR)/, `\n\n    <!-- PAGINATION CONTROLS (25 PLAYERS PER PAGE) -->\n    <div id="rankingPagination" class="pagination-container" style="display: none;"></div>$1`);
+  enRanking = enRanking.replace(
+    '</div>\n\n    <!-- BANNER DE MONETIZAÇÃO INFERIOR',
+    '</div>\n\n    <!-- PAGINATION CONTROLS (25 PLAYERS PER PAGE) -->\n    <div id="rankingPagination" class="pagination-container" style="display: none;"></div>\n\n    <!-- BANNER DE MONETIZAÇÃO INFERIOR'
+  );
 }
 
 const newEnScript = `<script type="module">
@@ -521,7 +647,7 @@ const newEnScript = `<script type="module">
       document.getElementById('tabFlappy').className = \`tab-btn \${tab === 'flappy' ? 'active' : ''}\`;
       document.getElementById('tabRunner').className = \`tab-btn \${tab === 'runner' ? 'active' : ''}\`;
       document.getElementById('searchRankingInput').value = '';
-      loadRankingData();
+      loadRankingData(true);
     }
 
     function switchPeriod(period) {
@@ -532,16 +658,18 @@ const newEnScript = `<script type="module">
       document.getElementById('periodAccumulated').className = \`period-btn \${period === 'accumulated' ? 'active' : ''}\`;
       document.getElementById('periodInvictos').className = \`period-btn \${period === 'invictos' ? 'active' : ''}\`;
       document.getElementById('searchRankingInput').value = '';
-      loadRankingData();
+      loadRankingData(true);
     }
 
-    async function loadRankingData(force = false) {
+    async function loadRankingData(force = true) {
       const container = document.getElementById('rankingList');
       const paginationContainer = document.getElementById('rankingPagination');
+      const myBanner = document.getElementById('myRankBanner');
       const totalBadge = document.getElementById('totalPlayersBadge');
       const periodLabel = currentPeriod === 'weekly' ? 'Weekly' : (currentPeriod === 'accumulated' ? 'Accumulated' : (currentPeriod === 'invictos' ? 'Win Streak' : 'All-Time'));
       container.innerHTML = \`<div style="text-align:center; padding:40px; color:var(--text-muted);">Loading \${periodLabel} leaderboard... 🌍</div>\`;
       if (paginationContainer) paginationContainer.style.display = 'none';
+      if (myBanner) myBanner.style.display = 'none';
 
       if (currentPeriod === 'invictos') {
         try {
@@ -594,11 +722,42 @@ const newEnScript = `<script type="module">
     function renderFilteredScores() {
       const container = document.getElementById('rankingList');
       const paginationContainer = document.getElementById('rankingPagination');
+      const myBanner = document.getElementById('myRankBanner');
       const searchTerm = (document.getElementById('searchRankingInput').value || '').trim().toLowerCase();
       const unit = currentPeriod === 'accumulated' 
         ? (currentTab === 'runner' ? '💰' : '🥩') 
         : (currentTab === 'runner' ? 'km' : '🥩');
       const curUser = auth.getCurrentUser();
+      const myName = (curUser && curUser.username) ? curUser.username : (localStorage.getItem('lula_player') || '');
+
+      // Current player rank banner
+      if (myBanner && myName) {
+        const myIdx = allCurrentScores.findIndex(s => (s.player || '').toLowerCase() === myName.toLowerCase());
+        if (myIdx !== -1) {
+          const myItem = allCurrentScores[myIdx];
+          const myRank = myIdx + 1;
+          const myPage = Math.ceil(myRank / PAGE_SIZE);
+          myBanner.style.display = 'flex';
+          myBanner.innerHTML = \`
+            <div class="my-rank-banner-text">
+              🎮 <strong>\${escapeHTML(myItem.player)}</strong>: You are ranked <strong>#\${myRank}</strong> (Page \${myPage}) with <strong>\${parseInt(myItem.score, 10).toLocaleString('en-US')} \${unit}</strong>!
+            </div>
+            <button id="btnGoToMyRank" class="jump-my-rank-btn">Jump to my page (\${myPage}) ➜</button>
+          \`;
+          document.getElementById('btnGoToMyRank')?.addEventListener('click', () => {
+            goToPage(myPage, true);
+          });
+        } else {
+          myBanner.style.display = 'flex';
+          myBanner.innerHTML = \`
+            <div class="my-rank-banner-text" style="color: var(--text-muted); font-size: 13px;">
+              👤 Playing as <strong>\${escapeHTML(myName)}</strong>. Play a game and score points to enter the world leaderboard!
+            </div>
+          \`;
+        }
+      } else if (myBanner) {
+        myBanner.style.display = 'none';
+      }
 
       let filtered = allCurrentScores;
       if (searchTerm) {
@@ -634,8 +793,10 @@ const newEnScript = `<script type="module">
         const originalRank = allCurrentScores.findIndex(s => s.player === item.player && s.score === item.score);
         const rankIdx = originalRank !== -1 ? originalRank : (startIndex + pageIdx);
 
+        const isThisMe = myName && (item.player || '').toLowerCase() === myName.toLowerCase();
         const row = document.createElement('div');
-        row.className = 'ranking-row';
+        row.className = \`ranking-row \${isThisMe ? 'highlight-my-row' : ''}\`;
+        if (isThisMe) row.id = 'myHighlightedRow';
 
         const rankClass = rankIdx === 0 ? 'rank-1' : rankIdx === 1 ? 'rank-2' : rankIdx === 2 ? 'rank-3' : 'rank-other';
         const badge = rankIdx === 0 ? '👑' : rankIdx === 1 ? '🥈' : rankIdx === 2 ? '🥉' : \`\${rankIdx + 1}\`;
@@ -676,6 +837,7 @@ const newEnScript = `<script type="module">
           <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
             <div style="font-weight:700; font-size:15px; color:#fff; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">\${safePlayer}</span>
+              \${isThisMe ? '<span style="font-size:10px; background:var(--amarelo-brasil); color:#000; font-weight:900; padding:1px 6px; border-radius:4px;">YOU</span>' : ''}
               \${prestigeHtml}
               \${medalHtml}
             </div>
@@ -780,9 +942,18 @@ const newEnScript = `<script type="module">
       });
     }
 
-    function goToPage(targetPage) {
+    function goToPage(targetPage, scrollToMyRow = false) {
       currentPage = targetPage;
       renderFilteredScores();
+      if (scrollToMyRow) {
+        setTimeout(() => {
+          const myRow = document.getElementById('myHighlightedRow');
+          if (myRow) {
+            myRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        }, 100);
+      }
       const rankingCard = document.querySelector('.ranking-card');
       if (rankingCard) {
         rankingCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -794,18 +965,20 @@ const newEnScript = `<script type="module">
       renderFilteredScores();
     });
 
-    loadRankingData();
+    loadRankingData(true);
     import('./js/ads-manager.js').then(m => m.AdsManager.init());
   </script>`;
 
-const sIdxEn = enRanking.indexOf(ptScriptStart);
+const sIdxEn = enRanking.indexOf('<script type="module">');
 const eIdxEn = enRanking.indexOf('</script>\r\n  <script src="/js/tracker.js"></script>') !== -1 
   ? enRanking.indexOf('</script>\r\n  <script src="/js/tracker.js"></script>')
-  : enRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>');
+  : (enRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>') !== -1
+      ? enRanking.indexOf('</script>\n  <script src="/js/tracker.js"></script>')
+      : enRanking.lastIndexOf('</script>'));
 
 if (sIdxEn !== -1 && eIdxEn !== -1) {
   enRanking = enRanking.substring(0, sIdxEn) + newEnScript + enRanking.substring(eIdxEn + 9);
 }
 
 fs.writeFileSync(path.join(__dirname, '../en/ranking.html'), enRanking, 'utf8');
-console.log('✅ en/ranking.html updated successfully with pagination!');
+console.log('✅ en/ranking.html updated with user position banner & instant refresh!');
