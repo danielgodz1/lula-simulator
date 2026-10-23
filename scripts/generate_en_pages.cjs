@@ -47,7 +47,7 @@ indexHtml = indexHtml.replace('Confira o pódio oficial dos melhores jogadores o
 indexHtml = indexHtml.replace('🐦 Flappy Lula (Picanhas)', '🐦 Flappy Lula (Steaks)');
 indexHtml = indexHtml.replace('🏃 Empresário 3D (km)', '🏃 3D Runner (km)');
 indexHtml = indexHtml.replace('Consultando os melhores jogadores do Brasil... 🇧🇷', 'Loading leaderboard champions... 🌍');
-indexHtml = indexHtml.replace('🏆 VER RANKING COMPLETO (TOP 300) ➜', '🏆 VIEW FULL LEADERBOARD (TOP 300) ➜');
+indexHtml = indexHtml.replace('🏆 VER RANKING COMPLETO ➜', '🏆 VIEW FULL LEADERBOARD ➜');
 
 indexHtml = indexHtml.replace('MODOS DE JOGO & RECURSOS 🎮', 'GAME MODES & HIGHLIGHTS 🎮');
 indexHtml = indexHtml.replace('Flappy Lula 2D', 'Flappy Lula 2D');

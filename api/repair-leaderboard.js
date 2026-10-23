@@ -17,13 +17,13 @@ export default async function handler(req, res) {
   if (applyCors(req, res)) return;
 
   // ── Proteção por chave secreta ─────────────────────────────────────────────
-  const repairKey = process.env.REPAIR_SECRET;
+  const repairKey = process.env.REPAIR_SECRET || process.env.SESSION_SECRET;
   const providedKey = req.query.key;
 
   if (!repairKey) {
     return res.status(501).json({
       success: false,
-      error: 'REPAIR_SECRET não configurado nas variáveis de ambiente da Vercel.'
+      error: 'REPAIR_SECRET ou SESSION_SECRET não configurado nas variáveis de ambiente da Vercel.'
     });
   }
   if (!providedKey || providedKey !== repairKey) {
@@ -202,9 +202,9 @@ export default async function handler(req, res) {
         console.warn('⚠️ Aviso ao mesclar leaderboard existente:', mergeErr.message);
       }
 
-      // 4. Ordena e limita a 300 entradas
-      const flappyList = Array.from(flappyMap.values()).sort((a, b) => b.score - a.score).slice(0, 300);
-      const runnerList = Array.from(runnerMap.values()).sort((a, b) => b.score - a.score).slice(0, 300);
+      // 4. Ordena e limita a 5000 entradas
+      const flappyList = Array.from(flappyMap.values()).sort((a, b) => b.score - a.score).slice(0, 5000);
+      const runnerList = Array.from(runnerMap.values()).sort((a, b) => b.score - a.score).slice(0, 5000);
 
       const now = new Date().toISOString();
 

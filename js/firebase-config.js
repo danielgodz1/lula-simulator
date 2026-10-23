@@ -153,7 +153,7 @@ export async function savePlayerScore(gameType, score, sessionMatchScore = null)
 }
 
 // 3. OBTER PLACAR COM DOCUMENTO ÚNICO E CACHE LOCAL TTL (1 LEITURA POR CONSULTA EXPIRADA)
-export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300, forceRefresh = false, period = 'general') {
+export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 5000, forceRefresh = false, period = 'general') {
   const isRunner = typeof gameTypeOrCollection === 'string' && gameTypeOrCollection.includes('runner');
   const game = isRunner ? 'runner' : 'flappy';
   const isWeekly = period === 'weekly';
@@ -198,7 +198,7 @@ export async function getTopScores(gameTypeOrCollection = 'flappy', limit = 300,
   // 3. Consulta à API Serverless Otimizada
   try {
     const queryType = isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general');
-    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 300)}&type=${queryType}`);
+    const apiRes = await fetch(`/api/score?game=${game}&limit=${Math.max(limit, 5000)}&type=${queryType}`);
     if (apiRes.ok) {
       const data = await apiRes.json();
       if (data.success && Array.isArray(data.scores)) {

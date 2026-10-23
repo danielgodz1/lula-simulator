@@ -114,10 +114,10 @@ export default async function handler(req, res) {
     return '';
   };
 
-  // 1. GET: Consulta no documento consolidado Top 300 (Geral, Semanal ou Total Acumulado)
+  // 1. GET: Consulta no documento consolidado de Leaderboard (Geral, Semanal ou Total Acumulado)
   if (req.method === 'GET') {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
-    const { game = 'flappy', limit = 300, type = 'general' } = req.query;
+    const { game = 'flappy', limit, page, pageSize, type = 'general' } = req.query;
     const cleanGame = game === 'runner' ? 'runner' : 'flappy';
     const isWeekly = type === 'weekly';
     const isAccumulated = type === 'accumulated';
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
         if (isWeekly) {
           const docWeek = data.weekKey || '';
           if (docWeek !== currentWeekKey) {
-            return res.status(200).json({ success: true, count: 0, scores: [], type: 'weekly', weekKey: currentWeekKey });
+            return res.status(200).json({ success: true, count: 0, total: 0, scores: [], type: 'weekly', weekKey: currentWeekKey });
           }
         }
 
@@ -146,10 +146,34 @@ export default async function handler(req, res) {
           .filter(s => s && typeof s.score === 'number' && s.score > 0)
           .sort((a, b) => b.score - a.score);
 
-        const maxLimit = Math.min(300, Math.max(1, parseInt(limit, 10) || 300));
+        // Suporte opcional à paginação no backend (?page=X&pageSize=25)
+        if (page !== undefined) {
+          const pageNum = Math.max(1, parseInt(page, 10) || 1);
+          const size = Math.max(1, Math.min(100, parseInt(pageSize || limit, 10) || 25));
+          const totalCount = scores.length;
+          const totalPages = Math.ceil(totalCount / size) || 1;
+          const startIndex = (pageNum - 1) * size;
+          const paginatedScores = scores.slice(startIndex, startIndex + size);
+
+          return res.status(200).json({
+            success: true,
+            total: totalCount,
+            count: paginatedScores.length,
+            page: pageNum,
+            pageSize: size,
+            totalPages,
+            scores: paginatedScores,
+            type: isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general'),
+            weekKey: isWeekly ? currentWeekKey : undefined
+          });
+        }
+
+        const parsedLimit = limit !== undefined ? parseInt(limit, 10) : 5000;
+        const maxLimit = Math.min(5000, Math.max(1, isNaN(parsedLimit) ? 5000 : parsedLimit));
         return res.status(200).json({
           success: true,
-          count: scores.length,
+          total: scores.length,
+          count: Math.min(scores.length, maxLimit),
           scores: scores.slice(0, maxLimit),
           type: isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general'),
           weekKey: isWeekly ? currentWeekKey : undefined
@@ -158,6 +182,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
+        total: 0,
         count: 0,
         scores: [],
         type: isAccumulated ? 'accumulated' : (isWeekly ? 'weekly' : 'general'),
@@ -258,6 +283,8 @@ export default async function handler(req, res) {
         await userRef.set(userFields, { merge: true });
       }
 
+      const MAX_LEADERBOARD_ENTRIES = 5000;
+
       // Função auxiliar para atualizar um documento consolidado de leaderboard (Geral, Semanal ou Acumulado)
       const updateLeaderboardDoc = async (docName, scoreToUse, isWeeklyBoard = false) => {
         const lbRef = db.collection('lula_leaderboards_v2').doc(docName);
@@ -284,6 +311,9 @@ export default async function handler(req, res) {
         const existingIdx = currentScores.findIndex(s => (s.player || '').toLowerCase() === playerKey);
         let shouldUpdate = false;
 
+        // Otimização de payload: não salvar base64 volumoso no array consolidado
+        const safeAvatarForBoard = finalAvatar.startsWith('data:') ? '' : finalAvatar;
+
         if (existingIdx !== -1) {
           if (scoreToUse > currentScores[existingIdx].score) {
             currentScores[existingIdx].score = scoreToUse;
@@ -292,19 +322,20 @@ export default async function handler(req, res) {
             currentScores[existingIdx].countryName = detectedCountryName;
             currentScores[existingIdx].flag = detectedFlag;
             if (numPrestige) currentScores[existingIdx].prestigeLevel = numPrestige;
-            if (finalAvatar) currentScores[existingIdx].avatar = finalAvatar;
+            if (safeAvatarForBoard) currentScores[existingIdx].avatar = safeAvatarForBoard;
             shouldUpdate = true;
-          } else if (finalAvatar && currentScores[existingIdx].avatar !== finalAvatar) {
-            currentScores[existingIdx].avatar = finalAvatar;
+          } else if (safeAvatarForBoard && currentScores[existingIdx].avatar !== safeAvatarForBoard) {
+            currentScores[existingIdx].avatar = safeAvatarForBoard;
             shouldUpdate = true;
           }
         } else {
-          const lowestScore = currentScores.length >= 300 ? currentScores[currentScores.length - 1].score : 0;
-          if (currentScores.length < 300 || scoreToUse > lowestScore) {
+          // Permite que todo novo jogador que marcar pontos entre no ranking (capacidade até 5000)
+          const lowestScore = currentScores.length >= MAX_LEADERBOARD_ENTRIES ? currentScores[currentScores.length - 1].score : 0;
+          if (currentScores.length < MAX_LEADERBOARD_ENTRIES || scoreToUse > lowestScore) {
             currentScores.push({
               player: cleanPlayer,
               score: scoreToUse,
-              avatar: finalAvatar,
+              avatar: safeAvatarForBoard,
               country: detectedCountry,
               countryName: detectedCountryName,
               flag: detectedFlag,
@@ -317,12 +348,12 @@ export default async function handler(req, res) {
 
         if (shouldUpdate || (isWeeklyBoard && docWeek !== currentWeekKey)) {
           currentScores.sort((a, b) => b.score - a.score);
-          const top300 = currentScores.slice(0, 300);
+          const topScores = currentScores.slice(0, MAX_LEADERBOARD_ENTRIES);
 
           const payload = {
             game: cleanGame,
             updatedAt: new Date().toISOString(),
-            scores: top300
+            scores: topScores
           };
           if (isWeeklyBoard) payload.weekKey = currentWeekKey;
 

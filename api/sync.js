@@ -194,12 +194,13 @@ export default async function handler(req, res) {
             shouldUpdate = true;
           }
         } else {
-          const lowestScore = scoresList.length >= 300 ? (scoresList[scoresList.length - 1]?.score || 0) : 0;
-          if (scoresList.length < 300 || scoreValue > lowestScore) {
+          const MAX_SYNC_LB = 5000;
+          const lowestScore = scoresList.length >= MAX_SYNC_LB ? (scoresList[scoresList.length - 1]?.score || 0) : 0;
+          if (scoresList.length < MAX_SYNC_LB || scoreValue > lowestScore) {
             scoresList.push({
               player: cleanName,
               score: scoreValue,
-              avatar: finalAvatar,
+              avatar: (finalAvatar && !finalAvatar.startsWith('data:')) ? finalAvatar : '',
               country: country || 'BR',
               countryName: existingData.countryName || country || 'BR',
               flag: existingData.flag || '',
@@ -213,7 +214,7 @@ export default async function handler(req, res) {
         scoresList.sort((a, b) => b.score - a.score);
         await lbRef.set({
           game,
-          scores: scoresList.slice(0, 300),
+          scores: scoresList.slice(0, 5000),
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
       };
